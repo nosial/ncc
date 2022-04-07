@@ -32,6 +32,14 @@
         public $Build;
 
         /**
+         * Public Constructor
+         */
+        public function __construct()
+        {
+            $this->Assembly = new Assembly();
+        }
+
+        /**
          * Validates the object for any errors
          *
          * @param bool $throw_exception
