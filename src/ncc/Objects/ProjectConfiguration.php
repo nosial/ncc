@@ -2,6 +2,7 @@
 
     namespace ncc\Objects;
 
+    use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
     use ncc\Objects\ProjectConfiguration\Project;
@@ -29,6 +30,21 @@
          * @var Build
          */
         public $Build;
+
+        /**
+         * Validates the object for any errors
+         *
+         * @param bool $throw_exception
+         * @return bool
+         * @throws InvalidProjectConfigurationException
+         */
+        public function validate(bool $throw_exception=false): bool
+        {
+            if($this->Assembly->validate($throw_exception) == false)
+                return false;
+
+            return true;
+        }
 
         /**
          * Returns an array representation of the object
