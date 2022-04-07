@@ -5,6 +5,7 @@
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
     use ncc\Objects\ProjectConfiguration\Project;
+    use ncc\Utilities\Functions;
 
     class ProjectConfiguration
     {
@@ -32,11 +33,14 @@
         /**
          * Returns an array representation of the object
          *
+         * @param bool $bytecode
          * @return array
          */
-        public function toArray(): array
+        public function toArray(bool $bytecode=false): array
         {
-            return [];
+            return [
+                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly->toArray($bytecode)
+            ];
         }
 
         /**
@@ -48,6 +52,8 @@
         public static function fromArray(array $data): ProjectConfiguration
         {
             $ProjectConfigurationObject = new ProjectConfiguration();
+
+            $ProjectConfigurationObject->Assembly = Assembly::fromArray((Functions::array_bc($data, 'assembly') ?? []));
 
             return $ProjectConfigurationObject;
         }
