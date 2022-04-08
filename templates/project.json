@@ -26,7 +26,7 @@
 		],
 		"options": {},
 		"scope": "user",
-		"define_constants": ["%ASSEMBLY.NAME%_HELLO"],
+		"define_constants": {"%ASSEMBLY.NAME%_HELLO": "Hello World!"},
 		"dependencies": [
 			{"name": "mbstring", "source": "extension", "version": "latest"},
 			{"name": "com.example.dependency", "source": "default@github/example/ncc_dependency", "version": "latest"},
@@ -38,7 +38,7 @@
 				"options": {},
 				"static_linking": true,
 				"output_path": "build/debug",
-				"define_constants": ["%ASSEMBLY.NAME%_DEBUG"],
+				"define_constants": {"%ASSEMBLY.NAME%_DEBUG": "1"},
 				"strict_constants": false,
 				"exclude_files": [],
 				"dependencies": [
@@ -50,7 +50,7 @@
 				"options": {},
 				"static_linking": true,
 				"output_path": "build/release",
-				"define_constants": [],
+				"define_constants": {},
 				"strict_constants": false,
 				"exclude_files": [],
 				"dependencies": []
