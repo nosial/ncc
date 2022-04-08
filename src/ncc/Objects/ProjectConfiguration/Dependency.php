@@ -25,6 +25,8 @@
          */
         public $Version;
 
+        // TODO: Add validation function here
+
         /**
          * Returns an array representation of the object
          *
