@@ -1,6 +1,10 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects\ProjectConfiguration;
+
+    use ncc\Utilities\Functions;
 
     class Dependency
     {
@@ -30,22 +34,23 @@
         /**
          * Returns an array representation of the object
          *
+         * @param bool $bytecode
          * @return array
          */
         public function toArray(bool $bytecode=false): array
         {
             $ReturnResults = [];
 
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('name') : 'name')] = $this->Name;
+            $ReturnResults[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
 
             if($this->Source !== null && strlen($this->Source) > 0)
             {
-                $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('source') : 'source')] = $this->Source;
+                $ReturnResults[($bytecode ? Functions::cbc('source') : 'source')] = $this->Source;
             }
 
             if($this->Version !== null && strlen($this->Version) > 0)
             {
-                $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('version') : 'version')] = $this->Version;
+                $ReturnResults[($bytecode ? Functions::cbc('version') : 'version')] = $this->Version;
             }
         
             return $ReturnResults;
@@ -61,9 +66,9 @@
         {
             $DependencyObject = new Dependency();
 
-            $DependencyObject->Name = \ncc\Utilities\Functions::array_bc($data, 'name');
-            $DependencyObject->Source = \ncc\Utilities\Functions::array_bc($data, 'source');
-            $DependencyObject->Version = \ncc\Utilities\Functions::array_bc($data, 'version');
+            $DependencyObject->Name = Functions::array_bc($data, 'name');
+            $DependencyObject->Source = Functions::array_bc($data, 'source');
+            $DependencyObject->Version = Functions::array_bc($data, 'version');
 
             return $DependencyObject;
         }

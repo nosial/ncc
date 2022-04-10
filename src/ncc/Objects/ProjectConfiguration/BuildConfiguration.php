@@ -1,6 +1,10 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects\ProjectConfiguration;
+
+    use ncc\Utilities\Functions;
 
     class BuildConfiguration
     {
@@ -57,7 +61,7 @@
          * Dependencies required for the build configuration, cannot conflict with the
          * default dependencies
          *
-         * @var \ncc\Objects\ProjectConfiguration\Dependency[]
+         * @var Dependency[]
          */
         public $Dependencies;
 
@@ -87,18 +91,18 @@
         {
             $ReturnResults = [];
 
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('name') : 'name')] = $this->Name;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('options') : 'options')] = $this->Options;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('static_linking') : 'static_linking')] = $this->StaticLinking;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('output_path') : 'output_path')] = $this->OutputPath;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('strict_constants') : 'strict_constants')] = $this->StrictConstants;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
-            $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('dependencies') : 'dependencies')] = [];
+            $ReturnResults[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
+            $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
+            $ReturnResults[($bytecode ? Functions::cbc('static_linking') : 'static_linking')] = $this->StaticLinking;
+            $ReturnResults[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->OutputPath;
+            $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
+            $ReturnResults[($bytecode ? Functions::cbc('strict_constants') : 'strict_constants')] = $this->StrictConstants;
+            $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
+            $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = [];
 
             foreach($this->Dependencies as $dependency)
             {
-                $ReturnResults[($bytecode ? \ncc\Utilities\Functions::cbc('dependencies') : 'dependencies')][] = $dependency->toArray();
+                $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')][] = $dependency->toArray();
             }
 
             return $ReturnResults;
@@ -114,44 +118,47 @@
         {
             $BuildConfigurationObject = new BuildConfiguration();
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'name') !== null)
+            if(Functions::array_bc($data, 'name') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'name');
+                $BuildConfigurationObject->Name = Functions::array_bc($data, 'name');
             }
             
-            if(\ncc\Utilities\Functions::array_bc($data, 'options') !== null)
+            if(Functions::array_bc($data, 'options') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'options');
+                $BuildConfigurationObject->Options = Functions::array_bc($data, 'options');
             }
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'static_linking') !== null)
+            if(Functions::array_bc($data, 'static_linking') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'static_linking');
+                $BuildConfigurationObject->StaticLinking = Functions::array_bc($data, 'static_linking');
             }
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'output_path') !== null)
+            if(Functions::array_bc($data, 'output_path') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'output_path');
+                $BuildConfigurationObject->OutputPath = Functions::array_bc($data, 'output_path');
             }
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'define_constants') !== null)
+            if(Functions::array_bc($data, 'define_constants') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'define_constants');
+                $BuildConfigurationObject->DefineConstants = Functions::array_bc($data, 'define_constants');
             }
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'strict_constants') !== null)
+            if(Functions::array_bc($data, 'strict_constants') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'strict_constants');
+                $BuildConfigurationObject->StrictConstants = Functions::array_bc($data, 'strict_constants');
             }
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'exclude_files') !== null)
+            if(Functions::array_bc($data, 'exclude_files') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'exclude_files');
+                $BuildConfigurationObject->ExcludeFiles = Functions::array_bc($data, 'exclude_files');
             }
 
-            if(\ncc\Utilities\Functions::array_bc($data, 'dependencies') !== null)
+            if(Functions::array_bc($data, 'dependencies') !== null)
             {
-                $BuildConfigurationObject = \ncc\Utilities\Functions::array_bc($data, 'dependencies');
+                foreach(Functions::array_bc($data, 'dependencies') as $item)
+                {
+                    $BuildConfigurationObject->Dependencies[] = Dependency::fromArray($item);
+                }
             }
 
             return $BuildConfigurationObject;

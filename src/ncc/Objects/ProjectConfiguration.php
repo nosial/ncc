@@ -36,7 +36,9 @@
          */
         public function __construct()
         {
+            $this->Project = new Project();
             $this->Assembly = new Assembly();
+            $this->Build = new Build();
         }
 
         /**
@@ -63,7 +65,9 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly->toArray($bytecode)
+                ($bytecode ? Functions::cbc('project') : 'project') => $this->Project->toArray($bytecode),
+                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly->toArray($bytecode),
+                ($bytecode ? Functions::cbc('build') : 'build') => $this->Build->toArray($bytecode),
             ];
         }
 

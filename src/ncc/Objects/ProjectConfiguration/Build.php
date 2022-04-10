@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects\ProjectConfiguration;
 
     class Build
@@ -49,14 +51,25 @@
         /**
          * An array of dependencies that are required by default
          *
-         * @var \ncc\Objects\ProjectConfiguration\Dependency[]
+         * @var Dependency[]
          */
         public $Dependencies;
 
         /**
          * An array of build configurations
          *
-         * @var \ncc\Objects\BuildConfiguration[]
+         * @var BuildConfiguration[]
          */
         public $Configurations;
+
+        /**
+         * Returns an array representation of the object
+         *
+         * @param bool $bytecode
+         * @return array
+         */
+        public function toArray(bool $bytecode=false): array
+        {
+
+        }
     }
