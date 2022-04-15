@@ -54,21 +54,10 @@
         {
             $CompilerObject = new Compiler();
 
-            if(Functions::array_bc($data, 'extension') !== null)
-            {
-                $CompilerObject->Extension = Functions::array_bc($data, 'extension');
-            }
-
-            if(Functions::array_bc($data, 'maximum_version') !== null)
-            {
-                $CompilerObject->MaximumVersion = Functions::array_bc($data, 'maximum_version');
-            }
-
-            if(Functions::array_bc($data, 'minimum_version') !== null)
-            {
-                $CompilerObject->MinimumVersion = Functions::array_bc($data, 'minimum_version');
-            }
-
+            $CompilerObject->MaximumVersion = Functions::array_bc($data, 'maximum_version');
+            $CompilerObject->Extension = Functions::array_bc($data, 'extension');
+            $CompilerObject->MinimumVersion = Functions::array_bc($data, 'minimum_version');
+            
             return $CompilerObject;
         }
     }
