@@ -2,6 +2,10 @@
 
     namespace ncc\Utilities;
 
+    /**
+     * @author Zi Xing Narrakas
+     * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
+     */
     class Functions
     {
         /**
