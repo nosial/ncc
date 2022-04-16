@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace ncc\PhpSchool\CliMenu\Util;
 
-use Assert\Assertion;
+use ncc\Assert\Assertion;
 use ncc\PhpSchool\Terminal\Terminal;
 
 class ColourUtil

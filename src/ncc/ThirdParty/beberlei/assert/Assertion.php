@@ -96,7 +96,7 @@ use Traversable;
  * @method static bool allNotInArray(mixed[] $value, array $choices, string|callable $message = null, string $propertyPath = null) Assert that value is not in array of choices for all values.
  * @method static bool allNotIsInstanceOf(mixed[] $value, string $className, string|callable $message = null, string $propertyPath = null) Assert that value is not instance of given class-name for all values.
  * @method static bool allNotNull(mixed[] $value, string|callable $message = null, string $propertyPath = null) Assert that value is not null for all values.
- * @method static bool allNotRegex(mixed[] $value, string $pattern, string|callable $message = null, string $propertyPath = null) Assert that value does not match a regex for all values.
+ * @method static bool allNotRegex(mixed[] $value, string $pattern, string|callable $message = null, string $propertyPath = null) # Assert that value does not match a regex for all values.
  * @method static bool allNotSame(mixed[] $value1, mixed $value2, string|callable $message = null, string $propertyPath = null) Assert that two values are not the same (using ===) for all values.
  * @method static bool allNull(mixed[] $value, string|callable $message = null, string $propertyPath = null) Assert that value is null for all values.
  * @method static bool allNumeric(mixed[] $value, string|callable $message = null, string $propertyPath = null) Assert that value is numeric for all values.
@@ -185,7 +185,7 @@ use Traversable;
  * @method static bool nullOrNotInArray(mixed|null $value, array $choices, string|callable $message = null, string $propertyPath = null) Assert that value is not in array of choices or that the value is null.
  * @method static bool nullOrNotIsInstanceOf(mixed|null $value, string $className, string|callable $message = null, string $propertyPath = null) Assert that value is not instance of given class-name or that the value is null.
  * @method static bool nullOrNotNull(mixed|null $value, string|callable $message = null, string $propertyPath = null) Assert that value is not null or that the value is null.
- * @method static bool nullOrNotRegex(mixed|null $value, string $pattern, string|callable $message = null, string $propertyPath = null) Assert that value does not match a regex or that the value is null.
+ * @method static bool nullOrNotRegex(mixed|null $value, string $pattern, string|callable $message = null, string $propertyPath = null) # Assert that value does not match a regex or that the value is null.
  * @method static bool nullOrNotSame(mixed|null $value1, mixed $value2, string|callable $message = null, string $propertyPath = null) Assert that two values are not the same (using ===) or that the value is null.
  * @method static bool nullOrNull(mixed|null $value, string|callable $message = null, string $propertyPath = null) Assert that value is null or that the value is null.
  * @method static bool nullOrNumeric(mixed|null $value, string|callable $message = null, string $propertyPath = null) Assert that value is numeric or that the value is null.

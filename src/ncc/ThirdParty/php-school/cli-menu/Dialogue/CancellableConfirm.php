@@ -37,6 +37,8 @@ class CancellableConfirm extends Dialogue
                 $this->drawDialog($confirmText, $cancelText);
             }
         }
+
+        return true;
     }
 
     private function drawDialog(string $confirmText = 'OK', string $cancelText = 'Cancel'): void

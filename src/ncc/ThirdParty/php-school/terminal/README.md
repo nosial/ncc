@@ -7,7 +7,7 @@
 <p align="center">
     <a href="https://travis-ci.org/php-school/terminal" title="Build Status" target="_blank">
      <img src="https://img.shields.io/travis/php-school/terminal/master.svg?style=flat-square&label=Linux" />
-    </a
+    </a>
     <a href="https://codecov.io/github/php-school/terminal" title="Coverage Status" target="_blank">
      <img src="https://img.shields.io/codecov/c/github/php-school/terminal.svg?style=flat-square" />
     </a>
