@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess\Exception;
+namespace ncc\Symfony\Component\Process\Exception;
 
 /**
- * RuntimeException for the NccProcess Component.
+ * RuntimeException for the Process Component.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */

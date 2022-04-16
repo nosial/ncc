@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess\Exception;
+namespace ncc\Symfony\Component\Process\Exception;
 
 /**
- * Marker Interface for the NccProcess Component.
+ * Marker Interface for the Process Component.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */

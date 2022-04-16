@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess;
+namespace ncc\Symfony\Component\Process;
 
 /**
  * An executable finder specifically designed for the PHP executable.

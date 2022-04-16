@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess\Exception;
+namespace ncc\Symfony\Component\Process\Exception;
 
-use Symfony\Component\NccProcess\Process;
+use ncc\Symfony\Component\Process\Process;
 
 /**
  * Exception that is thrown when a process times out.

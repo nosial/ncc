@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess\Pipes;
+namespace ncc\Symfony\Component\Process\Pipes;
 
-use Symfony\Component\NccProcess\Exception\RuntimeException;
-use Symfony\Component\NccProcess\Process;
+use ncc\Symfony\Component\Process\Exception\RuntimeException;
+use ncc\Symfony\Component\Process\Process;
 
 /**
  * WindowsPipes implementation uses temporary files as handles.

@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess;
+namespace ncc\Symfony\Component\Process;
 
-use Symfony\Component\NccProcess\Exception\RuntimeException;
+use ncc\Symfony\Component\Process\Exception\RuntimeException;
 
 /**
- * Provides a way to continuously write to the input of a NccProcess until the InputStream is closed.
+ * Provides a way to continuously write to the input of a Process until the InputStream is closed.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  *

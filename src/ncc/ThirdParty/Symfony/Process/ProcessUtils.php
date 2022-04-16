@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess;
+namespace ncc\Symfony\Component\Process;
 
-use Symfony\Component\NccProcess\Exception\InvalidArgumentException;
+use ncc\Symfony\Component\Process\Exception\InvalidArgumentException;
 
 /**
  * ProcessUtils is a bunch of utility methods.
@@ -30,7 +30,7 @@ class ProcessUtils
     }
 
     /**
-     * Validates and normalizes a NccProcess input.
+     * Validates and normalizes a Process input.
      *
      * @param string $caller The name of method call that validates the input
      * @param mixed  $input  The input to validate

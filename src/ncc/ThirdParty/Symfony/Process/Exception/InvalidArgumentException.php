@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess\Exception;
+namespace ncc\Symfony\Component\Process\Exception;
 
 /**
- * InvalidArgumentException for the NccProcess Component.
+ * InvalidArgumentException for the Process Component.
  *
  * @author Romain Neutron <imprec@gmail.com>
  */

@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess;
+namespace ncc\Symfony\Component\Process;
 
-use Symfony\Component\NccProcess\Exception\LogicException;
-use Symfony\Component\NccProcess\Exception\RuntimeException;
+use ncc\Symfony\Component\Process\Exception\LogicException;
+use ncc\Symfony\Component\Process\Exception\RuntimeException;
 
 /**
  * PhpProcess runs a PHP script in an independent process.

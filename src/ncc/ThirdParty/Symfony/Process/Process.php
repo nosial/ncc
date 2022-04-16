@@ -9,20 +9,20 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess;
+namespace ncc\Symfony\Component\Process;
 
-use Symfony\Component\NccProcess\Exception\InvalidArgumentException;
-use Symfony\Component\NccProcess\Exception\LogicException;
-use Symfony\Component\NccProcess\Exception\ProcessFailedException;
-use Symfony\Component\NccProcess\Exception\ProcessSignaledException;
-use Symfony\Component\NccProcess\Exception\ProcessTimedOutException;
-use Symfony\Component\NccProcess\Exception\RuntimeException;
-use Symfony\Component\NccProcess\Pipes\PipesInterface;
-use Symfony\Component\NccProcess\Pipes\UnixPipes;
-use Symfony\Component\NccProcess\Pipes\WindowsPipes;
+use ncc\Symfony\Component\Process\Exception\InvalidArgumentException;
+use ncc\Symfony\Component\Process\Exception\LogicException;
+use ncc\Symfony\Component\Process\Exception\ProcessFailedException;
+use ncc\Symfony\Component\Process\Exception\ProcessSignaledException;
+use ncc\Symfony\Component\Process\Exception\ProcessTimedOutException;
+use ncc\Symfony\Component\Process\Exception\RuntimeException;
+use ncc\Symfony\Component\Process\Pipes\PipesInterface;
+use ncc\Symfony\Component\Process\Pipes\UnixPipes;
+use ncc\Symfony\Component\Process\Pipes\WindowsPipes;
 
 /**
- * NccProcess is a thin wrapper around proc_* functions to easily
+ * Process is a thin wrapper around proc_* functions to easily
  * start independent PHP processes.
  *
  * @author Fabien Potencier <fabien@symfony.com>
@@ -103,7 +103,7 @@ class Process implements \IteratorAggregate
         131 => 'Quit and dump core',
         132 => 'Illegal instruction',
         133 => 'Trace/breakpoint trap',
-        134 => 'NccProcess aborted',
+        134 => 'Process aborted',
         135 => 'Bus error: "access to undefined portion of memory object"',
         136 => 'Floating point exception: "erroneous arithmetic operation"',
         137 => 'Kill (terminate immediately)',
@@ -143,7 +143,7 @@ class Process implements \IteratorAggregate
     public function __construct(array $command, string $cwd = null, array $env = null, $input = null, ?float $timeout = 60)
     {
         if (!\function_exists('proc_open')) {
-            throw new LogicException('The NccProcess class relies on proc_open, which is not available on your PHP installation.');
+            throw new LogicException('The Process class relies on proc_open, which is not available on your PHP installation.');
         }
 
         $this->commandline = $command;
@@ -167,7 +167,7 @@ class Process implements \IteratorAggregate
     }
 
     /**
-     * Creates a NccProcess instance as a command-line to be run in a shell wrapper.
+     * Creates a Process instance as a command-line to be run in a shell wrapper.
      *
      * Command-lines are parsed by the shell of your OS (/bin/sh on Unix-like, cmd.exe on Windows.)
      * This allows using e.g. pipes or conditional execution. In this mode, signals are sent to the
@@ -176,7 +176,7 @@ class Process implements \IteratorAggregate
      * In order to inject dynamic values into command-lines, we strongly recommend using placeholders.
      * This will save escaping values, which is not portable nor secure anyway:
      *
-     *   $process = NccProcess::fromShellCommandline('my_command "${:MY_VAR}"');
+     *   $process = Process::fromShellCommandline('my_command "${:MY_VAR}"');
      *   $process->run(null, ['MY_VAR' => $theValue]);
      *
      * @param string         $command The command line to pass to the shell of the OS
@@ -297,7 +297,7 @@ class Process implements \IteratorAggregate
     public function start(callable $callback = null, array $env = [])
     {
         if ($this->isRunning()) {
-            throw new RuntimeException('NccProcess is already running.');
+            throw new RuntimeException('Process is already running.');
         }
 
         $this->resetProcessData();
@@ -388,7 +388,7 @@ class Process implements \IteratorAggregate
     public function restart(callable $callback = null, array $env = []): self
     {
         if ($this->isRunning()) {
-            throw new RuntimeException('NccProcess is already running.');
+            throw new RuntimeException('Process is already running.');
         }
 
         $process = clone $this;
@@ -421,7 +421,7 @@ class Process implements \IteratorAggregate
         if (null !== $callback) {
             if (!$this->processPipes->haveReadSupport()) {
                 $this->stop(0);
-                throw new LogicException('Pass the callback to the "NccProcess::start" method or call enableOutput to use a callback with "NccProcess::wait".');
+                throw new LogicException('Pass the callback to the "Process::start" method or call enableOutput to use a callback with "Process::wait".');
             }
             $this->callback = $this->buildCallback($callback);
         }
@@ -462,7 +462,7 @@ class Process implements \IteratorAggregate
 
         if (!$this->processPipes->haveReadSupport()) {
             $this->stop(0);
-            throw new LogicException('Pass the callback to the "NccProcess::start" method or call enableOutput to use a callback with "NccProcess::waitUntil".');
+            throw new LogicException('Pass the callback to the "Process::start" method or call enableOutput to use a callback with "Process::waitUntil".');
         }
         $callback = $this->buildCallback($callback);
 
@@ -613,9 +613,9 @@ class Process implements \IteratorAggregate
     }
 
     /**
-     * Returns an iterator to the output of the process, with the output type as keys (NccProcess::OUT/ERR).
+     * Returns an iterator to the output of the process, with the output type as keys (Process::OUT/ERR).
      *
-     * @param int $flags A bit field of NccProcess::ITER_* flags
+     * @param int $flags A bit field of Process::ITER_* flags
      *
      * @throws LogicException in case the output has been disabled
      * @throws LogicException In case the process is not started
@@ -746,7 +746,7 @@ class Process implements \IteratorAggregate
     /**
      * Returns the exit code returned by the process.
      *
-     * @return int|null The exit status code, null if the NccProcess is not terminated
+     * @return int|null The exit status code, null if the Process is not terminated
      */
     public function getExitCode()
     {
@@ -761,7 +761,7 @@ class Process implements \IteratorAggregate
      * This method relies on the Unix exit code status standardization
      * and might not be relevant for other operating systems.
      *
-     * @return string|null A string representation for the exit status code, null if the NccProcess is not terminated
+     * @return string|null A string representation for the exit status code, null if the Process is not terminated
      *
      * @see http://tldp.org/LDP/abs/html/exitcodes.html
      * @see http://en.wikipedia.org/wiki/Unix_signal
@@ -1153,7 +1153,7 @@ class Process implements \IteratorAggregate
     }
 
     /**
-     * Gets the NccProcess input.
+     * Gets the Process input.
      *
      * @return resource|string|\Iterator|null
      */
@@ -1593,7 +1593,7 @@ class Process implements \IteratorAggregate
     private function requireProcessIsStarted(string $functionName)
     {
         if (!$this->isStarted()) {
-            throw new LogicException(sprintf('NccProcess must be started before calling "%s()".', $functionName));
+            throw new LogicException(sprintf('Process must be started before calling "%s()".', $functionName));
         }
     }
 
@@ -1605,7 +1605,7 @@ class Process implements \IteratorAggregate
     private function requireProcessIsTerminated(string $functionName)
     {
         if (!$this->isTerminated()) {
-            throw new LogicException(sprintf('NccProcess must be terminated before calling "%s()".', $functionName));
+            throw new LogicException(sprintf('Process must be terminated before calling "%s()".', $functionName));
         }
     }
 

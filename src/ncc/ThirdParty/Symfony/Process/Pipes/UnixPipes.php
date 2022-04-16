@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\NccProcess\Pipes;
+namespace ncc\Symfony\Component\Process\Pipes;
 
-use Symfony\Component\NccProcess\Process;
+use ncc\Symfony\Component\Process\Process;
 
 /**
  * UnixPipes implementation uses unix pipes as handles.
