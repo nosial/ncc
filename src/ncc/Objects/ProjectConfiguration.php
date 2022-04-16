@@ -81,7 +81,9 @@
         {
             $ProjectConfigurationObject = new ProjectConfiguration();
 
-            $ProjectConfigurationObject->Assembly = Assembly::fromArray((Functions::array_bc($data, 'assembly') ?? []));
+            $ProjectConfigurationObject->Project = Functions::array_bc($data, 'project');
+            $ProjectConfigurationObject->Assembly = Functions::array_bc($data, 'assembly');
+            $ProjectConfigurationObject->Build = Functions::array_bc($data, 'build');
 
             return $ProjectConfigurationObject;
         }
