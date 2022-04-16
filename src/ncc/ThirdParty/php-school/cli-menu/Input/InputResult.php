@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Input;
+namespace ncc\PhpSchool\CliMenu\Input;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

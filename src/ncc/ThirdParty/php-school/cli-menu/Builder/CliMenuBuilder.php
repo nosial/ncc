@@ -1,30 +1,30 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Builder;
+namespace ncc\PhpSchool\CliMenu\Builder;
 
-use PhpSchool\CliMenu\Action\ExitAction;
-use PhpSchool\CliMenu\Action\GoBackAction;
-use PhpSchool\CliMenu\Exception\InvalidShortcutException;
-use PhpSchool\CliMenu\MenuItem\AsciiArtItem;
-use PhpSchool\CliMenu\MenuItem\CheckboxItem;
-use PhpSchool\CliMenu\MenuItem\LineBreakItem;
-use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
-use PhpSchool\CliMenu\MenuItem\MenuMenuItem;
-use PhpSchool\CliMenu\MenuItem\RadioItem;
-use PhpSchool\CliMenu\MenuItem\SelectableItem;
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\MenuItem\SplitItem;
-use PhpSchool\CliMenu\MenuItem\StaticItem;
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Style\CheckboxStyle;
-use PhpSchool\CliMenu\Style\DefaultStyle;
-use PhpSchool\CliMenu\Style\ItemStyle;
-use PhpSchool\CliMenu\Style\RadioStyle;
-use PhpSchool\CliMenu\Style\SelectableStyle;
-use PhpSchool\CliMenu\Terminal\TerminalFactory;
-use PhpSchool\Terminal\Terminal;
-use function PhpSchool\CliMenu\Util\each;
+use ncc\PhpSchool\CliMenu\Action\ExitAction;
+use ncc\PhpSchool\CliMenu\Action\GoBackAction;
+use ncc\PhpSchool\CliMenu\Exception\InvalidShortcutException;
+use ncc\PhpSchool\CliMenu\MenuItem\AsciiArtItem;
+use ncc\PhpSchool\CliMenu\MenuItem\CheckboxItem;
+use ncc\PhpSchool\CliMenu\MenuItem\LineBreakItem;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuItemInterface;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuMenuItem;
+use ncc\PhpSchool\CliMenu\MenuItem\RadioItem;
+use ncc\PhpSchool\CliMenu\MenuItem\SelectableItem;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\MenuItem\SplitItem;
+use ncc\PhpSchool\CliMenu\MenuItem\StaticItem;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Style\CheckboxStyle;
+use ncc\PhpSchool\CliMenu\Style\DefaultStyle;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\Style\RadioStyle;
+use ncc\PhpSchool\CliMenu\Style\SelectableStyle;
+use ncc\PhpSchool\CliMenu\Terminal\TerminalFactory;
+use ncc\PhpSchool\Terminal\Terminal;
+use function ncc\PhpSchool\CliMenu\Util\each;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

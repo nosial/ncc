@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\MenuItem;
+namespace ncc\PhpSchool\CliMenu\MenuItem;
 
 use Assert\Assertion;
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Style\DefaultStyle;
-use PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Style\DefaultStyle;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

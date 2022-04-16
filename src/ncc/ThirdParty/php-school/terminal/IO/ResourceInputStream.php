@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSchool\Terminal\IO;
+namespace ncc\PhpSchool\Terminal\IO;
 
 use function is_resource;
 use function get_resource_type;

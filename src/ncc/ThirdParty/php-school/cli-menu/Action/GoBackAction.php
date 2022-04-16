@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Action;
+namespace ncc\PhpSchool\CliMenu\Action;
 
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Dialogue;
+namespace ncc\PhpSchool\CliMenu\Dialogue;
 
-use PhpSchool\Terminal\NonCanonicalReader;
+use ncc\PhpSchool\Terminal\NonCanonicalReader;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

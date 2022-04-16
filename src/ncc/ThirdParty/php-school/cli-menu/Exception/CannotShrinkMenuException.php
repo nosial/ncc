@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Exception;
+namespace ncc\PhpSchool\CliMenu\Exception;
 
 use InvalidArgumentException;
 

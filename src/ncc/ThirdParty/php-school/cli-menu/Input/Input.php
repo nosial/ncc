@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Input;
+namespace ncc\PhpSchool\CliMenu\Input;
 
-use PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\MenuStyle;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

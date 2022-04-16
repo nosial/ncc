@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Input;
+namespace ncc\PhpSchool\CliMenu\Input;
 
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\Util\StringUtil;
-use PhpSchool\Terminal\InputCharacter;
-use PhpSchool\Terminal\NonCanonicalReader;
-use PhpSchool\Terminal\Terminal;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Util\StringUtil;
+use ncc\PhpSchool\Terminal\InputCharacter;
+use ncc\PhpSchool\Terminal\NonCanonicalReader;
+use ncc\PhpSchool\Terminal\Terminal;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

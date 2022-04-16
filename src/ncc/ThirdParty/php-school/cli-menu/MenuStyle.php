@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu;
+namespace ncc\PhpSchool\CliMenu;
 
-use PhpSchool\CliMenu\Exception\CannotShrinkMenuException;
-use PhpSchool\CliMenu\Terminal\TerminalFactory;
-use PhpSchool\CliMenu\Util\ColourUtil;
-use PhpSchool\CliMenu\Util\StringUtil as s;
-use PhpSchool\Terminal\Terminal;
+use ncc\PhpSchool\CliMenu\Exception\CannotShrinkMenuException;
+use ncc\PhpSchool\CliMenu\Terminal\TerminalFactory;
+use ncc\PhpSchool\CliMenu\Util\ColourUtil;
+use ncc\PhpSchool\CliMenu\Util\StringUtil as s;
+use ncc\PhpSchool\Terminal\Terminal;
 use Assert\Assertion;
 
 //TODO: B/W fallback

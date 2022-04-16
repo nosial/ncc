@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\MenuItem;
+namespace ncc\PhpSchool\CliMenu\MenuItem;
 
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Style\ItemStyle;
-use PhpSchool\CliMenu\Style\Selectable;
-use PhpSchool\CliMenu\Util\StringUtil as s;
-use function PhpSchool\CliMenu\Util\mapWithKeys;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\Style\Selectable;
+use ncc\PhpSchool\CliMenu\Util\StringUtil as s;
+use function ncc\PhpSchool\CliMenu\Util\mapWithKeys;
 
 class SelectableItemRenderer
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSchool\Terminal;
+namespace ncc\PhpSchool\Terminal;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

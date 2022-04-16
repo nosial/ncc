@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Style;
+namespace ncc\PhpSchool\CliMenu\Style;
 
-use PhpSchool\CliMenu\MenuItem\AsciiArtItem;
-use PhpSchool\CliMenu\MenuItem\CheckboxItem;
-use PhpSchool\CliMenu\MenuItem\LineBreakItem;
-use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
-use PhpSchool\CliMenu\MenuItem\MenuMenuItem;
-use PhpSchool\CliMenu\MenuItem\RadioItem;
-use PhpSchool\CliMenu\MenuItem\SelectableItem;
-use PhpSchool\CliMenu\MenuItem\SplitItem;
-use PhpSchool\CliMenu\MenuItem\StaticItem;
-use PhpSchool\CliMenu\Style\Exception\InvalidStyle;
-use function PhpSchool\CliMenu\Util\mapWithKeys;
+use ncc\PhpSchool\CliMenu\MenuItem\AsciiArtItem;
+use ncc\PhpSchool\CliMenu\MenuItem\CheckboxItem;
+use ncc\PhpSchool\CliMenu\MenuItem\LineBreakItem;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuItemInterface;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuMenuItem;
+use ncc\PhpSchool\CliMenu\MenuItem\RadioItem;
+use ncc\PhpSchool\CliMenu\MenuItem\SelectableItem;
+use ncc\PhpSchool\CliMenu\MenuItem\SplitItem;
+use ncc\PhpSchool\CliMenu\MenuItem\StaticItem;
+use ncc\PhpSchool\CliMenu\Style\Exception\InvalidStyle;
+use function ncc\PhpSchool\CliMenu\Util\mapWithKeys;
 
 class Locator
 {

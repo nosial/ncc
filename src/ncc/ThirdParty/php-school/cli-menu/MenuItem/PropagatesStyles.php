@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\MenuItem;
+namespace ncc\PhpSchool\CliMenu\MenuItem;
 
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 interface PropagatesStyles
 {

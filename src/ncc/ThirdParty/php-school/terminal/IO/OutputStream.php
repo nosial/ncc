@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSchool\Terminal\IO;
+namespace ncc\PhpSchool\Terminal\IO;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

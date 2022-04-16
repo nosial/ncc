@@ -1,10 +1,10 @@
 <?php
 
-namespace PhpSchool\Terminal;
+namespace ncc\PhpSchool\Terminal;
 
-use PhpSchool\Terminal\Exception\NotInteractiveTerminal;
-use PhpSchool\Terminal\IO\InputStream;
-use PhpSchool\Terminal\IO\OutputStream;
+use ncc\PhpSchool\Terminal\Exception\NotInteractiveTerminal;
+use ncc\PhpSchool\Terminal\IO\InputStream;
+use ncc\PhpSchool\Terminal\IO\OutputStream;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

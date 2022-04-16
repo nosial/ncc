@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu;
+namespace ncc\PhpSchool\CliMenu;
 
 /**
  * Represents the current screen being displayed

@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Util;
+namespace ncc\PhpSchool\CliMenu\Util;
 
 use Assert\Assertion;
-use PhpSchool\Terminal\Terminal;
+use ncc\PhpSchool\Terminal\Terminal;
 
 class ColourUtil
 {

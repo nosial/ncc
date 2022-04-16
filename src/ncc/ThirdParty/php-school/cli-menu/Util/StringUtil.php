@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Util;
+namespace ncc\PhpSchool\CliMenu\Util;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

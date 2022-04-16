@@ -92,8 +92,8 @@ Here is a super basic example menu which will echo out the text of the selected 
 ```php
 <?php
 
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 require_once(__DIR__ . '/../vendor/autoload.php');
 
@@ -203,7 +203,7 @@ The `CliMenu` object is constructed via the Builder class
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     /**
@@ -229,7 +229,7 @@ Whatever string you pass to `setTitleSeparator` will be repeated for the width o
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setTitle('One Menu to rule them all!')
@@ -253,7 +253,7 @@ You can change the foreground and background colour of the menu to any of the fo
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setForegroundColour('green')
@@ -271,7 +271,7 @@ In this example if no 256 colour support is found it will automatically fall bac
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setForegroundColour('40')
@@ -284,7 +284,7 @@ In this example if no 256 colour support is found it will fall back to `yellow` 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setForegroundColour('40', 'yellow')
@@ -301,7 +301,7 @@ and all around border of 5 and all around padding of 5 will leave for a content 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setWidth(1000) //if terminal is only 400, width will also be 400
@@ -313,7 +313,7 @@ If you want to use the full width of the terminal, you can grab the terminal obj
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = ($builder = new CliMenuBuilder)
     ->setWidth($builder->getTerminal()->getWidth())
@@ -326,7 +326,7 @@ automatically (shrink the width based on the margin).
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = ($builder = new CliMenuBuilder)
     ->setWidth($builder->getTerminal()->getWidth())
@@ -341,7 +341,7 @@ The padding can be set for all sides with one value or can be set individually f
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setPadding(10) //10 padding top/bottom/left/right
@@ -353,7 +353,7 @@ Different values can also be set for the top/bottom and the left/right padding:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setPaddingTopBottom(10)
@@ -366,7 +366,7 @@ Configure top/bottom and left/right padding using the shorthand method:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setPadding(10, 5) //top/bottom = 10, left/right = 5
@@ -383,7 +383,7 @@ Automatically center menu:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setWidth(200)
@@ -396,7 +396,7 @@ Arbitrary margin:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setWidth(200)
@@ -414,7 +414,7 @@ Set universal red border of 2:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setWidth(200)
@@ -427,7 +427,7 @@ Configure each border separately:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setWidth(200)
@@ -444,7 +444,7 @@ Configure each border separately using the shorthand method, like CSS:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setWidth(200)
@@ -461,7 +461,7 @@ Modify the exit button text:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->setExitButtonText("Don't you want me baby?")
@@ -475,7 +475,7 @@ You can remove the exit button altogether:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->disableDefaultItems()
@@ -489,9 +489,9 @@ You can manually add exit and go back buttons using the following:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\Action\ExitAction;
-use PhpSchool\CliMenu\Action\GoBackAction;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Action\ExitAction;
+use ncc\PhpSchool\CliMenu\Action\GoBackAction;
 
 $menu = (new CliMenuBuilder)
     ->disableDefaultItems()
@@ -522,8 +522,8 @@ There a few different types of items you can add to your menu
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $menu = (new CliMenuBuilder)
     ->addItem('The Item Text', function (CliMenu $menu) { 
@@ -537,8 +537,8 @@ You can add multiple items at once like so:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $callable = function (CliMenu $menu) {
     echo 'I am alive!';
@@ -561,8 +561,8 @@ and must be a valid PHP `callable`. Try using an `Invokable` class to keep your 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $callable = function (CliMenu $menu) {
     echo $menu->getSelectedItem()->getText();
@@ -580,8 +580,8 @@ You can add multiple checkbox items at once like so:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $callable = function (CliMenu $menu) {
     echo 'I am alive!';
@@ -604,8 +604,8 @@ checked.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $callable = function (CliMenu $menu) {
     echo $menu->getSelectedItem()->getText();
@@ -623,8 +623,8 @@ You can add multiple radio items at once like so:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $callable = function (CliMenu $menu) {
     echo 'I am alive!';
@@ -647,7 +647,7 @@ checked and all other `RadioItem` within the same level will be unchecked.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->addLineBreak('<3', 2)
@@ -664,7 +664,7 @@ If the text is longer than the width of the Menu, it will be continued on the ne
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $menu = (new CliMenuBuilder)
     ->addStaticItem('AREA 1')
@@ -688,8 +688,8 @@ alignment:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\MenuItem\AsciiArtItem;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\MenuItem\AsciiArtItem;
 
 $art = <<<ART
         _ __ _
@@ -718,8 +718,8 @@ can have different styles and colours!
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $callable = function (CliMenu $menu) {
     echo "I'm just a boring selectable item";
@@ -749,7 +749,7 @@ If you have already have a configured menu builder you can just pass that to `ad
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
 
 $subMenuBuilder = (new CliMenuBuilder)
     ->setTitle('Behold the awesomeness')
@@ -760,7 +760,7 @@ $menu = (new CliMenuBuilder)
     ->build();
 ```
 
-Note: The submenu menu item will be an instance of `\PhpSchool\CliMenu\MenuItem\MenuMenuItem`. If you need access to the submenu,
+Note: The submenu menu item will be an instance of `\ncc\PhpSchool\CliMenu\MenuItem\MenuMenuItem`. If you need access to the submenu,
 you can get it via `$menuMenuItem->getSubMenu()`.
 
 ### Split Item
@@ -774,9 +774,9 @@ Only Selectable, Checkbox, Radio, Static and SubMenu items are currently allowed
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\Builder\SplitItemBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Builder\SplitItemBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     echo $menu->getSelectedItem()->getText();
@@ -812,8 +812,8 @@ In this example we are disabling certain items and a submenu but still having th
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     echo $menu->getSelectedItem()->getText();
@@ -845,13 +845,13 @@ The outcome is a full menu with dimmed rows to denote them being disabled. When 
 
 The marker displayed by the side of the currently active item can be modified, UTF-8 characters are supported.
 The marker for un-selected items can also be modified. If you want to disable it, just set it to an empty string. Item
-markers only display on *selectable* items, which are: `\PhpSchool\CliMenu\MenuItem\SelectableItem` & `\PhpSchool\CliMenu\MenuItem\MenuMenuItem`.
+markers only display on *selectable* items, which are: `\ncc\PhpSchool\CliMenu\MenuItem\SelectableItem` & `\ncc\PhpSchool\CliMenu\MenuItem\MenuMenuItem`.
 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\Style\SelectableStyle;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Style\SelectableStyle;
 
 $menu = (new CliMenuBuilder)
     ->modifySelectableStyle(function (SelectableStyle $style) {
@@ -865,13 +865,13 @@ $menu = (new CliMenuBuilder)
     ->build();
 ```
 
-You may also change the marker for `\PhpSchool\CliMenu\MenuItem\CheckboxItem`:
+You may also change the marker for `\ncc\PhpSchool\CliMenu\MenuItem\CheckboxItem`:
 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\Style\CheckboxStyle;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Style\CheckboxStyle;
 
 $menu = (new CliMenuBuilder)
     ->modifyCheckboxStyle(function (CheckboxStyle $style) {
@@ -883,13 +883,13 @@ $menu = (new CliMenuBuilder)
     ->build();
 ```
 
-and for `\PhpSchool\CliMenu\MenuItem\RadioItem`:
+and for `\ncc\PhpSchool\CliMenu\MenuItem\RadioItem`:
 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\Style\RadioStyle;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\Style\RadioStyle;
 
 $menu = (new CliMenuBuilder)
     ->modifyRadioStyle(function (RadioStyle $style) {
@@ -914,9 +914,9 @@ The third parameter to `addItem` is a boolean whether to show the item extra or 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\Style\SelectableStyle;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Style\SelectableStyle;
 
 $menu = (new CliMenuBuilder)
     ->modifySelectableStyle(function (SelectableStyle $style) {
@@ -935,8 +935,8 @@ menu like so:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $menu = (new CliMenuBuilder)
     ->setItemExtra('✔')
@@ -954,7 +954,7 @@ $menu = (new CliMenuBuilder)
 
 ## Menu Methods
 
-The next set of documentation applies to methods available directly on the `\PhpSchool\CliMenu\CliMenu` instance. Typically
+The next set of documentation applies to methods available directly on the `\ncc\PhpSchool\CliMenu\CliMenu` instance. Typically
 you will invoke these methods whilst your menu is open in you action callbacks.
 
 ### Redrawing the Menu
@@ -965,8 +965,8 @@ colour in an action.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $menu->getStyle()->setBg($menu->getStyle()->getBg() === 'red' ? 'blue' : 'red');
@@ -991,8 +991,8 @@ the terminal before redrawing.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $menu->getStyle()->setWidth($menu->getStyle()->getWidth() === 100 ? 80 : 100);
@@ -1018,9 +1018,9 @@ will likely want to redraw the menu as well so the new list is rendered.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\MenuItem\LineBreakItem;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\MenuItem\LineBreakItem;
 
 $itemCallable = function (CliMenu $menu) {
     foreach ($menu->getItems() as $item) {
@@ -1057,8 +1057,8 @@ This functionality allows to map custom key presses to a callable. For example w
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $exit = function(CliMenu $menu) {
     $menu->close();
@@ -1078,8 +1078,8 @@ Another example is mapping shortcuts to a list of items:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $myCallback = function(CliMenu $menu) {
     echo "Client 1\nClient 2\nClient 3\n";
@@ -1110,8 +1110,8 @@ To enable this automatic keyboard shortcut mapping simply call `->enableAutoShor
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $myCallback = function(CliMenu $menu) {
     echo "Client 1\nClient 2\nClient 3\n";
@@ -1141,8 +1141,8 @@ below we change the background color on the flash to green.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 require_once(__DIR__ . '/../vendor/autoload.php');
     
@@ -1171,8 +1171,8 @@ text can be customised.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $menu->confirm('PHP School FTW!')
@@ -1209,8 +1209,8 @@ placeholder text (the default is empty) and the validation failed text (the defa
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $result = $menu->askText()
@@ -1243,8 +1243,8 @@ When entering a number you can use the up/down keys to increment and decrement t
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $result = $menu->askNumber()
@@ -1278,8 +1278,8 @@ Ask for a password with the default validation:
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $result = $menu->askPassword()
@@ -1313,8 +1313,8 @@ password is longer than 20 characters.
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $result = $menu->askPassword()
@@ -1344,8 +1344,8 @@ Ask for a password with custom validation and set the validation failure message
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
 
 $itemCallable = function (CliMenu $menu) {
     $result = $menu->askPassword()
@@ -1381,18 +1381,18 @@ $menu->open();
 #### Custom Input
 
 If you need a new type of input which is not covered by the bundled selection then you can create your own by implementing
-`\PhpSchool\CliMenu\Input\Input` - take a look at existing implementations to see how they are built. If all you need is some custom
-validation - extend the `\PhpSchool\CliMenu\Input\Text` class and overwrite the `validate` method. You can then use it in
+`\ncc\PhpSchool\CliMenu\Input\Input` - take a look at existing implementations to see how they are built. If all you need is some custom
+validation - extend the `\ncc\PhpSchool\CliMenu\Input\Text` class and overwrite the `validate` method. You can then use it in
 your menu item actions like so:
 
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Input\Text;
-use PhpSchool\CliMenu\Input\InputIO;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Input\Text;
+use ncc\PhpSchool\CliMenu\Input\InputIO;
 
 $itemCallable = function (CliMenu $menu) {
     
@@ -1432,9 +1432,9 @@ you can build up a `MenuStyle` object and pass it to the dialogue and input meth
 ```php
 <?php
 
-use PhpSchool\CliMenu\Builder\CliMenuBuilder;
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\MenuStyle;
 
 $popupStyle = (new MenuStyle)
     ->setBg('green')

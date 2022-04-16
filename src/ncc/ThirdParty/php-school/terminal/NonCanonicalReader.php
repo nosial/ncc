@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSchool\Terminal;
+namespace ncc\PhpSchool\Terminal;
 
 /**
  * This class takes a terminal and disabled canonical mode. It reads the input

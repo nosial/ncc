@@ -35,7 +35,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
  - CheckboxItem & RadioItem (#186, #189, #193, #194, #226)
  - Ability to force display extra (#187)
  - Individual style objects for each item type (#211, #212, #213, #214, #216, #230)
- - Method getStyle() to interface PhpSchool\CliMenu\MenuItem\MenuItemInterface
+ - Method getStyle() to interface ncc\PhpSchool\CliMenu\MenuItem\MenuItemInterface
  
 ### Fixed
  - Fixed item extra rendering outside of menu (#66, £184, #187)
@@ -45,14 +45,14 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Removed
  - Remove rebinding $this in builder closures so we can access the real $this (#191, #192, #196)
- - Marker methods from PhpSchool\CliMenu\MenuStyle: 
+ - Marker methods from ncc\PhpSchool\CliMenu\MenuStyle: 
             #getSelectedMarker()
             #setSelectedMarker()
             #getUnselectedMarker()
             #setUnselectedMarker()
             #getMarker()
- - PhpSchool\CliMenu\MenuItem\SelectableTrait
- - Marker methods from PhpSchool\CliMenu\Builder\CliMenuBuilder:
+ - ncc\PhpSchool\CliMenu\MenuItem\SelectableTrait
+ - Marker methods from ncc\PhpSchool\CliMenu\Builder\CliMenuBuilder:
             #setUnselectedMarker()
             #setSelectedMarker()
 

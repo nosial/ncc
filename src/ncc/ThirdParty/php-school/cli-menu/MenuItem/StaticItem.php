@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\MenuItem;
+namespace ncc\PhpSchool\CliMenu\MenuItem;
 
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Style\DefaultStyle;
-use PhpSchool\CliMenu\Style\ItemStyle;
-use PhpSchool\CliMenu\Util\StringUtil;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Style\DefaultStyle;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\Util\StringUtil;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

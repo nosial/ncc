@@ -1,31 +1,31 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu;
+namespace ncc\PhpSchool\CliMenu;
 
-use PhpSchool\CliMenu\Dialogue\CancellableConfirm;
-use PhpSchool\CliMenu\Exception\InvalidTerminalException;
-use PhpSchool\CliMenu\Exception\MenuNotOpenException;
-use PhpSchool\CliMenu\Input\InputIO;
-use PhpSchool\CliMenu\Input\Number;
-use PhpSchool\CliMenu\Input\Password;
-use PhpSchool\CliMenu\Input\Text;
-use PhpSchool\CliMenu\MenuItem\LineBreakItem;
-use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
-use PhpSchool\CliMenu\MenuItem\PropagatesStyles;
-use PhpSchool\CliMenu\MenuItem\SplitItem;
-use PhpSchool\CliMenu\MenuItem\StaticItem;
-use PhpSchool\CliMenu\Dialogue\Confirm;
-use PhpSchool\CliMenu\Dialogue\Flash;
-use PhpSchool\CliMenu\Style\ItemStyle;
-use PhpSchool\CliMenu\Style\Locator;
-use PhpSchool\CliMenu\Terminal\TerminalFactory;
-use PhpSchool\CliMenu\Util\StringUtil as s;
-use PhpSchool\Terminal\InputCharacter;
-use PhpSchool\Terminal\NonCanonicalReader;
-use PhpSchool\Terminal\Terminal;
-use function PhpSchool\CliMenu\Util\collect;
-use function PhpSchool\CliMenu\Util\each;
+use ncc\PhpSchool\CliMenu\Dialogue\CancellableConfirm;
+use ncc\PhpSchool\CliMenu\Exception\InvalidTerminalException;
+use ncc\PhpSchool\CliMenu\Exception\MenuNotOpenException;
+use ncc\PhpSchool\CliMenu\Input\InputIO;
+use ncc\PhpSchool\CliMenu\Input\Number;
+use ncc\PhpSchool\CliMenu\Input\Password;
+use ncc\PhpSchool\CliMenu\Input\Text;
+use ncc\PhpSchool\CliMenu\MenuItem\LineBreakItem;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuItemInterface;
+use ncc\PhpSchool\CliMenu\MenuItem\PropagatesStyles;
+use ncc\PhpSchool\CliMenu\MenuItem\SplitItem;
+use ncc\PhpSchool\CliMenu\MenuItem\StaticItem;
+use ncc\PhpSchool\CliMenu\Dialogue\Confirm;
+use ncc\PhpSchool\CliMenu\Dialogue\Flash;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\Style\Locator;
+use ncc\PhpSchool\CliMenu\Terminal\TerminalFactory;
+use ncc\PhpSchool\CliMenu\Util\StringUtil as s;
+use ncc\PhpSchool\Terminal\InputCharacter;
+use ncc\PhpSchool\Terminal\NonCanonicalReader;
+use ncc\PhpSchool\Terminal\Terminal;
+use function ncc\PhpSchool\CliMenu\Util\collect;
+use function ncc\PhpSchool\CliMenu\Util\each;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

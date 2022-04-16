@@ -1,19 +1,19 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\MenuItem;
+namespace ncc\PhpSchool\CliMenu\MenuItem;
 
 use Assert\Assertion;
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Style\DefaultStyle;
-use PhpSchool\CliMenu\Style\ItemStyle;
-use PhpSchool\CliMenu\Style\Selectable;
-use PhpSchool\CliMenu\Util\StringUtil;
-use function PhpSchool\CliMenu\Util\collect;
-use function PhpSchool\CliMenu\Util\each;
-use function PhpSchool\CliMenu\Util\mapWithKeys;
-use function PhpSchool\CliMenu\Util\max;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Style\DefaultStyle;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\Style\Selectable;
+use ncc\PhpSchool\CliMenu\Util\StringUtil;
+use function ncc\PhpSchool\CliMenu\Util\collect;
+use function ncc\PhpSchool\CliMenu\Util\each;
+use function ncc\PhpSchool\CliMenu\Util\mapWithKeys;
+use function ncc\PhpSchool\CliMenu\Util\max;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>
@@ -49,9 +49,9 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
      * @var array
      */
     private static $blacklistedItems = [
-        \PhpSchool\CliMenu\MenuItem\AsciiArtItem::class,
-        \PhpSchool\CliMenu\MenuItem\LineBreakItem::class,
-        \PhpSchool\CliMenu\MenuItem\SplitItem::class,
+        \ncc\PhpSchool\CliMenu\MenuItem\AsciiArtItem::class,
+        \ncc\PhpSchool\CliMenu\MenuItem\LineBreakItem::class,
+        \ncc\PhpSchool\CliMenu\MenuItem\SplitItem::class,
     ];
 
     public function __construct(array $items = [])

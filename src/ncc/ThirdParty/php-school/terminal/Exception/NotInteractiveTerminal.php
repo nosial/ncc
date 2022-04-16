@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSchool\Terminal\Exception;
+namespace ncc\PhpSchool\Terminal\Exception;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

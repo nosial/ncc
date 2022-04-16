@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Style;
+namespace ncc\PhpSchool\CliMenu\Style;
 
-use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuItemInterface;
 
 interface ItemStyle
 {

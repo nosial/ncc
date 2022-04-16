@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\MenuItem;
+namespace ncc\PhpSchool\CliMenu\MenuItem;
 
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\CliMenu\Style\CheckboxStyle;
-use PhpSchool\CliMenu\Style\ItemStyle;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\CliMenu\Style\CheckboxStyle;
+use ncc\PhpSchool\CliMenu\Style\ItemStyle;
 
 class CheckboxItem implements MenuItemInterface
 {

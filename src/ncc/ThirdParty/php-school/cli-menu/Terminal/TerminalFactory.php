@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Terminal;
+namespace ncc\PhpSchool\CliMenu\Terminal;
 
-use PhpSchool\Terminal\IO\ResourceInputStream;
-use PhpSchool\Terminal\IO\ResourceOutputStream;
-use PhpSchool\Terminal\Terminal;
-use PhpSchool\Terminal\UnixTerminal;
+use ncc\PhpSchool\Terminal\IO\ResourceInputStream;
+use ncc\PhpSchool\Terminal\IO\ResourceOutputStream;
+use ncc\PhpSchool\Terminal\Terminal;
+use ncc\PhpSchool\Terminal\UnixTerminal;
 
 /**
  * @author Michael Woodward <mikeymike.mw@gmail.com>

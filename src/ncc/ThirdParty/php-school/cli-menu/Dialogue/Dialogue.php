@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Dialogue;
+namespace ncc\PhpSchool\CliMenu\Dialogue;
 
-use PhpSchool\CliMenu\CliMenu;
-use PhpSchool\CliMenu\Exception\MenuNotOpenException;
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\Terminal\Terminal;
+use ncc\PhpSchool\CliMenu\CliMenu;
+use ncc\PhpSchool\CliMenu\Exception\MenuNotOpenException;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\Terminal\Terminal;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>

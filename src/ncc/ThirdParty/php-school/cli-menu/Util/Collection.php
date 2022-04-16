@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Util;
+namespace ncc\PhpSchool\CliMenu\Util;
 
 class Collection
 {

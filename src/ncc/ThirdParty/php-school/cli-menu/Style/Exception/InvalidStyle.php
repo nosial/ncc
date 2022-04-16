@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Style\Exception;
+namespace ncc\PhpSchool\CliMenu\Style\Exception;
 
-use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
+use ncc\PhpSchool\CliMenu\MenuItem\MenuItemInterface;
 
 class InvalidStyle extends \RuntimeException
 {

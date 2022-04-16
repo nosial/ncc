@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSchool\Terminal;
+namespace ncc\PhpSchool\Terminal;
 
 use function in_array;
 

@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace PhpSchool\CliMenu\Input;
+namespace ncc\PhpSchool\CliMenu\Input;
 
-use PhpSchool\CliMenu\MenuStyle;
-use PhpSchool\Terminal\InputCharacter;
+use ncc\PhpSchool\CliMenu\MenuStyle;
+use ncc\PhpSchool\Terminal\InputCharacter;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>
