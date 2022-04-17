@@ -2,7 +2,9 @@
 
     namespace ncc\Objects;
 
+    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\MalformedJsonException;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
     use ncc\Objects\ProjectConfiguration\Project;
@@ -54,7 +56,7 @@
          */
         public function validate(bool $throw_exception=false): bool
         {
-            if($this->Assembly->validate($throw_exception) == false)
+            if(!$this->Assembly->validate($throw_exception))
                 return false;
 
             return true;
@@ -76,6 +78,21 @@
         }
 
         /**
+         * Writes a json representation of the object to a file
+         *
+         * @param string $path
+         * @param bool $bytecode
+         * @return void
+         * @throws MalformedJsonException
+         * @noinspection PhpMissingReturnTypeInspection
+         * @noinspection PhpUnused
+         */
+        public function toFile(string $path, bool $bytecode=false)
+        {
+            Functions::encodeJsonFile($this->toArray($bytecode), $path, Functions::FORCE_ARRAY);
+        }
+
+        /**
          * Constructs the object from an array representation
          *
          * @param array $data
@@ -90,5 +107,19 @@
             $ProjectConfigurationObject->Build = Functions::array_bc($data, 'build');
 
             return $ProjectConfigurationObject;
+        }
+
+        /**
+         * Loads the object from a file representation
+         *
+         * @param string $path
+         * @return ProjectConfiguration
+         * @throws FileNotFoundException
+         * @throws MalformedJsonException
+         * @noinspection PhpUnused
+         */
+        public static function fromFile(string $path): ProjectConfiguration
+        {
+            return ProjectConfiguration::fromArray(Functions::loadJsonFile($path, Functions::FORCE_ARRAY));
         }
     }

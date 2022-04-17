@@ -7,6 +7,7 @@
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\MalformedJsonException;
 
     /**
      * @author Zi Xing Narrakas
@@ -38,4 +39,9 @@
          * @see AccessDeniedException
          */
         const AccessDeniedException = -1704;
+
+        /**
+         * @see MalformedJsonException
+         */
+        const MalformedJsonException = -1705;
     }
