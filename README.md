@@ -1,4 +1,4 @@
-# NCC
+# ![NCC](assets/icon/ncc_32px.png "NCC")   NCC
 
 Nosial Code Compiler is a program written in PHP designed to be a multi-purpose compiler, package manager and toolkit.
 
