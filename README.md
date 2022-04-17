@@ -2,6 +2,18 @@
 
 Nosial Code Compiler is a program written in PHP designed to be a multi-purpose compiler, package manager and toolkit.
 
+## Notes
+
+ > While NCC has windows compatibility in mind, not all compiler extensions or features will work correctly. NCC is
+ > designed to be used in production in a Unix environment and Windows should only be used for development purposes.
+
+ > Compiler extensions requires their own set of dependencies to be met, for example Java compilers will require JDK
+
+ > NCC is designed to run only on a PHP 8.0+ environment, compiler extensions can have support for different PHP versions.
+
+ > Third-party dependencies and included libraries has a dedicated namespace for `ncc` to avoid user land conflicts if
+ > the user wishes to install and use one of the same dependencies that NCC uses.
+
 ## Authors
  - Zi Xing Narrakas (netkas) <[netkas@n64.cc](mailto:netkas@64.cc)>
  - Marc Gutt (mgutt) <[marc@gutt.it](mailto:marc@gutt.it)>
