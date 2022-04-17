@@ -13,6 +13,41 @@
     class Validate
     {
         /**
+         * Determines if the runtime meets the required extensions
+         *
+         * @return array
+         */
+        public static function requiredExtensions(): array
+        {
+            $requirements = [
+                'zlib',
+                'libxml',
+                'ctype',
+                'json',
+                'mbstring',
+                'posix',
+                'ctype',
+                'tokenizer'
+            ];
+
+            $results = [];
+
+            foreach($requirements as $ext)
+            {
+                if(in_array(strtolower($ext), get_loaded_extensions()))
+                {
+                    $results[$ext] = true;
+                }
+                else
+                {
+                    $results[$ext] = false;
+                }
+            }
+
+            return $results;
+        }
+
+        /**
          * Validates the version number
          *
          * @param string $input
