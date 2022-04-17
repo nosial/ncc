@@ -9,6 +9,7 @@ spl_autoload_register(
             $classes = array(
                 'ncc\\abstracts\\exceptioncodes' => '/Abstracts/ExceptionCodes.php',
                 'ncc\\abstracts\\regexpatterns' => '/Abstracts/RegexPatterns.php',
+                'ncc\\abstracts\\scopes' => '/Abstracts/Scopes.php',
                 'ncc\\assert\\assert' => '/ThirdParty/beberlei/assert/Assert.php',
                 'ncc\\assert\\assertion' => '/ThirdParty/beberlei/assert/Assertion.php',
                 'ncc\\assert\\assertionchain' => '/ThirdParty/beberlei/assert/AssertionChain.php',
@@ -16,8 +17,11 @@ spl_autoload_register(
                 'ncc\\assert\\invalidargumentexception' => '/ThirdParty/beberlei/assert/InvalidArgumentException.php',
                 'ncc\\assert\\lazyassertion' => '/ThirdParty/beberlei/assert/LazyAssertion.php',
                 'ncc\\assert\\lazyassertionexception' => '/ThirdParty/beberlei/assert/LazyAssertionException.php',
+                'ncc\\exceptions\\accessdeniedexception' => '/Exceptions/AccessDeniedException.php',
+                'ncc\\exceptions\\directorynotfoundexception' => '/Exceptions/DirectoryNotFoundException.php',
                 'ncc\\exceptions\\filenotfoundexception' => '/Exceptions/FileNotFoundException.php',
                 'ncc\\exceptions\\invalidprojectconfigurationexception' => '/Exceptions/InvalidProjectConfigurationException.php',
+                'ncc\\exceptions\\invalidscopeexception' => '/Exceptions/InvalidScopeException.php',
                 'ncc\\ncc' => '/ncc.php',
                 'ncc\\objects\\projectconfiguration' => '/Objects/ProjectConfiguration.php',
                 'ncc\\objects\\projectconfiguration\\assembly' => '/Objects/ProjectConfiguration/Assembly.php',
@@ -97,6 +101,9 @@ spl_autoload_register(
                 'ncc\\symfony\\component\\process\\process' => '/ThirdParty/Symfony/Process/Process.php',
                 'ncc\\symfony\\component\\process\\processutils' => '/ThirdParty/Symfony/Process/ProcessUtils.php',
                 'ncc\\utilities\\functions' => '/Utilities/Functions.php',
+                'ncc\\utilities\\pathfinder' => '/Utilities/PathFinder.php',
+                'ncc\\utilities\\resolver' => '/Utilities/Resolver.php',
+                'ncc\\utilities\\security' => '/Utilities/Security.php',
                 'ncc\\utilities\\validate' => '/Utilities/Validate.php'
             );
         }

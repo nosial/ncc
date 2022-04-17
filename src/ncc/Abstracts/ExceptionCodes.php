@@ -2,8 +2,11 @@
 
     namespace ncc\Abstracts;
 
+    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\InvalidScopeException;
 
     /**
      * @author Zi Xing Narrakas
@@ -20,4 +23,19 @@
          * @see FileNotFoundException;
          */
         const FileNotFoundException = -1701;
+
+        /**
+         * @see DirectoryNotFoundException
+         */
+        const DirectoryNotFoundException = -1702;
+
+        /**
+         * @see InvalidScopeException
+         */
+        const InvalidScopeException = -1703;
+
+        /**
+         * @see AccessDeniedException
+         */
+        const AccessDeniedException = -1704;
     }
