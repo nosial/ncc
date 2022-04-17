@@ -22,7 +22,11 @@ spl_autoload_register(
                 'ncc\\exceptions\\filenotfoundexception' => '/Exceptions/FileNotFoundException.php',
                 'ncc\\exceptions\\invalidprojectconfigurationexception' => '/Exceptions/InvalidProjectConfigurationException.php',
                 'ncc\\exceptions\\invalidscopeexception' => '/Exceptions/InvalidScopeException.php',
+                'ncc\\exceptions\\malformedjsonexception' => '/Exceptions/MalformedJsonException.php',
                 'ncc\\ncc' => '/ncc.php',
+                'ncc\\ncc\\ziproto\\typetransformer\\binarytransformer' => '/Extensions/ZiProto/TypeTransformer/BinaryTransformer.php',
+                'ncc\\ncc\\ziproto\\typetransformer\\extension' => '/Extensions/ZiProto/TypeTransformer/Extension.php',
+                'ncc\\ncc\\ziproto\\typetransformer\\validator' => '/Extensions/ZiProto/TypeTransformer/Validator.php',
                 'ncc\\objects\\projectconfiguration' => '/Objects/ProjectConfiguration.php',
                 'ncc\\objects\\projectconfiguration\\assembly' => '/Objects/ProjectConfiguration/Assembly.php',
                 'ncc\\objects\\projectconfiguration\\build' => '/Objects/ProjectConfiguration/Build.php',
@@ -104,7 +108,23 @@ spl_autoload_register(
                 'ncc\\utilities\\pathfinder' => '/Utilities/PathFinder.php',
                 'ncc\\utilities\\resolver' => '/Utilities/Resolver.php',
                 'ncc\\utilities\\security' => '/Utilities/Security.php',
-                'ncc\\utilities\\validate' => '/Utilities/Validate.php'
+                'ncc\\utilities\\validate' => '/Utilities/Validate.php',
+                'ncc\\ziproto\\abstracts\\options' => '/Extensions/ZiProto/Abstracts/Options.php',
+                'ncc\\ziproto\\abstracts\\regex' => '/Extensions/ZiProto/Abstracts/Regex.php',
+                'ncc\\ziproto\\bufferstream' => '/Extensions/ZiProto/BufferStream.php',
+                'ncc\\ziproto\\decodingoptions' => '/Extensions/ZiProto/DecodingOptions.php',
+                'ncc\\ziproto\\encodingoptions' => '/Extensions/ZiProto/EncodingOptions.php',
+                'ncc\\ziproto\\exception\\decodingfailedexception' => '/Extensions/ZiProto/Exception/DecodingFailedException.php',
+                'ncc\\ziproto\\exception\\encodingfailedexception' => '/Extensions/ZiProto/Exception/EncodingFailedException.php',
+                'ncc\\ziproto\\exception\\insufficientdataexception' => '/Extensions/ZiProto/Exception/InsufficientDataException.php',
+                'ncc\\ziproto\\exception\\integeroverflowexception' => '/Extensions/ZiProto/Exception/IntegerOverflowException.php',
+                'ncc\\ziproto\\exception\\invalidoptionexception' => '/Extensions/ZiProto/Exception/InvalidOptionException.php',
+                'ncc\\ziproto\\ext' => '/Extensions/ZiProto/Ext.php',
+                'ncc\\ziproto\\packet' => '/Extensions/ZiProto/Packet.php',
+                'ncc\\ziproto\\type\\binary' => '/Extensions/ZiProto/Type/Binary.php',
+                'ncc\\ziproto\\type\\map' => '/Extensions/ZiProto/Type/Map.php',
+                'ncc\\ziproto\\typetransformer\\maptransformer' => '/Extensions/ZiProto/TypeTransformer/MapTransformer.php',
+                'ncc\\ziproto\\ziproto' => '/Extensions/ZiProto/ZiProto.php'
             );
         }
         $cn = strtolower($class);
