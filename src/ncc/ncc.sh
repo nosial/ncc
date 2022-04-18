@@ -1,0 +1,1 @@
+php ncc --ncc-cli "$@"

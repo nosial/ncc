@@ -4,6 +4,7 @@
 
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Objects\CliHelpSection;
 
     /**
      * @author Zi Xing Narrakas
@@ -125,5 +126,30 @@
         public static function encodeJsonFile($value, string $path, int $flags=0)
         {
             file_put_contents($path, self::encodeJson($value, $flags));
+        }
+
+        /**
+         * @param CliHelpSection[] $input
+         * @return int
+         */
+        public static function detectParametersPadding(array $input): int
+        {
+            $current_count = 0;
+
+            foreach($input as $optionsSection)
+            {
+                if(count($optionsSection->Parameters) > 0)
+                {
+                    foreach($optionsSection->Parameters as $parameter)
+                    {
+                        if($current_count < strlen($parameter))
+                        {
+                            $current_count = strlen($parameter);
+                        }
+                    }
+                }
+            }
+
+            return $current_count;
         }
     }
