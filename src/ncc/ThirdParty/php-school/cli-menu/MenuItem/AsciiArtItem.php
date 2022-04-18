@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace ncc\PhpSchool\CliMenu\MenuItem;
 
-use Assert\Assertion;
+use ncc\Assert\Assertion;
 use ncc\PhpSchool\CliMenu\MenuStyle;
 use ncc\PhpSchool\CliMenu\Style\DefaultStyle;
 use ncc\PhpSchool\CliMenu\Style\ItemStyle;
