@@ -1,4 +1,6 @@
 {
-  "VERSION": "1.0.0",
-  "BRANCH": "master"
+  "version": "1.0.0",
+  "branch": "master",
+  "flags": ["UNSTABLE"],
+  "update_source": null
 }
