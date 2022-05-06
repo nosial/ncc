@@ -44,4 +44,7 @@
          * @see MalformedJsonException
          */
         const MalformedJsonException = -1705;
+
+
+        const RuntimeException = -1706;
     }
