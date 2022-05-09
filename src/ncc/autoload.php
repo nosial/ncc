@@ -7,7 +7,9 @@ spl_autoload_register(
         static $classes = null;
         if ($classes === null) {
             $classes = array(
+                'ncc\\abstracts\\authenticationsource' => '/Abstracts/AuthenticationSource.php',
                 'ncc\\abstracts\\exceptioncodes' => '/Abstracts/ExceptionCodes.php',
+                'ncc\\abstracts\\nccbuildflags' => '/Abstracts/NccBuildFlags.php',
                 'ncc\\abstracts\\regexpatterns' => '/Abstracts/RegexPatterns.php',
                 'ncc\\abstracts\\scopes' => '/Abstracts/Scopes.php',
                 'ncc\\abstracts\\stringpaddingmethod' => '/Abstracts/StringPaddingMethod.php',
@@ -27,11 +29,14 @@ spl_autoload_register(
                 'ncc\\exceptions\\invalidprojectconfigurationexception' => '/Exceptions/InvalidProjectConfigurationException.php',
                 'ncc\\exceptions\\invalidscopeexception' => '/Exceptions/InvalidScopeException.php',
                 'ncc\\exceptions\\malformedjsonexception' => '/Exceptions/MalformedJsonException.php',
+                'ncc\\exceptions\\runtimeexception' => '/Exceptions/RuntimeException.php',
                 'ncc\\ncc' => '/ncc.php',
                 'ncc\\ncc\\ziproto\\typetransformer\\binarytransformer' => '/Extensions/ZiProto/TypeTransformer/BinaryTransformer.php',
                 'ncc\\ncc\\ziproto\\typetransformer\\extension' => '/Extensions/ZiProto/TypeTransformer/Extension.php',
                 'ncc\\ncc\\ziproto\\typetransformer\\validator' => '/Extensions/ZiProto/TypeTransformer/Validator.php',
                 'ncc\\objects\\clihelpsection' => '/Objects/CliHelpSection.php',
+                'ncc\\objects\\nccupdateinformation' => '/Objects/NccUpdateInformation.php',
+                'ncc\\objects\\nccversioninformation' => '/Objects/NccVersionInformation.php',
                 'ncc\\objects\\projectconfiguration' => '/Objects/ProjectConfiguration.php',
                 'ncc\\objects\\projectconfiguration\\assembly' => '/Objects/ProjectConfiguration/Assembly.php',
                 'ncc\\objects\\projectconfiguration\\build' => '/Objects/ProjectConfiguration/Build.php',
