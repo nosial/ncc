@@ -1,6 +1,12 @@
 # ![NCC](assets/icon/ncc_32px.png "NCC")   NCC
 
 Nosial Code Compiler is a program written in PHP designed to be a multi-purpose compiler, package manager and toolkit.
+This program is a complete re-write of the now defunct [PHP Package Manager (PPM)](https://git.n64.cc/intellivoid/ppm)
+toolkit offering more features, security and proper code licensing and copyrighting for the components used for the project.
+
+NCC Cannot compile, read or use PPM packages (.ppm) files or work with project sources designed to be built with PPM, however
+a PPM extension may be built in the future to allow for backwards compatibility.
+
 
 ## Notes
 
