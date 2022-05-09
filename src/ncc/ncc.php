@@ -42,7 +42,7 @@
 
             try
             {
-                self::$VersionInformation = \ncc\Objects\NccVersionInformation::fromArray(\ncc\Utilities\Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json'));
+                self::$VersionInformation = \ncc\Objects\NccVersionInformation::fromArray(\ncc\Utilities\Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', \ncc\Utilities\Functions::FORCE_ARRAY));
             }
             catch(\ncc\Exceptions\MalformedJsonException $e)
             {

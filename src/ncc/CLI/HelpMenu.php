@@ -3,7 +3,6 @@
     namespace ncc\CLI;
 
     use ncc\Objects\CliHelpSection;
-    use ncc\Utilities\Resolver;
 
     class HelpMenu
     {
@@ -15,7 +14,8 @@
          */
         public static function start($argv)
         {
-            print('Usage: ncc [options] COMMAND' . PHP_EOL . PHP_EOL);
+            print('Usage: ncc COMMAND [options]' . PHP_EOL);
+            print('Alternative Usage: ncc.php --ncc-cli=COMMAND [options]' . PHP_EOL . PHP_EOL);
             print('Nosial Code Compiler / Project Toolkit' . PHP_EOL . PHP_EOL);
 
             self::displayMainOptions();
@@ -38,9 +38,7 @@
                 new CliHelpSection(['-l', '--log-level={debug|info|warn|error|fatal}'], 'Set the logging level', 'info'),
                 new CliHelpSection(['--basic-ascii'], 'Uses basic ascii characters'),
                 new CliHelpSection(['--no-color'], 'Omits the use of colors'),
-                new CliHelpSection(['--no-banner'], 'Omits displaying the NCC ascii banner'),
-                new CliHelpSection(['--no-ui'], 'Omits displaying a user-interface for wizards/dialogs'),
-                new CliHelpSection(['--require-scope={user|system}'], 'Enforces the requirement of a access scope', 'user'),
+                new CliHelpSection(['--no-banner'], 'Omits displaying the NCC ascii banner')
             ];
             $options_padding = \ncc\Utilities\Functions::detectParametersPadding($options) + 4;
 
