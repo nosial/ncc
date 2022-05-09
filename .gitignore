@@ -1,5 +1,4 @@
 .vscode/dryrun.log
 .vscode/configurationCache.log
 .vscode/targets.log
-.gitignore
 .vscode/launch.json
