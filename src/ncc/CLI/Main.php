@@ -23,27 +23,16 @@
 
                 if(isset($args['no-banner']) == false)
                 {
+                    $basic_ascii = false;
+
                     if(isset($args['basic-ascii']))
                     {
-                        $banner = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_basic');
-                    }
-                    else
-                    {
-                        $banner = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_extended');
+                        $basic_ascii = true;
                     }
 
-                    $banner_version = NCC_VERSION_BRANCH . ' ' . NCC_VERSION_NUMBER;
-                    $banner_version = str_pad($banner_version, 21);
-    
-                    $banner_copyright = 'Copyright (c) 2022-2022 Nosial';
-                    $banner_copyright = str_pad($banner_copyright, 30);
-    
-                    $banner = str_ireplace('%A', $banner_version, $banner);
-                    $banner = str_ireplace('%B', $banner_copyright, $banner);
-    
-                    print($banner . PHP_EOL);
+                    // TODO: Make copyright not hard-coded.
+                    print(\ncc\Utilities\Functions::getBanner(NCC_VERSION_BRANCH . ' ' . NCC_VERSION_NUMBER, 'Copyright (c) 2022-2022 Nosial', $basic_ascii) . PHP_EOL);
                 }
-                
 
                 switch(strtolower($args['ncc-cli']))
                 {

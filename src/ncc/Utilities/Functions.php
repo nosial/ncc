@@ -152,4 +152,33 @@
 
             return $current_count;
         }
+
+        /**
+         * Returns the banner for the CLI menu (Really fancy stuff!)
+         *
+         * @param string $version
+         * @param string $copyright
+         * @param bool $basic_ascii
+         * @return string
+         */
+        public static function getBanner(string $version, string $copyright, bool $basic_ascii=false): string
+        {
+            if($basic_ascii)
+            {
+                $banner = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_basic');
+            }
+            else
+            {
+                $banner = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_extended');
+            }
+
+            $banner_version = str_pad($version, 21);
+            $banner_copyright = str_pad($copyright, 30);
+
+            $banner = str_ireplace('%A', $banner_version, $banner);
+            /** @noinspection PhpUnnecessaryLocalVariableInspection */
+            $banner = str_ireplace('%B', $banner_copyright, $banner);
+
+            return $banner;
+        }
     }
