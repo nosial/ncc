@@ -2,6 +2,8 @@
 
     namespace ncc\CLI;
 
+    use Exception;
+    use ncc\ncc;
     use ncc\Utilities\Resolver;
 
     class Main
@@ -19,32 +21,32 @@
             if(isset($args['ncc-cli']))
             {
                 // Initialize NCC
-                \ncc\ncc::initialize();
+                ncc::initialize();
 
-                if(isset($args['no-banner']) == false)
+                try
                 {
-                    $basic_ascii = false;
-
-                    if(isset($args['basic-ascii']))
+                    switch(strtolower($args['ncc-cli']))
                     {
-                        $basic_ascii = true;
+                        default:
+                            print('Unknown command ' . strtolower($args['ncc-cli']) . PHP_EOL);
+                            exit(1);
+
+                        case 'credential':
+                            CredentialMenu::start($args);
+                            exit(0);
+
+                        case '1':
+                        case 'help':
+                            HelpMenu::start($args);
+                            exit(0);
                     }
-
-                    // TODO: Make copyright not hard-coded.
-                    print(\ncc\Utilities\Functions::getBanner(NCC_VERSION_BRANCH . ' ' . NCC_VERSION_NUMBER, 'Copyright (c) 2022-2022 Nosial', $basic_ascii) . PHP_EOL);
                 }
-
-                switch(strtolower($args['ncc-cli']))
+                catch(Exception $e)
                 {
-                    default:
-                        print('Unknown command ' . strtolower($args['ncc-cli']) . PHP_EOL);
-                        exit(1);
-
-                    case '1':
-                    case 'help':
-                        HelpMenu::start($argv);
-                        exit(0);
+                    print('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')' . PHP_EOL);
+                    exit(1);
                 }
+
             }
         }
 

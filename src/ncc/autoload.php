@@ -13,6 +13,7 @@ spl_autoload_register(
                 'ncc\\abstracts\\regexpatterns' => '/Abstracts/RegexPatterns.php',
                 'ncc\\abstracts\\scopes' => '/Abstracts/Scopes.php',
                 'ncc\\abstracts\\stringpaddingmethod' => '/Abstracts/StringPaddingMethod.php',
+                'ncc\\cli\\credentialmenu' => '/CLI/CredentialMenu.php',
                 'ncc\\cli\\functions' => '/CLI/Functions.php',
                 'ncc\\cli\\helpmenu' => '/CLI/HelpMenu.php',
                 'ncc\\cli\\main' => '/CLI/Main.php',

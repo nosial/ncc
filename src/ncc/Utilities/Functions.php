@@ -5,6 +5,9 @@
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Objects\CliHelpSection;
+    use function chr;
+    use function is_int;
+    use function is_string;
 
     /**
      * @author Zi Xing Narrakas
@@ -180,5 +183,36 @@
             $banner = str_ireplace('%B', $banner_copyright, $banner);
 
             return $banner;
+        }
+
+        /**
+         * @param string|null $prompt
+         * @return string
+         */
+        public static function getInput(?string $prompt=null): string
+        {
+            if($prompt !== null)
+            {
+                print($prompt);
+            }
+
+            $handle = fopen ("php://stdin","r");
+            return fgets($handle);
+        }
+
+        /**
+         * @param array $args
+         * @param string $option
+         * @param string $prompt
+         * @return string
+         */
+        public static function getOptionInput(array $args, string $option, string $prompt): string
+        {
+            if(isset($args[$option]))
+            {
+                return $args[$option];
+            }
+
+            return self::getInput($prompt);
         }
     }

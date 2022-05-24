@@ -9,11 +9,21 @@
         /**
          * Displays the main help menu
          *
-         * @param $argv
+         * @param $args
          * @return void
          */
-        public static function start($argv)
+        public static function start($args)
         {
+            $basic_ascii = false;
+
+            if(isset($args['basic-ascii']))
+            {
+                $basic_ascii = true;
+            }
+
+            // TODO: Make copyright not hard-coded.
+            print(\ncc\Utilities\Functions::getBanner(NCC_VERSION_BRANCH . ' ' . NCC_VERSION_NUMBER, 'Copyright (c) 2022-2022 Nosial', $basic_ascii) . PHP_EOL);
+
             print('Usage: ncc COMMAND [options]' . PHP_EOL);
             print('Alternative Usage: ncc.php --ncc-cli=COMMAND [options]' . PHP_EOL . PHP_EOL);
             print('Nosial Code Compiler / Project Toolkit' . PHP_EOL . PHP_EOL);
