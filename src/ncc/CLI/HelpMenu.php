@@ -48,8 +48,6 @@
                 print('   ' . $option->toString($options_padding) . PHP_EOL);
             }
             print(PHP_EOL);
-
-
         }
 
         /**
