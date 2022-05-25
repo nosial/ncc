@@ -56,6 +56,7 @@
             $options = [
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
                 new CliHelpSection(['add'], 'Adds a new credential to the vault'),
+                new CliHelpSection(['remove'], 'Adds a new credential to the vault'),
             ];
 
             $options_padding = \ncc\Utilities\Functions::detectParametersPadding($options) + 4;
