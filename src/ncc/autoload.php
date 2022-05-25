@@ -7,7 +7,7 @@ spl_autoload_register(
         static $classes = null;
         if ($classes === null) {
             $classes = array(
-                'ncc\\abstracts\\authenticationsource' => '/Abstracts/AuthenticationSource.php',
+                '   ncc\\abstracts\\authenticationsource' => '/Abstracts/AuthenticationSource.php',
                 'ncc\\abstracts\\exceptioncodes' => '/Abstracts/ExceptionCodes.php',
                 'ncc\\abstracts\\nccbuildflags' => '/Abstracts/NccBuildFlags.php',
                 'ncc\\abstracts\\regexpatterns' => '/Abstracts/RegexPatterns.php',
