@@ -22,6 +22,8 @@ a PPM extension may be built in the future to allow for backwards compatibility.
 
 ## Authors
  - Zi Xing Narrakas (netkas) <[netkas@n64.cc](mailto:netkas@64.cc)>
+
+## Special Thanks
  - Marc Gutt (mgutt) <[marc@gutt.it](mailto:marc@gutt.it)>
 
 ## Copyright
