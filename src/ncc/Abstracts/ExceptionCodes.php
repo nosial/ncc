@@ -5,9 +5,11 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InvalidCredentialsEntryException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\RuntimeException;
 
     /**
      * @author Zi Xing Narrakas
@@ -45,6 +47,13 @@
          */
         const MalformedJsonException = -1705;
 
-
+        /**
+         * @see RuntimeException
+         */
         const RuntimeException = -1706;
+
+        /**
+         * @see InvalidCredentialsEntryException
+         */
+        const InvalidCredentialsEntryException = -1707;
     }
