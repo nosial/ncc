@@ -9,3 +9,9 @@
 # Dependency:
 #     PHP 8.0+
 # ------------------------------------------------------------------
+
+$NCC_INSTALL_PATH='/etc/ncc'
+$NCC_SOURCE_PATH='src/ncc'
+$NCC_VERSION_NUMBER='1.0.0'
+$NCC_UPDATE_SOURCE='https://updates.nosial.com/ncc/check_updates?current_version=$VERSION'
+$NCC_CREATE_SYSTEM='True'
