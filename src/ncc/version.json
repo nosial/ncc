@@ -2,5 +2,27 @@
   "version": "1.0.0",
   "branch": "master",
   "flags": ["UNSTABLE"],
+  "components": [
+    {
+      "vendor": "defuse",
+      "package_name": "php-encryption"
+    },
+    {
+      "vendor": "Symfony",
+      "package_name": "polyfill-ctype"
+    },
+    {
+      "vendor": "Symfony",
+      "package_name": "polyfill-mbstring"
+    },
+    {
+      "vendor": "Symfony",
+      "package_name": "polyfill-Process"
+    },
+    {
+      "vendor": "Symfony",
+      "package_name": "polyfill-uid"
+    }
+  ],
   "update_source": null
 }

@@ -3,6 +3,7 @@
     namespace ncc\Abstracts;
 
     use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\ComponentVersionNotFoundException;
     use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidCredentialsEntryException;
@@ -56,4 +57,9 @@
          * @see InvalidCredentialsEntryException
          */
         const InvalidCredentialsEntryException = -1707;
+
+        /**
+         * @see ComponentVersionNotFoundException
+         */
+        const ComponentVersionNotFoundException = -1708;
     }

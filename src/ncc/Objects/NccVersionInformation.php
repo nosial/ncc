@@ -2,6 +2,8 @@
 
     namespace ncc\Objects;
 
+    use ncc\Objects\NccVersionInformation\Component;
+
     class NccVersionInformation
     {
         /**
@@ -26,6 +28,13 @@
         public $Flags;
 
         /**
+         * An array of components that ncc uses and comes pre-built with
+         *
+         * @var Component[]
+         */
+        public $Components;
+
+        /**
          * The remote source for where NCC can check for available updates and how to
          * install these updates
          *
@@ -40,9 +49,17 @@
          */
         public function toArray(): array
         {
+            $components = [];
+
+            foreach($this->Components as $component)
+            {
+                $components[] = $component->toArray();
+            }
+
             return [
                 'version' => $this->Version,
                 'branch' => $this->Branch,
+                'components' =>$components,
                 'flags' => $this->Flags
             ];
         }
@@ -62,7 +79,15 @@
 
             if(isset($data['branch']))
                 $NccVersionInformationObject->Branch = $data['branch'];
-            
+
+            if(isset($data['components']))
+            {
+                foreach($data['components'] as $datum)
+                {
+                    $NccVersionInformationObject->Components[] = Component::fromArray($datum);
+                }
+            }
+
             if(isset($data['version']))
                 $NccVersionInformationObject->Version = $data['version'];
 
