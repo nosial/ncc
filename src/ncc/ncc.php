@@ -2,6 +2,11 @@
 
     namespace ncc;
     
+    use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\RuntimeException;
+    use ncc\Objects\NccVersionInformation;
+    use ncc\Utilities\Functions;
+
     /**
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
@@ -12,7 +17,7 @@
         /**
          * The cache'd version of the version information object.
          *
-         * @var \ncc\Objects\NccVersionInformation|null
+         * @var NccVersionInformation|null
          */
         private static $VersionInformation;
 
@@ -28,35 +33,37 @@
          * Returns the version information object about the current build of NCC
          *
          * @param boolean $reload Indicates if the cached version is to be ignored and the version file to be reloaded and validated
-         * @return \ncc\Objects\NccVersionInformation
+         * @return NccVersionInformation
+         * @throws Exceptions\FileNotFoundException
+         * @throws Exceptions\RuntimeException
          */
-        public static function getVersionInformation(bool $reload=False): \ncc\Objects\NccVersionInformation
+        public static function getVersionInformation(bool $reload=False): NccVersionInformation
         {
             if(self::$VersionInformation !== null && $reload == False)
                 return self::$VersionInformation;
 
             if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'version.json') == false)
             {
-                throw new \ncc\Exceptions\RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
+                throw new RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
             }
 
             try
             {
-                self::$VersionInformation = \ncc\Objects\NccVersionInformation::fromArray(\ncc\Utilities\Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', \ncc\Utilities\Functions::FORCE_ARRAY));
+                self::$VersionInformation = NccVersionInformation::fromArray(Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', Functions::FORCE_ARRAY));
             }
-            catch(\ncc\Exceptions\MalformedJsonException $e)
+            catch(MalformedJsonException $e)
             {
-                throw new \ncc\Exceptions\RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
+                throw new RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
             }
 
             if(self::$VersionInformation->Version == null)
             {
-                throw new \ncc\Exceptions\RuntimeException('The version number is not specified in the version information file');
+                throw new RuntimeException('The version number is not specified in the version information file');
             }
 
             if(self::$VersionInformation->Branch == null)
             {
-                throw new \ncc\Exceptions\RuntimeException('The version branch is not specified in the version information file');
+                throw new RuntimeException('The version branch is not specified in the version information file');
             }
 
             return self::$VersionInformation;
@@ -95,7 +102,7 @@
         {
             if(defined('NCC_INIT') == false)
             {
-                throw new \ncc\Exceptions\RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getDefinitions()');
+                throw new RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getDefinitions()');
             }
 
             return [
