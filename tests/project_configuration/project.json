@@ -26,7 +26,12 @@
 		],
 		"options": {},
 		"scope": "user",
-		"define_constants": {"%ASSEMBLY.NAME%_HELLO": "Hello World!"},
+		"define_constants": {
+			"ASSEMBLY_NAME": "%ASSEMBLY.NAME%",
+			"ASSEMBLY_PACKAGE": "%ASSEMBLY.PACKAGE%",
+			"ASSEMBLY_VERSION": "%ASSEMBLY.VERSION%",
+			"ASSEMBLY_UID": "%ASSEMBLY.UID%"
+		},
 		"dependencies": [
 			{"name": "mbstring", "source": "extension", "version": "latest"},
 			{"name": "com.example.dependency", "source": "default@github/example/ncc_dependency", "version": "latest"},
@@ -36,10 +41,10 @@
 			{
 				"name": "debug",
 				"options": {},
-				"static_linking": true,
 				"output_path": "build/debug",
-				"define_constants": {"%ASSEMBLY.NAME%_DEBUG": "1"},
-				"strict_constants": false,
+				"define_constants": {
+					"DEBUG": "1"
+				},
 				"exclude_files": [],
 				"dependencies": [
 					{"name": "x-debug", "source": "extension", "version": "latest"}
@@ -48,10 +53,10 @@
 			{
 				"name": "release",
 				"options": {},
-				"static_linking": true,
 				"output_path": "build/release",
-				"define_constants": {},
-				"strict_constants": false,
+				"define_constants": {
+					"DEBUG": "0"
+				},
 				"exclude_files": [],
 				"dependencies": []
 			}

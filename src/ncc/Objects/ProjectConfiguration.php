@@ -89,6 +89,12 @@
          */
         public function toFile(string $path, bool $bytecode=false)
         {
+            if(!$bytecode)
+            {
+                Functions::encodeJsonFile($this->toArray($bytecode), $path, Functions::FORCE_ARRAY | Functions::PRETTY | Functions::ESCAPE_UNICODE);
+                return;
+            }
+
             Functions::encodeJsonFile($this->toArray($bytecode), $path, Functions::FORCE_ARRAY);
         }
 

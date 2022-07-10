@@ -112,4 +112,27 @@
             return $configs;
         }
 
+        /**
+         * Resolves the constant's full name
+         *
+         * @param string $scope
+         * @param string $name
+         * @return string
+         */
+        public static function resolveFullConstantName(string $scope, string $name): string
+        {
+            return $scope . '.(' . $name . ')';
+        }
+
+        /**
+         * Resolves the constant's unique hash
+         *
+         * @param string $scope
+         * @param string $name
+         * @return string
+         */
+        public static function resolveConstantHash(string $scope, string $name): string
+        {
+            return hash('haval128,3', self::resolveFullConstantName($scope, $name));
+        }
     }

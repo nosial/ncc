@@ -4,6 +4,7 @@
 
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ComponentVersionNotFoundException;
+    use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidCredentialsEntryException;
@@ -62,4 +63,9 @@
          * @see ComponentVersionNotFoundException
          */
         const ComponentVersionNotFoundException = -1708;
+
+        /**
+         * @see ConstantReadonlyException
+         */
+        const ConstantReadonlyException = -1709;
     }

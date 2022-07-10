@@ -2,7 +2,11 @@
 
     namespace ncc\Managers;
 
+    use ncc\Abstracts\Options\InitializeProjectOptions;
+    use ncc\Exceptions\MalformedJsonException;
+    use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
+    use ncc\Symfony\Component\Uid\Uuid;
 
     class ProjectManager
     {
@@ -18,6 +22,13 @@
          *
          * @var string|null
          */
+        private string $ProjectFilePath;
+
+        /**
+         * The path that points the project's main directory
+         *
+         * @var string|null
+         */
         private string $ProjectPath;
 
         /**
@@ -28,6 +39,9 @@
         public function __construct(string $selected_directory)
         {
             $this->SelectedDirectory = $selected_directory;
+            $this->ProjectFilePath = null;
+            $this->ProjectPath = null;
+
             $this->detectProjectPath();
         }
 
@@ -42,6 +56,7 @@
             $selected_directory = $this->SelectedDirectory;
 
             // Auto-resolve the trailing slash
+            /** @noinspection PhpStrFunctionsInspection */
             if(substr($selected_directory, -1) !== '/')
             {
                 $selected_directory .= $selected_directory . DIRECTORY_SEPARATOR;
@@ -56,37 +71,81 @@
             // Detect if project.json exists in the directory
             if(file_exists($selected_directory . 'project.json') == true)
             {
-                $this->ProjectPath = $selected_directory . 'project.json';
+                $this->ProjectPath = $selected_directory;
+                $this->ProjectFilePath = $selected_directory . 'project.json';
                 return true;
             }
 
-            // If not, check for pointer files
-            $pointer_files = [
-                '.ppm_package', // Backwards Compatibility
-                '.ncc_project'
-            ];
-
-            foreach($pointer_files as $pointer_file)
-            {
-                if(file_exists($selected_directory . $pointer_file) && is_file($selected_directory . $pointer_file))
-                {
-                    // TODO: Complete this
-                }
-            }
-
-            return true;
+            return false;
         }
 
         /**
          * Initializes the project sturcture
          *
          * @param Compiler $compiler
+         * @param string $source
          * @param string $name
          * @param string $package
-         * @return bool
+         * @param array $options
+         * @throws MalformedJsonException
          */
-        public function initializeProject(Compiler $compiler, string $name, string $package): bool
+        public function initializeProject(Compiler $compiler, string $source, string $name, string $package, array $options=[])
         {
+            $Project = new ProjectConfiguration();
 
+            // Set the compiler information
+            $Project->Project->Compiler = $compiler;
+
+            // Set the assembly information
+            $Project->Assembly->Name = $name;
+            $Project->Assembly->Package = $package;
+            $Project->Assembly->UUID = Uuid::v1()->toRfc4122();
+
+            // Set the build information
+            $Project->Build->SourcePath = $source;
+            $Project->Build->DefaultConfiguration = 'debug';
+
+            // Assembly constants if the program wishes to check for this
+            $Project->Build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
+            $Project->Build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
+            $Project->Build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
+            $Project->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
+
+            // Generate configurations
+            $DebugConfiguration = new ProjectConfiguration\BuildConfiguration();
+            $DebugConfiguration->Name = 'debug';
+            $DebugConfiguration->OutputPath = 'build/debug';
+            $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
+            $Project->Build->Configurations[] = $DebugConfiguration;
+            $ReleaseConfiguration = new ProjectConfiguration\BuildConfiguration();
+            $ReleaseConfiguration->Name = 'release';
+            $ReleaseConfiguration->OutputPath = 'build/release';
+            $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
+            $Project->Build->Configurations[] = $ReleaseConfiguration;
+
+            // Finally create project.json
+            $Project->toFile($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json');
+
+            // Process options
+            foreach($options as $option)
+            {
+                switch($option)
+                {
+                    case InitializeProjectOptions::CREATE_SOURCE_DIRECTORY:
+                        if(file_exists($source) == false)
+                        {
+                            mkdir($source);
+                        }
+                        break;
+                }
+            }
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getProjectFilePath(): ?string
+        {
+            return $this->ProjectFilePath;
         }
     }
