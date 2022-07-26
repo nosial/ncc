@@ -121,7 +121,7 @@
                 return false;
             }
 
-            if((bool)preg_match(RegexPatterns::PackageNameFormat, $input) == false)
+            if(!preg_match(RegexPatterns::PackageNameFormat, $input))
             {
                 return false;
             }
