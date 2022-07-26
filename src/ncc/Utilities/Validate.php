@@ -4,7 +4,6 @@
 
     use ncc\Abstracts\RegexPatterns;
     use ncc\Abstracts\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
 
     /**
      * @author Zi Xing Narrakas
