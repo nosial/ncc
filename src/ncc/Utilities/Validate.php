@@ -108,4 +108,25 @@
 
             return true;
         }
+
+        /**
+         * Validates if the package name is valid
+         *
+         * @param $input
+         * @return bool
+         */
+        public static function PackageName($input): bool
+        {
+            if($input == null)
+            {
+                return false;
+            }
+
+            if((bool)preg_match("/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$/", $input) == false)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
