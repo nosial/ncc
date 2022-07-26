@@ -8,6 +8,7 @@
     use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidCredentialsEntryException;
+    use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\MalformedJsonException;
@@ -68,4 +69,26 @@
          * @see ConstantReadonlyException
          */
         const ConstantReadonlyException = -1709;
+
+        /**
+         * @see InvalidPackageNameException
+         */
+        const InvalidPackageNameException = -1710;
+
+        /**
+         * All the exception codes from NCC
+         */
+        const All = [
+            self::InvalidProjectConfigurationException,
+            self::FileNotFoundException,
+            self::DirectoryNotFoundException,
+            self::InvalidScopeException,
+            self::AccessDeniedException,
+            self::MalformedJsonException,
+            self::RuntimeException,
+            self::InvalidCredentialsEntryException,
+            self::ComponentVersionNotFoundException,
+            self::ConstantReadonlyException,
+            self::InvalidPackageNameException
+        ];
     }

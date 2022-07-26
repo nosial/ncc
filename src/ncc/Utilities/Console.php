@@ -2,6 +2,7 @@
 
     namespace ncc\Utilities;
 
+    use Exception;
     use ncc\Abstracts\ConsoleColors;
 
     class Console
@@ -108,5 +109,41 @@
         public static function outWarning(string $message, bool $newline=true)
         {
             self::out(self::formatColor(ConsoleColors::Yellow, 'Warning: ') . $message, $newline);
+        }
+
+        /**
+         * Prints out an exception message and exits the program if needed
+         *
+         * @param string $message
+         * @param Exception $e
+         * @param int|null $exit_code
+         * @return void
+         */
+        public static function outException(string $message, Exception $e, ?int $exit_code=null)
+        {
+            if(strlen($message) > 0)
+            {
+                self::out(self::formatColor('Error: ' . $message, ConsoleColors::Red));
+            }
+
+            self::outExceptionDetails($e);
+
+            if($exit_code !== null)
+            {
+                exit($exit_code);
+            }
+        }
+
+        /**
+         * Prints out a detailed exception display (unfinished)
+         *
+         * @param Exception $e
+         * @return void
+         */
+        private static function outExceptionDetails(Exception $e)
+        {
+            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::Magenta);
+            $trace_error = self::formatColor('error: ', ConsoleColors::Red);
+            self::out($trace_header . ' ' . $trace_error . $e->getMessage());
         }
     }

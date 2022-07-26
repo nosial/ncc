@@ -3,10 +3,12 @@
     namespace ncc\Managers;
 
     use ncc\Abstracts\Options\InitializeProjectOptions;
+    use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Symfony\Component\Uid\Uuid;
+    use ncc\Utilities\Validate;
 
     class ProjectManager
     {
@@ -20,14 +22,14 @@
         /**
          * The path that points to the project's main project.json file
          *
-         * @var string|null
+         * @var string
          */
         private string $ProjectFilePath;
 
         /**
          * The path that points the project's main directory
          *
-         * @var string|null
+         * @var string
          */
         private string $ProjectPath;
 
@@ -69,7 +71,7 @@
             }
 
             // Detect if project.json exists in the directory
-            if(file_exists($selected_directory . 'project.json') == true)
+            if(file_exists($selected_directory . 'project.json'))
             {
                 $this->ProjectPath = $selected_directory;
                 $this->ProjectFilePath = $selected_directory . 'project.json';
@@ -80,17 +82,24 @@
         }
 
         /**
-         * Initializes the project sturcture
+         * Initializes the project structure
          *
          * @param Compiler $compiler
          * @param string $source
          * @param string $name
          * @param string $package
          * @param array $options
+         * @throws InvalidPackageNameException
          * @throws MalformedJsonException
          */
         public function initializeProject(Compiler $compiler, string $source, string $name, string $package, array $options=[])
         {
+            // Validate the project information first
+            if(!Validate::packageName($package))
+            {
+                throw new InvalidPackageNameException('The given package name \'' . $package . '\' is not a valid package name');
+            }
+
             $Project = new ProjectConfiguration();
 
             // Set the compiler information
@@ -99,6 +108,7 @@
             // Set the assembly information
             $Project->Assembly->Name = $name;
             $Project->Assembly->Package = $package;
+            $Project->Assembly->Version = '1.0.0';
             $Project->Assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
@@ -135,7 +145,7 @@
 
             foreach($Folders as $folder)
             {
-                if(file_exists($folder) == false)
+                if(!file_exists($folder))
                 {
                     mkdir($folder);
                 }
