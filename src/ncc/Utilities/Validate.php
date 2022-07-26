@@ -114,7 +114,7 @@
          * @param $input
          * @return bool
          */
-        public static function package($input): bool
+        public static function packageName($input): bool
         {
             if($input == null)
             {
