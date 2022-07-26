@@ -4,6 +4,7 @@
 
     use Exception;
     use ncc\ncc;
+    use ncc\Utilities\Console;
     use ncc\Utilities\Resolver;
 
     class Main
@@ -28,7 +29,7 @@
                     switch(strtolower($args['ncc-cli']))
                     {
                         default:
-                            print('Unknown command ' . strtolower($args['ncc-cli']) . PHP_EOL);
+                            Console::out('Unknown command ' . strtolower($args['ncc-cli']) . PHP_EOL);
                             exit(1);
 
                         case 'credential':
@@ -43,7 +44,7 @@
                 }
                 catch(Exception $e)
                 {
-                    print('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')' . PHP_EOL);
+                    Console::out('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')' . PHP_EOL);
                     exit(1);
                 }
 

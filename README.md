@@ -29,6 +29,7 @@ a PPM extension may be built in the future to allow for backwards compatibility.
 ## Copyright
  - Copyright (c) 2022-2022, Nosial - All Rights Reserved
  - Copyright (c) 2004-2022, Fabien Potencier
+ - Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
 
 # Licenses
 

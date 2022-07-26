@@ -2,6 +2,9 @@
 
     namespace ncc\Objects;
 
+    use ncc\Abstracts\ConsoleColors;
+    use ncc\Utilities\Console;
+
     class CliHelpSection
     {
         /**
@@ -80,7 +83,7 @@
          *
          * @return string
          */
-        public function toString(int $param_padding=0)
+        public function toString(int $param_padding=0, bool $basic=false)
         {
             $out = [];
 
@@ -88,11 +91,25 @@
             {
                 if($param_padding > 0)
                 {
-                    $out[] .= str_pad(implode(' ', $this->Parameters), $param_padding, ' ', STR_PAD_RIGHT);
+                    $result = str_pad(implode(' ', $this->Parameters), $param_padding, ' ', STR_PAD_RIGHT);
+
+                    if($basic == false)
+                    {
+                        $result = Console::formatColor($result, ConsoleColors::Green);
+                    }
+
+                    $out[] .= $result;
                 }
                 else
                 {
-                    $out[] .= implode(' ', $this->Parameters);
+                    if($basic)
+                    {
+                        $out[] .= implode(' ', $this->Parameters);
+                    }
+                    else
+                    {
+                        $out[] .= Console::formatColor(implode(' ', $this->Parameters), ConsoleColors::Green);
+                    }
                 }
             }
 

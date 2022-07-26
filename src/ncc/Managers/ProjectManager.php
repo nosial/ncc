@@ -126,6 +126,21 @@
             // Finally create project.json
             $Project->toFile($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json');
 
+            // And create the project directory for additional assets/resources
+            $Folders = [
+                $this->ProjectPath . DIRECTORY_SEPARATOR . 'ncc',
+                $this->ProjectPath . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'cache',
+                $this->ProjectPath . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'config',
+            ];
+
+            foreach($Folders as $folder)
+            {
+                if(file_exists($folder) == false)
+                {
+                    mkdir($folder);
+                }
+            }
+
             // Process options
             foreach($options as $option)
             {
