@@ -129,4 +129,30 @@
             return true;
         }
 
+        /**
+         * Validates the name of the project
+         *
+         * @param $input
+         * @return bool
+         */
+        public static function projectName($input): bool
+        {
+            if($input == null)
+            {
+                return false;
+            }
+
+            if(strlen($input) == 0)
+            {
+                return false;
+            }
+
+            if(strlen($input) > 126)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
     }

@@ -184,35 +184,4 @@
 
             return $banner;
         }
-
-        /**
-         * @param string|null $prompt
-         * @return string
-         */
-        public static function getInput(?string $prompt=null): string
-        {
-            if($prompt !== null)
-            {
-                print($prompt);
-            }
-
-            $handle = fopen ("php://stdin","r");
-            return fgets($handle);
-        }
-
-        /**
-         * @param array $args
-         * @param string $option
-         * @param string $prompt
-         * @return string
-         */
-        public static function getOptionInput(array $args, string $option, string $prompt): string
-        {
-            if(isset($args[$option]))
-            {
-                return $args[$option];
-            }
-
-            return self::getInput($prompt);
-        }
     }

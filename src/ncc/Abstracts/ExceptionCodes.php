@@ -10,8 +10,11 @@
     use ncc\Exceptions\InvalidCredentialsEntryException;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\InvalidVersionNumberException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\RuntimeException;
 
     /**
@@ -76,6 +79,21 @@
         const InvalidPackageNameException = -1710;
 
         /**
+         * @see InvalidVersionNumberException
+         */
+        const InvalidVersionNumberException = -1711;
+
+        /**
+         * @see InvalidProjectNameException
+         */
+        const InvalidProjectNameException = -1712;
+
+        /**
+         * @see ProjectAlreadyExistsException
+         */
+        const ProjectAlreadyExistsException = -1713;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -89,6 +107,9 @@
             self::InvalidCredentialsEntryException,
             self::ComponentVersionNotFoundException,
             self::ConstantReadonlyException,
-            self::InvalidPackageNameException
+            self::InvalidPackageNameException,
+            self::InvalidVersionNumberException,
+            self::InvalidProjectNameException,
+            self::ProjectAlreadyExistsException,
         ];
     }

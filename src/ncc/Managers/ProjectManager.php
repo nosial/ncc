@@ -4,7 +4,9 @@
 
     use ncc\Abstracts\Options\InitializeProjectOptions;
     use ncc\Exceptions\InvalidPackageNameException;
+    use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Symfony\Component\Uid\Uuid;
@@ -85,19 +87,30 @@
          * Initializes the project structure
          *
          * @param Compiler $compiler
-         * @param string $source
          * @param string $name
          * @param string $package
          * @param array $options
          * @throws InvalidPackageNameException
+         * @throws InvalidProjectNameException
          * @throws MalformedJsonException
+         * @throws ProjectAlreadyExistsException
          */
-        public function initializeProject(Compiler $compiler, string $source, string $name, string $package, array $options=[])
+        public function initializeProject(Compiler $compiler, string $name, string $package, array $options=[])
         {
             // Validate the project information first
             if(!Validate::packageName($package))
             {
                 throw new InvalidPackageNameException('The given package name \'' . $package . '\' is not a valid package name');
+            }
+
+            if(!Validate::projectName($name))
+            {
+                throw new InvalidProjectNameException('The given project name \'' . $name . '\' is not valid');
+            }
+
+            if(file_exists($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json'))
+            {
+                throw new ProjectAlreadyExistsException('A project has already been initialized in \'' . $this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json' . '\'');
             }
 
             $Project = new ProjectConfiguration();
@@ -112,7 +125,7 @@
             $Project->Assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
-            $Project->Build->SourcePath = $source;
+            $Project->Build->SourcePath = $this->SelectedDirectory;
             $Project->Build->DefaultConfiguration = 'debug';
 
             // Assembly constants if the program wishes to check for this
@@ -157,7 +170,7 @@
                 switch($option)
                 {
                     case InitializeProjectOptions::CREATE_SOURCE_DIRECTORY:
-                        if(file_exists($source) == false)
+                        if(!file_exists($source))
                         {
                             mkdir($source);
                         }

@@ -108,7 +108,25 @@
          */
         public static function outWarning(string $message, bool $newline=true)
         {
-            self::out(self::formatColor(ConsoleColors::Yellow, 'Warning: ') . $message, $newline);
+            self::out(self::formatColor('Warning: ', ConsoleColors::Yellow) . $message, $newline);
+        }
+
+        /**
+         * Prints out a generic error output, optionally exits the process with an exit code.
+         *
+         * @param string $message
+         * @param bool $newline
+         * @param int|null $exit_code
+         * @return void
+         */
+        public static function outError(string $message, bool $newline=true, ?int $exit_code=null)
+        {
+            self::out(self::formatColor(ConsoleColors::Red, 'Error: ') . $message, $newline);
+
+            if($exit_code !== null)
+            {
+                exit($exit_code);
+            }
         }
 
         /**
@@ -145,5 +163,74 @@
             $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::Magenta);
             $trace_error = self::formatColor('error: ', ConsoleColors::Red);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());
+        }
+
+        /**
+         * @param string|null $prompt
+         * @return string
+         */
+        public static function getInput(?string $prompt=null): string
+        {
+            if($prompt !== null)
+            {
+                print($prompt);
+            }
+
+            $handle = fopen ("php://stdin","r");
+            return fgets($handle);
+        }
+
+        /**
+         * @param array $args
+         * @param string $option
+         * @param string $prompt
+         * @return string
+         */
+        public static function getOptionInput(array $args, string $option, string $prompt): string
+        {
+            if(isset($args[$option]))
+            {
+                return $args[$option];
+            }
+
+            return self::getInput($prompt);
+        }
+
+        /**
+         * Prompts the user for a yes/no input
+         *
+         * @param string $prompt
+         * @param bool $display_options
+         * @return bool
+         */
+        public static function getBooleanInput(string $prompt, bool $display_options=true): bool
+        {
+            while(true)
+            {
+                if($display_options)
+                {
+                    $r = self::getInput($prompt . ' (Y/N): ', false);
+                }
+                else
+                {
+                    $r = self::getInput($prompt, false);
+                }
+
+                if(strlen($r) > 0)
+                {
+                    switch(strtoupper($r))
+                    {
+                        case '1':
+                        case 'Y':
+                        case 'YES':
+                            return true;
+
+                        case '0':
+                        case 'N':
+                        case 'NO':
+                            return false;
+                    }
+                }
+            }
         }
     }
