@@ -25,9 +25,9 @@
             // TODO: Make copyright not hard-coded.
             print(\ncc\Utilities\Functions::getBanner(NCC_VERSION_BRANCH . ' ' . NCC_VERSION_NUMBER, 'Copyright (c) 2022-2022 Nosial', $basic_ascii) . PHP_EOL);
 
-            Console::out('Usage: ncc COMMAND [options]' . PHP_EOL);
-            Console::out('Alternative Usage: ncc.php --ncc-cli=COMMAND [options]' . PHP_EOL . PHP_EOL);
-            Console::out('Nosial Code Compiler / Project Toolkit' . PHP_EOL . PHP_EOL);
+            Console::out('Usage: ncc COMMAND [options]');
+            Console::out('Alternative Usage: ncc.php --ncc-cli=COMMAND [options]' . PHP_EOL);
+            Console::out('Nosial Code Compiler / Project Toolkit' . PHP_EOL);
 
             self::displayMainOptions();
             self::displayManagementCommands();
@@ -53,12 +53,11 @@
             ];
             $options_padding = \ncc\Utilities\Functions::detectParametersPadding($options) + 4;
 
-            Console::out('Options:' . PHP_EOL);
+            Console::out('Options:');
             foreach($options as $option)
             {
-                Console::out('   ' . $option->toString($options_padding) . PHP_EOL);
+                Console::out('   ' . $option->toString($options_padding));
             }
-            print(PHP_EOL);
         }
 
         /**
@@ -76,12 +75,11 @@
             ];
             $commands_padding = \ncc\Utilities\Functions::detectParametersPadding($commands) + 2;
 
-            Console::out('Management Commands:' . PHP_EOL);
+            Console::out('Management Commands:');
             foreach($commands as $command)
             {
-                Console::out('   ' . $command->toString($commands_padding) . PHP_EOL);
+                Console::out('   ' . $command->toString($commands_padding));
             }
-            print(PHP_EOL);
         }
 
         /**
@@ -97,12 +95,11 @@
             ];
             $commands_padding = \ncc\Utilities\Functions::detectParametersPadding($commands) + 2;
 
-            Console::out('Commands:' . PHP_EOL);
+            Console::out('Commands:');
             foreach($commands as $command)
             {
-                Console::out('   ' . $command->toString($commands_padding) . PHP_EOL);
+                Console::out('   ' . $command->toString($commands_padding));
             }
-            print(PHP_EOL);
         }
 
         /**
@@ -117,11 +114,10 @@
             ];
             $extensions_padding = \ncc\Utilities\Functions::detectParametersPadding($extensions) + 2;
 
-            print('Extensions:' . PHP_EOL);
+            Console::out('Extensions:');
             foreach($extensions as $command)
             {
-                print('   ' . $command->toString($extensions_padding) . PHP_EOL);
+                Console::out('   ' . $command->toString($extensions_padding));
             }
-            print(PHP_EOL);
         }
     }

@@ -17,23 +17,23 @@
         /**
          * The selected directory for managing the project
          *
-         * @var string
+         * @var string|null
          */
-        private string $SelectedDirectory;
+        private ?string $SelectedDirectory;
 
         /**
          * The path that points to the project's main project.json file
          *
-         * @var string
+         * @var string|null
          */
-        private string $ProjectFilePath;
+        private ?string $ProjectFilePath;
 
         /**
          * The path that points the project's main directory
          *
-         * @var string
+         * @var string|null
          */
-        private string $ProjectPath;
+        private ?string $ProjectPath;
 
         /**
          * Public Constructor

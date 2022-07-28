@@ -120,8 +120,7 @@
             Console::out('Options:' . PHP_EOL);
             foreach($options as $option)
             {
-                Console::out('   ' . $option->toString($options_padding) . PHP_EOL);
+                Console::out('   ' . $option->toString($options_padding));
             }
-            print(PHP_EOL);
         }
     }

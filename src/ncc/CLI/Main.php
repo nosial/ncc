@@ -29,8 +29,12 @@
                     switch(strtolower($args['ncc-cli']))
                     {
                         default:
-                            Console::out('Unknown command ' . strtolower($args['ncc-cli']) . PHP_EOL);
+                            Console::out('Unknown command ' . strtolower($args['ncc-cli']));
                             exit(1);
+
+                        case 'project':
+                            ProjectMenu::start($args);
+                            exit(0);
 
                         case 'credential':
                             CredentialMenu::start($args);
@@ -44,7 +48,7 @@
                 }
                 catch(Exception $e)
                 {
-                    Console::out('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')' . PHP_EOL);
+                    Console::out('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
                     exit(1);
                 }
 
