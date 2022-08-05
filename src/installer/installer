@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/php
 
 # ------------------------------------------------------------------
 # Nosial Code Compiler (NCC) Installation Script
@@ -10,8 +10,51 @@
 #     PHP 8.0+
 # ------------------------------------------------------------------
 
-$NCC_INSTALL_PATH='/etc/ncc'
-$NCC_SOURCE_PATH='src/ncc'
-$NCC_VERSION_NUMBER='1.0.0'
-$NCC_UPDATE_SOURCE='https://updates.nosial.com/ncc/check_updates?current_version=$VERSION'
-$NCC_CREATE_SYSTEM='True'
+<?PHP
+    # Global Variables
+    $NCC_INSTALL_PATH='/etc/ncc';
+    $NCC_UPDATE_SOURCE='https://updates.nosial.com/ncc/check_updates?current_version=$VERSION'; # Unused
+    $NCC_CHECKSUM=__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin';
+    $NCC_AUTOLOAD=__DIR__ . DIRECTORY_SEPARATOR . 'autoload.php';
+
+    if(!file_exists($NCC_AUTOLOAD))
+    {
+        print('The file \'autoload.php\' was not found, installation cannot proceed.' . PHP_EOL);
+        exit(1);
+    }
+    require($NCC_AUTOLOAD);
+
+    if(!file_exists($NCC_CHECKSUM))
+    {
+        \ncc\Utilities\Console::outWarning('The file \'checksum.bin\' was not found, the contents of the program cannot be verified to be safe');
+    }
+    else
+    {
+        \ncc\Utilities\Console::out('Running checksum');
+
+        $checksum = \ncc\ZiProto\ZiProto::decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin'));
+        $checksum_failed = false;
+
+        foreach($checksum as $file => $hash)
+        {
+            if(hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $file) !== $hash)
+            {
+                \ncc\Utilities\Console::outWarning('The file \'' . $file . '\' does not match the original checksum');
+                $checksum_failed = true;
+            }
+        }
+
+        if($checksum_failed)
+        {
+            \ncc\Utilities\Console::outError('Checksum failed, the contents of the program cannot be verified to be safe');
+            exit(1);
+        }
+        else
+        {
+            \ncc\Utilities\Console::out('Checksum passed');
+        }
+    }
+
+
+    \ncc\Utilities\Console::out('Started NCC installer');
+?>
