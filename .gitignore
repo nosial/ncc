@@ -3,3 +3,12 @@
 .vscode/targets.log
 .vscode/launch.json
 build
+
+# Autoload files
+src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
+src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
+src/ncc/ThirdParty/Symfony/Process/autoload_spl.php
+src/ncc/ThirdParty/Symfony/uid/autoload_spl.php
+src/ncc/autoload_spl.php
+src/autoload/autoload.php src/ncc/autoload.php
