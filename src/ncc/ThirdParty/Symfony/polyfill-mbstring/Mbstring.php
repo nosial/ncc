@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\mbstring;
+namespace ncc\ThirdParty\Symfony\polyfill_mbstring;
 
 /**
  * Partial mbstring implementation in PHP, iconv based, UTF-8 centric.

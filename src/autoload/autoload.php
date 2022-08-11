@@ -14,9 +14,10 @@
         $target_files = [
             __DIR__ . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'defuse' . DIRECTORY_SEPARATOR . 'php-encryption' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
-            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-ctype' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
-            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-mbstring' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
-            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-mbstring' . DIRECTORY_SEPARATOR . 'bootstrap.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill_ctype' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill_ctype' . DIRECTORY_SEPARATOR . 'bootstrap.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill_mbstring' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill_mbstring' . DIRECTORY_SEPARATOR . 'bootstrap.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Process' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'uid' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
         ];
