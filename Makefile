@@ -51,7 +51,7 @@ redist: autoload
 	cp src/installer/hash_check.php build/src/hash_check.php; php build/src/hash_check.php; rm build/src/hash_check.php
 	cp src/installer/generate_build_files.php build/src/generate_build_files.php; php build/src/generate_build_files.php; rm build/src/generate_build_files.php
 
-tar:
+tar: redist
 	cd build/src; tar -czvf ../ncc.tar.gz *
 
 clean:
