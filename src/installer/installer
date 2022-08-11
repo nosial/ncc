@@ -14,8 +14,8 @@
     // TODO: Check for root before proceeding
 
     # Global Variables
-    $NCC_INSTALL_PATH='/etc/ncc-lib';
-    $NCC_DATA_PATH='/etc/ncc';
+    $NCC_INSTALL_PATH='/etc/ncc';
+    $NCC_DATA_PATH='/var/ncc';
     $NCC_UPDATE_SOURCE='https://updates.nosial.com/ncc/check_updates?current_version=$VERSION'; # Unused
     $NCC_CHECKSUM=__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin';
     $NCC_AUTOLOAD=__DIR__ . DIRECTORY_SEPARATOR . 'autoload.php';
