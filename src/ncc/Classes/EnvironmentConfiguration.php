@@ -1,6 +1,6 @@
 <?php
 
-    namespace ncc\Classes\EnvironmentConfiguration;
+    namespace ncc\Classes;
 
     use ncc\Objects\PhpConfiguration;
 
