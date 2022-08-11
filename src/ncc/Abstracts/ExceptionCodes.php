@@ -14,6 +14,7 @@
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\InvalidVersionNumberException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\MethodNotAvailableException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\RuntimeException;
 
