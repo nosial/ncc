@@ -176,8 +176,7 @@
                 print($prompt);
             }
 
-            $handle = fopen ("php://stdin","r");
-            return fgets($handle);
+            return rtrim(fgets(STDIN), "\n");
         }
 
         /**
@@ -209,15 +208,16 @@
             {
                 if($display_options)
                 {
-                    $r = self::getInput($prompt . ' (Y/N): ', false);
+                    $r = self::getInput($prompt . ' (Y/N): ');
                 }
                 else
                 {
-                    $r = self::getInput($prompt, false);
+                    $r = self::getInput($prompt);
                 }
 
                 if(strlen($r) > 0)
                 {
+                    print($r);
                     switch(strtoupper($r))
                     {
                         case '1':

@@ -155,4 +155,35 @@
             return true;
         }
 
+        /**
+         * Determines if a Unix filepath is valid
+         *
+         * @param $input
+         * @return bool
+         */
+        public static function unixFilepath($input): bool
+        {
+            if(preg_match(RegexPatterns::UnixPath, $input))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Determines if a Windows filepath is valid
+         *
+         * @param $input
+         * @return bool
+         */
+        public static function windowsFilepath($input): bool
+        {
+            if(preg_match(RegexPatterns::WindowsPath, $input))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }

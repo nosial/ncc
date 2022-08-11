@@ -11,12 +11,16 @@
 # ------------------------------------------------------------------
 
 <?PHP
+    // TODO: Check for root before proceeding
+
     # Global Variables
-    $NCC_INSTALL_PATH='/etc/ncc';
+    $NCC_INSTALL_PATH='/etc/ncc-lib';
+    $NCC_DATA_PATH='/etc/ncc';
     $NCC_UPDATE_SOURCE='https://updates.nosial.com/ncc/check_updates?current_version=$VERSION'; # Unused
     $NCC_CHECKSUM=__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin';
     $NCC_AUTOLOAD=__DIR__ . DIRECTORY_SEPARATOR . 'autoload.php';
 
+    // Require NCC
     if(!file_exists($NCC_AUTOLOAD))
     {
         print('The file \'autoload.php\' was not found, installation cannot proceed.' . PHP_EOL);
@@ -24,6 +28,20 @@
     }
     require($NCC_AUTOLOAD);
 
+    // Check for the required files
+    $required_files = [
+        'LICENSE',
+        'build_files'
+    ];
+    foreach($required_files as $file)
+    {
+        if(!file_exists($file))
+        {
+            \ncc\Utilities\Console::outError('Missing file \'' . $file . '\', installation failed.', true, 1);
+        }
+    }
+
+    // Preform the checksum validation
     if(!file_exists($NCC_CHECKSUM))
     {
         \ncc\Utilities\Console::outWarning('The file \'checksum.bin\' was not found, the contents of the program cannot be verified to be safe');
@@ -37,7 +55,12 @@
 
         foreach($checksum as $file => $hash)
         {
-            if(hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $file) !== $hash)
+            if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . $file) == false)
+            {
+                \ncc\Utilities\Console::outError('Cannot check file, \'' . $file . '\' not found.');
+                $checksum_failed = true;
+            }
+            elseif(hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $file) !== $hash)
             {
                 \ncc\Utilities\Console::outWarning('The file \'' . $file . '\' does not match the original checksum');
                 $checksum_failed = true;
@@ -55,6 +78,62 @@
         }
     }
 
+    // Check for required extensions
+    foreach(\ncc\Utilities\Validate::requiredExtensions() as $ext => $installed)
+    {
+        if(!$installed)
+        {
+            \ncc\Utilities\Console::outWarning('The extension \'' . $ext . '\' is not installed, compatibility without it is not guaranteed');
+        }
+    }
 
+    // Start of installer
     \ncc\Utilities\Console::out('Started NCC installer');
+
+    // Determine the installation path
+    // TODO: Add the ability to change the data path as well
+    while(true)
+    {
+        $user_input = null;
+        $user_input = \ncc\Utilities\Console::getInput("Installation Path (Default: $NCC_INSTALL_PATH): ");
+        if(strlen($user_input) > 0)
+        {
+            if(file_exists($user_input))
+            {
+                if(file_exists($user_input . DIRECTORY_SEPARATOR . 'ncc'))
+                {
+                    \ncc\Utilities\Console::out('NCC Seems to already be installed, the installer will repair/upgrade your current install');
+                    break;
+                }
+                else
+                {
+                    \ncc\Utilities\Console::outError('The given directory already exists, it must be deleted before proceeding');
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    \ncc\Utilities\Console::out("Note: This doesn't affect your current install of composer (if you have composer installed)");
+    $update_composer = \ncc\Utilities\Console::getBooleanInput('Do you want to install composer for NCC? (Recommended)');
+
+    // Prepare installation
+    if(file_exists($NCC_INSTALL_PATH))
+    {
+        // TODO: Implement recursive directory removal
+    }
+
+    mkdir($NCC_INSTALL_PATH);
+    mkdir($NCC_DATA_PATH);
+
+    // Install composer
+
+    // Install NCC
 ?>

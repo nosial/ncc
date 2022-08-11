@@ -39,10 +39,10 @@
          */
         public static function getVersionInformation(bool $reload=False): NccVersionInformation
         {
-            if(self::$VersionInformation !== null && $reload == False)
+            if(self::$VersionInformation !== null && !$reload)
                 return self::$VersionInformation;
 
-            if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'version.json') == false)
+            if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'version.json'))
             {
                 throw new RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
             }
@@ -73,6 +73,8 @@
          * Initializes the NCC environment
          *
          * @return bool
+         * @throws Exceptions\FileNotFoundException
+         * @throws RuntimeException
          */
         public static function initialize(): bool
         {
@@ -97,12 +99,13 @@
          * Returns the constants set by NCC
          *
          * @return array
+         * @throws RuntimeException
          */
         public static function getConstants(): array
         {
             if(defined('NCC_INIT') == false)
             {
-                throw new RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getDefinitions()');
+                throw new RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getConstants()');
             }
 
             return [
