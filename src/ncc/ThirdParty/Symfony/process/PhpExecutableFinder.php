@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process;
+namespace ncc\ThirdParty\Symfony\process;
 
 /**
  * An executable finder specifically designed for the PHP executable.
@@ -28,10 +28,8 @@ class PhpExecutableFinder
 
     /**
      * Finds The PHP executable.
-     *
-     * @return string|false
      */
-    public function find(bool $includeArgs = true)
+    public function find(bool $includeArgs = true): string|false
     {
         if ($php = getenv('PHP_BINARY')) {
             if (!is_executable($php)) {
@@ -88,10 +86,8 @@ class PhpExecutableFinder
 
     /**
      * Finds the PHP executable arguments.
-     *
-     * @return array
      */
-    public function findArguments()
+    public function findArguments(): array
     {
         $arguments = [];
         if ('phpdbg' === \PHP_SAPI) {

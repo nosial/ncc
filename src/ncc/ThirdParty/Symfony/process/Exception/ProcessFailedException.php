@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process\Exception;
+namespace ncc\ThirdParty\Symfony\process\Exception;
 
-use ncc\Symfony\Component\Process\Process;
+use ncc\ThirdParty\Symfony\process\process;
 
 /**
  * Exception for failed processes.

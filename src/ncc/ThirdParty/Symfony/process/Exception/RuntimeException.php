@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process\Exception;
+namespace ncc\ThirdParty\Symfony\process\Exception;
 
 /**
- * InvalidArgumentException for the Process Component.
+ * RuntimeException for the Process Component.
  *
- * @author Romain Neutron <imprec@gmail.com>
+ * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
 }

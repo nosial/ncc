@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process;
+namespace ncc\ThirdParty\Symfony\process;
 
-use ncc\Symfony\Component\Process\Exception\InvalidArgumentException;
+use ncc\ThirdParty\Symfony\process\Exception\InvalidArgumentException;
 
 /**
  * ProcessUtils is a bunch of utility methods.
@@ -35,11 +35,9 @@ class ProcessUtils
      * @param string $caller The name of method call that validates the input
      * @param mixed  $input  The input to validate
      *
-     * @return mixed
-     *
      * @throws InvalidArgumentException In case the input is not valid
      */
-    public static function validateInput(string $caller, $input)
+    public static function validateInput(string $caller, mixed $input): mixed
     {
         if (null !== $input) {
             if (\is_resource($input)) {
@@ -48,7 +46,7 @@ class ProcessUtils
             if (\is_string($input)) {
                 return $input;
             }
-            if (is_scalar($input)) {
+            if (\is_scalar($input)) {
                 return (string) $input;
             }
             if ($input instanceof Process) {

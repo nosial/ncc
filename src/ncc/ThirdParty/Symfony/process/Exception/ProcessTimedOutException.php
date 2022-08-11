@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process\Exception;
+namespace ncc\ThirdParty\Symfony\process\Exception;
 
-use ncc\Symfony\Component\Process\Process;
+use ncc\ThirdParty\Symfony\process\process;
 
 /**
  * Exception that is thrown when a process times out.
@@ -55,15 +55,10 @@ class ProcessTimedOutException extends RuntimeException
 
     public function getExceededTimeout()
     {
-        switch ($this->timeoutType) {
-            case self::TYPE_GENERAL:
-                return $this->process->getTimeout();
-
-            case self::TYPE_IDLE:
-                return $this->process->getIdleTimeout();
-
-            default:
-                throw new \LogicException(sprintf('Unknown timeout type "%d".', $this->timeoutType));
-        }
+        return match ($this->timeoutType) {
+            self::TYPE_GENERAL => $this->process->getTimeout(),
+            self::TYPE_IDLE => $this->process->getIdleTimeout(),
+            default => throw new \LogicException(sprintf('Unknown timeout type "%d".', $this->timeoutType)),
+        };
     }
 }

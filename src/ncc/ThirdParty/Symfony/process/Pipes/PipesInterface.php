@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process\Pipes;
+namespace ncc\ThirdParty\Symfony\process\Pipes;
 
 /**
  * PipesInterface manages descriptors and pipes for the use of proc_open.

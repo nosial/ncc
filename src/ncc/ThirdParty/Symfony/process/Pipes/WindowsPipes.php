@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process\Pipes;
+namespace ncc\ThirdParty\Symfony\process\Pipes;
 
-use ncc\Symfony\Component\Process\Exception\RuntimeException;
-use ncc\Symfony\Component\Process\Process;
+use ncc\ThirdParty\Symfony\process\Exception\RuntimeException;
+use ncc\ThirdParty\Symfony\process\Process;
 
 /**
  * WindowsPipes implementation uses temporary files as handles.
@@ -35,7 +35,7 @@ class WindowsPipes extends AbstractPipes
     ];
     private $haveReadSupport;
 
-    public function __construct($input, bool $haveReadSupport)
+    public function __construct(mixed $input, bool $haveReadSupport)
     {
         $this->haveReadSupport = $haveReadSupport;
 

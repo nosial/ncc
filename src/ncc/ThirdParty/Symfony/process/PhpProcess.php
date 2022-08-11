@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\Symfony\Component\Process;
+namespace ncc\ThirdParty\Symfony\process;
 
-use ncc\Symfony\Component\Process\Exception\LogicException;
-use ncc\Symfony\Component\Process\Exception\RuntimeException;
+use ncc\ThirdParty\Symfony\process\Exception\LogicException;
+use ncc\ThirdParty\Symfony\process\Exception\RuntimeException;
 
 /**
  * PhpProcess runs a PHP script in an independent process.
@@ -53,7 +53,7 @@ class PhpProcess extends Process
     /**
      * {@inheritdoc}
      */
-    public static function fromShellCommandline(string $command, string $cwd = null, array $env = null, $input = null, ?float $timeout = 60)
+    public static function fromShellCommandline(string $command, string $cwd = null, array $env = null, mixed $input = null, ?float $timeout = 60): static
     {
         throw new LogicException(sprintf('The "%s()" method cannot be called when using "%s".', __METHOD__, self::class));
     }
