@@ -22,6 +22,10 @@
     {
       "vendor": "Symfony",
       "package_name": "polyfill-uid"
+    },
+    {
+      "vendor": "Symfony",
+      "package_name": "Filesystem"
     }
   ],
   "update_source": null
