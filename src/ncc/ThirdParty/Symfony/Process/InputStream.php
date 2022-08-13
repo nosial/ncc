@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process;
+namespace ncc\ThirdParty\Symfony\Process;
 
-use ncc\ThirdParty\Symfony\process\Exception\RuntimeException;
+use ncc\ThirdParty\Symfony\Process\Exception\RuntimeException;
 
 /**
- * Provides a way to continuously write to the input of a process until the InputStream is closed.
+ * Provides a way to continuously write to the input of a Process until the InputStream is closed.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  *
@@ -49,7 +49,7 @@ class InputStream implements \IteratorAggregate
         if ($this->isClosed()) {
             throw new RuntimeException(sprintf('"%s" is closed.', static::class));
         }
-        $this->input[] = processUtils::validateInput(__METHOD__, $input);
+        $this->input[] = ProcessUtils::validateInput(__METHOD__, $input);
     }
 
     /**

@@ -17,11 +17,11 @@
     },
     {
       "vendor": "Symfony",
-      "package_name": "polyfill-Process"
+      "package_name": "Process"
     },
     {
       "vendor": "Symfony",
-      "package_name": "polyfill-uid"
+      "package_name": "Uid"
     },
     {
       "vendor": "Symfony",

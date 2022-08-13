@@ -1,0 +1,503 @@
+#!/bin/php
+
+# ------------------------------------------------------------------
+# Nosial Code Compiler (NCC) Installation Script
+#
+#          Nosial Code Compiler is a program written in PHP designed
+#          to be a multipurpose compiler, package manager and toolkit.
+#
+# Dependency:
+#     PHP 8.0+
+# ------------------------------------------------------------------
+
+<?PHP
+
+    use ncc\Abstracts\Scopes;
+    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\ComponentVersionNotFoundException;
+    use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InvalidScopeException;
+    use ncc\Managers\CredentialManager;
+    use ncc\ncc;
+use ncc\Objects\CliHelpSection;
+use ncc\ThirdParty\Symfony\Filesystem\Exception\IOException;
+    use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
+    use ncc\ThirdParty\Symfony\Process\Exception\ProcessFailedException;
+    use ncc\ThirdParty\Symfony\process\PhpExecutableFinder;
+    use ncc\ThirdParty\Symfony\Process\Process;
+    use ncc\Utilities\Console;
+use ncc\Utilities\Functions;
+use ncc\Utilities\PathFinder;
+use ncc\Utilities\Resolver;
+use ncc\Utilities\Validate;
+    use ncc\ZiProto\ZiProto;
+
+    # Global Variables
+    $NCC_INSTALL_PATH=DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'ncc';
+    $NCC_DATA_PATH=DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'ncc';
+    $NCC_UPDATE_SOURCE='https://updates.nosial.com/ncc/check_updates?current_version=$VERSION'; # Unused
+    $NCC_CHECKSUM=__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin';
+    $NCC_AUTOLOAD=__DIR__ . DIRECTORY_SEPARATOR . 'autoload.php';
+    $NCC_PHP_EXECUTABLE=null;
+    $NCC_FILESYSTEM=null;
+
+    // Require NCC
+    if(!file_exists($NCC_AUTOLOAD))
+    {
+        print('The file \'autoload.php\' was not found, installation cannot proceed.' . PHP_EOL);
+        exit(1);
+    }
+    require($NCC_AUTOLOAD);
+
+    // Initialize NCC
+    try
+    {
+        ncc::initialize();
+    }
+    catch (FileNotFoundException|\ncc\Exceptions\RuntimeException $e)
+    {
+        Console::outError('Cannot initialize NCC, ' . $e->getMessage() . ' (Error Code: ' . $e->getCode() . ')');
+        exit(1);
+    }
+
+    $NCC_ARGS = null;
+    $NCC_FILESYSTEM = new Filesystem();
+
+    // Options Parser
+    if(isset($argv))
+    {
+        $NCC_ARGS = Resolver::parseArguments(implode(' ', $argv));
+    }
+
+    if(isset($NCC_ARGS['help']))
+    {
+        $options = [
+            new CliHelpSection(['--help'], 'Displays this help menu about the installer'),
+            new CliHelpSection(['--auto'], 'Automates the installation process'),
+            new CliHelpSection(['--install-composer'], 'Require composer to be installed alongside NCC'),
+            new CliHelpSection(['--install-dir'], 'Specifies the installation directory for NCC'),
+        ];
+
+        $options_padding = Functions::detectParametersPadding($options) + 4;
+
+        Console::out('Usage: ' . __FILE__ . ' [options]');
+        Console::out('Options:' . PHP_EOL);
+        foreach($options as $option)
+        {
+            Console::out('   ' . $option->toString($options_padding));
+        }
+        exit(0);
+    }
+
+    // Detect if running in Windows
+    if(strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+    {
+        print('This installer can only run on Linux based machines' . PHP_EOL);
+    }
+
+    // Detect the server API
+    if(defined('PHP_SAPI'))
+    {
+        if(strtolower(PHP_SAPI) !== 'cli')
+        {
+            print('This installation script is meant to be running in your terminal' . PHP_EOL);
+        }
+    }
+    elseif(function_exists('php_sapi_name') && strtolower(php_sapi_name()) !== 'cli')
+    {
+        print('This installation script is meant to be running in your terminal' . PHP_EOL);
+    }
+    else
+    {
+        Console::outWarning(
+            'The installer cannot determine the Server API (SAPI), the installer will continue but it is ' .
+            'recommended to be running this installer in a terminal'
+        );
+    }
+
+    // Check if running in a TTY
+    if(stream_isatty(STDERR))
+    {
+        Console::outWarning('Your terminal may have some issues rendering the output of this installer');
+    }
+
+    // Check if running as root
+    if (posix_getuid() !== 0)
+    {
+        Console::outError('You must be running as root');
+        exit(1);
+    }
+
+    // Find the PHP executable
+    $executable_finder = new PhpExecutableFinder();
+    $NCC_PHP_EXECUTABLE = $executable_finder->find();
+    if(!$NCC_PHP_EXECUTABLE)
+    {
+        Console::outError('Cannot find PHP executable path');
+        exit(1);
+    }
+
+    // Check for the required files
+    $required_files = [
+        __DIR__ . DIRECTORY_SEPARATOR . 'LICENSE',
+        __DIR__ . DIRECTORY_SEPARATOR . 'build_files',
+        __DIR__ . DIRECTORY_SEPARATOR . 'ncc.sh',
+    ];
+    foreach($required_files as $path)
+    {
+        if(!file_exists($path))
+        {
+            Console::outError('Missing file \'' . $path . '\', installation failed.', true, 1);
+            exit(1);
+        }
+    }
+
+    // Preform the checksum validation
+    if(!file_exists($NCC_CHECKSUM))
+    {
+        Console::outWarning('The file \'checksum.bin\' was not found, the contents of the program cannot be verified to be safe');
+    }
+    else
+    {
+        Console::out('Running checksum');
+
+        $checksum = ZiProto::decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin'));
+        $checksum_failed = false;
+
+        foreach($checksum as $path => $hash)
+        {
+            if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . $path))
+            {
+                Console::outError('Cannot check file, \'' . $path . '\' not found.');
+                $checksum_failed = true;
+            }
+            elseif(hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $path) !== $hash)
+            {
+                Console::outWarning('The file \'' . $path . '\' does not match the original checksum');
+                $checksum_failed = true;
+            }
+        }
+
+        if($checksum_failed)
+        {
+            Console::outError('Checksum failed, the contents of the program cannot be verified to be safe');
+            exit(1);
+        }
+        else
+        {
+            Console::out('Checksum passed');
+        }
+    }
+
+    // Check for required extensions
+    $curl_available = true;
+    foreach(Validate::requiredExtensions() as $ext => $installed)
+    {
+        if(!$installed)
+        {
+            switch($ext)
+            {
+                case 'curl':
+                    Console::outWarning('This installer requires the \'curl\' extension to install composer');
+                    $curl_available = false;
+                    break;
+
+                default:
+                    Console::outWarning('The extension \'' . $ext . '\' is not installed, compatibility without it is not guaranteed');
+                    break;
+            }
+        }
+    }
+
+    // Attempt to load version information
+    try
+    {
+        $VersionInformation = ncc::getVersionInformation();
+    }
+    catch (FileNotFoundException|\ncc\Exceptions\RuntimeException $e)
+    {
+        Console::outError('Cannot get version information, ' . $e->getMessage() . ' (Error Code: ' . $e->getCode() . ')');
+        exit(1);
+    }
+
+    // Start of installer
+    Console::out('Started NCC installer');
+
+    // Display version information
+    Console::out('NCC Version: ' . NCC_VERSION_NUMBER . ' (' . NCC_VERSION_BRANCH . ')');
+    Console::out('Build Flags: ' . implode(',', NCC_VERSION_FLAGS));
+
+    foreach($VersionInformation->Components as $component)
+    {
+        $full_name = $component->Vendor . '/' . $component->PackageName;
+
+        try
+        {
+            Console::out($full_name . ' Version: ' . $component->getVersion());
+        }
+        catch (ComponentVersionNotFoundException $e)
+        {
+            Console::outWarning('Cannot determine component version of ' . $full_name);
+        }
+    }
+
+    // Determine the installation path
+    // TODO: Add the ability to change the data path as well
+    if($NCC_ARGS == null && !isset($NCC_ARGS['auto']))
+    {
+        while(true)
+        {
+            $user_input = null;
+            $user_input = Console::getInput("Installation Path (Default: $NCC_INSTALL_PATH): ");
+            if(strlen($user_input) > 0)
+            {
+                if(file_exists($user_input))
+                {
+                    if(file_exists($user_input . DIRECTORY_SEPARATOR . 'ncc'))
+                    {
+                        Console::out('NCC Seems to already be installed, the installer will repair/upgrade your current install');
+                        break;
+                    }
+                    else
+                    {
+                        Console::outError('The given directory already exists, it must be deleted before proceeding');
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        if(strlen($NCC_ARGS['install-dir']) > 0)
+        {
+            if(file_exists($NCC_ARGS['install-dir']))
+            {
+                if(file_exists($NCC_ARGS['install-dir'] . DIRECTORY_SEPARATOR . 'ncc'))
+                {
+                    Console::out('NCC Seems to already be installed, the installer will repair/upgrade your current install');
+                }
+                else
+                {
+                    Console::outError('The given directory already exists, it must be deleted before proceeding');
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    // Ask to install composer if curl is available
+    if($curl_available)
+    {
+        if($NCC_ARGS !== null && isset($NCC_ARGS['auto']) && isset($NCC_ARGS['install-composer']))
+        {
+            $update_composer = true;
+        }
+        elseif(isset($NCC_ARGS['install-composer']))
+        {
+            $update_composer = true;
+        }
+        else
+        {
+            Console::out("Note: This doesn't affect your current install of composer (if you have composer installed)");
+            $update_composer = Console::getBooleanInput('Do you want to install composer for NCC? (Recommended)');
+        }
+    }
+
+    if($NCC_ARGS == null && !isset($NCC_ARGS['auto']))
+    {
+        if(!Console::getBooleanInput('Do you want install NCC?'))
+        {
+            Console::outError('Installation cancelled by user');
+            exit(1);
+        }
+    }
+
+    // Prepare installation
+    if(file_exists($NCC_INSTALL_PATH))
+    {
+        try
+        {
+            $NCC_FILESYSTEM->remove([$NCC_INSTALL_PATH]);
+        }
+        catch(IOException $e)
+        {
+            Console::outError('Cannot delete directory \'' . $NCC_INSTALL_PATH . '\', ' . $e->getMessage());
+            exit(1);
+        }
+    }
+
+    // Create the required directories
+    $required_dirs = [
+        $NCC_INSTALL_PATH,
+        $NCC_DATA_PATH,
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'packages',
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'cache',
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'repos',
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'downloads',
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'config',
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'data',
+        $NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'ext',
+    ];
+
+    $NCC_FILESYSTEM->mkdir($required_dirs);
+    foreach($required_dirs as $dir)
+    {
+        $NCC_FILESYSTEM->chmod([$dir], 0755);
+    }
+    $NCC_FILESYSTEM->chmod([$NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'config'], 0755);
+    $NCC_FILESYSTEM->chmod([$NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'cache'], 0755);
+
+    // Install composer
+    if($curl_available && $update_composer)
+    {
+        Console::out('Installing composer for NCC');
+
+        $fp = fopen($NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'composer-setup.php', 'w+');
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://getcomposer.org/installer');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'ncc/' . NCC_VERSION_NUMBER . ' (' . NCC_VERSION_BRANCH . ')');
+        curl_exec($ch);
+        curl_close($ch);
+        fclose($fp);
+
+        Console::out('Running composer installer');
+        // TODO: Unescaped shell arguments are a security issue
+        $Process = Process::fromShellCommandline(implode(' ', [
+            $NCC_PHP_EXECUTABLE,
+            $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'composer-setup.php',
+            '--install-dir=' . $NCC_INSTALL_PATH,
+            '--filename=composer.phar'
+        ]));
+        $Process->setWorkingDirectory($NCC_INSTALL_PATH);
+        $Process->setTty(true);
+
+        try
+        {
+            $Process->mustRun();
+        }
+        catch(ProcessFailedException $e)
+        {
+            Console::outError('Cannot install composer, ' . $e->getMessage());
+            exit(1);
+        }
+
+        $NCC_FILESYSTEM->remove([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'composer-setup.php']);
+        $NCC_FILESYSTEM->chmod([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'composer.phar'], 0755);
+        Console::out('Installed composer successfully');
+    }
+
+    // Install NCC
+    Console::out('Copying files to \'' . $NCC_INSTALL_PATH . '\'');
+    $build_files = explode("\n", file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'build_files'));
+    $total_items = count($build_files);
+    $processed_items = 0;
+
+    // Create all the directories first
+    foreach($build_files as $path)
+    {
+        if(is_dir(__DIR__ . DIRECTORY_SEPARATOR . $path))
+        {
+            $NCC_FILESYSTEM->mkdir([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $path]);
+            $NCC_FILESYSTEM->chmod([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $path], 0755);
+            $processed_items += 1;
+        }
+
+        Console::inlineProgressBar($processed_items, $total_items);
+    }
+
+    // Copy over all the files
+    foreach($build_files as $file)
+    {
+        if(is_file(__DIR__ . DIRECTORY_SEPARATOR . $file))
+        {
+            $NCC_FILESYSTEM->copy(__DIR__ . DIRECTORY_SEPARATOR . $file, $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $file);
+            $NCC_FILESYSTEM->chmod([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $file], 0755);
+            $processed_items += 1;
+        }
+
+        Console::inlineProgressBar($processed_items, $total_items);
+    }
+
+    // Create credential store if needed
+    Console::out('Processing Credential Store');
+    $credential_manager = new CredentialManager();
+
+    try
+    {
+        $credential_manager->constructStore();
+    }
+    catch (AccessDeniedException|\ncc\Exceptions\RuntimeException $e)
+    {
+        Console::outError('Cannot construct credential store, ' . $e->getMessage() . ' (Error Code: ' . $e->getCode() . ')');
+    }
+
+    try
+    {
+        $NCC_FILESYSTEM->touch([PathFinder::getPackageLock(Scopes::System)]);
+    }
+    catch (InvalidScopeException $e)
+    {
+        Console::outError('Cannot create package lock, ' . $e->getMessage());
+        exit(0);
+    }
+
+    // Generate executable shortcut
+    Console::out('Creating shortcut');
+    $executable_shortcut = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'ncc.sh');
+    $executable_shortcut = str_ireplace('%php_exec', $NCC_PHP_EXECUTABLE, $executable_shortcut);
+    $executable_shortcut = str_ireplace('%ncc_exec', $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'ncc', $executable_shortcut);
+
+    $bin_paths = [
+        DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'bin',
+        DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'bin',
+        DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'share'
+    ];
+
+    foreach($bin_paths as $path)
+    {
+        if($NCC_FILESYSTEM->exists([$path]))
+        {
+            file_put_contents($path . DIRECTORY_SEPARATOR . 'ncc', $executable_shortcut);
+            $NCC_FILESYSTEM->chmod([$path . DIRECTORY_SEPARATOR . 'ncc'], 0755);
+        }
+    }
+
+    // Register the ncc extension
+    Console::out('Registering extension');
+    $extension_shortcut = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'extension');
+    $extension_shortcut = str_ireplace('%ncc_install', $NCC_INSTALL_PATH, $extension_shortcut);
+
+    if(function_exists('get_include_path'))
+    {
+
+        foreach(explode(':', get_include_path()) as $path)
+        {
+            switch($path)
+            {
+                case '.':
+                case '..':
+                    break;
+
+                default:
+                    file_put_contents($path . DIRECTORY_SEPARATOR . 'ncc', $extension_shortcut);
+                    $NCC_FILESYSTEM->chmod([$path . DIRECTORY_SEPARATOR . 'ncc'], 0755);
+                    break;
+            }
+        }
+    }
+
+    Console::out('NCC has been successfully installed');
+    exit(0);

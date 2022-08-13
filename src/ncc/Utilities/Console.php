@@ -11,14 +11,14 @@
          * Inline Progress bar, created by dealnews.com.
          *
          * // TODO: Add non-inline option
-         * @copyright Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
          * @param int $value
          * @param int $total
          * @param int $size
-         * @param array $flags
+         * @param array $options
          * @return void
+         *@copyright Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
          */
-        public static function inlineProgressBar(int $value, int $total, int $size=38, array $flags=[])
+        public static function inlineProgressBar(int $value, int $total, int $size=38, array $options=[])
         {
             static $start_time;
 
@@ -48,10 +48,15 @@
             $rate = ($now-$start_time)/$value;
             $left = $total - $value;
             $eta = round($rate * $left, 2);
-
             $elapsed = $now - $start_time;
 
-            $status_bar.= " remaining: ".number_format($eta)." sec.  elapsed: ".number_format($elapsed)." sec.";
+            $remaining_text = 'remaining: ';
+            if(isset($options['remaining_text']))
+            {
+                $remaining_text = $options['remaining_text'];
+            }
+
+            $status_bar.= " $remaining_text ".number_format($eta)." sec.  elapsed: ".number_format($elapsed)." sec.";
 
             echo "$status_bar  ";
 
@@ -217,7 +222,6 @@
 
                 if(strlen($r) > 0)
                 {
-                    print($r);
                     switch(strtoupper($r))
                     {
                         case '1':

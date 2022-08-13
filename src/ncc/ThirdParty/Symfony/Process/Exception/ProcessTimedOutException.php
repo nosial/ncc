@@ -9,38 +9,38 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process\Exception;
+namespace ncc\ThirdParty\Symfony\Process\Exception;
 
-use ncc\ThirdParty\Symfony\process\process;
+use ncc\ThirdParty\Symfony\Process\Process;
 
 /**
- * Exception that is thrown when a process times out.
+ * Exception that is thrown when a Process times out.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class processTimedOutException extends RuntimeException
+class ProcessTimedOutException extends RuntimeException
 {
     public const TYPE_GENERAL = 1;
     public const TYPE_IDLE = 2;
 
-    private $process;
+    private $Process;
     private $timeoutType;
 
-    public function __construct(process $process, int $timeoutType)
+    public function __construct(Process $Process, int $timeoutType)
     {
-        $this->process = $process;
+        $this->Process = $Process;
         $this->timeoutType = $timeoutType;
 
         parent::__construct(sprintf(
-            'The process "%s" exceeded the timeout of %s seconds.',
-            $process->getCommandLine(),
+            'The Process "%s" exceeded the timeout of %s seconds.',
+            $Process->getCommandLine(),
             $this->getExceededTimeout()
         ));
     }
 
-    public function getprocess()
+    public function getProcess()
     {
-        return $this->process;
+        return $this->Process;
     }
 
     public function isGeneralTimeout()
@@ -56,8 +56,8 @@ class processTimedOutException extends RuntimeException
     public function getExceededTimeout()
     {
         return match ($this->timeoutType) {
-            self::TYPE_GENERAL => $this->process->getTimeout(),
-            self::TYPE_IDLE => $this->process->getIdleTimeout(),
+            self::TYPE_GENERAL => $this->Process->getTimeout(),
+            self::TYPE_IDLE => $this->Process->getIdleTimeout(),
             default => throw new \LogicException(sprintf('Unknown timeout type "%d".', $this->timeoutType)),
         };
     }

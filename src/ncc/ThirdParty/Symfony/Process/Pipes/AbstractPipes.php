@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process\Pipes;
+namespace ncc\ThirdParty\Symfony\Process\Pipes;
 
-use ncc\ThirdParty\Symfony\process\Exception\InvalidArgumentException;
+use ncc\ThirdParty\Symfony\Process\Exception\InvalidArgumentException;
 
 /**
  * @author Romain Neutron <imprec@gmail.com>

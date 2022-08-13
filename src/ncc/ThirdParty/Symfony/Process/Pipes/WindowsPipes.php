@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process\Pipes;
+namespace ncc\ThirdParty\Symfony\Process\Pipes;
 
-use ncc\ThirdParty\Symfony\process\Exception\RuntimeException;
-use ncc\ThirdParty\Symfony\process\process;
+use ncc\ThirdParty\Symfony\Process\Exception\RuntimeException;
+use ncc\ThirdParty\Symfony\Process\Process;
 
 /**
  * WindowsPipes implementation uses temporary files as handles.
@@ -30,8 +30,8 @@ class WindowsPipes extends AbstractPipes
     private $fileHandles = [];
     private $lockHandles = [];
     private $readBytes = [
-        process::STDOUT => 0,
-        process::STDERR => 0,
+        Process::STDOUT => 0,
+        Process::STDERR => 0,
     ];
     private $haveReadSupport;
 
@@ -45,8 +45,8 @@ class WindowsPipes extends AbstractPipes
             //
             // @see https://bugs.php.net/51800
             $pipes = [
-                process::STDOUT => process::OUT,
-                process::STDERR => process::ERR,
+                Process::STDOUT => Process::OUT,
+                Process::STDERR => Process::ERR,
             ];
             $tmpDir = sys_get_temp_dir();
             $lastError = 'unknown reason';
@@ -60,7 +60,7 @@ class WindowsPipes extends AbstractPipes
                             continue 2;
                         }
                         restore_error_handler();
-                        throw new RuntimeException('A temporary file could not be opened to write the process output: '.$lastError);
+                        throw new RuntimeException('A temporary file could not be opened to write the Process output: '.$lastError);
                     }
                     if (!flock($h, \LOCK_EX | \LOCK_NB)) {
                         continue 2;
@@ -120,7 +120,7 @@ class WindowsPipes extends AbstractPipes
 
         // We're not using pipe on Windows platform as it hangs (https://bugs.php.net/51800)
         // We're not using file handles as it can produce corrupted output https://bugs.php.net/65650
-        // So we redirect output within the commandline and pass the nul device to the process
+        // So we redirect output within the commandline and pass the nul device to the Process
         return [
             ['pipe', 'r'],
             ['file', 'NUL', 'w'],
@@ -147,9 +147,9 @@ class WindowsPipes extends AbstractPipes
 
         if ($blocking) {
             if ($w) {
-                @stream_select($r, $w, $e, 0, process::TIMEOUT_PRECISION * 1E6);
+                @stream_select($r, $w, $e, 0, Process::TIMEOUT_PRECISION * 1E6);
             } elseif ($this->fileHandles) {
-                usleep(process::TIMEOUT_PRECISION * 1E6);
+                usleep(Process::TIMEOUT_PRECISION * 1E6);
             }
         }
         foreach ($this->fileHandles as $type => $fileHandle) {

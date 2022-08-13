@@ -9,46 +9,46 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process\Exception;
+namespace ncc\ThirdParty\Symfony\Process\Exception;
 
-use ncc\ThirdParty\Symfony\process\process;
+use ncc\ThirdParty\Symfony\Process\Process;
 
 /**
- * Exception for failed processes.
+ * Exception for failed Processes.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class processFailedException extends RuntimeException
+class ProcessFailedException extends RuntimeException
 {
-    private $process;
+    private $Process;
 
-    public function __construct(process $process)
+    public function __construct(Process $Process)
     {
-        if ($process->isSuccessful()) {
-            throw new InvalidArgumentException('Expected a failed process, but the given process was successful.');
+        if ($Process->isSuccessful()) {
+            throw new InvalidArgumentException('Expected a failed Process, but the given Process was successful.');
         }
 
         $error = sprintf('The command "%s" failed.'."\n\nExit Code: %s(%s)\n\nWorking directory: %s",
-            $process->getCommandLine(),
-            $process->getExitCode(),
-            $process->getExitCodeText(),
-            $process->getWorkingDirectory()
+            $Process->getCommandLine(),
+            $Process->getExitCode(),
+            $Process->getExitCodeText(),
+            $Process->getWorkingDirectory()
         );
 
-        if (!$process->isOutputDisabled()) {
+        if (!$Process->isOutputDisabled()) {
             $error .= sprintf("\n\nOutput:\n================\n%s\n\nError Output:\n================\n%s",
-                $process->getOutput(),
-                $process->getErrorOutput()
+                $Process->getOutput(),
+                $Process->getErrorOutput()
             );
         }
 
         parent::__construct($error);
 
-        $this->process = $process;
+        $this->Process = $Process;
     }
 
-    public function getprocess()
+    public function getProcess()
     {
-        return $this->process;
+        return $this->Process;
     }
 }

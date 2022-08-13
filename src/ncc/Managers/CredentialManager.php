@@ -55,7 +55,7 @@
          */
         public function constructStore(): void
         {
-            // Do not continue the function if the file already exists, if the file is damaged a seperate function
+            // Do not continue the function if the file already exists, if the file is damaged a separate function
             // is to be executed to fix the damaged file.
             if(file_exists($this->CredentialsPath))
                 return;
@@ -68,11 +68,12 @@
             $VaultObject = new Vault();
             $VaultObject->Version = Versions::CredentialsStoreVersion;
 
-            // TODO: Set proper permissions for root access only for the file
             if(!@file_put_contents($this->CredentialsPath, ZiProto::encode($VaultObject->toArray())))
             {
                 throw new RuntimeException('Cannot create file \'' . $this->CredentialsPath . '\'');
             }
+
+            chmod($this->CredentialsPath, 0600);
         }
 
         /**

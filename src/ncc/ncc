@@ -1,5 +1,4 @@
 <?php
 
     require('autoload.php');
-
     \ncc\CLI\Main::start($argv);

@@ -23,19 +23,12 @@
         /**
          * Attempts to resolve the component's build version
          *
-         * @param string $ncc_installation_path
          * @return string
          * @throws ComponentVersionNotFoundException
          */
-        public function getVersion(string $ncc_installation_path): string
+        public function getVersion(): string
         {
-            // Auto-resolve the trailing slash
-            if(substr($ncc_installation_path, -1) !== '/')
-            {
-                $ncc_installation_path .= $ncc_installation_path . DIRECTORY_SEPARATOR;
-            }
-
-            $third_party_path = $ncc_installation_path . DIRECTORY_SEPARATOR . 'ThirdParty' . DIRECTORY_SEPARATOR;
+            $third_party_path = NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'ThirdParty' . DIRECTORY_SEPARATOR;
             $component_path = $third_party_path . $this->Vendor . DIRECTORY_SEPARATOR . $this->PackageName . DIRECTORY_SEPARATOR;
 
             if(file_exists($component_path . 'VERSION') == false)

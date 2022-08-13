@@ -92,6 +92,7 @@
             define('NCC_VERSION_UPDATE_SOURCE', $VersionInformation->UpdateSource);
             define('NCC_VERSION_FLAGS', $VersionInformation->Flags);
 
+            define('NCC_INIT', 1);
             return true;
         }
 

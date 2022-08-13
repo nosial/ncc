@@ -9,18 +9,18 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process;
+namespace ncc\ThirdParty\Symfony\Process;
 
-use ncc\ThirdParty\Symfony\process\Exception\InvalidArgumentException;
+use ncc\ThirdParty\Symfony\Process\Exception\InvalidArgumentException;
 
 /**
- * processUtils is a bunch of utility methods.
+ * ProcessUtils is a bunch of utility methods.
  *
  * This class contains static methods only and is not meant to be instantiated.
  *
  * @author Martin Hasoň <martin.hason@gmail.com>
  */
-class processUtils
+class ProcessUtils
 {
     /**
      * This class should not be instantiated.
@@ -30,7 +30,7 @@ class processUtils
     }
 
     /**
-     * Validates and normalizes a process input.
+     * Validates and normalizes a Process input.
      *
      * @param string $caller The name of method call that validates the input
      * @param mixed  $input  The input to validate
@@ -49,7 +49,7 @@ class processUtils
             if (\is_scalar($input)) {
                 return (string) $input;
             }
-            if ($input instanceof process) {
+            if ($input instanceof Process) {
                 return $input->getIterator($input::ITER_SKIP_ERR);
             }
             if ($input instanceof \Iterator) {

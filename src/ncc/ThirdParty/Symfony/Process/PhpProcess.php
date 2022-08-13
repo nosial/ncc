@@ -9,26 +9,26 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process;
+namespace ncc\ThirdParty\Symfony\Process;
 
-use ncc\ThirdParty\Symfony\process\Exception\LogicException;
-use ncc\ThirdParty\Symfony\process\Exception\RuntimeException;
+use ncc\ThirdParty\Symfony\Process\Exception\LogicException;
+use ncc\ThirdParty\Symfony\Process\Exception\RuntimeException;
 
 /**
- * Phpprocess runs a PHP script in an independent process.
+ * PhpProcess runs a PHP script in an independent Process.
  *
- *     $p = new Phpprocess('<?php echo "foo"; ?>');
+ *     $p = new PhpProcess('<?php echo "foo"; ?>');
  *     $p->run();
  *     print $p->getOutput()."\n";
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class Phpprocess extends process
+class PhpProcess extends Process
 {
     /**
      * @param string      $script  The PHP script to run (as a string)
-     * @param string|null $cwd     The working directory or null to use the working dir of the current PHP process
-     * @param array|null  $env     The environment variables or null to use the same environment as the current PHP process
+     * @param string|null $cwd     The working directory or null to use the working dir of the current PHP Process
+     * @param array|null  $env     The environment variables or null to use the same environment as the current PHP Process
      * @param int         $timeout The timeout in seconds
      * @param array|null  $php     Path to the PHP binary to use with any additional arguments
      */

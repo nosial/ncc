@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\process\Exception;
+namespace ncc\ThirdParty\Symfony\Process\Exception;
 
 /**
- * RuntimeException for the process Component.
+ * RuntimeException for the Process Component.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */

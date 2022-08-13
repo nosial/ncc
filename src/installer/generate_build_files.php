@@ -35,7 +35,9 @@
         'generate_build_files.php',
         'installer',
         'checksum.bin'.
-        'build_files'
+        'build_files',
+        'ncc.sh',
+        'extension'
     ];
 
     ncc\Utilities\Console::out('Creating build_files ...');

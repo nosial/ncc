@@ -21,6 +21,7 @@
             $requirements = [
                 'zlib',
                 'libxml',
+                'curl',
                 'ctype',
                 'json',
                 'mbstring',

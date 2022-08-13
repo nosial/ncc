@@ -23,7 +23,7 @@
         /**
          * Flags for the current build
          *
-         * @var string|null
+         * @var array|null
          */
         public $Flags;
 
