@@ -1,0 +1,13 @@
+<?php
+
+    if(defined('NCC_INIT') == false)
+    {
+        if(file_exists('%ncc_install' . DIRECTORY_SEPARATOR . 'autoload.php') == false)
+        {
+            throw new RuntimeException('Cannot locate file \'%ncc_install' . DIRECTORY_SEPARATOR . 'autoload.php\'');
+        }
+        else
+        {
+            require('%ncc_install' . DIRECTORY_SEPARATOR . 'autoload.php');
+        }
+    }
