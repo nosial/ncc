@@ -6,6 +6,7 @@ autoload:
 	make src/ncc/ThirdParty/Symfony/Process/autoload_spl.php
 	make src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 	make src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
+	make src/ncc/ThirdParty/austinhyde/IniParser/autoload_spl.php
 	make src/ncc/autoload_spl.php
 	cp src/autoload/autoload.php src/ncc/autoload.php
 
@@ -32,6 +33,10 @@ src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php:
 src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php:
 	/usr/bin/env phpab --output src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php \
 		src/ncc/ThirdParty/Symfony/Filesystem
+
+src/ncc/ThirdParty/austinhyde/IniParser/autoload_spl.php:
+	/usr/bin/env phpab --output src/ncc/ThirdParty/austinhyde/IniParser/autoload_spl.php \
+		src/ncc/ThirdParty/austinhyde/IniParser
 
 src/ncc/autoload_spl.php:
 	/usr/bin/env phpab --output src/ncc/autoload_spl.php \
@@ -71,3 +76,4 @@ clean:
 	rm -f src/ncc/ThirdParty/Symfony/Process/autoload_spl.php
 	rm -f src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 	rm -f src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
+	rm -f src/ncc/ThirdParty/austinhyde/IniParser/autoload_spl.php
