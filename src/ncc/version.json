@@ -26,6 +26,10 @@
     {
       "vendor": "Symfony",
       "package_name": "Filesystem"
+    },
+    {
+      "vendor": "austinhyde",
+      "package_name": "IniParser"
     }
   ],
   "update_source": null
