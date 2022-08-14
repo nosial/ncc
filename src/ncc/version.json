@@ -28,8 +28,8 @@
       "package_name": "Filesystem"
     },
     {
-      "vendor": "austinhyde",
-      "package_name": "IniParser"
+      "vendor": "Symfony",
+      "package_name": "Yaml"
     }
   ],
   "update_source": null

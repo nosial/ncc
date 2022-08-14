@@ -21,7 +21,7 @@
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Process' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Uid' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Filesystem' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
-            $third_party_path . 'austinhyde' . DIRECTORY_SEPARATOR . 'IniParser' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Yaml' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
         ];
 
         foreach($target_files as $file)

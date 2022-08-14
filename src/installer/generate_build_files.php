@@ -33,8 +33,9 @@
     $excluded_files = [
         'hash_check.php',
         'generate_build_files.php',
+        'default_config.yaml',
         'installer',
-        'checksum.bin'.
+        'checksum.bin',
         'build_files',
         'ncc.sh',
         'extension'
@@ -50,7 +51,7 @@
     $build_files_content = [];
     foreach(scanContents(__DIR__) as $path)
     {
-        if(!in_array($path, $excluded_files))
+        if(!in_array($path, $excluded_files, true))
         {
             $build_files_content[] = $path;
         }
