@@ -53,7 +53,7 @@ src/ncc/autoload_spl.php:
 
 redist: autoload
 	rm -rf build/src
-	mkdir build build/src
+	mkdir -p build/src
 	cp -rf src/ncc/* build/src
 	cp src/installer/installer build/src/INSTALL
 	cp src/installer/ncc.sh build/src/ncc.sh
