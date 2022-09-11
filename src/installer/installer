@@ -154,7 +154,7 @@
     }
 
     // Check if running as root
-    if(function_exists('posix_getuid') == false)
+    if(!function_exists('posix_getuid'))
     {
         Console::outError('The function posix_getuid() is not available on your system, please make sure the extension `php-common` is installed');
         exit(1);
