@@ -9,7 +9,7 @@
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
-    use ncc\Symfony\Component\Uid\Uuid;
+    use ncc\ThirdParty\Symfony\Uid\Uuid;
     use ncc\Utilities\Validate;
 
     class ProjectManager
@@ -53,9 +53,9 @@
          * Attempts to resolve the project path from the selected directory
          * Returns false if the selected directory is not a proper project or an initialized project
          *
-         * @return bool
+         * @return void
          */
-        private function detectProjectPath(): bool
+        private function detectProjectPath(): void
         {
             $selected_directory = $this->SelectedDirectory;
 
@@ -69,7 +69,7 @@
             // Detect if the folder exists or not
             if(!file_exists($selected_directory) || !is_dir($selected_directory))
             {
-                return false;
+                return;
             }
 
             // Detect if project.json exists in the directory
@@ -77,10 +77,7 @@
             {
                 $this->ProjectPath = $selected_directory;
                 $this->ProjectFilePath = $selected_directory . 'project.json';
-                return true;
             }
-
-            return false;
         }
 
         /**
@@ -95,7 +92,7 @@
          * @throws MalformedJsonException
          * @throws ProjectAlreadyExistsException
          */
-        public function initializeProject(Compiler $compiler, string $name, string $package, array $options=[])
+        public function initializeProject(Compiler $compiler, string $name, string $package, array $options=[]): void
         {
             // Validate the project information first
             if(!Validate::packageName($package))
@@ -170,9 +167,9 @@
                 switch($option)
                 {
                     case InitializeProjectOptions::CREATE_SOURCE_DIRECTORY:
-                        if(!file_exists($source))
+                        if(!file_exists($this->ProjectPath . DIRECTORY_SEPARATOR . 'src'))
                         {
-                            mkdir($source);
+                            mkdir($this->ProjectPath . DIRECTORY_SEPARATOR . 'src');
                         }
                         break;
                 }
