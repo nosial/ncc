@@ -1,95 +1,97 @@
 PHPCC=/usr/bin/php
-PHPAB=phpab
+PHPAB=/usr/bin/phpab
+BUILD_PATH=build
+SRC_PATH=src
 
 autoload:
 	# Generates/creates all the autoloader files
-	make src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
-	make src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
-	make src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
-	make src/ncc/ThirdParty/Symfony/Process/autoload_spl.php
-	make src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
-	make src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
-	make src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
-	make src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
-	make src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
-	make src/ncc/autoload_spl.php
-	cp src/autoload/autoload.php src/ncc/autoload.php
+	make $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
+	make $(SRC_PATH)/ncc/autoload_spl.php
+	cp $(SRC_PATH)/autoload/autoload.php $(SRC_PATH)/ncc/autoload.php
 
-src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php:
-	$(PHPCC) $($(PHPAB)) --output src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php \
-		src/ncc/ThirdParty/defuse/php-encryption
+$(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption
 
-src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php \
-		src/ncc/ThirdParty/Symfony/polyfill-ctype
+$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype
 
-src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php \
-		src/ncc/ThirdParty/Symfony/polyfill-mbstring
+$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring
 
-src/ncc/ThirdParty/Symfony/Process/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/Symfony/Process/autoload_spl.php \
-		src/ncc/ThirdParty/Symfony/Process
+$(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/Process
 
-src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php:
-	$(PHPAB) --output src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php \
-		src/ncc/ThirdParty/Symfony/Uid
+$(SRC_PATH)/ncc/ThirdParty/Symfony/Uid/autoload_spl.php:
+	$(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/Uid/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/Uid
 
-src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php \
-		src/ncc/ThirdParty/Symfony/Filesystem
+$(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem
 
-src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php \
-		src/ncc/ThirdParty/Symfony/Yaml
+$(SRC_PATH)/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/Yaml
 
-src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php \
-		src/ncc/ThirdParty/theseer/Autoload
+$(SRC_PATH)/ncc/ThirdParty/theseer/Autoload/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/theseer/Autoload/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/theseer/Autoload
 
-src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php \
-		src/ncc/ThirdParty/theseer/DirectoryScanner
+$(SRC_PATH)/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/theseer/DirectoryScanner
 
-src/ncc/autoload_spl.php:
-	$(PHPCC) $(PHPAB) --output src/ncc/autoload_spl.php \
-		src/ncc/Abstracts \
-		src/ncc/Classes \
-		src/ncc/CLI \
-		src/ncc/Exceptions \
-		src/ncc/Extensions \
-		src/ncc/Managers \
-		src/ncc/Objects \
-		src/ncc/Runtime \
-		src/ncc/Utilities \
-	  	src/ncc/ncc.php
+$(SRC_PATH)/ncc/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/autoload_spl.php \
+		$(SRC_PATH)/ncc/Abstracts \
+		$(SRC_PATH)/ncc/Classes \
+		$(SRC_PATH)/ncc/CLI \
+		$(SRC_PATH)/ncc/Exceptions \
+		$(SRC_PATH)/ncc/Extensions \
+		$(SRC_PATH)/ncc/Managers \
+		$(SRC_PATH)/ncc/Objects \
+		$(SRC_PATH)/ncc/Runtime \
+		$(SRC_PATH)/ncc/Utilities \
+	  	$(SRC_PATH)/ncc/ncc.php
 
 redist: autoload
-	rm -rf build/src
-	mkdir -p build/src
-	cp -rf src/ncc/* build/src
-	cp src/installer/installer build/src/INSTALL
-	cp src/installer/ncc.sh build/src/ncc.sh
-	cp src/config/ncc.yaml build/src/default_config.yaml;
-	cp src/installer/extension build/src/extension
-	chmod +x build/src/INSTALL
-	cp LICENSE build/src/LICENSE
-	cp README.md build/src/README.md
-	cp src/installer/hash_check.php build/src/hash_check.php; $(PHPCC) php build/src/hash_check.php; rm build/src/hash_check.php
-	cp src/installer/generate_build_files.php build/src/generate_build_files.php; $(PHPCC) php build/src/generate_build_files.php; rm build/src/generate_build_files.php
+	rm -rf $(BUILD_PATH)/src
+	mkdir -p $(BUILD_PATH)/src
+	cp -rf $(SRC_PATH)/ncc/* $(BUILD_PATH)/src
+	cp $(SRC_PATH)/installer/installer $(BUILD_PATH)/$(SRC_PATH)/INSTALL
+	cp $(SRC_PATH)/installer/ncc.sh $(BUILD_PATH)/$(SRC_PATH)/ncc.sh
+	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/$(SRC_PATH)/default_config.yaml;
+	cp $(SRC_PATH)/installer/extension $(BUILD_PATH)/$(SRC_PATH)/extension
+	chmod +x $(BUILD_PATH)/$(SRC_PATH)/INSTALL
+	cp LICENSE $(BUILD_PATH)/$(SRC_PATH)/LICENSE
+	cp README.md $(BUILD_PATH)/$(SRC_PATH)/README.md
+	cp $(SRC_PATH)/installer/hash_check.php $(BUILD_PATH)/$(SRC_PATH)/hash_check.php; $(PHPCC) $(BUILD_PATH)/$(SRC_PATH)/hash_check.php; rm $(BUILD_PATH)/$(SRC_PATH)/hash_check.php
+	cp $(SRC_PATH)/installer/generate_build_files.php $(BUILD_PATH)/$(SRC_PATH)/generate_build_files.php; $(PHPCC) $(BUILD_PATH)/$(SRC_PATH)/generate_build_files.php; rm $(BUILD_PATH)/$(SRC_PATH)/generate_build_files.php
 
 tar: redist
-	cd build/src; tar -czvf ../ncc.tar.gz *
+	cd $(BUILD_PATH)/src; tar -czvf ../ncc.tar.gz *
 
 clean:
-	rm -rf build
-	rm -f src/ncc/autoload_spl.php
-	rm -f src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
-	rm -f src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
-	rm -f src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
-	rm -f src/ncc/ThirdParty/Symfony/Process/autoload_spl.php
-	rm -f src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
-	rm -f src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
-	rm -f src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
-	rm -f src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
-	rm -f src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
+	rm -rf $(BUILD_PATH)
+	rm -f $(SRC_PATH)/ncc/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
