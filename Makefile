@@ -10,6 +10,7 @@ autoload:
 	make src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 	make src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
 	make src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
+	make src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
 	make src/ncc/autoload_spl.php
 	cp src/autoload/autoload.php src/ncc/autoload.php
 
@@ -40,6 +41,10 @@ src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php:
 src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php \
 		src/ncc/ThirdParty/Symfony/Yaml
+
+src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php \
+		src/ncc/ThirdParty/theseer/Autoload
 
 src/ncc/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output src/ncc/autoload_spl.php \
