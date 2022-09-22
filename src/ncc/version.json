@@ -30,6 +30,14 @@
     {
       "vendor": "Symfony",
       "package_name": "Yaml"
+    },
+    {
+      "vendor": "theseer",
+      "package_name": "Autoload"
+    },
+    {
+      "vendor": "theseer",
+      "package_name": "DirectoryScanner"
     }
   ],
   "update_source": null
