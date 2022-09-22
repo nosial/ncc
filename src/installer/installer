@@ -462,6 +462,16 @@
     $NCC_FILESYSTEM->chmod([$NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'config'], 0777);
     $NCC_FILESYSTEM->chmod([$NCC_DATA_PATH . DIRECTORY_SEPARATOR . 'cache'], 0777);
 
+    // Verify directories exist
+    foreach($required_dirs as $dir)
+    {
+        if(!file_exists($dir))
+        {
+            Console::outError("Cannot create directory '$dir', please verify if you have write permissions to the directory.");
+            exit(1);
+        }
+    }
+
     // Install composer
     if($curl_available && $update_composer)
     {
@@ -540,6 +550,13 @@
         {
             $NCC_FILESYSTEM->copy(__DIR__ . DIRECTORY_SEPARATOR . $file, $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $file);
             $NCC_FILESYSTEM->chmod([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $file], 0755);
+
+            if(!file_exists($NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $file))
+            {
+                Console::outError('Cannot create file \'' . $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $file . '\', installation failed.');
+                exit(1);
+            }
+
             $processed_items += 1;
         }
 
@@ -583,6 +600,12 @@
 
     foreach($bin_paths as $path)
     {
+        // Delete old versions of the executable shortcuts.
+        if(file_exists($path . DIRECTORY_SEPARATOR . 'ncc'))
+        {
+            $NCC_FILESYSTEM->remove($path . DIRECTORY_SEPARATOR . 'ncc');
+        }
+
         if($NCC_FILESYSTEM->exists([$path]))
         {
             file_put_contents($path . DIRECTORY_SEPARATOR . 'ncc', $executable_shortcut);
@@ -594,21 +617,41 @@
     Console::out('Registering extension');
     $extension_shortcut = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'extension');
     $extension_shortcut = str_ireplace('%ncc_install', $NCC_INSTALL_PATH, $extension_shortcut);
+    $extension_registered = false;
 
+    // Remove all the old extensions first.
     if(function_exists('get_include_path'))
     {
-
         foreach(explode(':', get_include_path()) as $path)
         {
             switch($path)
             {
+                // Ignore local files
                 case '.':
                 case '..':
                     break;
 
+                // First real include path is /usr/share/php
                 default:
+                    // Don't continue if the extension is already registered.
+                    if($extension_registered)
+                        break;
+
+                    // Remove the old extension
+                    if(file_exists($path . DIRECTORY_SEPARATOR . 'ncc'))
+                    {
+                        $NCC_FILESYSTEM->remove($path . DIRECTORY_SEPARATOR . 'ncc');
+                    }
+
                     file_put_contents($path . DIRECTORY_SEPARATOR . 'ncc', $extension_shortcut);
                     $NCC_FILESYSTEM->chmod([$path . DIRECTORY_SEPARATOR . 'ncc'], 0755);
+
+                    if(file_exists($path . DIRECTORY_SEPARATOR . 'ncc'))
+                    {
+                        // The extension is considered registered if the file was written
+                        $extension_registered = true;
+                    }
+
                     break;
             }
         }
@@ -657,6 +700,7 @@
         $config_obj['composer']['enable_internal_composer'] = false;
         if($config_obj['composer']['executable_path'] == null)
         {
+            // TODO: Implement Configuration Tools
             Console::outWarning('Cannot locate the executable path for \'composer\', run \'ncc config --composer.executable_path="composer.phar"\' as root to update the path');
         }
     }
@@ -672,5 +716,5 @@
     }
 
     file_put_contents($NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'ncc.yaml', Yaml::dump($config_obj));
-    Console::out('NCC has been successfully installed');
+    Console::out('NCC version: ' . NCC_VERSION_NUMBER . ' has been successfully installed');
     exit(0);
