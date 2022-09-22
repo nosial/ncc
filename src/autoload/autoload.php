@@ -8,7 +8,7 @@
      * before proceeding to improve performance.
      */
 
-    if(defined('NCC_INIT') == false)
+    if(!defined('NCC_INIT'))
     {
         $third_party_path = __DIR__ . DIRECTORY_SEPARATOR . 'ThirdParty' . DIRECTORY_SEPARATOR;
         $target_files = [
