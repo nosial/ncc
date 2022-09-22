@@ -28,6 +28,12 @@
 
         foreach($target_files as $file)
         {
+            if(!file_exists($file))
+            {
+                trigger_error('Cannot find file ' . $file, E_USER_WARNING);
+                continue;
+            }
+
             require_once($file);
         }
 
