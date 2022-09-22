@@ -30,6 +30,10 @@
     {
       "vendor": "Symfony",
       "package_name": "Yaml"
+    },
+    {
+      "vendor": "theseer",
+      "package_name": "Autoload"
     }
   ],
   "update_source": null
