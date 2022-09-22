@@ -26,18 +26,25 @@
             $third_party_path . 'theseer' . DIRECTORY_SEPARATOR . 'DirectoryScanner' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
         ];
 
+        $init_success = true;
         foreach($target_files as $file)
         {
             if(!file_exists($file))
             {
                 trigger_error('Cannot find file ' . $file, E_USER_WARNING);
+                $init_success = false;
                 continue;
             }
 
             require_once($file);
         }
 
-        if(\ncc\ncc::initialize() == false)
+        if(!$init_success)
+        {
+            trigger_error('One or more NCC components are missing/failed to load, NCC runtime may not be stable.', E_USER_WARNING);
+        }
+
+        if(!\ncc\ncc::initialize())
         {
             trigger_error('NCC Failed to initialize', E_USER_WARNING);
         }
