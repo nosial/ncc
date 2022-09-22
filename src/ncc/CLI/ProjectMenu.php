@@ -112,6 +112,7 @@
             $options = [
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
                 new CliHelpSection(['create', '--src', '--package', '--name'], 'Creates a new NCC project'),
+                new CliHelpSection(['create', '--makefile'], 'Generates a Makefile for the project'),
             ];
 
             $options_padding = \ncc\Utilities\Functions::detectParametersPadding($options) + 4;
