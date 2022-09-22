@@ -35,9 +35,9 @@
      * @license    BSD License
      *
      */
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
-    use TheSeer\DirectoryScanner\DirectoryScanner;
+    use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
 
     class PharBuilder {
 

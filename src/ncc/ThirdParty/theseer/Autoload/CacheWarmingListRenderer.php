@@ -1,9 +1,11 @@
 <?php
-namespace TheSeer\Autoload;
+namespace ncc\ThirdParty\theseer\Autoload;
+
+use ncc\ThirdParty\theseer\Autoload\StaticListRenderer;
 
 class CacheWarmingListRenderer implements StaticListRenderer {
     /**
-     * @var boo
+     * @var bool
      */
     private $addReset;
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2009-2019 Arne Blankerts <arne@blankerts.de>
+ * Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,72 +29,86 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package    Autoload
+ * @package    DirectoryScanner
  * @author     Arne Blankerts <arne@blankerts.de>
  * @copyright  Arne Blankerts <arne@blankerts.de>, All rights reserved.
  * @license    BSD License
  */
 
-namespace ncc\ThirdParty\theseer\Autoload {
+namespace ncc\ThirdParty\theseer\DirectoryScanner {
+
+    use ReturnTypeWillChange;
 
     /**
-     * Sorting classes by depdendency for static requires
+     * FilterIterator to accept Items based on include/exclude conditions
      *
      * @author     Arne Blankerts <arne@blankerts.de>
      * @copyright  Arne Blankerts <arne@blankerts.de>, All rights reserved.
+     * @version    Release: %version%
      */
-    class ClassDependencySorter {
+    class IncludeExcludeFilterIterator extends \FilterIterator {
 
-        private $classList;
-        private $dependencies;
+        /**
+         * List of filter for include shell patterns
+         *
+         * @var Array
+         */
+        protected $include;
 
-        private $level;
+        /**
+         * List of filter for exclude shell patterns
+         *
+         * @var Array
+         */
+        protected $exclude;
 
-        private $sorted = array();
-
-        public function __construct(Array $classes, Array $dependencies) {
-            $this->classList    = $classes;
-            $this->dependencies = $dependencies;
+        /**
+         * Set and by that overwrite the include filter array
+         *
+         * @param Array $inc Array of include pattern strings
+         *
+         * @return void
+         */
+        public function setInclude(array $inc = array()) {
+            $this->include = $inc;
         }
 
-        public function process() {
-            $this->level = 0;
-            foreach($this->classList as $class => $file) {
-                if (!in_array($class, $this->sorted)) {
-                    $this->resolve($class);
+        /**
+         * Set and by that overwrite the exclude filter array
+         *
+         * @param Array $exc Array of exclude pattern strings
+         *
+         * @return void
+         */
+        public function setExclude(array $exc = array()) {
+            $this->exclude = $exc;
+        }
+
+        /**
+         * FilterIterator Method to decide whether or not to include
+         * the current item into the list
+         *
+         * @return boolean
+         */
+        #[ReturnTypeWillChange]
+        public function accept() {
+            $pathname = $this->current()->getPathname();
+
+            foreach($this->exclude as $out) {
+                if (fnmatch($out, $pathname)) {
+                    return false;
                 }
             }
 
-            $res = array();
-            foreach($this->sorted as $class) {
-                if (!isset($this->classList[$class])) {
-                    continue;
+            foreach($this->include as $in) {
+                if (fnmatch($in, $pathname)) {
+                    return true;
                 }
-                $res[$class] = $this->classList[$class];
             }
-            return $res;
+
+            return false;
         }
 
-        private function resolve($class) {
-            $this->level++;
-            if ($this->level == 50) {
-                throw new ClassDependencySorterException("Can't resolve more than 50 levels of dependencies", ClassDependencySorterException::TooManyDependencyLevels);
-            }
-            if (isset($this->dependencies[$class])) {
-                foreach($this->dependencies[$class] as $depclass) {
-                    if (!in_array($depclass, $this->sorted)) {
-                        $this->resolve($depclass);
-                    }
-                }
-            }
-            $this->sorted[] = $class;
-            $this->level--;
-        }
     }
 
-    class ClassDependencySorterException extends \Exception {
-
-        const TooManyDependencyLevels = 1;
-
-    }
 }

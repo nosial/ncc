@@ -35,7 +35,7 @@
  * @license    BSD License
  */
 
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
     // PHP 5.3 compat
     define('T_TRAIT_53', 10355);

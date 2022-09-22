@@ -1,5 +1,5 @@
 <?php
-namespace TheSeer\Autoload;
+namespace ncc\ThirdParty\theseer\Autoload;
 
 /**
  * Namespace aware parser to find and extract defined classes within php source files

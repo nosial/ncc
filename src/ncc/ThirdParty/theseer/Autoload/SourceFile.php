@@ -1,7 +1,9 @@
 <?php
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
-    class SourceFile extends \SplFileInfo {
+    use SplFileInfo;
+
+    class SourceFile extends SplFileInfo {
 
         public function getTokens() {
             return token_get_all(file_get_contents($this->getRealPath()));

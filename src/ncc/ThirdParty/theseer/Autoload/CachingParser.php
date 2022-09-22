@@ -1,5 +1,8 @@
 <?php
-namespace TheSeer\Autoload {
+
+    namespace ncc\ThirdParty\theseer\Autoload {
+
+    use ncc\ThirdParty\theseer\Autoload\ParserInterface;
 
     class CachingParser implements ParserInterface {
 

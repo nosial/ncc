@@ -35,7 +35,7 @@
  * @license    BSD License
  */
 
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
     /**
      * Builds spl based autoload code for inclusion into projects

@@ -35,7 +35,7 @@
  * @license    BSD License
  */
 
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
     /**
      * Builds static require list for inclusion into projects

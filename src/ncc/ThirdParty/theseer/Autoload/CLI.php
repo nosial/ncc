@@ -36,7 +36,7 @@
  * @license    BSD License
  */
 
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
     /**
      * CLI interface to AutoloadRenderer / StaticRenderer
@@ -138,7 +138,7 @@ namespace TheSeer\Autoload {
         /**
          * @param \ezcConsoleInput $input
          *
-         * @return \TheSeer\Autoload\Config
+         * @return \ncc\ThirdParty\theseer\Autoload\Config
          */
         private function configure(\ezcConsoleInput $input) {
             $config = new Config($input->getArguments());

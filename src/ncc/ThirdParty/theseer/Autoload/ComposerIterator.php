@@ -1,7 +1,12 @@
 <?php
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
-    class ComposerIterator implements \Iterator {
+    use Exception;
+    use Iterator;
+    use ReturnTypeWillChange;
+    use SplFileInfo;
+
+    class ComposerIterator implements Iterator {
 
         /**
          * @var array
@@ -12,7 +17,7 @@ namespace TheSeer\Autoload {
 
         private $pos = 0;
 
-        public function __construct(\SplFileInfo $composerFile) {
+        public function __construct(SplFileInfo $composerFile) {
             if (!$composerFile->isFile() || !$composerFile->isReadable()) {
                 throw new ComposerIteratorException(
                     sprintf('Composer file "%s" not found or not readable', $composerFile->getPathname()),
@@ -115,7 +120,7 @@ namespace TheSeer\Autoload {
          * @link http://php.net/manual/en/iterator.current.php
          * @return mixed Can return any type.
          */
-        #[\ReturnTypeWillChange]
+        #[ReturnTypeWillChange]
         public function current() {
             return $this->directories[$this->pos];
         }
@@ -127,7 +132,7 @@ namespace TheSeer\Autoload {
          * @link http://php.net/manual/en/iterator.next.php
          * @return void Any returned value is ignored.
          */
-        #[\ReturnTypeWillChange]
+        #[ReturnTypeWillChange]
         public function next() {
             $this->pos++;
         }
@@ -139,7 +144,7 @@ namespace TheSeer\Autoload {
          * @link http://php.net/manual/en/iterator.key.php
          * @return mixed scalar on success, or null on failure.
          */
-        #[\ReturnTypeWillChange]
+        #[ReturnTypeWillChange]
         public function key() {
             return $this->pos;
         }
@@ -152,7 +157,7 @@ namespace TheSeer\Autoload {
          * @return boolean The return value will be casted to boolean and then evaluated.
          *       Returns true on success or false on failure.
          */
-        #[\ReturnTypeWillChange]
+        #[ReturnTypeWillChange]
         public function valid() {
             return $this->pos < count($this->directories);
         }
@@ -164,14 +169,14 @@ namespace TheSeer\Autoload {
          * @link http://php.net/manual/en/iterator.rewind.php
          * @return void Any returned value is ignored.
          */
-        #[\ReturnTypeWillChange]
+        #[ReturnTypeWillChange]
         public function rewind() {
             $this->pos = 0;
         }
 
     }
 
-    class ComposerIteratorException extends \Exception {
+    class ComposerIteratorException extends Exception {
         const InvalidComposerJsonFile = 1;
     }
 

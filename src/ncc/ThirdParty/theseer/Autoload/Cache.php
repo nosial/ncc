@@ -1,5 +1,6 @@
 <?php
-namespace TheSeer\Autoload {
+
+namespace ncc\ThirdParty\theseer\Autoload {
 
     class Cache {
 

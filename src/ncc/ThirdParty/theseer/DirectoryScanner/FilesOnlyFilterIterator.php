@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2009-2019 Arne Blankerts <arne@blankerts.de>
+ * Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,31 +29,46 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package    Autoload
+ * @package    DirectoryScanner
  * @author     Arne Blankerts <arne@blankerts.de>
  * @copyright  Arne Blankerts <arne@blankerts.de>, All rights reserved.
  * @license    BSD License
- *
  */
-namespace ncc\ThirdParty\theseer\Autoload {
 
-    class Logger {
+namespace ncc\ThirdParty\theseer\DirectoryScanner {
 
-        private $quiet = FALSE;
+    use ReturnTypeWillChange;
+
+    /**
+     * FilterIterator to accept on files from a directory iterator
+     *
+     * @author     Arne Blankerts <arne@blankerts.de>
+     * @copyright  Arne Blankerts <arne@blankerts.de>, All rights reserved.
+     * @version    Release: %version%
+     */
+    class FilesOnlyFilterIterator extends \FilterIterator {
 
         /**
-         * @param bool $quietMode
+         * FilterIterator Method to decide whether or not to include
+         * the current item into the list
+         *
+         * @return boolean
          */
-        public function __construct($quietMode = FALSE) {
-            $this->quiet = $quietMode;
-        }
-
-        public function log($message, $target = STDOUT) {
-            if ($this->quiet) {
-                return;
+        #[ReturnTypeWillChange]
+        public function accept() {
+            switch($this->current()->getType()) {
+                case 'file': {
+                    return true;
+                }
+                case 'link': {
+                    return is_file(realpath($this->current()->getPathname()));
+                }
+                default: {
+                    return false;
+                }
             }
-            fwrite($target, $message);
         }
 
     }
+
 }

@@ -1,5 +1,5 @@
 PHPCC=/usr/bin/php
-$(PHPAB)=$(PHPAB)
+PHPAB=phpab
 
 autoload:
 	# Generates/creates all the autoloader files
@@ -11,6 +11,7 @@ autoload:
 	make src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
 	make src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
 	make src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
+	make src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
 	make src/ncc/autoload_spl.php
 	cp src/autoload/autoload.php src/ncc/autoload.php
 
@@ -45,6 +46,10 @@ src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php:
 src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php \
 		src/ncc/ThirdParty/theseer/Autoload
+
+src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php \
+		src/ncc/ThirdParty/theseer/DirectoryScanner
 
 src/ncc/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output src/ncc/autoload_spl.php \
@@ -86,3 +91,5 @@ clean:
 	rm -f src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 	rm -f src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
 	rm -f src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
+	rm -f src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
+	rm -f src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php

@@ -1,7 +1,7 @@
 <?php
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
-    use TheSeer\DirectoryScanner\PHPFilterIterator;
+    use ncc\ThirdParty\theseer\DirectoryScanner\PHPFilterIterator;
 
     class Collector {
 

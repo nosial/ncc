@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2009-2019 Arne Blankerts <arne@blankerts.de>
+ * Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -33,27 +33,33 @@
  * @author     Arne Blankerts <arne@blankerts.de>
  * @copyright  Arne Blankerts <arne@blankerts.de>, All rights reserved.
  * @license    BSD License
- *
  */
-namespace ncc\ThirdParty\theseer\Autoload {
 
-    class Logger {
+namespace ncc\ThirdParty\theseer\DirectoryScanner {
 
-        private $quiet = FALSE;
+    use ReturnTypeWillChange;
+
+    /**
+     * FilterIterator to accept only php source files based on content
+     *
+     * @author     Arne Blankerts <arne@blankerts.de>
+     * @copyright  Arne Blankerts <arne@blankerts.de>, All rights reserved.
+     * @version    Release: %version%
+     */
+    class PHPFilterIterator extends \FilterIterator {
 
         /**
-         * @param bool $quietMode
+         * FilterIterator Method to decide whether or not to include
+         * the current item into the list
+         *
+         * @return boolean
          */
-        public function __construct($quietMode = FALSE) {
-            $this->quiet = $quietMode;
-        }
-
-        public function log($message, $target = STDOUT) {
-            if ($this->quiet) {
-                return;
-            }
-            fwrite($target, $message);
+        #[ReturnTypeWillChange]
+        public function accept() {
+            $finfo = new \finfo(FILEINFO_MIME);
+            return strpos($finfo->file($this->current()->getPathname()), 'text/x-php') === 0;
         }
 
     }
+
 }

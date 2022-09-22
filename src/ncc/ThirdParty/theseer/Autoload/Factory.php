@@ -35,10 +35,10 @@
  * @license    BSD License
  *
  */
-namespace TheSeer\Autoload {
+namespace ncc\ThirdParty\theseer\Autoload {
 
-    use TheSeer\DirectoryScanner\DirectoryScanner;
-    use TheSeer\DirectoryScanner\IncludeExcludeFilterIterator;
+    use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
+    use ncc\ThirdParty\theseer\DirectoryScanner\IncludeExcludeFilterIterator;
 
     class Factory {
 
@@ -53,7 +53,7 @@ namespace TheSeer\Autoload {
         private $cache;
 
         /**
-         * @param \TheSeer\Autoload\Config $config
+         * @param \ncc\ThirdParty\theseer\Autoload\Config $config
          */
         public function setConfig(Config $config) {
             $this->config = $config;
@@ -163,8 +163,8 @@ namespace TheSeer\Autoload {
          *
          * @param CollectorResult $result
          *
+         * @return \ncc\ThirdParty\theseer\Autoload\AutoloadRenderer|\ncc\ThirdParty\theseer\Autoload\StaticRenderer
          * @throws \RuntimeException
-         * @return \TheSeer\Autoload\AutoloadRenderer|\TheSeer\Autoload\StaticRenderer
          */
         public function getRenderer(CollectorResult $result) {
             $isStatic = $this->config->isStaticMode();
