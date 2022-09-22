@@ -13,5 +13,6 @@ src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
 src/ncc/ThirdParty/Symfony/Yaml/autoload_spl.php
 src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
+src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
 src/ncc/autoload_spl.php
 src/ncc/autoload.php
