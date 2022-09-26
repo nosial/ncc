@@ -6,8 +6,10 @@ build
 
 # Autoload files
 src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+src/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
 src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
 src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
+src/ncc/ThirdParty/Symfony/polyfill-uuid/autoload_spl.php
 src/ncc/ThirdParty/Symfony/Process/autoload_spl.php
 src/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 src/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
@@ -16,3 +18,6 @@ src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
 src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
 src/ncc/autoload_spl.php
 src/ncc/autoload.php
+
+# Test files
+tests/example_project/src/project.json

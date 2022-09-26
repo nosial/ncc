@@ -8,12 +8,20 @@
       "package_name": "php-encryption"
     },
     {
+      "vendor": "nikic",
+      "package_name": "PhpParser"
+    },
+    {
       "vendor": "Symfony",
       "package_name": "polyfill-ctype"
     },
     {
       "vendor": "Symfony",
       "package_name": "polyfill-mbstring"
+    },
+    {
+      "vendor": "Symfony",
+      "package_name": "polyfill-uuid"
     },
     {
       "vendor": "Symfony",

@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects;
 
     class NccUpdateInformation

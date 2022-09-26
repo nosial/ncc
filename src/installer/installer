@@ -100,6 +100,8 @@
     }
 
     $NCC_AUTO_MODE = ($NCC_ARGS !== null && isset($NCC_ARGS['auto']));
+    $NCC_BYPASS_CLI_CHECK = ($NCC_ARGS !== null && isset($NCC_ARGS['bypass-cli-check']));
+    $NCC_BYPASS_CHECKSUM = ($NCC_ARGS !== null && isset($NCC_ARGS['bypass-checksum']));
 
     if(isset($NCC_ARGS['help']))
     {
@@ -108,6 +110,8 @@
             new CliHelpSection(['--auto'], 'Automates the installation process'),
             new CliHelpSection(['--install-composer'], 'Require composer to be installed alongside NCC'),
             new CliHelpSection(['--install-dir'], 'Specifies the installation directory for NCC'),
+            new CliHelpSection(['--bypass-cli-check'], 'Bypasses the check for a CLI environment'),
+            new CliHelpSection(['--bypass-checksum'], 'Bypasses the checksum for the installation files'),
         ];
 
         $options_padding = Functions::detectParametersPadding($options) + 4;
@@ -128,27 +132,30 @@
     }
 
     // Detect the server API
-    if(defined('PHP_SAPI'))
+    if(!$NCC_BYPASS_CLI_CHECK)
     {
-        if(strtolower(PHP_SAPI) !== 'cli')
+        if(defined('PHP_SAPI'))
+        {
+            if(strtolower(PHP_SAPI) !== 'cli')
+            {
+                print('This installation script is meant to be running in your terminal' . PHP_EOL);
+            }
+        }
+        elseif(function_exists('php_sapi_name') && strtolower(php_sapi_name()) !== 'cli')
         {
             print('This installation script is meant to be running in your terminal' . PHP_EOL);
         }
-    }
-    elseif(function_exists('php_sapi_name') && strtolower(php_sapi_name()) !== 'cli')
-    {
-        print('This installation script is meant to be running in your terminal' . PHP_EOL);
-    }
-    else
-    {
-        Console::outWarning(
-            'The installer cannot determine the Server API (SAPI), the installer will continue but it is ' .
-            'recommended to be running this installer in a terminal'
-        );
+        else
+        {
+            Console::outWarning(
+                'The installer cannot determine the Server API (SAPI), the installer will continue but it is ' .
+                'recommended to be running this installer in a terminal'
+            );
+        }
     }
 
     // Check if running in a TTY
-    if(stream_isatty(STDERR))
+    if(stream_isatty(STDERR) && !$NCC_BYPASS_CLI_CHECK)
     {
         Console::outWarning('Your terminal may have some issues rendering the output of this installer');
     }
@@ -193,39 +200,42 @@
     }
 
     // Preform the checksum validation
-    if(!file_exists($NCC_CHECKSUM))
+    if(!$NCC_BYPASS_CHECKSUM)
     {
-        Console::outWarning('The file \'checksum.bin\' was not found, the contents of the program cannot be verified to be safe');
-    }
-    else
-    {
-        Console::out('Running checksum');
-
-        $checksum = ZiProto::decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin'));
-        $checksum_failed = false;
-
-        foreach($checksum as $path => $hash)
+        if(!file_exists($NCC_CHECKSUM))
         {
-            if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . $path))
-            {
-                Console::outError('Cannot check file, \'' . $path . '\' not found.');
-                $checksum_failed = true;
-            }
-            elseif(hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $path) !== $hash)
-            {
-                Console::outWarning('The file \'' . $path . '\' does not match the original checksum');
-                $checksum_failed = true;
-            }
-        }
-
-        if($checksum_failed)
-        {
-            Console::outError('Checksum failed, the contents of the program cannot be verified to be safe');
-            exit(1);
+            Console::outWarning('The file \'checksum.bin\' was not found, the contents of the program cannot be verified to be safe');
         }
         else
         {
-            Console::out('Checksum passed');
+            Console::out('Running checksum');
+
+            $checksum = ZiProto::decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin'));
+            $checksum_failed = false;
+
+            foreach($checksum as $path => $hash)
+            {
+                if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . $path))
+                {
+                    Console::outError('Cannot check file, \'' . $path . '\' not found.');
+                    $checksum_failed = true;
+                }
+                elseif(hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $path) !== $hash)
+                {
+                    Console::outWarning('The file \'' . $path . '\' does not match the original checksum');
+                    $checksum_failed = true;
+                }
+            }
+
+            if($checksum_failed)
+            {
+                Console::outError('Checksum failed, the contents of the program cannot be verified to be safe');
+                exit(1);
+            }
+            else
+            {
+                Console::out('Checksum passed');
+            }
         }
     }
 
@@ -514,7 +524,7 @@
         // Verify install
         if(!$NCC_FILESYSTEM->exists([$NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'composer.phar']))
         {
-            Console::outError("The installation exited without any issues but composer doesn't seem to be installed correctly");
+            Console::outError("Installation failed, the installation exited without any issues but composer doesn't seem to be installed correctly");
             exit(1);
         }
 

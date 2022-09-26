@@ -1,10 +1,14 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Runtime;
 
     use ncc\Exceptions\ConstantReadonlyException;
+    use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Objects\Constant;
     use ncc\Utilities\Resolver;
+    use ncc\Utilities\Validate;
 
     class Constants
     {
@@ -24,10 +28,13 @@
          * @param bool $readonly Indicates if the constant cannot be changed with the registerConstant function once it's registered
          * @return void
          * @throws ConstantReadonlyException
+         * @throws InvalidConstantNameException
          */
-        public static function register(string $scope, string $name, string $value, bool $readonly=false)
+        public static function register(string $scope, string $name, string $value, bool $readonly=false): void
         {
-            // TODO: Add functionality to convert the constant name to be more memory-friendly with a size limit
+            if(!Validate::constantName($name))
+                throw new InvalidConstantNameException('The name specified is not valid for a constant name');
+
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
             if(isset(self::$Constants[$constant_hash]))
@@ -47,8 +54,11 @@
          * @return void
          * @throws ConstantReadonlyException
          */
-        public static function delete(string $scope, string $name)
+        public static function delete(string $scope, string $name): void
         {
+            if(!Validate::constantName($name))
+                return;
+
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
             if(isset(self::$Constants[$constant_hash]) && self::$Constants[$constant_hash]->isReadonly())

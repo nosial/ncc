@@ -97,6 +97,23 @@
         }
 
         /**
+         * Determines if NCC is currently in CLI mode or not
+         *
+         * @return bool
+         */
+        public static function cliMode(): bool
+        {
+            // TODO: Optimize this function to reduce redundant calls
+
+            if(defined('NCC_CLI_MODE') && NCC_CLI_MODE == 1)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
          * Returns the constants set by NCC
          *
          * @return array
@@ -122,6 +139,9 @@
                 'NCC_VERSION_BRANCH' => constant('NCC_VERSION_BRANCH'),
                 'NCC_VERSION_UPDATE_SOURCE' => constant('NCC_VERSION_UPDATE_SOURCE'),
                 'NCC_VERSION_FLAGS' => constant('NCC_VERSION_FLAGS'),
+
+                // Runtime Information
+                'NCC_CLI_MODE' => (defined('NCC_CLI_MODE') ? NCC_CLI_MODE : 0) // May not be set during runtime initialization
             ];
         }
     }

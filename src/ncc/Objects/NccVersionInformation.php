@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects;
 
     use ncc\Objects\NccVersionInformation\Component;

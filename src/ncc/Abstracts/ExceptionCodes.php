@@ -3,20 +3,26 @@
     namespace ncc\Abstracts;
 
     use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AutoloadGeneratorException;
+    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\ComponentVersionNotFoundException;
     use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidCredentialsEntryException;
+    use ncc\Exceptions\InvalidPackageException;
     use ncc\Exceptions\InvalidPackageNameException;
+    use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\InvalidVersionNumberException;
     use ncc\Exceptions\MalformedJsonException;
-    use ncc\Exceptions\MethodNotAvailableException;
+    use ncc\Exceptions\NoUnitsFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\UnsupportedPackageException;
 
     /**
      * @author Zi Xing Narrakas
@@ -95,6 +101,51 @@
         const ProjectAlreadyExistsException = -1713;
 
         /**
+         * @see AutoloadGeneratorException
+         */
+        const AutoloadGeneratorException = -1714;
+
+        /**
+         * @see NoUnitsFoundException
+         */
+        const NoUnitsFoundException = -1715;
+
+        /**
+         * @see UnsupportedPackageException
+         */
+        const UnsupportedPackageException = -1716;
+
+        /**
+         * @see NotImplementedException
+         */
+        const NotImplementedException = -1717;
+
+        /**
+         * @see InvalidPackageException
+         */
+        const InvalidPackageException = -1718;
+
+        /**
+         * @see InvalidConstantNameException
+         */
+        const InvalidConstantNameException = -1719;
+
+        /**
+         * @see PackagePreparationFailedException
+         */
+        const PackagePreparationFailedException = -1720;
+
+        /**
+         * @see BuildConfigurationNotFoundException
+         */
+        const BuildConfigurationNotFoundException = -1721;
+
+        /**
+         * @see InvalidProjectBuildConfiguration
+         */
+        const InvalidProjectBuildConfiguration = -1722;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -112,5 +163,14 @@
             self::InvalidVersionNumberException,
             self::InvalidProjectNameException,
             self::ProjectAlreadyExistsException,
+            self::AutoloadGeneratorException,
+            self::NoUnitsFoundException,
+            self::UnsupportedPackageException,
+            self::NotImplementedException,
+            self::InvalidPackageException,
+            self::InvalidConstantNameException,
+            self::PackagePreparationFailedException,
+            self::BuildConfigurationNotFoundException,
+            self::InvalidProjectBuildConfiguration
         ];
     }

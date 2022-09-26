@@ -3,7 +3,6 @@
     namespace ncc\Objects;
 
     use ncc\Exceptions\ConstantReadonlyException;
-    use ncc\Symfony\Component\Uid\Uuid;
     use ncc\Utilities\Resolver;
 
     class Constant
@@ -90,6 +89,7 @@
 
         /**
          * @param string $value
+         * @param bool $readonly
          * @throws ConstantReadonlyException
          */
         public function setValue(string $value, bool $readonly=false): void

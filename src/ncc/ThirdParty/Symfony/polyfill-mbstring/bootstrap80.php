@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use ncc\ThirdParty\Symfony\polyfill as p;
+use ncc\ThirdParty\Symfony\mbstring as p;
 
 if (!function_exists('mb_convert_encoding')) {
     function mb_convert_encoding(array|string|null $string, ?string $to_encoding, array|string|null $from_encoding = null): array|string|false { return p\Mbstring::mb_convert_encoding($string ?? '', (string) $to_encoding, $from_encoding); }
