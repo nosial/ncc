@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects;
 
     use ncc\Abstracts\ConsoleColors;
@@ -81,9 +83,11 @@
         /**
          * Returns a string representation of the object
          *
+         * @param int $param_padding
+         * @param bool $basic
          * @return string
          */
-        public function toString(int $param_padding=0, bool $basic=false)
+        public function toString(int $param_padding=0, bool $basic=false): string
         {
             $out = [];
 
@@ -91,9 +95,10 @@
             {
                 if($param_padding > 0)
                 {
+                    /** @noinspection PhpRedundantOptionalArgumentInspection */
                     $result = str_pad(implode(' ', $this->Parameters), $param_padding, ' ', STR_PAD_RIGHT);
 
-                    if($basic == false)
+                    if(!$basic)
                     {
                         $result = Console::formatColor($result, ConsoleColors::Green);
                     }

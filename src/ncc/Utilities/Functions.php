@@ -29,7 +29,7 @@
          */
         public static function cbc(string $input): int
         {
-            return hexdec(hash('crc32', $input));
+            return hexdec(hash('crc32', $input, true));
         }
 
         /**

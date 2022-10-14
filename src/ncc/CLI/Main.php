@@ -3,6 +3,9 @@
     namespace ncc\CLI;
 
     use Exception;
+    use ncc\Abstracts\NccBuildFlags;
+    use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\RuntimeException;
     use ncc\ncc;
     use ncc\Utilities\Console;
     use ncc\Utilities\Resolver;
@@ -22,7 +25,26 @@
             if(isset($args['ncc-cli']))
             {
                 // Initialize NCC
-                ncc::initialize();
+                try
+                {
+                    ncc::initialize();
+                }
+                catch (FileNotFoundException $e)
+                {
+                    Console::outException('Cannot initialize NCC, one or more files were not found.', $e, 1);
+                }
+                catch (RuntimeException $e)
+                {
+                    Console::outException('Cannot initialize NCC due to a runtime error.', $e, 1);
+                }
+
+                // Define CLI stuff
+                define('NCC_CLI_MODE', 1);
+
+                if(in_array(NccBuildFlags::Unstable, NCC_VERSION_FLAGS))
+                {
+                    Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
+                }
 
                 try
                 {

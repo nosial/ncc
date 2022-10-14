@@ -187,4 +187,25 @@
 
             return false;
         }
+
+        /**
+         * Validates if the constant name is valid
+         *
+         * @param $input
+         * @return bool
+         */
+        public static function constantName($input): bool
+        {
+            if($input == null)
+            {
+                return false;
+            }
+
+            if(!preg_match(RegexPatterns::ConstantName, $input))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }

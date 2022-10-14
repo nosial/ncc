@@ -85,7 +85,7 @@
          */
         public function validate(bool $throw_exception=false): bool
         {
-            if(preg_match(RegexPatterns::UUIDv4, $this->UUID) == false)
+            if(!preg_match(RegexPatterns::UUIDv4, $this->UUID))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The UUID is not a valid v4 UUID', 'Assembly.UUID');
@@ -93,7 +93,7 @@
                 return false;
             }
 
-            if(Validate::version($this->Version) == false)
+            if(!Validate::version($this->Version))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The version number is invalid', 'Assembly.Version');
@@ -101,7 +101,7 @@
                 return false;
             }
 
-            if(preg_match(RegexPatterns::PackageNameFormat, $this->Package) == false)
+            if(!preg_match(RegexPatterns::PackageNameFormat, $this->Package))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The package name is invalid', 'Assembly.Package');
