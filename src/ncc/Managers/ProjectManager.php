@@ -63,7 +63,7 @@
             /** @noinspection PhpStrFunctionsInspection */
             if(substr($selected_directory, -1) !== '/')
             {
-                $selected_directory .= $selected_directory . DIRECTORY_SEPARATOR;
+                $selected_directory .= DIRECTORY_SEPARATOR;
             }
 
             // Detect if the folder exists or not
