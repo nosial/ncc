@@ -72,16 +72,14 @@
                 return;
             }
 
-            // Detect if project.json exists in the directory
-            if(file_exists($selected_directory . 'project.json'))
-            {
-                $this->ProjectPath = $selected_directory;
-                $this->ProjectFilePath = $selected_directory . 'project.json';
-            }
+            $this->ProjectPath = $selected_directory;
+            $this->ProjectFilePath = $selected_directory . 'project.json';
         }
 
         /**
          * Initializes the project structure
+         *
+         * // TODO: Correct the unexpected path behavior issue when initializing a project
          *
          * @param Compiler $compiler
          * @param string $name
