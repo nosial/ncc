@@ -3,6 +3,7 @@
     namespace ncc\Classes\PhpExtension;
 
     use ArrayIterator;
+    use ncc\Abstracts\ComponentFileExtensions;
     use ncc\Exceptions\AutoloadGeneratorException;
     use ncc\Exceptions\NoUnitsFoundException;
     use ncc\Objects\ProjectConfiguration;
@@ -45,9 +46,11 @@
         {
             // Construct configuration
             $configuration = new Config([$src]);
-            $configuration->setFollowSymlinks(false);
+            $configuration->setFollowSymlinks(false); // Don't follow symlinks, it won't work on some systems.
             $configuration->setOutputFile($output);
             $configuration->setTrusting(false); // Paranoid
+            // Official PHP file extensions that are missing from the default configuration (whatever)
+            $configuration->setInclude(ComponentFileExtensions::Php);
 
             // Construct factory
             $factory = new Factory();

@@ -83,7 +83,7 @@
          * @return bool
          * @throws InvalidProjectConfigurationException
          */
-        public function validate(bool $throw_exception=false): bool
+        public function validate(bool $throw_exception=True): bool
         {
             if(!preg_match(RegexPatterns::UUIDv4, $this->UUID))
             {

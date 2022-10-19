@@ -4,6 +4,7 @@
 
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\AutoloadGeneratorException;
+    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\ComponentVersionNotFoundException;
     use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\DirectoryNotFoundException;
@@ -12,6 +13,7 @@
     use ncc\Exceptions\InvalidCredentialsEntryException;
     use ncc\Exceptions\InvalidPackageException;
     use ncc\Exceptions\InvalidPackageNameException;
+    use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\InvalidScopeException;
@@ -129,6 +131,21 @@
         const InvalidConstantNameException = -1719;
 
         /**
+         * @see PackagePreparationFailedException
+         */
+        const PackagePreparationFailedException = -1720;
+
+        /**
+         * @see BuildConfigurationNotFoundException
+         */
+        const BuildConfigurationNotFoundException = -1721;
+
+        /**
+         * @see InvalidProjectBuildConfiguration
+         */
+        const InvalidProjectBuildConfiguration = -1722;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -151,6 +168,9 @@
             self::UnsupportedPackageException,
             self::NotImplementedException,
             self::InvalidPackageException,
-            self::InvalidConstantNameException
+            self::InvalidConstantNameException,
+            self::PackagePreparationFailedException,
+            self::BuildConfigurationNotFoundException,
+            self::InvalidProjectBuildConfiguration
         ];
     }

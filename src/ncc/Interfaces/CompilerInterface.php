@@ -4,7 +4,7 @@
 
     interface CompilerInterface
     {
-        public function prepare(array $options);
+        public function prepare(array $options, string $src);
 
-        public function build(array $options);
+        public function build(array $options, string $src);
     }

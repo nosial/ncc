@@ -54,7 +54,7 @@
          * @return bool
          * @throws InvalidProjectConfigurationException
          */
-        public function validate(bool $throw_exception=false): bool
+        public function validate(bool $throw_exception=True): bool
         {
             if(!$this->Assembly->validate($throw_exception))
                 return false;

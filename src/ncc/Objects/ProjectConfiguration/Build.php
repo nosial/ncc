@@ -4,6 +4,8 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Utilities\Functions;
 
     /**
@@ -78,6 +80,71 @@
             $this->DefineConstants = [];
             $this->Dependencies = [];
             $this->Configurations = [];
+        }
+
+        /**
+         * Validates the build configuration object
+         *
+         * @param bool $throw_exception
+         * @return bool
+         * @throws InvalidProjectBuildConfiguration
+         */
+        public function validate(bool $throw_exception=True): bool
+        {
+            // TODO: Implement further validation logic
+
+            // Check for duplicate configuration names
+            $build_configurations = [];
+            foreach($this->Configurations as $configuration)
+            {
+                if(in_array($configuration->Name, $build_configurations))
+                {
+                    if($throw_exception)
+                        throw new InvalidProjectBuildConfiguration('The build configuration \'' . $configuration->Name . '\' is already defined, build configuration names must be unique');
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * Returns an array of all the build configurations defined in the project configuration
+         *
+         * @return array
+         */
+        public function getBuildConfigurations(): array
+        {
+            $build_configurations = [];
+
+            foreach($this->Configurations as $configuration)
+            {
+                $build_configurations[] = $configuration->Name;
+            }
+
+            return $build_configurations;
+        }
+
+        /**
+         * Returns the build configurations defined in the project configuration, throw an
+         * exception if there is no such configuration defined in the project configuration
+         *
+         * @param string $name
+         * @return BuildConfiguration
+         * @throws BuildConfigurationNotFoundException
+         */
+        public function getBuildConfiguration(string $name): BuildConfiguration
+        {
+            foreach($this->Configurations as $configuration)
+            {
+                if($configuration->Name == $name)
+                {
+                    return $configuration;
+                }
+            }
+
+            throw new BuildConfigurationNotFoundException('The build configuration ' . $name . ' does not exist');
         }
 
         /**
