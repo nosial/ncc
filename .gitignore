@@ -21,3 +21,4 @@ src/ncc/autoload.php
 
 # Test files
 tests/example_project/src/project.json
+tests/example_project/src/ncc
