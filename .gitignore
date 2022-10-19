@@ -17,3 +17,6 @@ src/ncc/ThirdParty/theseer/Autoload/autoload_spl.php
 src/ncc/ThirdParty/theseer/DirectoryScanner/autoload_spl.php
 src/ncc/autoload_spl.php
 src/ncc/autoload.php
+
+# Test files
+tests/example_project/src/project.json
