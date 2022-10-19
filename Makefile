@@ -9,6 +9,7 @@ autoload:
 	make $(SRC_PATH)/ncc/ThirdParty/nikic/php-parser/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-uuid/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php
@@ -33,6 +34,10 @@ $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php:
 $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php \
 		$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring
+
+$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-uuid/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-uuid/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-uuid
 
 $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php \
@@ -95,6 +100,7 @@ clean:
 	rm -f $(SRC_PATH)/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-uuid/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Process/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Uid/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/Filesystem/autoload_spl.php

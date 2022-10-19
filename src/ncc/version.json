@@ -21,6 +21,10 @@
     },
     {
       "vendor": "Symfony",
+      "package_name": "polyfill-uuid"
+    },
+    {
+      "vendor": "Symfony",
       "package_name": "Process"
     },
     {
