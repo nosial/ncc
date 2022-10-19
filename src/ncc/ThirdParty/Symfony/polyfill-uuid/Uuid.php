@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Polyfill\Uuid;
+namespace ncc\ThirdParty\Symfony\uuid;
 
 /**
  * @internal

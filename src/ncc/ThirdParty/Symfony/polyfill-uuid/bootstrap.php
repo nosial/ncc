@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\Polyfill\Uuid as p;
+use ncc\ThirdParty\Symfony\uuid as p;
 
 if (extension_loaded('uuid')) {
     return;

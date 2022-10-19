@@ -19,6 +19,8 @@
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-ctype' . DIRECTORY_SEPARATOR . 'bootstrap.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-mbstring' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-mbstring' . DIRECTORY_SEPARATOR . 'bootstrap.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-uuid' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
+            $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill-uuid' . DIRECTORY_SEPARATOR . 'bootstrap.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Process' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Uid' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'Filesystem' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
