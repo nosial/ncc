@@ -113,9 +113,6 @@
                 $Component = new Package\Component();
                 $Component->Name = $item->getPath();
                 $this->package->Components[] = $Component;
-
-                var_dump($item->getPath());
-                var_dump($item);
             }
 
             if(count($this->package->Components) > 0)
@@ -145,8 +142,6 @@
                 $Resource->Name = $item->getPath();
                 $this->package->Resources[] = $Resource;
 
-                var_dump($item->getPath());
-                var_dump($item);
             }
 
             if(count($this->package->Resources) > 0)
@@ -157,9 +152,6 @@
             {
                 Console::out('No resources found');
             }
-
-            var_dump($this->package);
-
         }
 
         public function build(array $options, string $src)

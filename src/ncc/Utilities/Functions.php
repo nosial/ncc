@@ -205,8 +205,6 @@
                 $basename .= DIRECTORY_SEPARATOR;
             }
 
-            var_dump($basename);
-
             // If the path is "/etc/foo/text.txt" and the basename is "/etc" then the returned path will be "foo/test.txt"
             return str_replace($basename, (string)null, $path);
         }

@@ -63,6 +63,10 @@
                     Console::outError('The selected source directory \'' . $full_path . '\' was not found or is not a directory', true, 1);
                 }
             }
+            else
+            {
+                $real_src = getcwd() . DIRECTORY_SEPARATOR . 'src';
+            }
 
             // Remove basename from real_src
             $real_src = \ncc\Utilities\Functions::removeBasename($real_src, $current_directory);

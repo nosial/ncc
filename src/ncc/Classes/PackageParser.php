@@ -38,6 +38,5 @@
 
             $file_handler = fopen($this->PackagePath, 'rb');
             $header = fread($file_handler, 14);
-            var_dump($header);
         }
     }
