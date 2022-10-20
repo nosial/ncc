@@ -84,13 +84,14 @@
          * @param Compiler $compiler
          * @param string $name
          * @param string $package
+         * @param string $src
          * @param array $options
          * @throws InvalidPackageNameException
          * @throws InvalidProjectNameException
          * @throws MalformedJsonException
          * @throws ProjectAlreadyExistsException
          */
-        public function initializeProject(Compiler $compiler, string $name, string $package, array $options=[]): void
+        public function initializeProject(Compiler $compiler, string $name, string $package, string $src, array $options=[]): void
         {
             // Validate the project information first
             if(!Validate::packageName($package))
@@ -120,7 +121,7 @@
             $Project->Assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
-            $Project->Build->SourcePath = $this->SelectedDirectory;
+            $Project->Build->SourcePath = $src;
             $Project->Build->DefaultConfiguration = 'debug';
 
             // Assembly constants if the program wishes to check for this

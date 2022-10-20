@@ -1,0 +1,57 @@
+{
+    "project": {
+        "compiler": {
+            "extension": "php",
+            "minimum_version": "7.4",
+            "maximum_version": "8.1"
+        },
+        "options": []
+    },
+    "assembly": {
+        "name": "ExampleLibrary",
+        "package": "com.example.library",
+        "description": null,
+        "company": null,
+        "product": null,
+        "copyright": null,
+        "trademark": null,
+        "version": "1.0.0",
+        "uid": "4a37f1c8-50a2-11ed-9ce4-170520693532"
+    },
+    "build": {
+        "source_path": "src/ExampleLibrary",
+        "default_configuration": "debug",
+        "exclude_files": [],
+        "options": [],
+        "scope": null,
+        "define_constants": {
+            "ASSEMBLY_NAME": "%ASSEMBLY.NAME%",
+            "ASSEMBLY_PACKAGE": "%ASSEMBLY.PACKAGE%",
+            "ASSEMBLY_VERSION": "%ASSEMBLY.VERSION%",
+            "ASSEMBLY_UID": "%ASSEMBLY.UID%"
+        },
+        "dependencies": [],
+        "configurations": [
+            {
+                "name": "debug",
+                "options": [],
+                "output_path": "build/debug",
+                "define_constants": {
+                    "DEBUG": "1"
+                },
+                "exclude_files": [],
+                "dependencies": []
+            },
+            {
+                "name": "release",
+                "options": [],
+                "output_path": "build/release",
+                "define_constants": {
+                    "DEBUG": "0"
+                },
+                "exclude_files": [],
+                "dependencies": []
+            }
+        ]
+    }
+}

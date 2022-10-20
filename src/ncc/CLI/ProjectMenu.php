@@ -38,7 +38,8 @@
         public static function createProject($args): void
         {
             // First determine the source directory of the project
-            $src = getcwd();
+            $current_directory = getcwd();
+            $real_src = $current_directory;
             if(isset($args['src']))
             {
                 // Make sure directory separators are corrected
@@ -55,13 +56,16 @@
 
                 if(file_exists($full_path) && is_dir($full_path))
                 {
-                    $src = getcwd() . DIRECTORY_SEPARATOR . $args['src'];
+                    $real_src = getcwd() . DIRECTORY_SEPARATOR . $args['src'];
                 }
                 else
                 {
                     Console::outError('The selected source directory \'' . $full_path . '\' was not found or is not a directory', true, 1);
                 }
             }
+
+            // Remove basename from real_src
+            $real_src = \ncc\Utilities\Functions::removeBasename($real_src, $current_directory);
 
             // Fetch the rest of the information needed for the project
             //$compiler_extension = Console::getOptionInput($args, 'ce', 'Compiler Extension (php, java): ');
@@ -76,10 +80,11 @@
             $Compiler->MinimumVersion = '7.4';
 
             // Now create the project
-            $ProjectManager = new ProjectManager($src);
+            $ProjectManager = new ProjectManager($current_directory);
+
             try
             {
-                $ProjectManager->initializeProject($Compiler, $project_name, $package_name);
+                $ProjectManager->initializeProject($Compiler, $project_name, $package_name, $real_src);
             }
             catch (InvalidPackageNameException $e)
             {
@@ -91,7 +96,7 @@
             }
             catch (ProjectAlreadyExistsException $e)
             {
-                Console::outException('A project has already been initialized in \'' . $src . '\'', $e, 1);
+                Console::outException('A project has already been initialized in \'' . $current_directory . '\'', $e, 1);
             }
             catch(Exception $e)
             {

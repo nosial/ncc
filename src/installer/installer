@@ -726,5 +726,8 @@
     }
 
     file_put_contents($NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'ncc.yaml', Yaml::dump($config_obj));
+
     Console::out('NCC version: ' . NCC_VERSION_NUMBER . ' has been successfully installed');
+    Console::out('For licensing information see \'' . $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . 'LICENSE\' or run \'ncc help --license\'');
+
     exit(0);

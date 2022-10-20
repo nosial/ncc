@@ -184,4 +184,30 @@
 
             return $banner;
         }
+
+        /**
+         * Removes the basename from a path, eg; extracts "foo/bar.txt" from "/root/foo/bar.txt" if "/root" is the
+         * current working directory, optionally accepts a different basename using the $basename parameter.
+         *
+         * @param string $path
+         * @param string|null $basename
+         * @return string
+         */
+        public static function removeBasename(string $path, ?string $basename=null): string
+        {
+            if($basename == null)
+                $basename = getcwd();
+
+            // Append the trailing slash if it's not already there
+            // "/etc/foo" becomes "/etc/foo/"
+            if(substr($basename, -1) !== DIRECTORY_SEPARATOR)
+            {
+                $basename .= DIRECTORY_SEPARATOR;
+            }
+
+            var_dump($basename);
+
+            // If the path is "/etc/foo/text.txt" and the basename is "/etc" then the returned path will be "foo/test.txt"
+            return str_replace($basename, (string)null, $path);
+        }
     }
