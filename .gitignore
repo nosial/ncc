@@ -1,7 +1,10 @@
+# vscode
 .vscode/dryrun.log
 .vscode/configurationCache.log
 .vscode/targets.log
 .vscode/launch.json
+
+# build
 build
 
 # Autoload files
@@ -20,5 +23,6 @@ src/ncc/autoload_spl.php
 src/ncc/autoload.php
 
 # Test files
-tests/example_project/src/project.json
-tests/example_project/src/ncc
+tests/example_project/project.json
+tests/example_project/ncc
+tests/example_project/build
