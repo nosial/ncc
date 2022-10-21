@@ -58,6 +58,10 @@
                             ProjectMenu::start($args);
                             exit(0);
 
+                        case 'build':
+                            BuildMenu::start($args);
+                            exit(0);
+
                         case 'credential':
                             CredentialMenu::start($args);
                             exit(0);
