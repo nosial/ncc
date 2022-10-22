@@ -6,6 +6,7 @@ SRC_PATH=src
 autoload:
 	# Generates/creates all the autoloader files
 	make $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+	make $(SRC_PATH)/ncc/ThirdParty/jelix/version/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/nikic/php-parser/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
 	make $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php
@@ -22,6 +23,10 @@ autoload:
 $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php \
 		$(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption
+
+$(SRC_PATH)/ncc/ThirdParty/jelix/version/autoload_spl.php:
+	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/jelix/version/autoload_spl.php \
+		$(SRC_PATH)/ncc/ThirdParty/jelix/version
 
 $(SRC_PATH)/ncc/ThirdParty/nikic/php-parser/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output $(SRC_PATH)/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php \
@@ -97,6 +102,7 @@ clean:
 	rm -rf $(BUILD_PATH)
 	rm -f $(SRC_PATH)/ncc/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+	rm -f $(SRC_PATH)/ncc/ThirdParty/jelix/version/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
 	rm -f $(SRC_PATH)/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php

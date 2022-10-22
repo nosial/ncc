@@ -9,6 +9,7 @@ build
 
 # Autoload files
 src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+src/ncc/ThirdParty/jelix/version/autoload_spl.php
 src/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
 src/ncc/ThirdParty/Symfony/polyfill-ctype/autoload_spl.php
 src/ncc/ThirdParty/Symfony/polyfill-mbstring/autoload_spl.php

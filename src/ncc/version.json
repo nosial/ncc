@@ -8,6 +8,10 @@
       "package_name": "php-encryption"
     },
     {
+      "vendor": "jelix",
+      "package_name": "version"
+    },
+    {
       "vendor": "nikic",
       "package_name": "PhpParser"
     },
