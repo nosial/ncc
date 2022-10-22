@@ -4,6 +4,10 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Exceptions\InvalidPropertyValueException;
+    use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\UnsupportedCompilerExtensionException;
+    use ncc\Exceptions\UnsupportedExtensionVersionException;
     use ncc\Utilities\Functions;
 
     /**
@@ -29,6 +33,24 @@
         {
             $this->Compiler = new Compiler();
             $this->Options = [];
+        }
+
+        /**
+         * Validates the Project object
+         *
+         * @param bool $throw_exception
+         * @return bool
+         * @throws InvalidPropertyValueException
+         * @throws RuntimeException
+         * @throws UnsupportedCompilerExtensionException
+         * @throws UnsupportedExtensionVersionException
+         */
+        public function validate(bool $throw_exception=True): bool
+        {
+            if(!$this->Compiler->validate($throw_exception))
+                return False;
+
+            return True;
         }
 
         /**

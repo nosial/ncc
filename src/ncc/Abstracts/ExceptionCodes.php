@@ -16,12 +16,15 @@
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidProjectNameException;
+    use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\InvalidVersionConfigurationException;
     use ncc\Exceptions\InvalidVersionNumberException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NoUnitsFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Exceptions\UnsupportedPackageException;
 
     /**
@@ -146,6 +149,26 @@
         const InvalidProjectBuildConfiguration = -1722;
 
         /**
+         * @see UnsupportedCompilerExtensionException
+         */
+        const UnsupportedCompilerExtensionException = -1723;
+
+        /**
+         * @see InvalidPropertyValueException
+         */
+        const InvalidPropertyValueException = -1724;
+
+        /**
+         * @see InvalidVersionConfigurationException
+         */
+        const InvalidVersionConfigurationException = -1725;
+
+        /**
+         * @see UnsupportedExtensionVersionException
+         */
+        const UnsupportedExtensionVersionException = -1726;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -171,6 +194,10 @@
             self::InvalidConstantNameException,
             self::PackagePreparationFailedException,
             self::BuildConfigurationNotFoundException,
-            self::InvalidProjectBuildConfiguration
+            self::InvalidProjectBuildConfiguration,
+            self::UnsupportedCompilerExtensionException,
+            self::InvalidPropertyValueException,
+            self::InvalidVersionConfigurationException,
+            self::UnsupportedExtensionVersionException
         ];
     }

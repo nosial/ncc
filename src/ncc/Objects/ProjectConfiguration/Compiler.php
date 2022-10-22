@@ -4,6 +4,15 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use Exception;
+    use ncc\Abstracts\CompilerExtensions;
+    use ncc\Abstracts\CompilerExtensionSupportedVersions;
+    use ncc\Exceptions\InvalidPropertyValueException;
+    use ncc\Exceptions\InvalidVersionConfigurationException;
+    use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\UnsupportedCompilerExtensionException;
+    use ncc\Exceptions\UnsupportedExtensionVersionException;
+    use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\Utilities\Functions;
 
     /**
@@ -32,6 +41,86 @@
          * @var string
          */
         public $MaximumVersion;
+
+        /**
+         * Validates the compiler object
+         *
+         * @param bool $throw_exception
+         * @return bool
+         * @throws InvalidPropertyValueException
+         * @throws RuntimeException
+         * @throws UnsupportedCompilerExtensionException
+         * @throws UnsupportedExtensionVersionException
+         */
+        public function validate(bool $throw_exception=True): bool
+        {
+            if($this->Extension == null)
+            {
+                if($throw_exception)
+                    throw new InvalidPropertyValueException('The property \'extension\' must not be null.');
+                return False;
+            }
+
+            if($this->MinimumVersion == null)
+            {
+                if($throw_exception)
+                    throw new InvalidPropertyValueException('The property \'minimum_version\' must not be null.');
+
+                return False;
+            }
+
+            if($this->MaximumVersion == null)
+            {
+                if($throw_exception)
+                    throw new InvalidPropertyValueException('The property \'maximum_version\' must not be null.');
+                return False;
+            }
+
+            try
+            {
+                if(VersionComparator::compareVersion($this->MinimumVersion, $this->MaximumVersion) == 1)
+                {
+                    if($throw_exception)
+                        throw new InvalidVersionConfigurationException('The minimum version cannot be greater version number than the maximum version');
+                    return False;
+                }
+            }
+            catch (Exception $e)
+            {
+                throw new RuntimeException('Version comparison failed: ' . $e->getMessage());
+            }
+
+            if(!in_array($this->Extension, CompilerExtensions::All))
+             {
+                if($throw_exception)
+                    throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $this->Extension . '\' is not supported');
+                return False;
+             }
+
+            switch($this->Extension)
+            {
+                case CompilerExtensions::PHP:
+                    if(!in_array($this->MaximumVersion, CompilerExtensionSupportedVersions::PHP))
+                    {
+                        if($throw_exception)
+                            throw new UnsupportedExtensionVersionException('The MaximumVersion does not support version ' . $this->MaximumVersion . ' for the extension ' . $this->Extension);
+                        return False;
+                    }
+
+                    if(!in_array($this->MinimumVersion, CompilerExtensionSupportedVersions::PHP))
+                    {
+                        if($throw_exception)
+                            throw new UnsupportedExtensionVersionException('The MinimumVersion does not support version ' . $this->MinimumVersion . ' for the extension ' . $this->Extension);
+                        return False;
+                    }
+                    break;
+
+                default:
+                    throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $this->Extension . '\' is not supported');
+            }
+
+             return True;
+        }
 
         /**
          * Returns an array representation of the object
