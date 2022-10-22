@@ -5,6 +5,7 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\AutoloadGeneratorException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ComponentVersionNotFoundException;
     use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\DirectoryNotFoundException;
@@ -169,6 +170,11 @@
         const UnsupportedExtensionVersionException = -1726;
 
         /**
+         * @see BuildException
+         */
+        const BuildException = -1727;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -198,6 +204,7 @@
             self::UnsupportedCompilerExtensionException,
             self::InvalidPropertyValueException,
             self::InvalidVersionConfigurationException,
-            self::UnsupportedExtensionVersionException
+            self::UnsupportedExtensionVersionException,
+            self::BuildException
         ];
     }
