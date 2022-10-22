@@ -7,7 +7,7 @@
 * @licence     MIT
 */
 
-namespace Jelix\Version;
+namespace ncc\ThirdParty\jelix\Version;
 
 /**
  * Embed version informations.

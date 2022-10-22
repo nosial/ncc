@@ -8,7 +8,7 @@
  */
 
 
-namespace Jelix\Version;
+namespace ncc\ThirdParty\jelix\Version;
 
 class VersionRangeTrueOperator implements VersionRangeOperatorInterface
 {

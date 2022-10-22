@@ -8,7 +8,7 @@
  */
 
 
-namespace Jelix\Version;
+namespace ncc\ThirdParty\jelix\Version;
 
 /**
  * Represents an unary operator (>,<,=,!=,<=,>=,~) in a version range expression.

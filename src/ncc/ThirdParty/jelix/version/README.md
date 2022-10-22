@@ -17,7 +17,7 @@ Use the `Jelix\Version\Parser` class to retrieve a `Jelix\Version\Version` objec
 containing all versions informations.
 
 ```php
-$version = \Jelix\Version\Parser::parse('1.2.3b2');
+$version = \ncc\ThirdParty\jelix\version\Parser::parse('1.2.3b2');
 
 $version->toString(); // '1.2.3-beta.2'
 $version->getMajor(); // 1
@@ -48,7 +48,7 @@ When retrieving a `Version` object for such versions, you can access to the seco
 version through a method `getSecondaryVersion()` which returns a `Version` object:
 
 ```php
-$version = \Jelix\Version\Parser::parse('1.2.3:1.4.5');
+$version = \ncc\ThirdParty\jelix\version\Parser::parse('1.2.3:1.4.5');
 
 $version->toString(); // '1.2.3:1.4.5'
 $version->toString(true, false); // '1.2.3'
@@ -65,11 +65,10 @@ $version->getBranchVersion(); // '1.2'
 
 ## Simple comparison
 
-
 ```php
 $v1 = '1.2.3';
 $v2 = '1.4.5';
-$result = \Jelix\Version\VersionComparator::compareVersion($v1, $v2);
+$result = \ncc\ThirdParty\jelix\version\VersionComparator::compareVersion($v1, $v2);
 ```
 
 `compareVersion()` returns:
@@ -82,7 +81,7 @@ $result = \Jelix\Version\VersionComparator::compareVersion($v1, $v2);
 Example to compare two versions:
 
 ```php
-\Jelix\Version\VersionComparator::compareVersion('1.2pre','1.2RC');
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersion('1.2pre','1.2RC');
 ```
 
 Secondary versions are also compared if primary versions are equals.
@@ -93,11 +92,10 @@ version.
 
 You have also an other method `compare()` taking `Version` objects as parameters:
 
-
 ```php
-$v1 = \Jelix\Version\Parser::parse('1.2.3');
-$v2 = \Jelix\Version\Parser::parse('1.4.5');
-$result = \Jelix\Version\VersionComparator::compare($v1, $v2);
+$v1 = \ncc\ThirdParty\jelix\version\Parser::parse('1.2.3');
+$v2 = \ncc\ThirdParty\jelix\version\Parser::parse('1.4.5');
+$result = \ncc\ThirdParty\jelix\version\VersionComparator::compare($v1, $v2);
 ```
 
 
@@ -127,18 +125,17 @@ You can combine several constraints with boolean operators :
 - AND operator: `,` or ` `
 - OR operator: `||` or `|`.
 
-
 ```php
 // check if 0.5 is between 0.8 and 1.0 or if it is higher than 2.0
-\Jelix\Version\VersionComparator::compareVersionRange('0.5','<1.0,>0.8|>2.0');
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange('0.5','<1.0,>0.8|>2.0');
 
 // check if 0.5 is between 0.8 and 1.0
-\Jelix\Version\VersionComparator::compareVersionRange('0.5','0.8 - 1.0');
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange('0.5','0.8 - 1.0');
 
 // with a wildcard
-\Jelix\Version\VersionComparator::compareVersionRange('1.1', '1.1.*'); // returns true
-\Jelix\Version\VersionComparator::compareVersionRange('1.1.2', '1.2.*'); // returns false
-\Jelix\Version\VersionComparator::compareVersionRange('1.3.0', '>=1.2.*'); // returns true
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange('1.1', '1.1.*'); // returns true
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange('1.1.2', '1.2.*'); // returns false
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange('1.3.0', '>=1.2.*'); // returns true
 ```
 
 Note: comparison with a range is done only on primary version. If a version string contains
@@ -146,14 +143,14 @@ a secondary version, this secondary version is not compared. To compare a second
 with a range, you should retrieve the secondary version with the `getSecondaryVersion()` method.
 
 ```php
-$version = Jelix\Version\Parser::parse('1.2.3:1.0.0');
+$version = ncc\ThirdParty\jelix\version\Parser::parse('1.2.3:1.0.0');
 
-\Jelix\Version\VersionComparator::compareVersionRange($version, '>=1.2.*'); // returns true
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange($version, '>=1.2.*'); // returns true
 
 $version2 = $version->getSecondaryVersion();
 $version2->toString(); // '1.0.0'
 
-\Jelix\Version\VersionComparator::compareVersionRange($version2, '>=1.2.*'); // returns false
+\ncc\ThirdParty\jelix\version\VersionComparator::compareVersionRange($version2, '>=1.2.*'); // returns false
 
 ```
 

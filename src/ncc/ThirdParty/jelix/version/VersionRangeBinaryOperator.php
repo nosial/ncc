@@ -6,7 +6,7 @@
  * @link        http://www.jelix.org
  * @licence     MIT
  */
-namespace Jelix\Version;
+namespace ncc\ThirdParty\jelix\Version;
 
 /**
  * Represents a binary operator (AND or OR) in a version range expression.
