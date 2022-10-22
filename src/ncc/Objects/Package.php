@@ -80,6 +80,8 @@
         public function __construct()
         {
             $this->MagicBytes = new MagicBytes();
+            $this->Header = new Header();
+            $this->Assembly = new Assembly();
             $this->Components = [];
             $this->Dependencies = [];
             $this->Resources = [];

@@ -108,9 +108,9 @@
         {
             $ProjectConfigurationObject = new ProjectConfiguration();
 
-            $ProjectConfigurationObject->Project = Functions::array_bc($data, 'project');
-            $ProjectConfigurationObject->Assembly = Functions::array_bc($data, 'assembly');
-            $ProjectConfigurationObject->Build = Functions::array_bc($data, 'build');
+            $ProjectConfigurationObject->Project = Project::fromArray(Functions::array_bc($data, 'project'));
+            $ProjectConfigurationObject->Assembly = Assembly::fromArray(Functions::array_bc($data, 'assembly'));
+            $ProjectConfigurationObject->Build = Build::fromArray(Functions::array_bc($data, 'build'));
 
             return $ProjectConfigurationObject;
         }

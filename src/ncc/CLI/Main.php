@@ -74,7 +74,7 @@
                 }
                 catch(Exception $e)
                 {
-                    Console::out('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
+                    Console::outException('Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')', $e, 1);
                     exit(1);
                 }
 

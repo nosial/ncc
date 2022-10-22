@@ -5,11 +5,10 @@
     namespace ncc\Classes\PhpExtension;
 
     use FilesystemIterator;
-    use ncc\Abstracts\CompilerOptions;
     use ncc\Abstracts\ComponentFileExtensions;
     use ncc\Abstracts\Options\BuildConfigurationValues;
-    use ncc\Abstracts\Versions;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\BuildException;
     use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\ncc;
@@ -18,6 +17,7 @@
     use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
     use ncc\ThirdParty\theseer\DirectoryScanner\Exception;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Functions;
     use SplFileInfo;
 
     class Compiler implements CompilerInterface
@@ -45,12 +45,12 @@
          * This function must be called before calling the build function, otherwise the operation will fail
          *
          * @param array $options
-         * @param string $src
+         * @param string $path
          * @param string $build_configuration
          * @return void
          * @throws PackagePreparationFailedException
          */
-        public function prepare(array $options, string $src, string $build_configuration=BuildConfigurationValues::DefaultConfiguration)
+        public function prepare(array $options, string $path, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): void
         {
             // Auto-select the default build configuration
             if($build_configuration == BuildConfigurationValues::DefaultConfiguration)
@@ -79,9 +79,8 @@
 
             if(ncc::cliMode())
             {
-                Console::out('Building autoloader');
+                Console::out('Scanning project files');
                 Console::out('theseer\DirectoryScanner - Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de> All rights reserved.');
-                Console::out('theseer\Autoload - Copyright (c) 2010-2016 Arne Blankerts <arne@blankerts.de> and Contributors All rights reserved.');
             }
 
             // First scan the project files and create a file struct.
@@ -89,8 +88,7 @@
 
             try
             {
-                $DirectoryScanner->unsetFlag(FilesystemIterator::
-                FOLLOW_SYMLINKS);
+                $DirectoryScanner->unsetFlag(FilesystemIterator::FOLLOW_SYMLINKS);
             }
             catch (Exception $e)
             {
@@ -101,61 +99,84 @@
             $DirectoryScanner->setIncludes(ComponentFileExtensions::Php);
             $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
 
+            // Append trailing slash to the end of the path if it's not already there
+            if(substr($path, -1) !== DIRECTORY_SEPARATOR)
+            {
+                $path .= DIRECTORY_SEPARATOR;
+            }
+
+            $source_path = $path . $this->project->Build->SourcePath;
+
             // Scan for components first.
-            Console::out('Scanning for components...', false);
+            Console::out('Scanning for components... ', false);
             /** @var SplFileInfo $item */
-            foreach($DirectoryScanner($src, true) as $item)
+            foreach($DirectoryScanner($source_path, true) as $item)
             {
                 // Ignore directories, they're not important. :-)
-                if(is_dir($item->getPath()))
+                if(is_dir($item->getPathName()))
                     continue;
 
                 $Component = new Package\Component();
-                $Component->Name = $item->getPath();
+                $Component->Name = Functions::removeBasename($item->getPathname(), $path);
                 $this->package->Components[] = $Component;
             }
 
-            if(count($this->package->Components) > 0)
+            if(ncc::cliMode())
             {
-                Console::out(count($this->package->Components) . ' component(s) found');
-            }
-            else
-            {
-                Console::out('No components found');
+                if(count($this->package->Components) > 0)
+                {
+                    Console::out(count($this->package->Components) . ' component(s) found');
+                }
+                else
+                {
+                    Console::out('No components found');
+                }
             }
 
-            // Now scan for resources
-            Console::out('Scanning for resources...', false);
+
+            // Clear previous excludes and includes
+            $DirectoryScanner->setExcludes([]);
+            $DirectoryScanner->setIncludes([]);
+
+            // Ignore component files
             $DirectoryScanner->setExcludes(array_merge(
                 $selected_build_configuration->ExcludeFiles, ComponentFileExtensions::Php
             ));
 
-            // Scan for components first.
+            Console::out('Scanning for resources... ', false);
             /** @var SplFileInfo $item */
-            foreach($DirectoryScanner($src, true) as $item)
+            foreach($DirectoryScanner($source_path, true) as $item)
             {
                 // Ignore directories, they're not important. :-)
-                if(is_dir($item->getPath()))
+                if(is_dir($item->getPathName()))
                     continue;
 
                 $Resource = new Package\Resource();
-                $Resource->Name = $item->getPath();
+                $Resource->Name = Functions::removeBasename($item->getPathname(), $path);
                 $this->package->Resources[] = $Resource;
 
             }
 
-            if(count($this->package->Resources) > 0)
+            if(ncc::cliMode())
             {
-                Console::out(count($this->package->Resources) . ' resources(s) found');
-            }
-            else
-            {
-                Console::out('No resources found');
+                if(count($this->package->Resources) > 0)
+                {
+                    Console::out(count($this->package->Resources) . ' resources(s) found');
+                }
+                else
+                {
+                    Console::out('No resources found');
+                }
             }
         }
 
-        public function build(array $options, string $src)
+        public function build(array $options, string $path): string
         {
-            // TODO: Implement build() method.
+            if($this->package == null)
+            {
+                throw new BuildException('The prepare() method must be called before building the package');
+            }
+
+            // TODO: Implement build() method
         }
     }

@@ -12,5 +12,5 @@
         /**
          * The current version of the package structure file format
          */
-        const PackageStructureVersion = '1.0.0';
+        const PackageStructureVersion = '1.0';
     }
