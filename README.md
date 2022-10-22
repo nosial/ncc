@@ -27,11 +27,13 @@ a PPM extension may be built in the future to allow for backwards compatibility.
  - Marc Gutt (mgutt) <[marc@gutt.it](mailto:marc@gutt.it)>
 
 ## Copyright
- - Copyright (c) 2022-2022, Nosial - All Rights Reserved
- - Copyright (c) 2004-2022, Fabien Potencier
- - Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
- - Copyright (c) 2013 Austin Hyde
- - Copyright (c) 2011, Nikita Popov
+- Copyright (c) 2022-2022, Nosial - All Rights Reserved
+- Copyright (c) 2004-2022, Fabien Potencier
+- Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
+- Copyright (c) 2013 Austin Hyde
+- Copyright (C) 2009-2016 Laurent Jouanneau
+- Copyright (c) 2011, Nikita Popov
+- Copyright (c) 2010-2016 Arne Blankerts <arne@blankerts.de> and Contributors
 
 # Licenses
 
