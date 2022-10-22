@@ -164,8 +164,8 @@
                 switch($Compiler->Extension)
                 {
                     case CompilerExtensions::PHP:
-                        $Compiler->MinimumVersion = CompilerExtensionDefaultVersions::PHP[1];
-                        $Compiler->MaximumVersion = CompilerExtensionDefaultVersions::PHP[0];
+                        $Compiler->MinimumVersion = CompilerExtensionDefaultVersions::PHP[0];
+                        $Compiler->MaximumVersion = CompilerExtensionDefaultVersions::PHP[1];
                         break;
 
                     default:
