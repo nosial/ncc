@@ -75,6 +75,7 @@ $(SRC_PATH)/ncc/autoload_spl.php:
 		$(SRC_PATH)/ncc/CLI \
 		$(SRC_PATH)/ncc/Exceptions \
 		$(SRC_PATH)/ncc/Extensions \
+		$(SRC_PATH)/ncc/Interfaces \
 		$(SRC_PATH)/ncc/Managers \
 		$(SRC_PATH)/ncc/Objects \
 		$(SRC_PATH)/ncc/Runtime \
