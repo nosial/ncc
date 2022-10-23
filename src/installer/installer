@@ -627,43 +627,63 @@
     Console::out('Registering extension');
     $extension_shortcut = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'extension');
     $extension_shortcut = str_ireplace('%ncc_install', $NCC_INSTALL_PATH, $extension_shortcut);
-    $extension_registered = false;
 
     // Remove all the old extensions first.
+    /**
+     * @param string $path
+     * @param Filesystem $NCC_FILESYSTEM
+     * @param string $extension_shortcut
+     * @return bool
+     */
+    function install_extension(string $path, Filesystem $NCC_FILESYSTEM, string $extension_shortcut): bool
+    {
+        if (file_exists($path . DIRECTORY_SEPARATOR . 'ncc'))
+        {
+            $NCC_FILESYSTEM->remove($path . DIRECTORY_SEPARATOR . 'ncc');
+        }
+
+        file_put_contents($path . DIRECTORY_SEPARATOR . 'ncc', $extension_shortcut);
+        $NCC_FILESYSTEM->chmod([$path . DIRECTORY_SEPARATOR . 'ncc'], 0755);
+
+        if (file_exists($path . DIRECTORY_SEPARATOR . 'ncc')) {
+            return true;
+        }
+
+        return false;
+    }
+
     if(function_exists('get_include_path'))
     {
-        foreach(explode(':', get_include_path()) as $path)
+        $default_share = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'share' . DIRECTORY_SEPARATOR . 'php';
+        $include_paths = explode(':', get_include_path());
+        $extension_registered = false;
+
+        if(!in_array($default_share, $include_paths))
         {
-            switch($path)
+            foreach($include_paths as $path)
             {
-                // Ignore local files
-                case '.':
-                case '..':
+                if($extension_registered)
                     break;
 
-                // First real include path is /usr/share/php
-                default:
-                    // Don't continue if the extension is already registered.
-                    if($extension_registered)
+                switch($path)
+                {
+                    // Ignore local files
+                    case '.':
+                    case '..':
                         break;
 
-                    // Remove the old extension
-                    if(file_exists($path . DIRECTORY_SEPARATOR . 'ncc'))
-                    {
-                        $NCC_FILESYSTEM->remove($path . DIRECTORY_SEPARATOR . 'ncc');
-                    }
-
-                    file_put_contents($path . DIRECTORY_SEPARATOR . 'ncc', $extension_shortcut);
-                    $NCC_FILESYSTEM->chmod([$path . DIRECTORY_SEPARATOR . 'ncc'], 0755);
-
-                    if(file_exists($path . DIRECTORY_SEPARATOR . 'ncc'))
-                    {
-                        // The extension is considered registered if the file was written
-                        $extension_registered = true;
-                    }
-
-                    break;
+                    // First real include path is /usr/share/php
+                    default:
+                        // Install the extension
+                        $extension_registered = install_extension($path, $NCC_FILESYSTEM, $extension_shortcut);
+                        break;
+                }
             }
+        }
+        else
+        {
+            // Remove the old extension
+            install_extension($default_share, $NCC_FILESYSTEM, $extension_shortcut);
         }
     }
 
