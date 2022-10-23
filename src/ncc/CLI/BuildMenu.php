@@ -2,10 +2,12 @@
 
     namespace ncc\CLI;
 
+    use Exception;
     use ncc\Abstracts\CompilerExtensions;
     use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Classes\PhpExtension\Compiler;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\BuildException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PackagePreparationFailedException;
@@ -105,9 +107,19 @@
             {
                 $Compiler->prepare([], getcwd(), $build_configuration);
             }
-            catch (PackagePreparationFailedException $e)
+            catch (Exception $e)
             {
                 Console::outException('The package preparation process failed', $e, 1);
+                return;
+            }
+
+            try
+            {
+                $Compiler->build([], getcwd());
+            }
+            catch (Exception $e)
+            {
+                Console::outException('Build Failed', $e, 1);
                 return;
             }
 

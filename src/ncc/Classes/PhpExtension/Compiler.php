@@ -6,6 +6,7 @@
 
     use FilesystemIterator;
     use ncc\Abstracts\ComponentFileExtensions;
+    use ncc\Abstracts\ComponentFlags;
     use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
@@ -14,10 +15,13 @@
     use ncc\ncc;
     use ncc\Objects\Package;
     use ncc\Objects\ProjectConfiguration;
+    use ncc\ThirdParty\nikic\PhpParser\Error;
+    use ncc\ThirdParty\nikic\PhpParser\ParserFactory;
     use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
     use ncc\ThirdParty\theseer\DirectoryScanner\Exception;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
+    use ncc\ZiProto\ZiProto;
     use SplFileInfo;
 
     class Compiler implements CompilerInterface
@@ -145,7 +149,7 @@
 
             Console::out('Scanning for resources... ', false);
             /** @var SplFileInfo $item */
-            foreach($DirectoryScanner($source_path, true) as $item)
+            foreach($DirectoryScanner($source_path) as $item)
             {
                 // Ignore directories, they're not important. :-)
                 if(is_dir($item->getPathName()))
@@ -170,6 +174,14 @@
             }
         }
 
+        /**
+         * Builds the package by parsing the AST contents of the components and resources
+         *
+         * @param array $options
+         * @param string $path
+         * @return string
+         * @throws BuildException
+         */
         public function build(array $options, string $path): string
         {
             if($this->package == null)
@@ -177,6 +189,113 @@
                 throw new BuildException('The prepare() method must be called before building the package');
             }
 
-            // TODO: Implement build() method
+            // Append trailing slash to the end of the path if it's not already there
+            if(substr($path, -1) !== DIRECTORY_SEPARATOR)
+            {
+                $path .= DIRECTORY_SEPARATOR;
+            }
+
+            $source_path = $path . $this->project->Build->SourcePath;
+
+            // Append trailing slash to the end of the source path if it's not already there
+            if(substr($source_path, -1) !== DIRECTORY_SEPARATOR)
+            {
+                $source_path .= DIRECTORY_SEPARATOR;
+            }
+
+            // Runtime variables
+            $components = [];
+            $resources = [];
+            $processed_items = 0;
+            $total_items = 0;
+
+            if(count($this->package->Components) > 0)
+            {
+                if(ncc::cliMode())
+                {
+                    Console::out('Compiling components');
+                    $total_items = count($this->package->Components);
+                }
+
+                // Process the components and attempt to create an AST representation of the source
+                foreach($this->package->Components as $component)
+                {
+                    if(ncc::cliMode())
+                    {
+                        Console::inlineProgressBar($processed_items, $total_items);
+                    }
+
+                    $content = file_get_contents(Functions::correctDirectorySeparator($source_path . $component->Name));
+                    $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
+
+                    try
+                    {
+                        $stmts = $parser->parse($content);
+                        $encoded = json_encode($stmts);
+
+                        if($encoded === false)
+                        {
+                            $component->Flags[] = ComponentFlags::b64encoded;
+                            $component->Data = Functions::byteEncode($content);
+                        }
+                        else
+                        {
+                            $component->Flags[] = ComponentFlags::AST;
+                            $component->Data = ZiProto::encode(json_decode($encoded));
+                        }
+                    }
+                    catch(Error $e)
+                    {
+                        $component->Flags[] = ComponentFlags::b64encoded;
+                        $component->Data = Functions::byteEncode($content);
+                        unset($e);
+                    }
+
+                    // Calculate the checksum
+                    $component->Checksum = hash('sha1', $component->Data);
+
+                    $components[] = $component;
+                    $processed_items += 1;
+                }
+
+                // Update the components
+                $this->package->Components = $components;
+            }
+
+            if(count($this->package->Resources) > 0)
+            {
+                // Process the resources
+                if(ncc::cliMode())
+                {
+                    Console::out('Processing resources');
+                    $processed_items = 0;
+                    $total_items = count($this->package->Resources);
+                }
+
+                foreach($this->package->Resources as $resource)
+                {
+                    if(ncc::cliMode())
+                    {
+                        Console::inlineProgressBar($processed_items, $total_items);
+                    }
+
+                    // Get the data and
+                    $resource->Data = file_get_contents(Functions::correctDirectorySeparator($source_path . $resource->Name));
+                    $resource->Data = Functions::byteEncode($resource->Data);
+                    $resource->Checksum = hash('sha1', $resource->Checksum);
+                }
+
+                // Update the resources
+                $this->package->Resources = $resources;
+            }
+
+            if(ncc::cliMode())
+            {
+                Console::out($this->package->Assembly->Package . ' compiled successfully');
+            }
+
+            // Write the package to disk
+            file_put_contents(getcwd() . DIRECTORY_SEPARATOR . 'test.bin', ZiProto::encode($this->package->toArray(true)));
+            return getcwd() . DIRECTORY_SEPARATOR . 'test.bin';
         }
     }

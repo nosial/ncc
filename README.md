@@ -25,6 +25,7 @@ a PPM extension may be built in the future to allow for backwards compatibility.
 
 ## Special Thanks
  - Marc Gutt (mgutt) <[marc@gutt.it](mailto:marc@gutt.it)>
+ - Debusschère Alexandre ([debuss](https://github.com/debuss)) 
 
 ## Copyright
 - Copyright (c) 2022-2022, Nosial - All Rights Reserved
