@@ -15,6 +15,7 @@
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
+    use ncc\ZiProto\ZiProto;
 
     class Package
     {
@@ -126,6 +127,18 @@
         }
 
         /**
+         * Writes the package contents to disk
+         *
+         * @param string $output_path
+         * @return void
+         */
+        public function save(string $output_path): void
+        {
+            $package_contents = $this->MagicBytes->toString() . ZiProto::encode($this->toArray(true));
+            file_put_contents($output_path, $package_contents);
+        }
+
+        /**
          * Constructs an array representation of the object
          *
          * @param bool $bytecode
@@ -148,12 +161,13 @@
             foreach($this->Resources as $resource)
                 $_resources[] = $resource->toArray($bytecode);
 
+
             return [
-                ($bytecode ? Functions::cbc('header') : 'header') => $this->Header->toArray($bytecode),
-                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly->toArray($bytecode),
+                ($bytecode ? Functions::cbc('header') : 'header') => $this->Header?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('dependencies') : 'dependencies') => $_dependencies,
-                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this->MainExecutionPolicy->toArray($bytecode),
-                ($bytecode ? Functions::cbc('installer') : 'installer') => $this->Installer->toArray($bytecode),
+                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this->MainExecutionPolicy?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('installer') : 'installer') => $this->Installer?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('resources') : 'resources') => $_resources,
                 ($bytecode ? Functions::cbc('components') : 'components') => $_components
             ];

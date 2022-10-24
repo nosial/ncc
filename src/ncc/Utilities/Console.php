@@ -4,6 +4,7 @@
 
     use Exception;
     use ncc\Abstracts\ConsoleColors;
+    use ncc\ncc;
 
     class Console
     {
@@ -18,16 +19,16 @@
          * @return void
          *@copyright Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
          */
-        public static function inlineProgressBar(int $value, int $total, int $size=38, array $options=[])
+        public static function inlineProgressBar(int $value, int $total, int $size=38, array $options=[]): void
         {
             static $start_time;
 
             // if we go over our bound, just ignore it
-            if($value > $total) return;
+            if($value > $total)
+                return;
 
             if(empty($start_time)) $start_time=time();
             $now = time();
-
             $perc=(double)($value/$total);
 
             $bar=floor($perc*$size);
@@ -44,6 +45,9 @@
             $disp=number_format($perc*100, 0);
 
             $status_bar.=" ] $disp%  $value/$total";
+
+            if($value == 0)
+                return;
 
             $rate = ($now-$start_time)/$value;
             $left = $total - $value;
@@ -75,8 +79,11 @@
          * @param bool $newline
          * @return void
          */
-        public static function out(string $message, bool $newline=true)
+        public static function out(string $message, bool $newline=true): void
         {
+            if(!ncc::cliMode())
+                return;
+
             if($newline)
             {
                 print($message . PHP_EOL);
@@ -111,8 +118,11 @@
          * @param bool $newline
          * @return void
          */
-        public static function outWarning(string $message, bool $newline=true)
+        public static function outWarning(string $message, bool $newline=true): void
         {
+            if(!ncc::cliMode())
+                return;
+
             self::out(self::formatColor('Warning: ', ConsoleColors::Yellow) . $message, $newline);
         }
 
@@ -124,8 +134,11 @@
          * @param int|null $exit_code
          * @return void
          */
-        public static function outError(string $message, bool $newline=true, ?int $exit_code=null)
+        public static function outError(string $message, bool $newline=true, ?int $exit_code=null): void
         {
+            if(!ncc::cliMode())
+                return;
+
             self::out(self::formatColor(ConsoleColors::Red, 'Error: ') . $message, $newline);
 
             if($exit_code !== null)
@@ -142,8 +155,11 @@
          * @param int|null $exit_code
          * @return void
          */
-        public static function outException(string $message, Exception $e, ?int $exit_code=null)
+        public static function outException(string $message, Exception $e, ?int $exit_code=null): void
         {
+            if(!ncc::cliMode())
+                return;
+
             if(strlen($message) > 0)
             {
                 self::out(self::formatColor('Error: ' . $message, ConsoleColors::Red));
@@ -163,8 +179,11 @@
          * @param Exception $e
          * @return void
          */
-        private static function outExceptionDetails(Exception $e)
+        private static function outExceptionDetails(Exception $e): void
         {
+            if(!ncc::cliMode())
+                return;
+
             $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::Magenta);
             $trace_error = self::formatColor('error: ', ConsoleColors::Red);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());

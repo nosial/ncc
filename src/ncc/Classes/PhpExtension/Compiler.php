@@ -4,9 +4,10 @@
 
     namespace ncc\Classes\PhpExtension;
 
+    use Exception;
     use FilesystemIterator;
     use ncc\Abstracts\ComponentFileExtensions;
-    use ncc\Abstracts\ComponentFlags;
+    use ncc\Abstracts\ComponentDataType;
     use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
@@ -17,11 +18,12 @@
     use ncc\Objects\ProjectConfiguration;
     use ncc\ThirdParty\nikic\PhpParser\Error;
     use ncc\ThirdParty\nikic\PhpParser\ParserFactory;
+    use ncc\ThirdParty\Symfony\Filesystem\Exception\IOException;
+    use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
-    use ncc\ThirdParty\theseer\DirectoryScanner\Exception;
+    use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
-    use ncc\ZiProto\ZiProto;
     use SplFileInfo;
 
     class Compiler implements CompilerInterface
@@ -37,6 +39,11 @@
         private $package;
 
         /**
+         * @var ProjectConfiguration\BuildConfiguration|null
+         */
+        private $selected_build_configuration;
+
+        /**
          * @param ProjectConfiguration $project
          */
         public function __construct(ProjectConfiguration $project)
@@ -48,14 +55,23 @@
          * Prepares the PHP package by generating the Autoloader and detecting all components & resources
          * This function must be called before calling the build function, otherwise the operation will fail
          *
-         * @param array $options
          * @param string $path
          * @param string $build_configuration
          * @return void
          * @throws PackagePreparationFailedException
          */
-        public function prepare(array $options, string $path, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): void
+        public function prepare(string $path, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): void
         {
+            try
+            {
+                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                $this->project->validate(True);
+            }
+            catch (Exception $e)
+            {
+                throw new PackagePreparationFailedException($e->getMessage(), $e);
+            }
+
             // Auto-select the default build configuration
             if($build_configuration == BuildConfigurationValues::DefaultConfiguration)
             {
@@ -65,7 +81,7 @@
             // Select the build configuration
             try
             {
-                $selected_build_configuration = $this->project->Build->getBuildConfiguration($build_configuration);
+                $this->selected_build_configuration = $this->project->Build->getBuildConfiguration($build_configuration);
             }
             catch (BuildConfigurationNotFoundException $e)
             {
@@ -77,7 +93,11 @@
             $this->package->Assembly = $this->project->Assembly;
             $this->package->Dependencies = $this->project->Build->Dependencies;
 
-            $this->package->Header->RuntimeConstants = $selected_build_configuration->DefineConstants;
+            // Add both the defined constants from the build configuration and the global constants.
+            // Global constants are overridden
+            $this->package->Header->RuntimeConstants = array_merge($this->selected_build_configuration->DefineConstants, $this->package->Header->RuntimeConstants);
+            $this->package->Header->RuntimeConstants = array_merge($this->project->Build->DefineConstants, $this->package->Header->RuntimeConstants);
+
             $this->package->Header->CompilerExtension = $this->project->Project->Compiler;
             $this->package->Header->CompilerVersion = NCC_VERSION_NUMBER;
 
@@ -101,7 +121,7 @@
 
             // Include file components that can be compiled
             $DirectoryScanner->setIncludes(ComponentFileExtensions::Php);
-            $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
+            $DirectoryScanner->setExcludes($this->selected_build_configuration->ExcludeFiles);
 
             // Append trailing slash to the end of the path if it's not already there
             if(substr($path, -1) !== DIRECTORY_SEPARATOR)
@@ -114,7 +134,8 @@
             // Scan for components first.
             Console::out('Scanning for components... ', false);
             /** @var SplFileInfo $item */
-            foreach($DirectoryScanner($source_path, true) as $item)
+            /** @noinspection PhpRedundantOptionalArgumentInspection */
+            foreach($DirectoryScanner($source_path, True) as $item)
             {
                 // Ignore directories, they're not important. :-)
                 if(is_dir($item->getPathName()))
@@ -144,7 +165,7 @@
 
             // Ignore component files
             $DirectoryScanner->setExcludes(array_merge(
-                $selected_build_configuration->ExcludeFiles, ComponentFileExtensions::Php
+                $this->selected_build_configuration->ExcludeFiles, ComponentFileExtensions::Php
             ));
 
             Console::out('Scanning for resources... ', false);
@@ -177,12 +198,11 @@
         /**
          * Builds the package by parsing the AST contents of the components and resources
          *
-         * @param array $options
          * @param string $path
          * @return string
          * @throws BuildException
          */
-        public function build(array $options, string $path): string
+        public function build(string $path): string
         {
             if($this->package == null)
             {
@@ -193,14 +213,6 @@
             if(substr($path, -1) !== DIRECTORY_SEPARATOR)
             {
                 $path .= DIRECTORY_SEPARATOR;
-            }
-
-            $source_path = $path . $this->project->Build->SourcePath;
-
-            // Append trailing slash to the end of the source path if it's not already there
-            if(substr($source_path, -1) !== DIRECTORY_SEPARATOR)
-            {
-                $source_path .= DIRECTORY_SEPARATOR;
             }
 
             // Runtime variables
@@ -220,12 +232,12 @@
                 // Process the components and attempt to create an AST representation of the source
                 foreach($this->package->Components as $component)
                 {
-                    if(ncc::cliMode())
+                    if(ncc::cliMode() && $total_items > 5)
                     {
                         Console::inlineProgressBar($processed_items, $total_items);
                     }
 
-                    $content = file_get_contents(Functions::correctDirectorySeparator($source_path . $component->Name));
+                    $content = file_get_contents(Functions::correctDirectorySeparator($path . $component->Name));
                     $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 
                     try
@@ -235,27 +247,33 @@
 
                         if($encoded === false)
                         {
-                            $component->Flags[] = ComponentFlags::b64encoded;
-                            $component->Data = Functions::byteEncode($content);
+                            $component->DataType = ComponentDataType::b64encoded;
+                            $component->Data = Base64::encode($content);
+                            $component->Checksum = hash('sha1', $component->Data);
                         }
                         else
                         {
-                            $component->Flags[] = ComponentFlags::AST;
-                            $component->Data = ZiProto::encode(json_decode($encoded));
+                            $component->DataType = ComponentDataType::AST;
+                            $component->Data = json_decode($encoded, true);
+                            $component->Checksum = null;
                         }
                     }
                     catch(Error $e)
                     {
-                        $component->Flags[] = ComponentFlags::b64encoded;
-                        $component->Data = Functions::byteEncode($content);
+                        $component->DataType = ComponentDataType::b64encoded;
+                        $component->Data = Base64::encode($content);
+                        $component->Checksum = hash('sha1', $component->Data);
                         unset($e);
                     }
 
-                    // Calculate the checksum
-                    $component->Checksum = hash('sha1', $component->Data);
-
+                    $component->Name = str_replace($this->project->Build->SourcePath, (string)null, $component->Name);
                     $components[] = $component;
                     $processed_items += 1;
+                }
+
+                if(ncc::cliMode() && $total_items > 5)
+                {
+                    print(PHP_EOL);
                 }
 
                 // Update the components
@@ -274,15 +292,17 @@
 
                 foreach($this->package->Resources as $resource)
                 {
-                    if(ncc::cliMode())
+                    if(ncc::cliMode() && $total_items > 5)
                     {
                         Console::inlineProgressBar($processed_items, $total_items);
                     }
 
                     // Get the data and
-                    $resource->Data = file_get_contents(Functions::correctDirectorySeparator($source_path . $resource->Name));
-                    $resource->Data = Functions::byteEncode($resource->Data);
-                    $resource->Checksum = hash('sha1', $resource->Checksum);
+                    $resource->Data = file_get_contents(Functions::correctDirectorySeparator($path . $resource->Name));
+                    $resource->Data = Base64::encode($resource->Data);
+                    $resource->Checksum = hash('sha1', $resource->Data);
+                    $resource->Name = str_replace($this->project->Build->SourcePath, (string)null, $resource->Name);
+                    $resources[] = $resource;
                 }
 
                 // Update the resources
@@ -291,11 +311,40 @@
 
             if(ncc::cliMode())
             {
+                if($total_items > 5)
+                    print(PHP_EOL);
                 Console::out($this->package->Assembly->Package . ' compiled successfully');
             }
 
             // Write the package to disk
-            file_put_contents(getcwd() . DIRECTORY_SEPARATOR . 'test.bin', ZiProto::encode($this->package->toArray(true)));
-            return getcwd() . DIRECTORY_SEPARATOR . 'test.bin';
+            $FileSystem = new Filesystem();
+
+            if($FileSystem->exists($path . $this->selected_build_configuration->OutputPath))
+            {
+                try
+                {
+                    $FileSystem->remove($path . $this->selected_build_configuration->OutputPath);
+                }
+                catch(IOException $e)
+                {
+                    throw new BuildException('Cannot delete directory \'' . $path . $this->selected_build_configuration->OutputPath . '\', ' . $e->getMessage(), $e);
+                }
+            }
+
+            // Finally write the package to the disk
+            $FileSystem->mkdir($path . $this->selected_build_configuration->OutputPath);
+            $output_file = $path . $this->selected_build_configuration->OutputPath . DIRECTORY_SEPARATOR . $this->package->Assembly->Package . '.ncc';
+            $FileSystem->touch($output_file);
+
+            try
+            {
+                $this->package->save($output_file);
+            }
+            catch(Exception $e)
+            {
+                throw new BuildException('Cannot write to output file', $e);
+            }
+
+            return $output_file;
         }
     }

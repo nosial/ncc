@@ -109,10 +109,10 @@
                 return false;
             }
 
-            if(strlen($this->Name) > 40)
+            if(strlen($this->Name) > 126)
             {
                 if($throw_exception)
-                    throw new InvalidProjectConfigurationException('The name cannot be larger than 40 characters', 'Assembly.Name');
+                    throw new InvalidProjectConfigurationException('The name cannot be larger than 126 characters', 'Assembly.Name');
 
                 return false;
             }
@@ -133,26 +133,26 @@
                 return false;
             }
 
-            if(strlen($this->Product) > 64)
+            if(strlen($this->Product) > 256)
             {
                 if($throw_exception)
-                    throw new InvalidProjectConfigurationException('The company cannot be larger than 64 characters', 'Assembly.Product');
+                    throw new InvalidProjectConfigurationException('The company cannot be larger than 256 characters', 'Assembly.Product');
 
                 return false;
             }
 
-            if(strlen($this->Copyright) > 64)
+            if(strlen($this->Copyright) > 256)
             {
                 if($throw_exception)
-                    throw new InvalidProjectConfigurationException('The copyright cannot be larger than 64 characters', 'Assembly.Copyright');
+                    throw new InvalidProjectConfigurationException('The copyright cannot be larger than 256 characters', 'Assembly.Copyright');
 
                 return false;
             }
 
-            if(strlen($this->Trademark) > 64)
+            if(strlen($this->Trademark) > 256)
             {
                 if($throw_exception)
-                    throw new InvalidProjectConfigurationException('The trademark cannot be larger than 64 characters', 'Assembly.Trademark');
+                    throw new InvalidProjectConfigurationException('The trademark cannot be larger than 256 characters', 'Assembly.Trademark');
 
                 return false;
             }

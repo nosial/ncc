@@ -2,7 +2,7 @@
 
     namespace ncc\Abstracts;
 
-    abstract class ComponentFlags
+    abstract class ComponentDataType
     {
         /**
          * Indicates whether the component is represented as an AST representation

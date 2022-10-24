@@ -5,9 +5,6 @@
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Objects\CliHelpSection;
-    use function chr;
-    use function is_int;
-    use function is_string;
 
     /**
      * @author Zi Xing Narrakas

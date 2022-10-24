@@ -3,7 +3,6 @@
     namespace ncc\Utilities;
 
     use ncc\Abstracts\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\InvalidScopeException;
 
     class PathFinder

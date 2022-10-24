@@ -3,8 +3,14 @@
     namespace ncc\Objects;
 
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InvalidConstantNameException;
+    use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\UnsupportedCompilerExtensionException;
+    use ncc\Exceptions\UnsupportedExtensionVersionException;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
     use ncc\Objects\ProjectConfiguration\Project;
@@ -53,10 +59,22 @@
          * @param bool $throw_exception
          * @return bool
          * @throws InvalidProjectConfigurationException
+         * @throws InvalidPropertyValueException
+         * @throws RuntimeException
+         * @throws UnsupportedCompilerExtensionException
+         * @throws UnsupportedExtensionVersionException
+         * @throws InvalidProjectBuildConfiguration
+         * @throws InvalidConstantNameException
          */
         public function validate(bool $throw_exception=True): bool
         {
+            if(!$this->Project->validate($throw_exception))
+                return false;
+
             if(!$this->Assembly->validate($throw_exception))
+                return false;
+
+            if(!$this->Build->validate($throw_exception))
                 return false;
 
             return true;

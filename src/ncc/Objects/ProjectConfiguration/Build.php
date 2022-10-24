@@ -5,8 +5,10 @@
     namespace ncc\Objects\ProjectConfiguration;
 
     use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\Validate;
 
     /**
      * @author Zi Xing Narrakas
@@ -87,11 +89,21 @@
          *
          * @param bool $throw_exception
          * @return bool
+         * @throws InvalidConstantNameException
          * @throws InvalidProjectBuildConfiguration
          */
         public function validate(bool $throw_exception=True): bool
         {
-            // TODO: Implement further validation logic
+            // TODO: Implement validation for Configurations, Dependencies and ExcludedFiles
+
+            // Check the defined constants
+            foreach($this->DefineConstants as $name => $value)
+            {
+                if(!Validate::constantName($name))
+                {
+                    throw new InvalidConstantNameException('The name \'' . $name . '\' is not valid for a constant declaration, ');
+                }
+            }
 
             // Check for duplicate configuration names
             $build_configurations = [];
