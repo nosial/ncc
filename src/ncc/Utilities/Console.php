@@ -11,7 +11,6 @@
         /**
          * Inline Progress bar, created by dealnews.com.
          *
-         * // TODO: Add non-inline option
          * @param int $value
          * @param int $total
          * @param int $size
@@ -21,6 +20,9 @@
          */
         public static function inlineProgressBar(int $value, int $total, int $size=38, array $options=[]): void
         {
+            if(!ncc::cliMode())
+                return;
+
             static $start_time;
 
             // if we go over our bound, just ignore it

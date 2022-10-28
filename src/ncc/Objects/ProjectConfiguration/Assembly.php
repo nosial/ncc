@@ -85,11 +85,10 @@
          */
         public function validate(bool $throw_exception=True): bool
         {
-            if(!preg_match(RegexPatterns::UUIDv4, $this->UUID))
+            if(!preg_match(RegexPatterns::UUID, $this->UUID))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The UUID is not a valid v4 UUID', 'Assembly.UUID');
-
                 return false;
             }
 

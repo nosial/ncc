@@ -21,6 +21,13 @@
         public $Flags;
 
         /**
+         * The data type of the component
+         *
+         * @var string
+         */
+        public $DataType;
+
+        /**
          * A sha1 hash checksum of the component, this will be compared against the data to determine
          * the integrity of the component to ensure that the component is not corrupted.
          *
@@ -66,6 +73,7 @@
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->Name,
                 ($bytecode ? Functions::cbc('flags') : 'flags') => $this->Flags,
+                ($bytecode ? Functions::cbc('data_type') : 'data_type') => $this->DataType,
                 ($bytecode ? Functions::cbc('checksum') : 'checksum') => $this->Checksum,
                 ($bytecode ? Functions::cbc('data') : 'data') => $this->Data,
             ];
@@ -83,6 +91,7 @@
 
             $Object->Name = Functions::array_bc($data, 'name');
             $Object->Flags = Functions::array_bc($data, 'flags');
+            $Object->DataType = Functions::array_bc($data, 'data_type');
             $Object->Checksum = Functions::array_bc($data, 'checksum');
             $Object->Data = Functions::array_bc($data, 'data');
 
