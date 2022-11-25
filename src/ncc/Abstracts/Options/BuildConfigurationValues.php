@@ -5,4 +5,6 @@
     abstract class BuildConfigurationValues
     {
         const DefaultConfiguration = 'default';
+
+        const AllConfigurations = 'all';
     }

@@ -17,6 +17,10 @@
          */
         public static function encode(string $string): string
         {
+            // Builtin function is faster than raw implementation
+            if(function_exists('base64_encode'))
+                return base64_encode($string);
+
             $base64 = str_split('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
             $bit_pattern = '';
             $padding = 0;
@@ -54,6 +58,9 @@
          */
         public static function decode(string $string): string
         {
+            if(function_exists('base64_decode'))
+                return base64_encode($string);
+
             $base64 = str_split('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
             $bit_pattern = '';
             $padding = substr_count(substr(strrev($string), 0, 2), '=');

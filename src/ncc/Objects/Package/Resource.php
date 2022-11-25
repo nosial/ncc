@@ -21,7 +21,7 @@
          *
          * @var string
          */
-        public $Checksum;
+        private $Checksum;
 
         /**
          * The raw data of the resource
@@ -44,10 +44,25 @@
             if($this->Data === null)
                 return false;
 
-            if(hash('sha1', $this->Data) !== $this->Checksum)
+            if(hash('sha1', $this->Data, true) !== $this->Checksum)
                 return false;
 
             return true;
+        }
+
+        /**
+         * Updates the checksum of the resource
+         *
+         * @return void
+         */
+        public function updateChecksum(): void
+        {
+            $this->Checksum = null;
+
+            if(gettype($this->Data) == 'string')
+            {
+                $this->Checksum = hash('sha1', $this->Data, true);
+            }
         }
 
         /**

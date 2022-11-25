@@ -6,12 +6,17 @@
     use ncc\Exceptions\AutoloadGeneratorException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
+    use ncc\Exceptions\ComponentChecksumException;
+    use ncc\Exceptions\ComponentDecodeException;
     use ncc\Exceptions\ComponentVersionNotFoundException;
     use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\DirectoryNotFoundException;
+    use ncc\Exceptions\ExecutionUnitNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidCredentialsEntryException;
+    use ncc\Exceptions\InvalidExecutionPolicyName;
     use ncc\Exceptions\InvalidPackageException;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
@@ -21,12 +26,25 @@
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\InvalidVersionConfigurationException;
     use ncc\Exceptions\InvalidVersionNumberException;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\NoAvailableUnitsException;
     use ncc\Exceptions\NoUnitsFoundException;
+    use ncc\Exceptions\PackageAlreadyInstalledException;
+    use ncc\Exceptions\PackageLockException;
+    use ncc\Exceptions\PackageNotFoundException;
+    use ncc\Exceptions\PackageParsingException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
+    use ncc\Exceptions\ProjectConfigurationNotFoundException;
+    use ncc\Exceptions\ResourceChecksumException;
+    use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\UndefinedExecutionPolicyException;
+    use ncc\Exceptions\UnsupportedComponentTypeException;
     use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Exceptions\UnsupportedPackageException;
+    use ncc\Exceptions\UnsupportedRunnerException;
+    use ncc\Exceptions\VersionNotFoundException;
 
     /**
      * @author Zi Xing Narrakas
@@ -175,6 +193,96 @@
         const BuildException = -1727;
 
         /**
+         * @see PackageParsingException
+         */
+        const PackageParsingException = -1728;
+
+        /**
+         * @see PackageLockException
+         */
+        const PackageLockException = -1729;
+
+        /**
+         * @see InstallationException
+         */
+        const InstallationException = -1730;
+
+        /**
+         * @see UnsupportedComponentTypeException
+         */
+        const UnsupportedComponentTypeException = -1731;
+
+        /**
+         * @see ComponentDecodeException
+         */
+        const ComponentDecodeException = -1732;
+
+        /**
+         * @see ComponentChecksumException
+         */
+        const ComponentChecksumException = -1733;
+
+        /**
+         * @see ResourceChecksumException
+         */
+        const ResourceChecksumException = -1734;
+
+        /**
+         * @see IOException
+         */
+        const IOException = -1735;
+
+        /**
+         * @see UnsupportedRunnerException
+         */
+        const UnsupportedRunnerException = -1736;
+
+        /**
+         * @see VersionNotFoundException
+         */
+        const VersionNotFoundException = -1737;
+
+        /**
+         * @see UndefinedExecutionPolicyException
+         */
+        const UndefinedExecutionPolicyException = -1738;
+
+        /**
+         * @see InvalidExecutionPolicyName
+         */
+        const InvalidExecutionPolicyName = -1739;
+
+        /**
+         * @see ProjectConfigurationNotFoundException
+         */
+        const ProjectConfigurationNotFoundException = -1740;
+
+        /**
+         * @see RunnerExecutionException
+         */
+        const RunnerExecutionException = -1741;
+
+        /**
+         * @see NoAvailableUnitsException
+         */
+        const NoAvailableUnitsException = -1742;
+
+        /**
+         * @see ExecutionUnitNotFoundException
+         */
+        const ExecutionUnitNotFoundException = -1743;
+
+        /**
+         * @see PackageAlreadyInstalledException
+         */
+        const PackageAlreadyInstalledException = -1744;
+
+        /**
+         * @see PackageNotFoundException
+         */
+        const PackageNotFoundException = -1745;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -205,6 +313,23 @@
             self::InvalidPropertyValueException,
             self::InvalidVersionConfigurationException,
             self::UnsupportedExtensionVersionException,
-            self::BuildException
+            self::BuildException,
+            self::PackageParsingException,
+            self::PackageLockException,
+            self::InstallationException,
+            self::UnsupportedComponentTypeException,
+            self::ComponentDecodeException,
+            self::ResourceChecksumException,
+            self::IOException,
+            self::UnsupportedRunnerException,
+            self::VersionNotFoundException,
+            self::UndefinedExecutionPolicyException,
+            self::InvalidExecutionPolicyName,
+            self::ProjectConfigurationNotFoundException,
+            self::RunnerExecutionException,
+            self::NoAvailableUnitsException,
+            self::ExecutionUnitNotFoundException,
+            self::PackageAlreadyInstalledException,
+            self::PackageNotFoundException
         ];
     }

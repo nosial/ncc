@@ -1,8 +1,14 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects\NccVersionInformation;
 
+    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ComponentVersionNotFoundException;
+    use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\IOException;
+    use ncc\Utilities\IO;
 
     class Component
     {
@@ -25,18 +31,19 @@
          *
          * @return string
          * @throws ComponentVersionNotFoundException
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
          */
         public function getVersion(): string
         {
             $third_party_path = NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'ThirdParty' . DIRECTORY_SEPARATOR;
             $component_path = $third_party_path . $this->Vendor . DIRECTORY_SEPARATOR . $this->PackageName . DIRECTORY_SEPARATOR;
 
-            if(file_exists($component_path . 'VERSION') == false)
-            {
+            if(!file_exists($component_path . 'VERSION'))
                 throw new ComponentVersionNotFoundException('The file \'' . $component_path . 'VERSION' . '\' does not exist');
-            }
 
-            return file_get_contents($component_path . 'VERSION');
+            return IO::fread($component_path . 'VERSION');
         }
 
         /**

@@ -1,11 +1,21 @@
 <?php
 
-    namespace ncc\Utilities;
+        /** @noinspection PhpMissingFieldTypeInspection */
 
+        namespace ncc\Utilities;
+
+    use ncc\Abstracts\LogLevel;
     use ncc\Abstracts\Scopes;
 
     class Resolver
     {
+        /**
+         * The cache value of the User ID
+         *
+         * @var string|null
+         */
+        private static $UserIdCache;
+
         /**
          * @param string|null $input
          * @return string
@@ -20,10 +30,13 @@
 
             $input = strtoupper($input);
 
+            if(self::$UserIdCache == null)
+                self::$UserIdCache = posix_getuid();
+
             // Resolve the scope if it's set to automatic
             if($input == Scopes::Auto)
             {
-                if(posix_getuid() == 0)
+                if(self::$UserIdCache == 0)
                 {
                     $input = Scopes::System;
                 }
@@ -34,7 +47,7 @@
             }
 
             // Auto-Correct the scope if the current user ID is 0
-            if($input == Scopes::User && posix_getuid() == 0)
+            if($input == Scopes::User && self::$UserIdCache == 0)
             {
                 $input = Scopes::System;
             }
@@ -45,9 +58,12 @@
         /**
          * Parse arguments
          *
-         * @param array|string [$message] input arguments
+         * @param array|string $message [$message] input arguments
          * @param int $max_arguments
          * @return array Configs Key/Value
+         * @noinspection RegExpRedundantEscape
+         * @noinspection RegExpSimplifiable
+         * @noinspection PhpMissingParamTypeInspection
          */
         public static function parseArguments($message=null, int $max_arguments=1000): array
         {
@@ -134,5 +150,95 @@
         public static function resolveConstantHash(string $scope, string $name): string
         {
             return hash('haval128,3', self::resolveFullConstantName($scope, $name));
+        }
+
+        /**
+         * Checks if the input level matches the current level
+         *
+         * @param string|null $input
+         * @param string|null $current_level
+         * @return bool
+         */
+        public static function checkLogLevel(?string $input, ?string $current_level): bool
+        {
+            if($input == null)
+                return false;
+            if($current_level == null)
+                return false;
+
+            $input = strtolower($input);
+            if(!Validate::checkLogLevel($input))
+                return false;
+
+            $current_level = strtolower($current_level);
+            if(!Validate::checkLogLevel($current_level))
+                return false;
+
+            switch($current_level)
+            {
+                case LogLevel::Debug:
+                    $levels = [
+                        LogLevel::Debug,
+                        LogLevel::Verbose,
+                        LogLevel::Info,
+                        LogLevel::Warning,
+                        LogLevel::Fatal,
+                        LogLevel::Error
+                    ];
+                    if(in_array($input, $levels))
+                        return true;
+                    return false;
+
+                case LogLevel::Verbose:
+                    $levels = [
+                        LogLevel::Verbose,
+                        LogLevel::Info,
+                        LogLevel::Warning,
+                        LogLevel::Fatal,
+                        LogLevel::Error
+                    ];
+                    if(in_array($input, $levels))
+                        return true;
+                    return false;
+
+                case LogLevel::Info:
+                    $levels = [
+                        LogLevel::Info,
+                        LogLevel::Warning,
+                        LogLevel::Fatal,
+                        LogLevel::Error
+                    ];
+                    if(in_array($input, $levels))
+                        return true;
+                    return false;
+
+                case LogLevel::Warning:
+                    $levels = [
+                        LogLevel::Warning,
+                        LogLevel::Fatal,
+                        LogLevel::Error
+                    ];
+                    if(in_array($input, $levels))
+                        return true;
+                    return false;
+
+                case LogLevel::Error:
+                    $levels = [
+                        LogLevel::Fatal,
+                        LogLevel::Error
+                    ];
+                    if(in_array($input, $levels))
+                        return true;
+                    return false;
+
+                case LogLevel::Fatal:
+                    if($input == LogLevel::Fatal)
+                        return true;
+                    return false;
+
+                default:
+                case LogLevel::Silent:
+                    return false;
+            }
         }
     }

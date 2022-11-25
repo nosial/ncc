@@ -1,12 +1,26 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Managers;
 
+    use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Abstracts\Options\InitializeProjectOptions;
+    use ncc\Classes\NccExtension\PackageCompiler;
+    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\BuildException;
+    use ncc\Exceptions\DirectoryNotFoundException;
+    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidProjectNameException;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
+    use ncc\Exceptions\ProjectConfigurationNotFoundException;
+    use ncc\Exceptions\UnsupportedCompilerExtensionException;
+    use ncc\Exceptions\UnsupportedRunnerException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
@@ -15,83 +29,76 @@
     class ProjectManager
     {
         /**
-         * The selected directory for managing the project
-         *
-         * @var string|null
-         */
-        private ?string $SelectedDirectory;
-
-        /**
          * The path that points to the project's main project.json file
          *
-         * @var string|null
+         * @var string
          */
-        private ?string $ProjectFilePath;
+        private $ProjectFilePath;
 
         /**
          * The path that points the project's main directory
          *
-         * @var string|null
+         * @var string
          */
-        private ?string $ProjectPath;
+        private $ProjectPath;
+
+        /**
+         * The loaded project configuration, null if no project file is loaded
+         *
+         * @var ProjectConfiguration|null
+         */
+        private $ProjectConfiguration;
 
         /**
          * Public Constructor
          *
-         * @param string $selected_directory
+         * @param string $path
+         * @throws AccessDeniedException
+         * @throws DirectoryNotFoundException
+         * @throws FileNotFoundException
+         * @throws IOException
+         * @throws MalformedJsonException
+         * @throws ProjectConfigurationNotFoundException
          */
-        public function __construct(string $selected_directory)
+        public function __construct(string $path)
         {
-            $this->SelectedDirectory = $selected_directory;
             $this->ProjectFilePath = null;
             $this->ProjectPath = null;
 
-            $this->detectProjectPath();
-        }
-
-        /**
-         * Attempts to resolve the project path from the selected directory
-         * Returns false if the selected directory is not a proper project or an initialized project
-         *
-         * @return void
-         */
-        private function detectProjectPath(): void
-        {
-            $selected_directory = $this->SelectedDirectory;
-
             // Auto-resolve the trailing slash
             /** @noinspection PhpStrFunctionsInspection */
-            if(substr($selected_directory, -1) !== '/')
+            if(substr($path, -1) !== '/')
             {
-                $selected_directory .= DIRECTORY_SEPARATOR;
+                $path .= DIRECTORY_SEPARATOR;
             }
 
             // Detect if the folder exists or not
-            if(!file_exists($selected_directory) || !is_dir($selected_directory))
+            if(!file_exists($path) || !is_dir($path))
             {
-                return;
+                throw new DirectoryNotFoundException('The given directory \'' . $path .'\' does not exist');
             }
 
-            $this->ProjectPath = $selected_directory;
-            $this->ProjectFilePath = $selected_directory . 'project.json';
+            $this->ProjectPath = $path;
+            $this->ProjectFilePath = $path . 'project.json';
+
+            if(file_exists($this->ProjectFilePath))
+                $this->load();
         }
 
         /**
          * Initializes the project structure
          *
-         * // TODO: Correct the unexpected path behavior issue when initializing a project
-         *
          * @param Compiler $compiler
          * @param string $name
          * @param string $package
-         * @param string $src
+         * @param string|null $src
          * @param array $options
          * @throws InvalidPackageNameException
          * @throws InvalidProjectNameException
          * @throws MalformedJsonException
          * @throws ProjectAlreadyExistsException
          */
-        public function initializeProject(Compiler $compiler, string $name, string $package, string $src, array $options=[]): void
+        public function initializeProject(Compiler $compiler, string $name, string $package, ?string $src=null, array $options=[]): void
         {
             // Validate the project information first
             if(!Validate::packageName($package))
@@ -109,41 +116,43 @@
                 throw new ProjectAlreadyExistsException('A project has already been initialized in \'' . $this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json' . '\'');
             }
 
-            $Project = new ProjectConfiguration();
+            $this->ProjectConfiguration = new ProjectConfiguration();
 
             // Set the compiler information
-            $Project->Project->Compiler = $compiler;
+            $this->ProjectConfiguration->Project->Compiler = $compiler;
 
             // Set the assembly information
-            $Project->Assembly->Name = $name;
-            $Project->Assembly->Package = $package;
-            $Project->Assembly->Version = '1.0.0';
-            $Project->Assembly->UUID = Uuid::v1()->toRfc4122();
+            $this->ProjectConfiguration->Assembly->Name = $name;
+            $this->ProjectConfiguration->Assembly->Package = $package;
+            $this->ProjectConfiguration->Assembly->Version = '1.0.0';
+            $this->ProjectConfiguration->Assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
-            $Project->Build->SourcePath = $src;
-            $Project->Build->DefaultConfiguration = 'debug';
+            $this->ProjectConfiguration->Build->SourcePath = $src;
+            if($this->ProjectConfiguration->Build->SourcePath == null)
+                $this->ProjectConfiguration->Build->SourcePath = $this->ProjectPath;
+            $this->ProjectConfiguration->Build->DefaultConfiguration = 'debug';
 
             // Assembly constants if the program wishes to check for this
-            $Project->Build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
-            $Project->Build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
-            $Project->Build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
-            $Project->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
+            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
+            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
+            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
+            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
 
             // Generate configurations
             $DebugConfiguration = new ProjectConfiguration\BuildConfiguration();
             $DebugConfiguration->Name = 'debug';
             $DebugConfiguration->OutputPath = 'build/debug';
             $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
-            $Project->Build->Configurations[] = $DebugConfiguration;
+            $this->ProjectConfiguration->Build->Configurations[] = $DebugConfiguration;
             $ReleaseConfiguration = new ProjectConfiguration\BuildConfiguration();
             $ReleaseConfiguration->Name = 'release';
             $ReleaseConfiguration->OutputPath = 'build/release';
             $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
-            $Project->Build->Configurations[] = $ReleaseConfiguration;
+            $this->ProjectConfiguration->Build->Configurations[] = $ReleaseConfiguration;
 
             // Finally create project.json
-            $Project->toFile($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json');
+            $this->ProjectConfiguration->toFile($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json');
 
             // And create the project directory for additional assets/resources
             $Folders = [
@@ -166,13 +175,57 @@
                 switch($option)
                 {
                     case InitializeProjectOptions::CREATE_SOURCE_DIRECTORY:
-                        if(!file_exists($this->ProjectPath . DIRECTORY_SEPARATOR . 'src'))
+                        if(!file_exists($this->ProjectConfiguration->Build->SourcePath))
                         {
-                            mkdir($this->ProjectPath . DIRECTORY_SEPARATOR . 'src');
+                            mkdir($this->ProjectConfiguration->Build->SourcePath);
                         }
                         break;
                 }
             }
+        }
+
+        /**
+         * Determines if a project configuration is loaded or not
+         *
+         * @return bool
+         */
+        public function projectLoaded(): bool
+        {
+            if($this->ProjectConfiguration == null)
+                return false;
+
+            return true;
+        }
+
+        /**
+         * Attempts to load the project configuration
+         *
+         * @return void
+         * @throws MalformedJsonException
+         * @throws ProjectConfigurationNotFoundException
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
+         */
+        public function load()
+        {
+            if(!file_exists($this->ProjectFilePath) && !is_file($this->ProjectFilePath))
+                throw new ProjectConfigurationNotFoundException('The project configuration file \'' . $this->ProjectFilePath . '\' was not found');
+
+            $this->ProjectConfiguration = ProjectConfiguration::fromFile($this->ProjectFilePath);
+        }
+
+        /**
+         * Saves the project configuration
+         *
+         * @return void
+         * @throws MalformedJsonException
+         */
+        public function save()
+        {
+            if(!$this->projectLoaded())
+                return;
+            $this->ProjectConfiguration->toFile($this->ProjectFilePath);
         }
 
         /**
@@ -181,5 +234,50 @@
         public function getProjectFilePath(): ?string
         {
             return $this->ProjectFilePath;
+        }
+
+        /**
+         * @return ProjectConfiguration|null
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
+         * @throws MalformedJsonException
+         * @throws ProjectConfigurationNotFoundException
+         */
+        public function getProjectConfiguration(): ?ProjectConfiguration
+        {
+            if($this->ProjectConfiguration == null)
+                $this->load();
+            return $this->ProjectConfiguration;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getProjectPath(): ?string
+        {
+            return $this->ProjectPath;
+        }
+
+
+        /**
+         * Compiles the project into a package
+         *
+         * @param string $build_configuration
+         * @return string
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
+         * @throws MalformedJsonException
+         * @throws ProjectConfigurationNotFoundException
+         * @throws BuildConfigurationNotFoundException
+         * @throws BuildException
+         * @throws PackagePreparationFailedException
+         * @throws UnsupportedCompilerExtensionException
+         * @throws UnsupportedRunnerException
+         */
+        public function build(string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
+        {
+            return PackageCompiler::compile($this, $build_configuration);
         }
     }
