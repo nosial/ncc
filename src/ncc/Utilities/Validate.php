@@ -2,6 +2,7 @@
 
     namespace ncc\Utilities;
 
+    use ncc\Abstracts\LogLevel;
     use ncc\Abstracts\RegexPatterns;
     use ncc\Abstracts\Scopes;
 
@@ -207,5 +208,54 @@
             }
 
             return true;
+        }
+
+        /**
+         * Validates the execution policy name
+         *
+         * @param string $input
+         * @return bool
+         */
+        public static function executionPolicyName(string $input): bool
+        {
+            if($input == null)
+            {
+                return false;
+            }
+
+            if(!preg_match(RegexPatterns::ExecutionPolicyName, $input))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Determines if the given log level is valid or not
+         *
+         * @param string $input
+         * @return bool
+         */
+        public static function checkLogLevel(string $input): bool
+        {
+            if(!in_array(strtolower($input), LogLevel::All))
+                return false;
+
+            return true;
+        }
+
+        /**
+         * Determines if given input exceeds the path length limit
+         *
+         * @param string $input
+         * @return bool
+         */
+        public static function exceedsPathLength(string $input): bool
+        {
+            if(strlen($input) > 4096)
+                return true;
+
+            return false;
         }
     }

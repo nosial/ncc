@@ -68,6 +68,9 @@
             $object->RuntimeConstants = Functions::array_bc($data, 'runtime_constants');
             $object->CompilerVersion = Functions::array_bc($data, 'compiler_version');
 
+            if($object->CompilerExtension !== null)
+                $object->CompilerExtension = Compiler::fromArray($object->CompilerExtension);
+
             return $object;
         }
     }

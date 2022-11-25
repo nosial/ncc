@@ -2,9 +2,22 @@
 
     namespace ncc\Utilities;
 
+    use Exception;
+    use ncc\Abstracts\Runners;
+    use ncc\Abstracts\Scopes;
+    use ncc\Classes\PhpExtension\Runner;
+    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\UnsupportedRunnerException;
+    use ncc\Managers\CredentialManager;
+    use ncc\Managers\PackageLockManager;
     use ncc\Objects\CliHelpSection;
+    use ncc\Objects\Package\ExecutionUnit;
+    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
+    use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
 
     /**
      * @author Zi Xing Narrakas
@@ -22,11 +35,15 @@
          * Calculates a byte-code representation of the input using CRC32
          *
          * @param string $input
-         * @return int
+         * @return string
          */
-        public static function cbc(string $input): int
+        public static function cbc(string $input): string
         {
-            return hexdec(hash('crc32', $input, true));
+            $cache = RuntimeCache::get("cbc_$input");
+            if($cache !== null)
+                return $cache;
+
+            return RuntimeCache::set("cbc_$input", hash('crc32', $input, true));
         }
 
         /**
@@ -36,6 +53,7 @@
          * @param array $data
          * @param string $select
          * @return mixed|null
+         * @noinspection PhpMissingReturnTypeInspection
          */
         public static function array_bc(array $data, string $select)
         {
@@ -54,7 +72,9 @@
          * @param string $path
          * @param int $flags
          * @return mixed
+         * @throws AccessDeniedException
          * @throws FileNotFoundException
+         * @throws IOException
          * @throws MalformedJsonException
          * @noinspection PhpMissingReturnTypeInspection
          */
@@ -65,7 +85,7 @@
                 throw new FileNotFoundException($path);
             }
 
-            return self::loadJson(file_get_contents($path), $flags);
+            return self::loadJson(IO::fread($path), $flags);
         }
 
         /**
@@ -98,6 +118,7 @@
          * @return string
          * @throws MalformedJsonException
          * @noinspection PhpMissingParamTypeInspection
+         * @noinspection PhpUnusedLocalVariableInspection
          */
         public static function encodeJson($value, int $flags=0): string
         {
@@ -123,7 +144,7 @@
          * @return void
          * @throws MalformedJsonException
          */
-        public static function encodeJsonFile($value, string $path, int $flags=0)
+        public static function encodeJsonFile($value, string $path, int $flags=0): void
         {
             file_put_contents($path, self::encodeJson($value, $flags));
         }
@@ -160,16 +181,19 @@
          * @param string $copyright
          * @param bool $basic_ascii
          * @return string
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
          */
         public static function getBanner(string $version, string $copyright, bool $basic_ascii=false): string
         {
             if($basic_ascii)
             {
-                $banner = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_basic');
+                $banner = IO::fread(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_basic');
             }
             else
             {
-                $banner = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_extended');
+                $banner = IO::fread(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'banner_extended');
             }
 
             $banner_version = str_pad($version, 21);
@@ -219,26 +243,125 @@
         }
 
         /**
-         * Converts the input string into a Bas64 encoding before returning it as a
-         * byte representation
-         *
-         * @param string $string
-         * @return string
+         * @param string $path
+         * @param ExecutionPolicy $policy
+         * @return ExecutionUnit
+         * @throws UnsupportedRunnerException
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
          */
-        public static function byteEncode(string $string): string
+        public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
-            return convert_uuencode(Base64::encode($string));
+            return match (strtolower($policy->Runner)) {
+                Runners::php => Runner::processUnit($path, $policy),
+                default => throw new UnsupportedRunnerException('The runner \'' . $policy->Runner . '\' is not supported'),
+            };
         }
 
         /**
-         * Decodes the input string back into the normal string representation that was encoded
-         * by the byteEncode() function
+         * Returns an array representation of the exception
          *
-         * @param string $string
+         * @param Exception $e
+         * @return array
+         */
+        public static function exceptionToArray(Exception $e): array
+        {
+            $exception = [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => null,
+                'trace_string' => $e->getTraceAsString(),
+            ];
+
+            if($e->getPrevious() !== null)
+            {
+                $exception['trace'] = self::exceptionToArray($e);
+            }
+
+            return $exception;
+        }
+
+        /**
+         * Takes the input bytes and converts it to a readable unit representation
+         *
+         * @param int $bytes
+         * @param int $decimals
          * @return string
          */
-        public static function byteDecode(string $string): string
+        public static function b2u(int $bytes, int $decimals=2): string
         {
-            return base64_decode(convert_uudecode($string));
+            $size = array('B','kB','MB','GB','TB','PB','EB','ZB','YB');
+            $factor = floor((strlen($bytes) - 1) / 3);
+            return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$size[$factor];
+        }
+
+        /**
+         * Initializes NCC files
+         *
+         * @return void
+         * @throws AccessDeniedException
+         * @throws InvalidScopeException
+         */
+        public static function initializeFiles(): void
+        {
+            if(Resolver::resolveScope() !== Scopes::System)
+                throw new AccessDeniedException('Cannot initialize NCC files, insufficient permissions');
+
+            Console::outVerbose('Initializing NCC files');
+
+            $filesystem = new Filesystem();
+            if(!$filesystem->exists(PathFinder::getDataPath(Scopes::System)))
+            {
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getDataPath(Scopes::System)));
+                $filesystem->mkdir(PathFinder::getDataPath(Scopes::System), 0755);
+            }
+
+            if(!$filesystem->exists(PathFinder::getCachePath(Scopes::System)))
+            {
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getCachePath(Scopes::System)));
+                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                $filesystem->mkdir(PathFinder::getCachePath(Scopes::System), 0777);
+            }
+
+            if(!$filesystem->exists(PathFinder::getRunnerPath(Scopes::System)))
+            {
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getRunnerPath(Scopes::System)));
+                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                $filesystem->mkdir(PathFinder::getRunnerPath(Scopes::System), 0755);
+            }
+
+            if(!$filesystem->exists(PathFinder::getPackagesPath(Scopes::System)))
+            {
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getPackagesPath(Scopes::System)));
+                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                $filesystem->mkdir(PathFinder::getPackagesPath(Scopes::System), 0755);
+            }
+
+            // Create credential store if needed
+            try
+            {
+                Console::outVerbose('Processing Credential Store');
+                $credential_manager = new CredentialManager();
+                $credential_manager->constructStore();
+            }
+            catch (Exception $e)
+            {
+                Console::outError('Cannot construct credential store, ' . $e->getMessage() . ' (Error Code: ' . $e->getCode() . ')');
+            }
+
+            // Create package lock if needed
+            try
+            {
+                Console::outVerbose('Processing Package Lock');
+                $package_manager = new PackageLockManager();
+                $package_manager->constructLockFile();
+            }
+            catch (Exception $e)
+            {
+                Console::outError('Cannot construct Package Lock, ' . $e->getMessage() . ' (Error Code: ' . $e->getCode() . ')');
+            }
         }
     }

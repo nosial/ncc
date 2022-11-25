@@ -4,17 +4,24 @@
 
     namespace ncc\Objects;
 
+    use Exception;
+    use ncc\Abstracts\EncoderType;
+    use ncc\Abstracts\PackageStructureVersions;
+    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidPackageException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PackageParsingException;
     use ncc\Objects\Package\Component;
+    use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Header;
     use ncc\Objects\Package\Installer;
     use ncc\Objects\Package\MagicBytes;
-    use ncc\Objects\Package\MainExecutionPolicy;
     use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\IO;
     use ncc\ZiProto\ZiProto;
 
     class Package
@@ -50,7 +57,7 @@
         /**
          * The Main Execution Policy object for the package if the package is an executable package.
          *
-         * @var MainExecutionPolicy|null
+         * @var string|null
          */
         public $MainExecutionPolicy;
 
@@ -60,6 +67,13 @@
          * @var Installer|null
          */
         public $Installer;
+
+        /**
+         * An array of execution units defined in the package
+         *
+         * @var ExecutionUnit[]
+         */
+        public $ExecutionUnits;
 
         /**
          * An array of resources that the package depends on
@@ -83,6 +97,7 @@
             $this->MagicBytes = new MagicBytes();
             $this->Header = new Header();
             $this->Assembly = new Assembly();
+            $this->ExecutionUnits = [];
             $this->Components = [];
             $this->Dependencies = [];
             $this->Resources = [];
@@ -127,15 +142,140 @@
         }
 
         /**
+         * Attempts to find the execution unit with the given name
+         *
+         * @param string $name
+         * @return ExecutionUnit|null
+         */
+        public function getExecutionUnit(string $name): ?ExecutionUnit
+        {
+            foreach($this->ExecutionUnits as $unit)
+            {
+                if($unit->ExecutionPolicy->Name == $name)
+                    return $unit;
+            }
+
+            return null;
+        }
+
+        /**
          * Writes the package contents to disk
          *
          * @param string $output_path
          * @return void
+         * @throws IOException
          */
         public function save(string $output_path): void
         {
             $package_contents = $this->MagicBytes->toString() . ZiProto::encode($this->toArray(true));
-            file_put_contents($output_path, $package_contents);
+            IO::fwrite($output_path, $package_contents, 0777);
+        }
+
+        /**
+         * Attempts to parse the specified package path and returns the object representation
+         * of the package, including with the MagicBytes representation that is in the
+         * file headers.
+         *
+         * @param string $path
+         * @return Package
+         * @throws FileNotFoundException
+         * @throws PackageParsingException
+         */
+        public static function load(string $path): Package
+        {
+            if(!file_exists($path) || !is_file($path) || !is_readable($path))
+            {
+                throw new FileNotFoundException('The file ' . $path . ' does not exist or is not readable');
+            }
+
+            $handle = fopen($path, "rb");
+            $header = fread($handle, 256); // Read the first 256 bytes of the file
+            fclose($handle);
+
+            if(!strtoupper(substr($header, 0, 11)) == 'NCC_PACKAGE')
+                throw new PackageParsingException('The package \'' . $path . '\' does not appear to be a valid NCC Package (Missing Header)');
+
+            // Extract the package structure version
+            $package_structure_version = strtoupper(substr($header, 11, 3));
+
+            if(!in_array($package_structure_version, PackageStructureVersions::ALL))
+                throw new PackageParsingException('The package \'' . $path . '\' has a package structure version of ' . $package_structure_version . ' which is not supported by this version NCC');
+
+            // Extract the package encoding type and package type
+            $encoding_header = strtoupper(substr($header, 14, 5));
+            $encoding_type = substr($encoding_header, 0, 3);
+            $package_type = substr($encoding_header, 3, 2);
+
+            $magic_bytes = new MagicBytes();
+            $magic_bytes->PackageStructureVersion = $package_structure_version;
+
+            // Determine the encoding type
+            switch($encoding_type)
+            {
+                case '300':
+                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->IsCompressed = false;
+                    $magic_bytes->IsEncrypted = false;
+                    break;
+
+                case '301':
+                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->IsCompressed = true;
+                    $magic_bytes->IsEncrypted = false;
+                    break;
+
+                case '310':
+                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->IsCompressed = false;
+                    $magic_bytes->IsEncrypted = true;
+                    break;
+
+                case '311':
+                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->IsCompressed = true;
+                    $magic_bytes->IsEncrypted = true;
+                    break;
+
+                default:
+                    throw new PackageParsingException('Cannot determine the encoding type for the package \'' . $path . '\' (Got ' . $encoding_type . ')');
+            }
+
+            // Determine the package type
+            switch($package_type)
+            {
+                case '40':
+                    $magic_bytes->IsInstallable = true;
+                    $magic_bytes->IsExecutable = false;
+                    break;
+
+                case '41':
+                    $magic_bytes->IsInstallable = false;
+                    $magic_bytes->IsExecutable = true;
+                    break;
+
+                case '42':
+                    $magic_bytes->IsInstallable = true;
+                    $magic_bytes->IsExecutable = true;
+                    break;
+
+                default:
+                    throw new PackageParsingException('Cannot determine the package type for the package \'' . $path . '\' (Got ' . $package_type . ')');
+            }
+
+            // TODO: Implement encryption and compression parsing
+
+            // Assuming all is good, load the entire fire into memory and parse its contents
+            try
+            {
+                $package = Package::fromArray(ZiProto::decode(substr(IO::fread($path), strlen($magic_bytes->toString()))));
+            }
+            catch(Exception $e)
+            {
+                throw new PackageParsingException('Cannot decode the contents of the package \'' . $path . '\', invalid encoding or the package is corrupted, ' . $e->getMessage(), $e);
+            }
+
+            $package->MagicBytes = $magic_bytes;
+            return $package;
         }
 
         /**
@@ -161,13 +301,17 @@
             foreach($this->Resources as $resource)
                 $_resources[] = $resource->toArray($bytecode);
 
+            $_execution_units = [];
+            foreach($this->ExecutionUnits as $unit)
+                $_execution_units[] = $unit->toArray($bytecode);
 
             return [
-                ($bytecode ? Functions::cbc('header') : 'header') => $this->Header?->toArray($bytecode),
-                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('header') : 'header') => $this?->Header?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this?->Assembly?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('dependencies') : 'dependencies') => $_dependencies,
-                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this->MainExecutionPolicy?->toArray($bytecode),
-                ($bytecode ? Functions::cbc('installer') : 'installer') => $this->Installer?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this?->MainExecutionPolicy,
+                ($bytecode ? Functions::cbc('installer') : 'installer') => $this?->Installer?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('execution_units') : 'execution_units') => $_execution_units,
                 ($bytecode ? Functions::cbc('resources') : 'resources') => $_resources,
                 ($bytecode ? Functions::cbc('components') : 'components') => $_components
             ];
@@ -190,8 +334,6 @@
                 $object->Assembly = Assembly::fromArray($object->Assembly);
 
             $object->MainExecutionPolicy = Functions::array_bc($data, 'main_execution_policy');
-            if($object->MainExecutionPolicy !== null)
-                $object->MainExecutionPolicy = MainExecutionPolicy::fromArray($object->MainExecutionPolicy);
 
             $object->Installer = Functions::array_bc($data, 'installer');
             if($object->Installer !== null)
@@ -221,6 +363,15 @@
                 foreach($_components as $component)
                 {
                     $object->Components[] = Component::fromArray($component);
+                }
+            }
+
+            $_execution_units = Functions::array_bc($data, 'execution_units');
+            if($_execution_units !== null)
+            {
+                foreach($_execution_units as $unit)
+                {
+                    $object->ExecutionUnits[] = ExecutionUnit::fromArray($unit);
                 }
             }
 

@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
+
     namespace ncc\Objects\Package;
 
     use ncc\Utilities\Functions;
@@ -33,12 +35,12 @@
          *
          * @var string
          */
-        public $Checksum;
+        private $Checksum;
 
         /**
          * The raw data of the component, this is to be processed by the compiler extension
          *
-         * @var string
+         * @var mixed
          */
         public $Data;
 
@@ -51,15 +53,30 @@
         public function validateChecksum(): bool
         {
             if($this->Checksum === null)
-                return false;
+                return true; // Return true if the checksum is empty
 
             if($this->Data === null)
-                return false;
+                return true; // Return true if the data is null
 
-            if(hash('sha1', $this->Data) !== $this->Checksum)
-                return false;
+            if(hash('sha1', $this->Data, true) !== $this->Checksum)
+                return false; // Return false if the checksum failed
 
             return true;
+        }
+
+        /**
+         * Updates the checksum of the resource
+         *
+         * @return void
+         */
+        public function updateChecksum(): void
+        {
+            $this->Checksum = null;
+
+            if(gettype($this->Data) == 'string')
+            {
+                $this->Checksum = hash('sha1', $this->Data, true);
+            }
         }
 
         /**

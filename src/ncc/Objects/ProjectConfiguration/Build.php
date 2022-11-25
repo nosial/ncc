@@ -4,6 +4,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
@@ -52,11 +53,32 @@
         public $Scope;
 
         /**
+         * The execution policy to use as the main execution point
+         *
+         * @var string|null
+         */
+        public $Main;
+
+        /**
          * An array of constants to define by default
          *
          * @var string[]
          */
         public $DefineConstants;
+
+        /**
+         * An array of execution policies to execute pre build
+         *
+         * @var string[]
+         */
+        public $PreBuild;
+
+        /**
+         * An array of execution policies to execute post build
+         *
+         * @var string[]
+         */
+        public $PostBuild;
 
         /**
          * An array of dependencies that are required by default
@@ -125,6 +147,7 @@
          * Returns an array of all the build configurations defined in the project configuration
          *
          * @return array
+         * @noinspection PhpUnused
          */
         public function getBuildConfigurations(): array
         {
@@ -148,6 +171,9 @@
          */
         public function getBuildConfiguration(string $name): BuildConfiguration
         {
+            if($name == BuildConfigurationValues::DefaultConfiguration)
+                $name = $this->DefaultConfiguration;
+
             foreach($this->Configurations as $configuration)
             {
                 if($configuration->Name == $name)
@@ -174,7 +200,10 @@
             $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
             $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
             $ReturnResults[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->Scope;
+            $ReturnResults[($bytecode ? Functions::cbc('main') : 'main')] = $this->Main;
             $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
+            $ReturnResults[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->PreBuild;
+            $ReturnResults[($bytecode ? Functions::cbc('post_build') : 'post_build')] = $this->PostBuild;
             $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = [];
 
             foreach($this->Dependencies as $dependency)
@@ -207,7 +236,10 @@
             $BuildObject->ExcludeFiles = (Functions::array_bc($data, 'exclude_files') ?? []);
             $BuildObject->Options = (Functions::array_bc($data, 'options') ?? []);
             $BuildObject->Scope = Functions::array_bc($data, 'scope');
+            $BuildObject->Main = Functions::array_bc($data, 'main');
             $BuildObject->DefineConstants = (Functions::array_bc($data, 'define_constants') ?? []);
+            $BuildObject->PreBuild = (Functions::array_bc($data, 'pre_build') ?? []);
+            $BuildObject->PostBuild = (Functions::array_bc($data, 'post_build') ?? []);
 
             if(Functions::array_bc($data, 'dependencies') !== null)
             {

@@ -4,12 +4,15 @@
 
     namespace ncc\Managers;
 
+    use Exception;
     use ncc\Abstracts\Scopes;
     use ncc\Abstracts\Versions;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\InvalidCredentialsEntryException;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Objects\Vault;
+    use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
     use ncc\ZiProto\ZiProto;
@@ -26,6 +29,7 @@
          */
         public function __construct()
         {
+            /** @noinspection PhpUnhandledExceptionInspection */
             $this->CredentialsPath = PathFinder::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'credentials.store';
         }
 
@@ -51,7 +55,7 @@
          *
          * @return void
          * @throws AccessDeniedException
-         * @throws RuntimeException
+         * @throws IOException
          */
         public function constructStore(): void
         {
@@ -68,12 +72,7 @@
             $VaultObject = new Vault();
             $VaultObject->Version = Versions::CredentialsStoreVersion;
 
-            if(!@file_put_contents($this->CredentialsPath, ZiProto::encode($VaultObject->toArray())))
-            {
-                throw new RuntimeException('Cannot create file \'' . $this->CredentialsPath . '\'');
-            }
-
-            chmod($this->CredentialsPath, 0600);
+            IO::fwrite($this->CredentialsPath, ZiProto::encode($VaultObject->toArray()), 0600);
         }
 
         /**
@@ -81,6 +80,7 @@
          *
          * @return Vault
          * @throws AccessDeniedException
+         * @throws IOException
          * @throws RuntimeException
          */
         public function getVault(): Vault
@@ -94,17 +94,15 @@
 
             try
             {
-                $Vault = ZiProto::decode(file_get_contents($this->CredentialsPath));
+                $Vault = ZiProto::decode(IO::fread($this->CredentialsPath));
             }
-            catch(\Exception $e)
+            catch(Exception $e)
             {
                 // TODO: Implement error-correction for corrupted credentials store.
                 throw new RuntimeException($e->getMessage(), $e);
             }
 
-            $Vault = Vault::fromArray($Vault);
-
-            return $Vault;
+            return Vault::fromArray($Vault);
         }
 
         /**
@@ -113,15 +111,16 @@
          * @param Vault $vault
          * @return void
          * @throws AccessDeniedException
+         * @throws IOException
          */
-        public function saveVault(Vault $vault)
+        public function saveVault(Vault $vault): void
         {
             if(!$this->checkAccess())
             {
                 throw new AccessDeniedException('Cannot write to credentials store without system permissions');
             }
 
-            file_put_contents($this->CredentialsPath, ZiProto::encode($vault->toArray()));
+            IO::fwrite($this->CredentialsPath, ZiProto::encode($vault->toArray()), 0600);
         }
 
         /**
@@ -132,8 +131,9 @@
          * @throws AccessDeniedException
          * @throws InvalidCredentialsEntryException
          * @throws RuntimeException
+         * @throws IOException
          */
-        public function registerEntry(Vault\Entry $entry)
+        public function registerEntry(Vault\Entry $entry): void
         {
             if(!preg_match('/^[\w-]+$/', $entry->Alias))
             {
@@ -152,7 +152,7 @@
         /**
          * @return null
          */
-        public function getCredentialsPath()
+        public function getCredentialsPath(): ?string
         {
             return $this->CredentialsPath;
         }

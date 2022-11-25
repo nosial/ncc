@@ -23,4 +23,6 @@
         const WindowsPath = '/^(([%][^\/:*?<>""|]*[%])|([a-zA-Z][:])|(\\\\))((\\\\{1})|((\\\\{1})[^\\\\]([^\/:*?<>""|]*))+)$/m';
 
         const ConstantName = '/^([^\x00-\x7F]|[\w_\ \.\+\-]){2,64}$/';
+
+        const ExecutionPolicyName = '/^[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/m';
     }

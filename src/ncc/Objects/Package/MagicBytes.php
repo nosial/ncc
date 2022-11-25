@@ -147,6 +147,12 @@
                 // NCC_PACKAGE1.030140
                 $magic_bytes .= '40';
             }
+            else
+            {
+                // If no type is specified, default to installable only
+                // NCC_PACKAGE1.030140
+                $magic_bytes .= '40';
+            }
 
             return $magic_bytes;
         }
