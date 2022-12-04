@@ -7,16 +7,19 @@
     use Exception;
     use ncc\Abstracts\CompilerExtensions;
     use ncc\Abstracts\ConstantReferences;
+    use ncc\Abstracts\DependencySourceType;
     use ncc\Abstracts\LogLevel;
     use ncc\Abstracts\Scopes;
     use ncc\Classes\NccExtension\PackageCompiler;
-    use ncc\Classes\PhpExtension\Installer;
+    use ncc\Classes\PhpExtension\PhpInstaller;
     use ncc\CLI\Main;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\MissingDependencyException;
+    use ncc\Exceptions\NotImplementedException;
     use ncc\Exceptions\PackageAlreadyInstalledException;
     use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\PackageNotFoundException;
@@ -28,12 +31,14 @@
     use ncc\Objects\Package;
     use ncc\Objects\PackageLock\PackageEntry;
     use ncc\Objects\PackageLock\VersionEntry;
+    use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
     use ncc\Utilities\Console;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
+    use ncc\Utilities\Validate;
     use ncc\ZiProto\ZiProto;
     use SplFileInfo;
 
@@ -63,37 +68,39 @@
         /**
          * Installs a local package onto the system
          *
-         * @param string $input
+         * @param string $package_path
          * @return string
          * @throws AccessDeniedException
          * @throws FileNotFoundException
          * @throws IOException
          * @throws InstallationException
+         * @throws MissingDependencyException
+         * @throws NotImplementedException
          * @throws PackageAlreadyInstalledException
          * @throws PackageLockException
+         * @throws PackageNotFoundException
          * @throws PackageParsingException
          * @throws UnsupportedCompilerExtensionException
          * @throws UnsupportedRunnerException
          * @throws VersionNotFoundException
          */
-        public function install(string $input): string
+        public function install(string $package_path): string
         {
             if(Resolver::resolveScope() !== Scopes::System)
                 throw new AccessDeniedException('Insufficient permission to install packages');
 
-            Console::outVerbose(sprintf('Installing %s', $input));
-            if(!file_exists($input) || !is_file($input) || !is_readable($input))
-                throw new FileNotFoundException('The specified file \'' . $input .' \' does not exist or is not readable.');
+            if(!file_exists($package_path) || !is_file($package_path) || !is_readable($package_path))
+                throw new FileNotFoundException('The specified file \'' . $package_path .' \' does not exist or is not readable.');
 
-            $package = Package::load($input);
+            $package = Package::load($package_path);
 
             if($this->getPackageVersion($package->Assembly->Package, $package->Assembly->Version) !== null)
-                throw new PackageAlreadyInstalledException('The package ' . $package->Assembly->Package . '==' . $package->Assembly->Version . ' is already installed');
+                throw new PackageAlreadyInstalledException('The package ' . $package->Assembly->Package . '=' . $package->Assembly->Version . ' is already installed');
 
             $extension = $package->Header->CompilerExtension->Extension;
-            $installation_paths = new InstallationPaths($this->PackagesPath . DIRECTORY_SEPARATOR . $package->Assembly->Package . '==' . $package->Assembly->Version);
+            $installation_paths = new InstallationPaths($this->PackagesPath . DIRECTORY_SEPARATOR . $package->Assembly->Package . '=' . $package->Assembly->Version);
             $installer = match ($extension) {
-                CompilerExtensions::PHP => new Installer($package),
+                CompilerExtensions::PHP => new PhpInstaller($package),
                 default => throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $extension . '\' is not supported'),
             };
             $execution_pointer_manager = new ExecutionPointerManager();
@@ -101,7 +108,16 @@
                 ConstantReferences::Install => $installation_paths
             ]);
 
-            Console::outVerbose(sprintf('Successfully parsed %s', $package->Assembly->Package));
+            // Process all the required dependencies before installing the package
+            if($package->Dependencies !== null && count($package->Dependencies) > 0)
+            {
+                foreach($package->Dependencies as $dependency)
+                {
+                    $this->processDependency($dependency, $package, $package_path);
+                }
+            }
+
+            Console::outVerbose(sprintf('Installing %s', $package_path));
 
             if(Resolver::checkLogLevel(LogLevel::Debug, Main::getLogLevel()))
             {
@@ -293,6 +309,71 @@
         }
 
         /**
+         * @param Dependency $dependency
+         * @param Package $package
+         * @param string $package_path
+         * @return void
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
+         * @throws InstallationException
+         * @throws MissingDependencyException
+         * @throws NotImplementedException
+         * @throws PackageAlreadyInstalledException
+         * @throws PackageLockException
+         * @throws PackageNotFoundException
+         * @throws PackageParsingException
+         * @throws UnsupportedCompilerExtensionException
+         * @throws UnsupportedRunnerException
+         * @throws VersionNotFoundException
+         */
+        private function processDependency(Dependency $dependency, Package $package, string $package_path): void
+        {
+            Console::outVerbose('processing dependency ' . $dependency->Name . ' (' . $dependency->Version . ')');
+            $dependent_package = $this->getPackage($dependency->Name);
+            $dependency_met = false;
+
+            if ($dependent_package !== null && $dependency->Version !== null && Validate::version($dependency->Version))
+            {
+                $dependent_version = $this->getPackageVersion($dependency->Name, $dependency->Version);
+                if ($dependent_version !== null)
+                    $dependency_met = true;
+            }
+            elseif ($dependent_package !== null && $dependency->Version == null)
+            {
+                $dependency_met = true;
+            }
+
+            if ($dependency->SourceType !== null)
+            {
+                if(!$dependency_met)
+                {
+                    Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->Name, $dependency->Version, $package->Assembly->Package, $package->Assembly->Version));
+                    switch ($dependency->SourceType)
+                    {
+                        case DependencySourceType::Local:
+                            Console::outDebug('installing from local source ' . $dependency->Source);
+                            $basedir = dirname($package_path);
+                            if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->Source))
+                                throw new FileNotFoundException($basedir . DIRECTORY_SEPARATOR . $dependency->Source);
+                            $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->Source);
+                            break;
+
+                        case DependencySourceType::StaticLinking:
+                            throw new PackageNotFoundException('Static linking not possible, package ' . $dependency->Name . ' is not installed');
+
+                        default:
+                            throw new NotImplementedException('Dependency source type ' . $dependency->SourceType . ' is not implemented');
+                    }
+                }
+            }
+            else
+            {
+                throw new MissingDependencyException(sprintf('The dependency %s=%s for %s=%s is not met', $dependency->Name, $dependency->Version, $package->Assembly->Package, $package->Assembly->Version));
+            }
+        }
+
+        /**
          * Returns an existing package entry, returns null if no such entry exists
          *
          * @param string $package
@@ -345,6 +426,82 @@
         }
 
         /**
+         * Returns a package tree representation
+         *
+         * @param array $tree
+         * @param string|null $package
+         * @return array
+         */
+        public function getPackageTree(array $tree=[], ?string $package=null): array
+        {
+            // First build the packages to scan first
+            $packages = [];
+            if($package !== null)
+            {
+                // If it's coming from a selected package, query the package and process its dependencies
+                $exploded = explode('=', $package);
+                try
+                {
+                    foreach ($this->getPackage($exploded[0])?->getVersion($exploded[1])?->Dependencies as $dependency)
+                    {
+                        if(!in_array($dependency->PackageName . '=' . $dependency->Version, $tree))
+                            $packages[] = $dependency->PackageName . '=' . $dependency->Version;
+                    }
+                }
+                catch(Exception $e)
+                {
+                    unset($e);
+                }
+
+            }
+            else
+            {
+                // If it's coming from nothing, start with the installed packages on the system
+                try
+                {
+                    foreach ($this->getInstalledPackages() as $installed_package => $versions)
+                    {
+                        foreach ($versions as $version)
+                        {
+                            if (!in_array($installed_package . '=' . $version, $packages))
+                                $packages[] = $installed_package . '=' . $version;
+                        }
+                    }
+                }
+                catch (PackageLockException $e)
+                {
+                    unset($e);
+                }
+            }
+
+            // Go through each package
+            foreach($packages as $package)
+            {
+                $package_e = explode('=', $package);
+                try
+                {
+                    $version_entry = $this->getPackageVersion($package_e[0], $package_e[1]);
+                    $tree[$package] = null;
+                    if($version_entry->Dependencies !== null && count($version_entry->Dependencies) > 0)
+                    {
+                        $tree[$package] = [];
+                        foreach($version_entry->Dependencies as $dependency)
+                        {
+                            $dependency_name = sprintf('%s=%s', $dependency->PackageName, $dependency->Version);
+                            $tree[$package] = $this->getPackageTree($tree[$package], $dependency_name);
+                        }
+                    }
+                }
+                catch(Exception $e)
+                {
+                    unset($e);
+                }
+            }
+
+            return $tree;
+        }
+
+        /**
          * Uninstalls a package version
          *
          * @param string $package
@@ -364,10 +521,10 @@
 
             $version_entry = $this->getPackageVersion($package, $version);
             if($version_entry == null)
-                throw new PackageNotFoundException(sprintf('The package %s==%s was not found', $package, $version));
+                throw new PackageNotFoundException(sprintf('The package %s=%s was not found', $package, $version));
 
-            Console::out(sprintf('Uninstalling %s==%s', $package, $version));
-            Console::outVerbose(sprintf('Removing package %s==%s from PackageLock', $package, $version));
+            Console::out(sprintf('Uninstalling %s=%s', $package, $version));
+            Console::outVerbose(sprintf('Removing package %s=%s from PackageLock', $package, $version));
             if(!$this->getPackageLockManager()->getPackageLock()->removePackageVersion($package, $version))
                 Console::outDebug('warning: removing package from package lock failed');
 
@@ -431,7 +588,7 @@
                 }
                 catch(Exception $e)
                 {
-                    Console::outDebug(sprintf('warning: unable to uninstall package %s==%s, %s (%s)', $package, $version_entry->Version, $e->getMessage(), $e->getCode()));
+                    Console::outDebug(sprintf('warning: unable to uninstall package %s=%s, %s (%s)', $package, $version_entry->Version, $e->getMessage(), $e->getCode()));
                 }
             }
         }

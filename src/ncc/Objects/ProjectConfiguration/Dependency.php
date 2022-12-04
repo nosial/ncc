@@ -4,6 +4,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Abstracts\DependencySourceType;
     use ncc\Utilities\Functions;
 
     /**
@@ -20,9 +21,16 @@
         public $Name;
 
         /**
-         * Optional. The source from where ncc can fetch the dependency from
+         * Optional. The type of source from where ncc can fetch the dependency from
          *
          * @var string|null
+         */
+        public $SourceType;
+
+        /**
+         * Optional. The actual source where NCC can fetch the dependency from
+         *
+         * @var DependencySourceType|string|null
          */
         public $Source;
 
@@ -47,15 +55,14 @@
 
             $ReturnResults[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
 
+            if($this->SourceType !== null && strlen($this->SourceType) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('source_type') : 'source_type')] = $this->SourceType;
+
             if($this->Source !== null && strlen($this->Source) > 0)
-            {
                 $ReturnResults[($bytecode ? Functions::cbc('source') : 'source')] = $this->Source;
-            }
 
             if($this->Version !== null && strlen($this->Version) > 0)
-            {
                 $ReturnResults[($bytecode ? Functions::cbc('version') : 'version')] = $this->Version;
-            }
         
             return $ReturnResults;
         }
@@ -71,6 +78,7 @@
             $DependencyObject = new Dependency();
 
             $DependencyObject->Name = Functions::array_bc($data, 'name');
+            $DependencyObject->SourceType = Functions::array_bc($data, 'source_type');
             $DependencyObject->Source = Functions::array_bc($data, 'source');
             $DependencyObject->Version = Functions::array_bc($data, 'version');
 

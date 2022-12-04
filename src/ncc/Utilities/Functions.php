@@ -5,18 +5,21 @@
     use Exception;
     use ncc\Abstracts\Runners;
     use ncc\Abstracts\Scopes;
-    use ncc\Classes\PhpExtension\Runner;
+    use ncc\Classes\PhpExtension\PhpRunner;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\UnsupportedRunnerException;
+    use ncc\Managers\ConfigurationManager;
     use ncc\Managers\CredentialManager;
     use ncc\Managers\PackageLockManager;
     use ncc\Objects\CliHelpSection;
+    use ncc\Objects\ComposerJson;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
+    use ncc\ThirdParty\jelix\Version\Parser;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
 
     /**
@@ -254,7 +257,7 @@
         public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
             return match (strtolower($policy->Runner)) {
-                Runners::php => Runner::processUnit($path, $policy),
+                Runners::php => PhpRunner::processUnit($path, $policy),
                 default => throw new UnsupportedRunnerException('The runner \'' . $policy->Runner . '\' is not supported'),
             };
         }
@@ -363,5 +366,90 @@
             {
                 Console::outError('Cannot construct Package Lock, ' . $e->getMessage() . ' (Error Code: ' . $e->getCode() . ')');
             }
+        }
+
+        /**
+         * Loads a composer json file and returns a ComposerJson object
+         *
+         * @param string $path
+         * @return ComposerJson
+         * @throws AccessDeniedException
+         * @throws FileNotFoundException
+         * @throws IOException
+         */
+        public static function loadComposerJson(string $path): ComposerJson
+        {
+            $json_contents = IO::fread($path);
+            return ComposerJson::fromArray(json_decode($json_contents, true));
+        }
+
+        /**
+         * Attempts to convert the value to a bool
+         *
+         * @param $value
+         * @return bool
+         */
+        public static function cbool($value): bool
+        {
+            if(is_null($value))
+                return false;
+            if(is_string($value))
+            {
+                switch(strtolower($value))
+                {
+                    case 'y':
+                    case 'yes':
+                    case 't':
+                    case 'true':
+                    case '1':
+                        return true;
+
+                    case 'n':
+                    case 'no':
+                    case 'f':
+                    case 'false':
+                    case '0':
+                        return false;
+                }
+            }
+
+            if(is_int($value))
+            {
+                if ($value == 0)
+                    return false;
+                if ($value == 1)
+                    return true;
+                return false;
+            }
+
+            return (bool)$value;
+        }
+
+        /**
+         * Returns a property value from the configuration
+         *
+         * @param string $property
+         * @return mixed|null
+         */
+        public static function getConfigurationProperty(string $property)
+        {
+            $config_manager = new ConfigurationManager();
+            return $config_manager->getProperty($property);
+        }
+
+        /**
+         * Parses the version and returns a valid version format
+         *
+         * @param string $version
+         * @return string
+         * @throws Exception
+         */
+        public static function parseVersion(string $version): string
+        {
+            /** @noinspection PhpStrFunctionsInspection */
+            if(substr($version, 0, 1) === 'v')
+                $version = substr($version, 1);
+
+            return Parser::parse($version)->toString();
         }
     }

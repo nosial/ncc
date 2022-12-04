@@ -95,17 +95,26 @@
         {
             $ReturnResults = [];
 
-            $ReturnResults[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
-            $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
-            $ReturnResults[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->OutputPath;
-            $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
-            $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
-            $ReturnResults[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->PreBuild;
-            $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = [];
-
-            foreach($this->Dependencies as $dependency)
+            if($this->Name !== null && strlen($this->Name) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
+            if($this->Options !== null && count($this->Options) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
+            if($this->OutputPath !== null && strlen($this->OutputPath) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->OutputPath;
+            if($this->DefineConstants !== null && count($this->DefineConstants) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
+            if($this->ExcludeFiles !== null && count($this->ExcludeFiles) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
+            if($this->PreBuild !== null && count($this->PreBuild) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->PreBuild;
+            if($this->Dependencies !== null && count($this->Dependencies) > 0)
             {
-                $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')][] = $dependency->toArray();
+                $Dependencies = [];
+                foreach($this->Dependencies as $Dependency)
+                {
+                    $Dependencies[] = $Dependency->toArray($bytecode);
+                }
+                $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = $Dependencies;
             }
 
             return $ReturnResults;
@@ -121,26 +130,13 @@
         {
             $BuildConfigurationObject = new BuildConfiguration();
 
-            if(Functions::array_bc($data, 'name') !== null)
-                $BuildConfigurationObject->Name = Functions::array_bc($data, 'name');
-            
-            if(Functions::array_bc($data, 'options') !== null)
-                $BuildConfigurationObject->Options = Functions::array_bc($data, 'options');
-
-            if(Functions::array_bc($data, 'output_path') !== null)
-                $BuildConfigurationObject->OutputPath = Functions::array_bc($data, 'output_path');
-
-            if(Functions::array_bc($data, 'define_constants') !== null)
-                $BuildConfigurationObject->DefineConstants = Functions::array_bc($data, 'define_constants');
-
-            if(Functions::array_bc($data, 'exclude_files') !== null)
-                $BuildConfigurationObject->ExcludeFiles = Functions::array_bc($data, 'exclude_files');
-
-            if(Functions::array_bc($data, 'pre_build') !== null)
-                $BuildConfigurationObject->PreBuild = Functions::array_bc($data, 'pre_build');
-
-            if(Functions::array_bc($data, 'post_build') !== null)
-                $BuildConfigurationObject->PostBuild = Functions::array_bc($data, 'post_build');
+            $BuildConfigurationObject->Name = Functions::array_bc($data, 'name');
+            $BuildConfigurationObject->Options = Functions::array_bc($data, 'options');
+            $BuildConfigurationObject->OutputPath = Functions::array_bc($data, 'output_path');
+            $BuildConfigurationObject->DefineConstants = Functions::array_bc($data, 'define_constants');
+            $BuildConfigurationObject->ExcludeFiles = Functions::array_bc($data, 'exclude_files');
+            $BuildConfigurationObject->PreBuild = Functions::array_bc($data, 'pre_build');
+            $BuildConfigurationObject->PostBuild = Functions::array_bc($data, 'post_build');
 
             if(Functions::array_bc($data, 'dependencies') !== null)
             {

@@ -91,9 +91,8 @@
             flush();
 
             // when done, send a newline
-            if($value == $total) {
-                echo "\n";
-            }
+            if($value == $total)
+                Console::out((string)null);
         }
 
         /**

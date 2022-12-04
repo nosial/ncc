@@ -58,14 +58,27 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            return [
-                ($bytecode ? Functions::cbc('pre_install') : 'pre_install') => $this->PreInstall,
-                ($bytecode? Functions::cbc('post_install') : 'post_install') => $this->PostInstall,
-                ($bytecode? Functions::cbc('pre_uninstall') : 'pre_uninstall') => $this->PostUninstall,
-                ($bytecode? Functions::cbc('post_uninstall') : 'post_uninstall') => $this->PostUninstall,
-                ($bytecode? Functions::cbc('pre_update') : 'pre_update') => $this->PreUpdate,
-                ($bytecode? Functions::cbc('post_update') : 'post_update') => $this->PostUpdate
-            ];
+            $results = [];
+
+            if($this->PreInstall !== null && count($this->PreInstall) > 0)
+                $results[($bytecode ? Functions::cbc('pre_install') : 'pre_install')] = $this->PreInstall;
+
+            if($this->PostInstall !== null && count($this->PostInstall) > 0)
+                $results[($bytecode ? Functions::cbc('post_install') : 'post_install')] = $this->PostInstall;
+
+            if($this->PreUninstall !== null && count($this->PreUninstall) > 0)
+                $results[($bytecode ? Functions::cbc('pre_uninstall') : 'pre_uninstall')] = $this->PreUninstall;
+
+            if($this->PostUninstall !== null && count($this->PostUninstall) > 0)
+                $results[($bytecode ? Functions::cbc('post_uninstall') : 'post_uninstall')] = $this->PostUninstall;
+
+            if($this->PreUpdate !== null && count($this->PreUpdate) > 0)
+                $results[($bytecode ? Functions::cbc('pre_update') : 'pre_update')] = $this->PreUpdate;
+
+            if($this->PostUpdate !== null && count($this->PostUpdate) > 0)
+                $results[($bytecode ? Functions::cbc('post_update') : 'post_update')] = $this->PostUpdate;
+
+            return $results;
         }
 
         /**

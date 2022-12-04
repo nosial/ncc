@@ -48,12 +48,21 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            return [
-                ($bytecode ? Functions::cbc('message') : 'message') => $this->Message,
-                ($bytecode ? Functions::cbc('end_process') : 'end_process') => $this->EndProcess,
-                ($bytecode ? Functions::cbc('run') : 'run') => $this->Run,
-                ($bytecode ? Functions::cbc('exit_code') : 'exit_code') => $this->ExitCode,
-            ];
+            $return_results = [];
+
+            if($this->Message !== null)
+                $return_results[($bytecode ? Functions::cbc('message') : 'message')] = $this->Message;
+
+            if($this->EndProcess !== null)
+                $return_results[($bytecode ? Functions::cbc('end_process') : 'end_process')] = $this->EndProcess;
+
+            if($this->Run !== null)
+                $return_results[($bytecode ? Functions::cbc('run') : 'run')] = $this->Run;
+
+            /** @noinspection PhpCastIsUnnecessaryInspection */
+            $return_results[($bytecode ? Functions::cbc('exit_code') : 'exit_code')] = (int)$this->ExitCode;
+
+            return $return_results;
         }
 
         /**

@@ -167,17 +167,36 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            return [
-                ($bytecode ? Functions::cbc('name') : 'name') => $this->Name,
-                ($bytecode ? Functions::cbc('package') : 'package') => $this->Package,
-                ($bytecode ? Functions::cbc('description') : 'description') => ($this->Description !== null && strlen($this->Description) > 0 ? $this->Description : null),
-                ($bytecode ? Functions::cbc('company') : 'company') => ($this->Company !== null && strlen($this->Company) > 0 ? $this->Company : null),
-                ($bytecode ? Functions::cbc('product') : 'product') => ($this->Product !== null && strlen($this->Product) > 0 ? $this->Product : null),
-                ($bytecode ? Functions::cbc('copyright') : 'copyright') => ($this->Copyright !== null && strlen($this->Copyright) > 0 ? $this->Copyright : null),
-                ($bytecode ? Functions::cbc('trademark') : 'trademark') => ($this->Trademark !== null && strlen($this->Trademark) > 0 ? $this->Trademark : null),
-                ($bytecode ? Functions::cbc('version') : 'version') => $this->Version,
-                ($bytecode ? Functions::cbc('uid') : 'uid') => $this->UUID,
-            ];
+            $return_results = [];
+
+            if($this->Name !== null && strlen($this->Name) > 0)
+                $return_results[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
+
+            if($this->Package !== null && strlen($this->Package) > 0)
+                $return_results[($bytecode ? Functions::cbc('package') : 'package')] = $this->Package;
+
+            if($this->Description !== null && strlen($this->Description) > 0)
+                $return_results[($bytecode ? Functions::cbc('description') : 'description')] = $this->Description;
+
+            if($this->Company !== null && strlen($this->Company) > 0)
+                $return_results[($bytecode ? Functions::cbc('company') : 'company')] = $this->Company;
+
+            if($this->Product !== null && strlen($this->Product) > 0)
+                $return_results[($bytecode ? Functions::cbc('product') : 'product')] = $this->Product;
+
+            if($this->Copyright !== null && strlen($this->Copyright) > 0)
+                $return_results[($bytecode ? Functions::cbc('copyright') : 'copyright')] = $this->Copyright;
+
+            if($this->Trademark !== null && strlen($this->Trademark) > 0)
+                $return_results[($bytecode ? Functions::cbc('trademark') : 'trademark')] = $this->Trademark;
+
+            if($this->Version !== null && strlen($this->Version) > 0)
+                $return_results[($bytecode ? Functions::cbc('version') : 'version')] = $this->Version;
+
+            if($this->UUID !== null && strlen($this->UUID) > 0)
+                $return_results[($bytecode ? Functions::cbc('uuid') : 'uuid')] = $this->UUID;
+
+            return $return_results;
         }
 
         /**
@@ -198,7 +217,7 @@
             $AssemblyObject->Copyright = Functions::array_bc($data, 'copyright');
             $AssemblyObject->Trademark = Functions::array_bc($data, 'trademark');
             $AssemblyObject->Version = Functions::array_bc($data, 'version');
-            $AssemblyObject->UUID = Functions::array_bc($data, 'uid');
+            $AssemblyObject->UUID = Functions::array_bc($data, 'uuid');
 
             return $AssemblyObject;
         }

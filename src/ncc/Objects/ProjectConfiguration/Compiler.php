@@ -130,11 +130,17 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            return [
-                ($bytecode ? Functions::cbc('extension') : 'extension') => $this->Extension,
-                ($bytecode ? Functions::cbc('minimum_version') : 'minimum_version') => $this->MinimumVersion,
-                ($bytecode ? Functions::cbc('maximum_version') : 'maximum_version') => $this->MaximumVersion
-            ];
+            $return_results = [];
+            if($this->Extension !== null && strlen($this->Extension) > 0)
+                $return_results['extension'] = $this->Extension;
+
+            if($this->MinimumVersion !== null && strlen($this->MinimumVersion) > 0)
+                $return_results['minimum_version'] = $this->MinimumVersion;
+
+            if($this->MaximumVersion !== null && strlen($this->MaximumVersion) > 0)
+                $return_results['maximum_version'] = $this->MaximumVersion;
+
+            return $return_results;
         }
 
         /**

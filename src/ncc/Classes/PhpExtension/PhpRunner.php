@@ -15,7 +15,7 @@
     use ncc\Utilities\Base64;
     use ncc\Utilities\IO;
 
-    class Runner implements RunnerInterface
+    class PhpRunner implements RunnerInterface
     {
         /**
          * @param string $path

@@ -89,6 +89,7 @@ redist: autoload
 	cp $(SRC_PATH)/installer/installer $(BUILD_PATH)/$(SRC_PATH)/INSTALL
 	cp $(SRC_PATH)/installer/ncc.sh $(BUILD_PATH)/$(SRC_PATH)/ncc.sh
 	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/$(SRC_PATH)/default_config.yaml;
+	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/$(SRC_PATH)/CLI/template_config.yaml;
 	cp $(SRC_PATH)/installer/extension $(BUILD_PATH)/$(SRC_PATH)/extension
 	chmod +x $(BUILD_PATH)/$(SRC_PATH)/INSTALL
 	cp LICENSE $(BUILD_PATH)/$(SRC_PATH)/LICENSE

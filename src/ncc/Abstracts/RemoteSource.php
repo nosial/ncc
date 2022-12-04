@@ -5,12 +5,12 @@
     abstract class RemoteSource
     {
         /**
-         * The original source is from GitHub (Enterprise not supported yet)
+         * The remote source is from composer
          */
-        const GitHub = 'GITHUB';
+        const Composer = 'composer';
 
         /**
-         * The original source is from Gitlab or a Gitlab instance
+         * The remote source is from a git repository
          */
-        const Gitlab = 'GITLAB';
+        const Git = 'git';
     }

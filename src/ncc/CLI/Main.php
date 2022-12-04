@@ -88,7 +88,7 @@
 
                 if(in_array(NccBuildFlags::Unstable, NCC_VERSION_FLAGS))
                 {
-                    Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
+                    //Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
                 }
 
                 try
@@ -115,6 +115,10 @@
                             PackageManagerMenu::start(self::$args);
                             exit(0);
 
+                        case 'config':
+                            ConfigMenu::start(self::$args);
+                            exit(0);
+
                         case '1':
                         case 'help':
                             HelpMenu::start(self::$args);
@@ -123,7 +127,7 @@
                 }
                 catch(Exception $e)
                 {
-                    Console::outException($e->getMessage() . ' (Code: ' . $e->getCode() . ')', $e, 1);
+                    Console::outException($e->getMessage(), $e, 1);
                     exit(1);
                 }
 

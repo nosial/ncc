@@ -344,7 +344,7 @@
             {
                 foreach($_dependencies as $dependency)
                 {
-                    $object->Dependencies[] = Resource::fromArray($dependency);
+                    $object->Dependencies[] = Dependency::fromArray($dependency);
                 }
             }
 

@@ -13,6 +13,7 @@
     use ncc\Exceptions\ComponentChecksumException;
     use ncc\Exceptions\ComponentDecodeException;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NoUnitsFoundException;
     use ncc\Exceptions\ResourceChecksumException;
@@ -30,6 +31,7 @@
     use ncc\ThirdParty\theseer\Autoload\Factory;
     use ncc\Utilities\Base64;
     use ncc\Utilities\IO;
+    use ncc\ZiProto\ZiProto;
     use ReflectionClass;
     use ReflectionException;
     use RuntimeException;
@@ -37,7 +39,7 @@
     use function is_array;
     use function is_string;
 
-    class Installer implements InstallerInterface
+    class PhpInstaller implements InstallerInterface
     {
         /**
          * @var ReflectionClass[] Node type to reflection class map
@@ -113,8 +115,24 @@
          */
         public function postInstall(InstallationPaths $installationPaths): void
         {
+            $static_files_exists = false;
+            if($this->package->Header->Options !== null && isset($this->package->Header->Options['static_files']))
+            {
+                $static_files = $this->package->Header->Options['static_files'];
+                $static_files_path = $installationPaths->getBinPath() . DIRECTORY_SEPARATOR . 'static_autoload.bin';
+
+                foreach($static_files as $file)
+                {
+                    if(!file_exists($file))
+                        throw new InstallationException(sprintf('Static file %s does not exist', $file));
+                }
+
+                $static_files_exists = true;
+                IO::fwrite($static_files_path, ZiProto::encode($static_files));
+            }
+
             $autoload_path = $installationPaths->getBinPath() . DIRECTORY_SEPARATOR . 'autoload.php';
-            $autoload_src = $this->generateAutoload($installationPaths->getSourcePath(), $autoload_path);
+            $autoload_src = $this->generateAutoload($installationPaths->getSourcePath(), $autoload_path, $static_files_exists);
             IO::fwrite($autoload_path, $autoload_src);
         }
 
@@ -268,6 +286,7 @@
          *
          * @param string $src
          * @param string $output
+         * @param bool $ignore_units
          * @return string
          * @throws AccessDeniedException
          * @throws CollectorException
@@ -275,7 +294,7 @@
          * @throws IOException
          * @throws NoUnitsFoundException
          */
-        private function generateAutoload(string $src, string $output): string
+        private function generateAutoload(string $src, string $output, bool $ignore_units=false): string
         {
             // Construct configuration
             $configuration = new Config([$src]);
@@ -286,6 +305,7 @@
             // Official PHP file extensions that are missing from the default configuration (whatever)
             $configuration->setInclude(ComponentFileExtensions::Php);
             $configuration->setQuietMode(true);
+            $configuration->setTolerantMode(true);
 
             // Construct factory
             $factory = new Factory();
@@ -295,7 +315,7 @@
             $result = self::runCollector($factory, $configuration);
 
             // Exception raises when there are no files in the project that can be processed by the autoloader
-            if(!$result->hasUnits())
+            if(!$result->hasUnits() && !$ignore_units)
             {
                 throw new NoUnitsFoundException('No units were found in the project');
             }

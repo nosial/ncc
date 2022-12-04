@@ -202,4 +202,15 @@
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'ext';
         }
+
+        /**
+         * Returns the configuration file path (ncc.yaml)
+         *
+         * @return string
+         * @throws InvalidScopeException
+         */
+        public static function getConfigurationFile(): string
+        {
+            return self::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'ncc.yaml';
+        }
     }

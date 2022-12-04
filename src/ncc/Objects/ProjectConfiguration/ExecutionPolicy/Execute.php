@@ -71,14 +71,27 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            return [
-                ($bytecode ? Functions::cbc('target') : 'target') => $this->Target,
-                ($bytecode ? Functions::cbc('working_directory') : 'working_directory') => $this->WorkingDirectory,
-                ($bytecode ? Functions::cbc('options') : 'options') => $this->Options,
-                ($bytecode ? Functions::cbc('silent') : 'silent') => $this->Silent,
-                ($bytecode ? Functions::cbc('tty') : 'tty') => $this->Tty,
-                ($bytecode ? Functions::cbc('timeout') : 'timeout') => $this->Timeout
-            ];
+            $results = [];
+
+            if($this->Target !== null)
+                $results[($bytecode ? Functions::cbc("target") : "target")] = $this->Target;
+
+            if($this->WorkingDirectory !== null)
+                $results[($bytecode ? Functions::cbc("working_directory") : "working_directory")] = $this->WorkingDirectory;
+
+            if($this->Options !== null)
+                $results[($bytecode ? Functions::cbc("options") : "options")] = $this->Options;
+
+            if($this->Silent !== null)
+                $results[($bytecode ? Functions::cbc("silent") : "silent")] = (bool)$this->Silent;
+
+            if($this->Tty !== null)
+                $results[($bytecode ? Functions::cbc("tty") : "tty")] = (bool)$this->Tty;
+
+            if($this->Timeout !== null)
+                $results[($bytecode ? Functions::cbc("timeout") : "timeout")] = (int)$this->Timeout;
+
+            return $results;
         }
 
         /**

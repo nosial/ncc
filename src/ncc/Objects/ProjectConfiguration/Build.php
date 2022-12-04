@@ -195,28 +195,42 @@
         {
             $ReturnResults = [];
 
-            $ReturnResults[($bytecode ? Functions::cbc('source_path') : 'source_path')] = $this->SourcePath;
-            $ReturnResults[($bytecode ? Functions::cbc('default_configuration') : 'default_configuration')] = $this->DefaultConfiguration;
-            $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
-            $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
-            $ReturnResults[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->Scope;
-            $ReturnResults[($bytecode ? Functions::cbc('main') : 'main')] = $this->Main;
-            $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
-            $ReturnResults[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->PreBuild;
-            $ReturnResults[($bytecode ? Functions::cbc('post_build') : 'post_build')] = $this->PostBuild;
-            $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = [];
-
-            foreach($this->Dependencies as $dependency)
-            {
-                $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')][] = $dependency->toArray($bytecode);
-            }
-
-            $ReturnResults[($bytecode ? Functions::cbc('configurations') : 'configurations')] = [];
-
-            foreach($this->Configurations as $configuration)
-            {
-                $ReturnResults[($bytecode ? Functions::cbc('configurations') : 'configurations')][] = $configuration->toArray($bytecode);
-            }
+            if($this->SourcePath !== null)
+                $ReturnResults[($bytecode ? Functions::cbc('source_path') : 'source_path')] = $this->SourcePath;
+            if($this->DefaultConfiguration !== null)
+                $ReturnResults[($bytecode ? Functions::cbc('default_configuration') : 'default_configuration')] = $this->DefaultConfiguration;
+            if($this->ExcludeFiles !== null && count($this->ExcludeFiles) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
+           if($this->Options !== null && count($this->Options) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
+           if($this->Scope !== null)
+                $ReturnResults[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->Scope;
+           if($this->Main !== null)
+                $ReturnResults[($bytecode ? Functions::cbc('main') : 'main')] = $this->Main;
+           if($this->DefineConstants !== null && count($this->DefineConstants) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
+           if($this->PreBuild !== null && count($this->PreBuild) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->PreBuild;
+           if($this->PostBuild !== null && count($this->PostBuild) > 0)
+                $ReturnResults[($bytecode ? Functions::cbc('post_build') : 'post_build')] = $this->PostBuild;
+           if($this->Dependencies !== null && count($this->Dependencies) > 0)
+           {
+                $dependencies = [];
+                foreach($this->Dependencies as $dependency)
+                {
+                     $dependencies[] = $dependency->toArray($bytecode);
+                }
+                $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = $dependencies;
+           }
+           if($this->Configurations !== null && count($this->Configurations) > 0)
+           {
+                $configurations = [];
+                foreach($this->Configurations as $configuration)
+                {
+                     $configurations[] = $configuration->toArray($bytecode);
+                }
+                $ReturnResults[($bytecode ? Functions::cbc('configurations') : 'configurations')] = $configurations;
+           }
 
             return $ReturnResults;
         }
