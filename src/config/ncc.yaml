@@ -1,38 +1,93 @@
-# NCC Default configuration file, upon installation the installer will generate a new configuration file
-# for your system or update the existing configuration file and only overwriting values that are no
-# longer applicable to the current version of NCC, incorrect configuration values can cause
-# unexpected behavior or bugs.
-
+# NCC Default configuration file, upon installation the installer
+# will generate a new configuration file for your system or update
+# the existing configuration file and only overwriting values that
+# are no longer applicable to the current version of NCC, incorrect
+# configuration values can cause unexpected behavior or bugs.
 ncc:
-  # The default data directory that is used by NCC to store packages,
-  # cache, configuration files and other generated files. This includes
-  # data stored by packages using the NCC storage API.
-  data_directory: "/var/ncc"
+  cli:
+    # Omits colors from displaying in the CLI
+    no_colors: false
 
+    # Display basic ascii characters in the CLI
+    basic_ascii: false
+
+    # The default logging level to use in the CLI
+    # Values can be (silent, verbose, debug, info, warn, error or fatal)
+    logging: "info"
+
+# Configuration section for the PHP configuration that NCC will use to run
 php:
-  # Configuration section for the PHP configuration that NCC will use to run
-
   # The main executable path for PHP that NCC should use
   executable_path: "/usr/bin/php"
-  
-  # Enables/Disables the environment configuration feature
-  # Allowing packages to install environment configurations to NCC
-  # that can be loaded during runtime using the NCC API
-  #
-  # If disabled packages may break if they depend on this feature.
-  #
-  # Leaving this enabled while installing and using unknown packages
-  # without reviewing their source code could lead to potential security
-  # issues/backdoors, use this feature for containerized environments
-  enable_environment_configurations: false
+  runtime:
+    # Whether to initialize NCC when running `require('ncc');`
+    initialize_on_require: true
+
+    # if NCC should handle fatal exceptions during execution
+    handle_exceptions: true
 
 git:
+  # if git is enabled or not
+  enabled: true
+
+  # The executable path of git
   executable_path: "/usr/bin/git"
 
+# When enabled, NCC will use it's builtin version of composer
+# to execute composer tasks, if disabled it will fall back to
+# the `executable_path` option and attempt to use that specified
+# location of composer
 composer:
-  # When enabled, NCC will use it's builtin version of composer
-  # to execute composer tasks, if disabled it will fall back to
-  # the `executable_path` option and attempt to use that specified
-  # location of composer
+
+  # if composer is enabled or not
+  enabled: true
+
+  # If internal composer is enabled (install must be executed with --install-composer)
   enable_internal_composer: true
+
+  # The executable path to the system's installed composer executable
   executable_path: "/home/user/composer.phar"
+
+  # Composer options
+  options:
+
+    # Do not output any message
+    quiet: false
+
+    # Disable ANSI output
+    no_ansi: false
+
+    # Do not ask any interactive question
+    no_interaction: false
+
+    # Display timing and memory usage information
+    profile: false
+
+    # Skips the execution of all scripts defined in composer.json file.
+    no_scripts: true
+
+    # Prevent use of the cache
+    no_cache: false
+
+    # 1 normal output, 2 for more verbose output and 3 for debug output, 4 to match NCC's logging level
+    logging: 1
+
+  # NCC Composer Extension options
+  extension:
+    # If licenses should be displayed in the conversion process of a composer package
+    display_licenses: true
+
+    # If authors should be displayed in the conversion process of a composer package
+    display_authors: true
+
+    # If NCC should try to install suggested packages
+    try_install_suggested: true
+
+# Supported runners executable paths
+runners:
+  php: "/usr/bin/php"
+  bash: "/usr/bin/bash"
+  sh: "/usr/bin/sh"
+  python: "/usr/bin/python"
+  python3: "/usr/bin/python3"
+  python2: "/usr/bin/python2"

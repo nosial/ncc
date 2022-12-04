@@ -56,8 +56,10 @@
          */
         public function load(): void
         {
+            Console::outDebug(sprintf('loading PackageLock from \'%s\'', $this->PackageLockPath));
             if(RuntimeCache::get($this->PackageLockPath) !== null)
             {
+                Console::outDebug('package lock is cached, loading from cache');
                 $this->PackageLock = RuntimeCache::get($this->PackageLockPath);
                 return;
             }
@@ -66,7 +68,7 @@
             {
                 try
                 {
-                    Console::outDebug('reading package lock file');
+                    Console::outDebug('package lock exists, loading from disk');
                     $data = IO::fread($this->PackageLockPath);
                     if(strlen($data) > 0)
                     {
@@ -84,9 +86,11 @@
             }
             else
             {
+                Console::outDebug('package lock file does not exist, creating new package lock');
                 $this->PackageLock = new PackageLock();
             }
 
+            Console::outDebug('caching PackageLock');
             RuntimeCache::set($this->PackageLockPath, $this->PackageLock);
         }
 
@@ -99,15 +103,21 @@
          */
         public function save(): void
         {
+            Console::outDebug(sprintf('saving package lock to \'%s\'', $this->PackageLockPath));
+
             // Don't save something that isn't loaded lol
             if($this->PackageLock == null)
+            {
+                Console::outDebug('warning: PackageLock is null, not saving to disk');
                 return;
+            }
 
             if(Resolver::resolveScope() !== Scopes::System)
                 throw new AccessDeniedException('Cannot write to PackageLock, insufficient permissions');
 
             try
             {
+                Console::outDebug(sprintf('saving PackageLock to \'%s\' & caching', $this->PackageLockPath));
                 IO::fwrite($this->PackageLockPath, ZiProto::encode($this->PackageLock->toArray(true)), 0755);
                 RuntimeCache::set($this->PackageLockPath, $this->PackageLock);
             }

@@ -131,7 +131,7 @@
                 'NCC_INIT' => constant('NCC_INIT'),
 
                 // Debugging/Troubleshooting constants
-                'NCC_EXEC_LOCATION' => constant('NCC_INIT'),
+                'NCC_EXEC_LOCATION' => constant('NCC_EXEC_LOCATION'),
                 'NCC_EXEC_IWD' => constant('NCC_EXEC_IWD'),
 
                 // Version Information

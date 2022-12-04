@@ -7,7 +7,7 @@
     use ncc\Abstracts\ConstantReferences;
     use ncc\Abstracts\LogLevel;
     use ncc\Abstracts\Options\BuildConfigurationValues;
-    use ncc\Classes\PhpExtension\Compiler;
+    use ncc\Classes\PhpExtension\PhpCompiler;
     use ncc\CLI\Main;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
@@ -67,7 +67,7 @@
             {
                 case CompilerExtensions::PHP:
                     /** @var CompilerInterface $Compiler */
-                    $Compiler = new Compiler($configuration, $manager->getProjectPath());
+                    $Compiler = new PhpCompiler($configuration, $manager->getProjectPath());
                     break;
 
                 default:
@@ -75,6 +75,7 @@
             }
 
             $build_configuration = $configuration->Build->getBuildConfiguration($build_configuration)->Name;
+            Console::out(sprintf('Building %s=%s', $configuration->Assembly->Package, $configuration->Assembly->Version));
             $Compiler->prepare($build_configuration);
             $Compiler->build();
 
@@ -102,7 +103,7 @@
             Console::out('Compiling Execution Policies');
             $total_items = count($configuration->ExecutionPolicies);
             $execution_units = [];
-            $processed_items = 0;
+            $processed_items = 1;
 
             /** @var ProjectConfiguration\ExecutionPolicy $policy */
             foreach($configuration->ExecutionPolicies as $policy)
@@ -248,7 +249,7 @@
 
                 if($unit->ExecutionPolicy->ExitHandlers->Warning !== null)
                 {
-                    $unit->ExecutionPolicy->ExitHandlers->Warning->Error = self::compileConstants($unit->ExecutionPolicy->ExitHandlers->Warning->Message, $refs);
+                    $unit->ExecutionPolicy->ExitHandlers->Warning->Message = self::compileConstants($unit->ExecutionPolicy->ExitHandlers->Warning->Message, $refs);
                 }
             }
 

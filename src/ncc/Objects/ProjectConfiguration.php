@@ -153,7 +153,7 @@
             foreach($this->ExecutionPolicies as $execution_policy)
             {
                 $defined_polices[] = $execution_policy->Name;
-                $execution_policy->validate();
+                //$execution_policy->validate();
             }
 
             // Check the installer by batch
@@ -277,17 +277,28 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            $execution_policies = [];
-            foreach($this->ExecutionPolicies as $executionPolicy)
+            $execution_policies = null;
+            if($this->ExecutionPolicies !== null)
             {
-                $execution_policies[$executionPolicy->Name] = $executionPolicy->toArray($bytecode);
+                $execution_policies = [];
+                foreach($this->ExecutionPolicies as $executionPolicy)
+                {
+                    $execution_policies[$executionPolicy->Name] = $executionPolicy->toArray($bytecode);
+                }
             }
-            return [
-                ($bytecode ? Functions::cbc('project') : 'project') => $this->Project->toArray($bytecode),
-                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this->Assembly->toArray($bytecode),
-                ($bytecode ? Functions::cbc('execution_policies') : 'execution_policies') => $execution_policies,
-                ($bytecode ? Functions::cbc('build') : 'build') => $this->Build->toArray($bytecode),
-            ];
+
+            $results = [];
+            if($this->Project !== null)
+                $results[($bytecode ? Functions::cbc('project') : 'project')] = $this->Project->toArray($bytecode);
+            if($this->Assembly !== null)
+                $results['assembly'] = $this->Assembly->toArray($bytecode);
+            if($this->Build !== null)
+                $results[($bytecode ? Functions::cbc('build') : 'build')] = $this->Build->toArray($bytecode);
+            if($this->Installer !== null)
+                $results[($bytecode ? Functions::cbc('installer') : 'installer')] = $this->Installer->toArray($bytecode);
+            if($execution_policies !== null && count($execution_policies) > 0)
+                $results[($bytecode ? Functions::cbc('execution_policies') : 'execution_policies')] = $execution_policies;
+            return $results;
         }
 
         /**
@@ -321,27 +332,21 @@
         {
             $ProjectConfigurationObject = new ProjectConfiguration();
 
-            $ProjectConfigurationObject->Project = Project::fromArray(Functions::array_bc($data, 'project'));
-            $ProjectConfigurationObject->Assembly = Assembly::fromArray(Functions::array_bc($data, 'assembly'));
-            $ProjectConfigurationObject->ExecutionPolicies = Functions::array_bc($data, 'execution_policies');
-            $ProjectConfigurationObject->Build = Build::fromArray(Functions::array_bc($data, 'build'));
-            $ProjectConfigurationObject->Installer = Functions::array_bc($data, 'installer');
-
-            if($ProjectConfigurationObject->Installer !== null)
-                $ProjectConfigurationObject->Installer = Installer::fromArray($ProjectConfigurationObject->Installer);
-
-            if($ProjectConfigurationObject->ExecutionPolicies == null)
+            if(isset($data['project']))
+                $ProjectConfigurationObject->Project = Project::fromArray($data['project']);
+            if(isset($data['assembly']))
+                $ProjectConfigurationObject->Assembly = Assembly::fromArray($data['assembly']);
+            if(isset($data['build']))
+                $ProjectConfigurationObject->Build = Build::fromArray($data['build']);
+            if(isset($data['installer']))
+                $ProjectConfigurationObject->Installer = Installer::fromArray($data['installer']);
+            if(isset($data['execution_policies']))
             {
                 $ProjectConfigurationObject->ExecutionPolicies = [];
-            }
-            else
-            {
-                $policies = [];
-                foreach($ProjectConfigurationObject->ExecutionPolicies as $policy)
+                foreach($data['execution_policies'] as $execution_policy)
                 {
-                    $policies[] = ExecutionPolicy::fromArray($policy);
+                    $ProjectConfigurationObject->ExecutionPolicies[] = ExecutionPolicy::fromArray($execution_policy);
                 }
-                $ProjectConfigurationObject->ExecutionPolicies = $policies;
             }
 
             return $ProjectConfigurationObject;

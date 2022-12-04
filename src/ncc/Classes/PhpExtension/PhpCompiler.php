@@ -9,6 +9,7 @@
     use ncc\Abstracts\ComponentFileExtensions;
     use ncc\Abstracts\ComponentDataType;
     use ncc\Abstracts\ConstantReferences;
+    use ncc\Abstracts\DependencySourceType;
     use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Classes\NccExtension\PackageCompiler;
     use ncc\Exceptions\AccessDeniedException;
@@ -16,13 +17,17 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\UnsupportedRunnerException;
+    use ncc\Exceptions\VersionNotFoundException;
     use ncc\Interfaces\CompilerInterface;
+    use ncc\Managers\PackageLockManager;
     use ncc\ncc;
     use ncc\Objects\Package;
     use ncc\Objects\ProjectConfiguration;
     use ncc\ThirdParty\nikic\PhpParser\ParserFactory;
+    use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
@@ -30,7 +35,7 @@
     use ncc\Utilities\IO;
     use SplFileInfo;
 
-    class Compiler implements CompilerInterface
+    class PhpCompiler implements CompilerInterface
     {
         /**
          * @var ProjectConfiguration
@@ -91,16 +96,17 @@
             // Global constants are overridden
             $this->package->Header->RuntimeConstants = [];
             $this->package->Header->RuntimeConstants = array_merge(
-                $selected_build_configuration->DefineConstants,
-                $this->project->Build->DefineConstants,
-                $this->package->Header->RuntimeConstants
+                ($selected_build_configuration?->DefineConstants ?? []),
+                ($this->project->Build->DefineConstants ?? []),
+                ($this->package->Header->RuntimeConstants ?? [])
             );
 
             $this->package->Header->CompilerExtension = $this->project->Project->Compiler;
             $this->package->Header->CompilerVersion = NCC_VERSION_NUMBER;
+            $this->package->Header->Options = $this->project->Project->Options;
 
-            Console::out('Scanning project files');
-            Console::out('theseer\DirectoryScanner - Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de> All rights reserved.');
+            Console::outDebug('scanning project files');
+            Console::outDebug('theseer\DirectoryScanner - Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de> All rights reserved.');
 
             // First scan the project files and create a file struct.
             $DirectoryScanner = new DirectoryScanner();
@@ -116,12 +122,13 @@
 
             // Include file components that can be compiled
             $DirectoryScanner->setIncludes(ComponentFileExtensions::Php);
-            $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
+            if($selected_build_configuration->ExcludeFiles !== null && count($selected_build_configuration->ExcludeFiles) > 0)
+                $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
             $source_path = $this->path . $this->project->Build->SourcePath;
 
             // TODO: Re-implement the scanning process outside the compiler, as this is will be redundant
             // Scan for components first.
-            Console::out('Scanning for components... ');
+            Console::outVerbose('Scanning for components... ');
             /** @var SplFileInfo $item */
             /** @noinspection PhpRedundantOptionalArgumentInspection */
             foreach($DirectoryScanner($source_path, True) as $item)
@@ -134,16 +141,16 @@
                 $Component->Name = Functions::removeBasename($item->getPathname(), $this->path);
                 $this->package->Components[] = $Component;
 
-                Console::outVerbose(sprintf('found component %s', $Component->Name));
+                Console::outVerbose(sprintf('Found component %s', $Component->Name));
             }
 
             if(count($this->package->Components) > 0)
             {
-                Console::out(count($this->package->Components) . ' component(s) found');
+                Console::outVerbose(count($this->package->Components) . ' component(s) found');
             }
             else
             {
-                Console::out('No components found');
+                Console::outVerbose('No components found');
             }
 
             // Clear previous excludes and includes
@@ -151,11 +158,16 @@
             $DirectoryScanner->setIncludes([]);
 
             // Ignore component files
-            $DirectoryScanner->setExcludes(array_merge(
-                $selected_build_configuration->ExcludeFiles, ComponentFileExtensions::Php
-            ));
+            if($selected_build_configuration->ExcludeFiles !== null && count($selected_build_configuration->ExcludeFiles) > 0)
+            {
+                $DirectoryScanner->setExcludes(array_merge($selected_build_configuration->ExcludeFiles, ComponentFileExtensions::Php));
+            }
+            else
+            {
+                $DirectoryScanner->setExcludes(ComponentFileExtensions::Php);
+            }
 
-            Console::out('Scanning for resources... ');
+            Console::outVerbose('Scanning for resources... ');
             /** @var SplFileInfo $item */
             foreach($DirectoryScanner($source_path) as $item)
             {
@@ -172,12 +184,77 @@
 
             if(count($this->package->Resources) > 0)
             {
-                Console::out(count($this->package->Resources) . ' resources(s) found');
+                Console::outVerbose(count($this->package->Resources) . ' resources(s) found');
             }
             else
             {
-                Console::out('No resources found');
+                Console::outVerbose('No resources found');
             }
+
+            $selected_dependencies = [];
+            if($this->project->Build->Dependencies !== null && count($this->project->Build->Dependencies) > 0)
+                $selected_dependencies = array_merge($selected_dependencies, $this->project->Build->Dependencies);
+            if($selected_build_configuration->Dependencies !== null && count($selected_build_configuration->Dependencies) > 0)
+                $selected_dependencies = array_merge($selected_dependencies, $selected_build_configuration->Dependencies);
+
+            // Process the dependencies
+            if(count($selected_dependencies) > 0)
+            {
+                $package_lock_manager = new PackageLockManager();
+                $filesystem = new Filesystem();
+
+                $lib_path = $selected_build_configuration->OutputPath . DIRECTORY_SEPARATOR . 'libs';
+                if($filesystem->exists($lib_path))
+                    $filesystem->remove($lib_path);
+                $filesystem->mkdir($lib_path);
+
+                Console::outVerbose('Scanning for dependencies... ');
+                foreach($selected_dependencies as $dependency)
+                {
+                    Console::outVerbose(sprintf('processing dependency %s', $dependency->Name));
+                    switch($dependency->SourceType)
+                    {
+                        case DependencySourceType::StaticLinking:
+
+                            try
+                            {
+                                $out_path = $lib_path . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->Name, $dependency->Version);
+                                $package = $package_lock_manager->getPackageLock()->getPackage($dependency->Name);
+                                $version = $package->getVersion($dependency->Version);
+                                Console::outDebug(sprintf('copying shadow package %s=%s to %s', $dependency->Name, $dependency->Version, $out_path));
+                                $filesystem->copy($version->Location, $out_path);
+                                $dependency->Source = 'libs' . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->Name, $dependency->Version);
+
+                            }
+                            catch (VersionNotFoundException $e)
+                            {
+                                throw new PackagePreparationFailedException('Static linking not possible, cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name, $e);
+                            }
+                            catch (PackageLockException $e)
+                            {
+                                throw new PackagePreparationFailedException('Static linking not possible, cannot find package lock for dependency ' . $dependency->Name, $e);
+                            }
+
+                            break;
+
+                        default:
+                        case DependencySourceType::RemoteSource:
+                            break;
+                    }
+
+                    $this->package->Dependencies[] = $dependency;
+                }
+
+                if(count($this->package->Dependencies) > 0)
+                {
+                    Console::outVerbose(count($this->package->Dependencies) . ' dependency(ies) found');
+                }
+                else
+                {
+                    Console::outVerbose('No dependencies found');
+                }
+            }
+
         }
 
         /**
@@ -223,17 +300,17 @@
                 return;
 
             // Process the resources
-            Console::out('Processing resources');
             $total_items = count($this->package->Resources);
-            $processed_items = 0;
+            $processed_items = 1;
             $resources = [];
+
+            if($total_items > 5)
+                Console::out('Processing resources');
 
             foreach($this->package->Resources as $resource)
             {
                 if($total_items > 5)
-                {
                     Console::inlineProgressBar($processed_items, $total_items);
-                }
 
                 // Get the data and
                 $resource->Data = IO::fread(Functions::correctDirectorySeparator($this->path . $resource->Name));
@@ -266,10 +343,12 @@
             if(count($this->package->Components) == 0)
                 return;
 
-            Console::out('Compiling components');
             $total_items = count($this->package->Components);
-            $processed_items = 0;
+            $processed_items = 1;
             $components = [];
+
+            if($total_items > 5)
+                Console::out('Compiling components');
 
             // Process the components and attempt to create an AST representation of the source
             foreach($this->package->Components as $component)
@@ -314,11 +393,6 @@
                 $processed_items += 1;
 
                 Console::outDebug(sprintf('processed component %s (%s)', $component->Name, $component->DataType));
-            }
-
-            if(ncc::cliMode() && $total_items > 5)
-            {
-                print(PHP_EOL);
             }
 
             // Update the components

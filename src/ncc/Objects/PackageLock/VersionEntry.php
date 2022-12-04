@@ -4,6 +4,7 @@
 
     namespace ncc\Objects\PackageLock;
 
+    use ncc\Objects\InstallationPaths;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Utilities\Functions;
@@ -57,6 +58,16 @@
         {
             $this->Dependencies = [];
             $this->ExecutionUnits = [];
+        }
+
+        /**
+         * Returns installation paths
+         *
+         * @return InstallationPaths
+         */
+        public function getInstallPaths(): InstallationPaths
+        {
+            return new InstallationPaths($this->Location);
         }
 
         /**

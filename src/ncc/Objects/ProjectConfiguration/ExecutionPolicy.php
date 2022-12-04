@@ -64,13 +64,24 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            return [
-                ($bytecode ? Functions::cbc('name') : 'name') => $this->Name,
-                ($bytecode ? Functions::cbc('runner') : 'runner') => $this->Runner,
-                ($bytecode ? Functions::cbc('message') : 'message') => $this->Message,
-                ($bytecode ? Functions::cbc('exec') : 'exec') => $this->Execute?->toArray($bytecode),
-                ($bytecode ? Functions::cbc('exit_handlers') : 'exit_handlers') => $this->ExitHandlers?->toArray($bytecode),
-            ];
+            $results = [];
+
+            if ($this->Name !== null && strlen($this->Name) > 0)
+                $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
+
+            if ($this->Runner !== null && strlen($this->Runner) > 0)
+                $results[($bytecode ? Functions::cbc('runner') : 'runner')] = $this->Runner;
+
+            if ($this->Message !== null && strlen($this->Message) > 0)
+                $results[($bytecode ? Functions::cbc('message') : 'message')] = $this->Message;
+
+            if ($this->Execute !== null)
+                $results[($bytecode ? Functions::cbc('execute') : 'execute')] = $this->Execute->toArray($bytecode);
+
+            if ($this->ExitHandlers !== null)
+                $results[($bytecode ? Functions::cbc('exit_handlers') : 'exit_handlers')] = $this->ExitHandlers->toArray($bytecode);
+
+            return $results;
         }
 
         /**

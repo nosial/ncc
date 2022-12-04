@@ -31,12 +31,20 @@
         public $CompilerVersion;
 
         /**
+         * An array of options to pass on to the extension
+         *
+         * @var array|null
+         */
+        public $Options;
+
+        /**
          * Public Constructor
          */
         public function __construct()
         {
             $this->CompilerExtension = new Compiler();
             $this->RuntimeConstants = [];
+            $this->Options = [];
         }
 
         /**
@@ -51,6 +59,7 @@
                 ($bytecode ? Functions::cbc('compiler_extension') : 'compiler_extension') => $this->CompilerExtension->toArray($bytecode),
                 ($bytecode ? Functions::cbc('runtime_constants') : 'runtime_constants') => $this->RuntimeConstants,
                 ($bytecode ? Functions::cbc('compiler_version') : 'compiler_version') => $this->CompilerVersion,
+                ($bytecode ? Functions::cbc('options') : 'options') => $this->Options,
             ];
         }
 
@@ -67,6 +76,7 @@
             $object->CompilerExtension = Functions::array_bc($data, 'compiler_extension');
             $object->RuntimeConstants = Functions::array_bc($data, 'runtime_constants');
             $object->CompilerVersion = Functions::array_bc($data, 'compiler_version');
+            $object->Options = Functions::array_bc($data, 'options');
 
             if($object->CompilerExtension !== null)
                 $object->CompilerExtension = Compiler::fromArray($object->CompilerExtension);

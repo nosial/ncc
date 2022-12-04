@@ -1,0 +1,5 @@
+{
+    "require": {
+        "%VENDOR%/%PACKAGE%": "%VERSION%"
+    }
+}
