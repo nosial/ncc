@@ -1,12 +1,34 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-    namespace ncc\Classes\NccExtension;
+namespace ncc\Classes\NccExtension;
 
     use Exception;
     use ncc\Abstracts\CompilerExtensions;
     use ncc\Abstracts\ConstantReferences;
     use ncc\Abstracts\LogLevel;
     use ncc\Abstracts\Options\BuildConfigurationValues;
+    use ncc\Abstracts\ProjectType;
+    use ncc\Classes\ComposerExtension\ComposerSourceBuiltin;
     use ncc\Classes\PhpExtension\PhpCompiler;
     use ncc\CLI\Main;
     use ncc\Exceptions\AccessDeniedException;
@@ -17,8 +39,9 @@
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
+    use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\UnsupportedCompilerExtensionException;
-    use ncc\Exceptions\UnsupportedRunnerException;
+    use ncc\Exceptions\UnsupportedProjectTypeException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
     use ncc\ncc;
@@ -47,7 +70,6 @@
          * @throws PackagePreparationFailedException
          * @throws ProjectConfigurationNotFoundException
          * @throws UnsupportedCompilerExtensionException
-         * @throws UnsupportedRunnerException
          */
         public static function compile(ProjectManager $manager, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
         {
@@ -85,6 +107,52 @@
         }
 
         /**
+         * Attempts to detect the project type and convert it accordingly before compiling
+         * Returns the compiled package path
+         *
+         * @param string $path
+         * @param string|null $version
+         * @return string
+         * @throws BuildException
+         */
+        public static function tryCompile(string $path, ?string $version=null): string
+        {
+            $project_type = Resolver::detectProjectType($path);
+
+            try
+            {
+                if($project_type->ProjectType == ProjectType::Composer)
+                {
+                    $project_path = ComposerSourceBuiltin::fromLocal($project_type->ProjectPath);
+                }
+                elseif($project_type->ProjectType == ProjectType::Ncc)
+                {
+                    $project_manager = new ProjectManager($project_type->ProjectPath);
+                    $project_manager->getProjectConfiguration()->Assembly->Version = $version;
+                    $project_path = $project_manager->build();
+                }
+                else
+                {
+                    throw new UnsupportedProjectTypeException('The project type \'' . $project_type->ProjectType . '\' is not supported');
+                }
+
+                if($version !== null)
+                {
+                    $package = Package::load($project_path);
+                    $package->Assembly->Version = Functions::convertToSemVer($version);
+                    $package->save($project_path);
+                }
+
+                return $project_path;
+            }
+            catch(Exception $e)
+            {
+                throw new BuildException('Failed to build project', $e);
+            }
+        }
+
+
+        /**
          * Compiles the execution policies of the package
          *
          * @param string $path
@@ -93,7 +161,7 @@
          * @throws AccessDeniedException
          * @throws FileNotFoundException
          * @throws IOException
-         * @throws UnsupportedRunnerException
+         * @throws RunnerExecutionException
          */
         public static function compileExecutionPolicies(string $path, ProjectConfiguration $configuration): array
         {
@@ -108,6 +176,8 @@
             /** @var ProjectConfiguration\ExecutionPolicy $policy */
             foreach($configuration->ExecutionPolicies as $policy)
             {
+                Console::outVerbose(sprintf('Compiling Execution Policy %s', $policy->Name));
+
                 if($total_items > 5)
                 {
                     Console::inlineProgressBar($processed_items, $total_items);
@@ -132,29 +202,29 @@
          * @param string $build_configuration
          * @return string
          * @throws BuildConfigurationNotFoundException
-         * @throws BuildException
          * @throws IOException
          */
         public static function writePackage(string $path, Package $package, ProjectConfiguration $configuration, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
         {
+            Console::outVerbose(sprintf('Writing package to %s', $path));
+
             // Write the package to disk
             $FileSystem = new Filesystem();
             $BuildConfiguration = $configuration->Build->getBuildConfiguration($build_configuration);
-            if($FileSystem->exists($path . $BuildConfiguration->OutputPath))
+            if(!$FileSystem->exists($path . $BuildConfiguration->OutputPath))
             {
-                try
-                {
-                    $FileSystem->remove($path . $BuildConfiguration->OutputPath);
-                }
-                catch(\ncc\ThirdParty\Symfony\Filesystem\Exception\IOException $e)
-                {
-                    throw new BuildException('Cannot delete directory \'' . $path . $BuildConfiguration->OutputPath . '\', ' . $e->getMessage(), $e);
-                }
+                Console::outDebug(sprintf('creating output directory %s', $path . $BuildConfiguration->OutputPath));
+                $FileSystem->mkdir($path . $BuildConfiguration->OutputPath);
             }
 
             // Finally write the package to the disk
             $FileSystem->mkdir($path . $BuildConfiguration->OutputPath);
             $output_file = $path . $BuildConfiguration->OutputPath . DIRECTORY_SEPARATOR . $package->Assembly->Package . '.ncc';
+            if($FileSystem->exists($output_file))
+            {
+                Console::outDebug(sprintf('removing existing package %s', $output_file));
+                $FileSystem->remove($output_file);
+            }
             $FileSystem->touch($output_file);
 
             try
@@ -170,34 +240,12 @@
         }
 
         /**
-         * Compiles the special formatted constants
-         *
-         * @param Package $package
-         * @param int $timestamp
-         * @return array
-         */
-        public static function compileRuntimeConstants(Package $package, int $timestamp): array
-        {
-            $compiled_constants = [];
-
-            foreach($package->Header->RuntimeConstants as $name => $value)
-            {
-                $compiled_constants[$name] = self::compileConstants($value, [
-                    ConstantReferences::Assembly => $package->Assembly,
-                    ConstantReferences::DateTime => $timestamp,
-                    ConstantReferences::Build => null
-                ]);
-            }
-
-            return $compiled_constants;
-        }
-
-        /**
          * Compiles the constants in the package object
          *
          * @param Package $package
          * @param array $refs
          * @return void
+         * @noinspection PhpParameterByRefIsNotUsedAsReferenceInspection
          */
         public static function compilePackageConstants(Package &$package, array $refs): void
         {
@@ -206,6 +254,7 @@
                 $assembly = [];
                 foreach($package->Assembly->toArray() as $key => $value)
                 {
+                    Console::outDebug(sprintf('compiling consts Assembly.%s (%s)', $key, implode(', ', array_keys($refs))));
                     $assembly[$key] = self::compileConstants($value, $refs);
                 }
                 $package->Assembly = Assembly::fromArray($assembly);
@@ -217,11 +266,44 @@
                 $units = [];
                 foreach($package->ExecutionUnits as $executionUnit)
                 {
+                    Console::outDebug(sprintf('compiling execution unit consts %s (%s)', $executionUnit->ExecutionPolicy->Name, implode(', ', array_keys($refs))));
                     $units[] = self::compileExecutionUnitConstants($executionUnit, $refs);
                 }
                 $package->ExecutionUnits = $units;
                 unset($units);
             }
+
+            $compiled_constants = [];
+            foreach($package->Header->RuntimeConstants as $name => $value)
+            {
+                Console::outDebug(sprintf('compiling runtime const %s (%s)', $name, implode(', ', array_keys($refs))));
+                $compiled_constants[$name] = self::compileConstants($value, $refs);
+            }
+
+            $options = [];
+            foreach($package->Header->Options as $name => $value)
+            {
+                if(is_array($value))
+                {
+                    $options[$name] = [];
+                    foreach($value as $key => $val)
+                    {
+                        if(!is_string($val))
+                            continue;
+
+                        Console::outDebug(sprintf('compiling option %s.%s (%s)', $name, $key, implode(', ', array_keys($refs))));
+                        $options[$name][$key] = self::compileConstants($val, $refs);
+                    }
+                }
+                else
+                {
+                    Console::outDebug(sprintf('compiling option %s (%s)', $name, implode(', ', array_keys($refs))));
+                    $options[$name] = self::compileConstants((string)$value, $refs);
+                }
+            }
+
+            $package->Header->Options = $options;
+            $package->Header->RuntimeConstants = $compiled_constants;
         }
 
         /**
@@ -302,6 +384,9 @@
 
             if(isset($refs[ConstantReferences::Install]))
                 $value = ConstantCompiler::compileInstallConstants($value, $refs[ConstantReferences::Install]);
+
+            if(isset($refs[ConstantReferences::Runtime]))
+                $value = ConstantCompiler::compileRuntimeConstants($value);
 
             return $value;
         }

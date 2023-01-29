@@ -1,13 +1,41 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Objects\PackageLock;
 
+    use ncc\Abstracts\Scopes;
+    use ncc\Abstracts\Versions;
+    use ncc\Exceptions\InvalidPackageNameException;
+    use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\VersionNotFoundException;
     use ncc\Objects\Package;
+    use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
+    use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\PathFinder;
+    use ncc\Utilities\Resolver;
 
     class PackageEntry
     {
@@ -33,6 +61,13 @@
         public $Versions;
 
         /**
+         * The update source of the package entry
+         *
+         * @var UpdateSource|null
+         */
+        public $UpdateSource;
+
+        /**
          * Public Constructor
          */
         public function __construct()
@@ -50,6 +85,9 @@
          */
         public function getVersion(string $version, bool $throw_exception=false): ?VersionEntry
         {
+            if($version == Versions::Latest)
+                $version = $this->LatestVersion;
+
             foreach($this->Versions as $versionEntry)
             {
                 if($versionEntry->Version == $version)
@@ -128,6 +166,9 @@
             $version->MainExecutionPolicy = $package->MainExecutionPolicy;
             $version->Location = $install_path;
 
+            foreach($version->ExecutionUnits as $unit)
+                $unit->Data = null;
+
             foreach($package->Dependencies as $dependency)
             {
                 $version->Dependencies[] = new DependencyEntry($dependency);
@@ -187,6 +228,24 @@
         }
 
         /**
+         * @return string
+         * @throws InvalidPackageNameException
+         * @throws InvalidScopeException
+         */
+        public function getDataPath(): string
+        {
+            $path = PathFinder::getPackageDataPath($this->Name);
+
+            if(!file_exists($path) && Resolver::resolveScope() == Scopes::System)
+            {
+                $filesystem = new Filesystem();
+                $filesystem->mkdir($path);
+            }
+
+            return $path;
+        }
+
+        /**
          * Returns an array representation of the object
          *
          * @param bool $bytecode
@@ -204,6 +263,7 @@
                 ($bytecode ? Functions::cbc('name')  : 'name')  => $this->Name,
                 ($bytecode ? Functions::cbc('latest_version')  : 'latest_version')  => $this->LatestVersion,
                 ($bytecode ? Functions::cbc('versions')  : 'versions')  => $versions,
+                ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->UpdateSource?->toArray($bytecode) ?? null),
             ];
         }
 
@@ -220,6 +280,10 @@
             $object->Name = Functions::array_bc($data, 'name');
             $object->LatestVersion = Functions::array_bc($data, 'latest_version');
             $versions = Functions::array_bc($data, 'versions');
+            $object->UpdateSource = Functions::array_bc($data, 'update_source');
+
+            if($object->UpdateSource !== null)
+                $object->UpdateSource = UpdateSource::fromArray($object->UpdateSource);
 
             if($versions !== null)
             {

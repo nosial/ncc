@@ -1,6 +1,28 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-    namespace ncc\Abstracts;
+namespace ncc\Abstracts;
+
+    use ncc\Exceptions\SymlinkException;
 
     /**
      * @author Zi Xing Narrakas
@@ -269,6 +291,91 @@
         const MissingDependencyException = -1751;
 
         /**
+         * @see HttpException
+         */
+        const HttpException = -1752;
+
+        /**
+         * @see UnsupportedRemoteSourceTypeException
+         */
+        const UnsupportedRemoteSourceTypeException = -1753;
+
+        /**
+         * @see GitCloneException
+         */
+        const GitCloneException = -1754;
+
+        /**
+         * @see GitCheckoutException
+         */
+        const GitCheckoutException = -1755;
+
+        /**
+         * @see GitlabServiceException
+         */
+        const GitlabServiceException = -1756;
+
+        /**
+         * @see ImportException
+         */
+        const ImportException = -1757;
+
+        /**
+         * @see GitTagsException
+         */
+        const GitTagsException = -1758;
+
+        /**
+         * @see GithubServiceException
+         */
+        const GithubServiceException = -1759;
+
+        /**
+         * @see AuthenticationException
+         */
+        const AuthenticationException = -1760;
+
+        /**
+         * @see NotSupportedException
+         */
+        const NotSupportedException = -1761;
+
+        /**
+         * @see UnsupportedProjectTypeException
+         */
+        const UnsupportedProjectTypeException = -1762;
+
+        /**
+         * @see UnsupportedArchiveException
+         */
+        const UnsupportedArchiveException = -1763;
+
+        /**
+         * @see ArchiveException
+         */
+        const ArchiveException = -1764;
+
+        /**
+         * @see PackageFetchException
+         */
+        const PackageFetchException = -1765;
+
+        /**
+         * @see InvalidBuildConfigurationException
+         */
+        const InvalidBuildConfigurationException = -1766;
+
+        /**
+         * @see InvalidBuildConfigurationNameException
+         */
+        const InvalidDependencyConfiguration = -1767;
+
+        /**
+         * @see SymlinkException
+         */
+        const SymlinkException = -1768;
+
+        /**
          * All the exception codes from NCC
          */
         const All = [
@@ -322,6 +429,21 @@
             self::ComposerNotAvailableException,
             self::ComposerException,
             self::UserAbortedOperationException,
-            self::MissingDependencyException
+            self::MissingDependencyException,
+            self::HttpException,
+            self::UnsupportedRemoteSourceTypeException,
+            self::GitCloneException,
+            self::GitCheckoutException,
+            self::GitlabServiceException,
+            self::GitTagsException,
+            self::AuthenticationException,
+            self::NotSupportedException,
+            self::UnsupportedProjectTypeException,
+            self::UnsupportedArchiveException,
+            self::ArchiveException,
+            self::PackageFetchException,
+            self::InvalidBuildConfigurationException,
+            self::InvalidDependencyConfiguration,
+            self::SymlinkException,
         ];
     }

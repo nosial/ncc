@@ -1,4 +1,26 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+    /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Utilities;
 
@@ -7,6 +29,7 @@
     use ncc\Abstracts\LogLevel;
     use ncc\CLI\Main;
     use ncc\ncc;
+    use Throwable;
 
     class Console
     {
@@ -14,6 +37,11 @@
          * @var int
          */
         private static $largestTickLength = 0;
+
+        /**
+         * @var float|int
+         */
+        private static $lastTickTime;
 
         /**
          * Inline Progress bar, created by dealnews.com.
@@ -115,13 +143,35 @@
             };
 
             $tick_time = (string)microtime(true);
+
             if(strlen($tick_time) > self::$largestTickLength)
+            {
                 self::$largestTickLength = strlen($tick_time);
+            }
+
             if(strlen($tick_time) < self::$largestTickLength)
+            {
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
                 $tick_time = str_pad($tick_time, (strlen($tick_time) + (self::$largestTickLength - strlen($tick_time))), ' ', STR_PAD_RIGHT);
+            }
 
-            return '[' . $tick_time . ' - ' . date('TH:i:sP') . '] ' . $input;
+            $fmt_tick = $tick_time;
+            if(self::$lastTickTime !== null)
+            {
+                $timeDiff = microtime(true) - self::$lastTickTime;
+
+                if ($timeDiff > 1.0)
+                {
+                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LightRed);
+                }
+                elseif ($timeDiff > 0.5)
+                {
+                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LightYellow);
+                }
+            }
+
+            self::$lastTickTime = $tick_time;
+            return '[' . $fmt_tick . '] ' . $input;
         }
 
         /**
@@ -178,6 +228,14 @@
                 $trace_msg .= Console::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LightGreen);
                 $trace_msg .= ' > ';
             }
+
+            /**  Apply syntax highlighting using regular expressions  */
+
+            // Hyperlinks
+            $message = preg_replace('/(https?:\/\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LightBlue), $message);
+
+            // File Paths
+            $message = preg_replace('/(\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LightCyan), $message);
 
             /** @noinspection PhpUnnecessaryStringCastInspection */
             $message = self::setPrefix(LogLevel::Debug, (string)$trace_msg . $message);
@@ -313,16 +371,20 @@
          * Prints out a detailed exception display (unfinished)
          *
          * @param Exception $e
+         * @param bool $sub
          * @return void
          */
-        private static function outExceptionDetails(Exception $e): void
+        private static function outExceptionDetails(Throwable $e, bool $sub=false): void
         {
             if(!ncc::cliMode())
                 return;
 
+            // Exception name without namespace
+
             $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::Magenta);
-            $trace_error = self::formatColor('error: ', ConsoleColors::Red);
+            $trace_error = self::formatColor( 'Error: ', ConsoleColors::Red);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());
+            self::out(sprintf('Exception: %s', get_class($e)));
             self::out(sprintf('Error code: %s', $e->getCode()));
             $trace = $e->getTrace();
             if(count($trace) > 1)
@@ -334,7 +396,16 @@
                 }
             }
 
-            if(Main::getArgs() !== null)
+            if($e->getPrevious() !== null)
+            {
+                // Check if previous is the same as the current
+                if($e->getPrevious()->getMessage() !== $e->getMessage())
+                {
+                    self::outExceptionDetails($e->getPrevious(), true);
+                }
+            }
+
+            if(Main::getArgs() !== null && !$sub)
             {
                 if(isset(Main::getArgs()['dbg-ex']))
                 {
@@ -425,4 +496,53 @@
                 }
             }
         }
+
+        /**
+         * Prompts for a password input while hiding the user's password
+         *
+         * @param string $prompt
+         * @return string|null
+         */
+        public static function passwordInput(string $prompt): ?string
+        {
+            if(!ncc::cliMode())
+                return null;
+
+            // passwordInput() is not properly implemented yet, defaulting to prompt
+            return self::getInput($prompt);
+
+            /**
+            $executable_finder = new ExecutableFinder();
+            $bash_path = $executable_finder->find('bash');
+
+            if($bash_path == null)
+            {
+                self::outWarning('Unable to find bash executable, cannot hide password input');
+                return self::getInput($prompt);
+            }
+
+            $prompt = escapeshellarg($prompt);
+            $random = Functions::randomString(10);
+            $command = "$bash_path -c 'read -s -p $prompt $random && echo \$" . $random . "'";
+            $password = rtrim(shell_exec($command));
+            self::out((string)null);
+            return $password;
+             **/
+        }
+
+        /**
+         * @param array $sections
+         * @return void
+         */
+        public static function outHelpSections(array $sections): void
+        {
+            if(!ncc::cliMode())
+                return;
+
+            $padding = Functions::detectParametersPadding($sections);
+
+            foreach($sections as $section)
+                Console::out('   ' . $section->toString($padding));
+        }
+
     }

@@ -1,11 +1,35 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Objects;
 
     use ncc\Abstracts\Versions;
+    use ncc\Exceptions\InvalidPackageNameException;
+    use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\VersionNotFoundException;
     use ncc\Objects\PackageLock\PackageEntry;
+    use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
 
     class PackageLock
@@ -55,21 +79,29 @@
          * @param Package $package
          * @param string $install_path
          * @return void
+         * @throws InvalidPackageNameException
+         * @throws InvalidScopeException
          */
         public function addPackage(Package $package, string $install_path): void
         {
+            Console::outVerbose("Adding package {$package->Assembly->Package} to package lock file");
+
             if(!isset($this->Packages[$package->Assembly->Package]))
             {
                 $package_entry = new PackageEntry();
                 $package_entry->addVersion($package, $install_path, true);
                 $package_entry->Name = $package->Assembly->Package;
+                $package_entry->UpdateSource = $package->Header->UpdateSource;
+                $package_entry->getDataPath();
                 $this->Packages[$package->Assembly->Package] = $package_entry;
                 $this->update();
 
                 return;
             }
 
-            $this->Packages[$package->Assembly->Package]->addVersion($package, true);
+            $this->Packages[$package->Assembly->Package]->UpdateSource = $package->Header->UpdateSource;
+            $this->Packages[$package->Assembly->Package]->addVersion($package, $install_path, true);
+            $this->Packages[$package->Assembly->Package]->getDataPath();
             $this->update();
         }
 
@@ -82,6 +114,8 @@
          */
         public function removePackageVersion(string $package, string $version): bool
         {
+            Console::outVerbose(sprintf('Removing package %s version %s from package lock file', $package, $version));
+
             if(isset($this->Packages[$package]))
             {
                 $r = $this->Packages[$package]->removeVersion($version);
@@ -104,12 +138,15 @@
          *
          * @param string $package
          * @return bool
+         * @noinspection PhpUnused
          */
         public function removePackage(string $package): bool
         {
+            Console::outVerbose(sprintf('Removing package %s from package lock file', $package));
             if(isset($this->Packages[$package]))
             {
                 unset($this->Packages[$package]);
+                $this->update();
                 return true;
             }
 
@@ -124,12 +161,48 @@
          */
         public function getPackage(string $package): ?PackageEntry
         {
+            Console::outDebug(sprintf('getting package %s from package lock file', $package));
+
             if(isset($this->Packages[$package]))
             {
                 return $this->Packages[$package];
             }
 
             return null;
+        }
+
+        /**
+         * Determines if the requested package exists in the package lock
+         *
+         * @param string $package
+         * @param string|null $version
+         * @return bool
+         */
+        public function packageExists(string $package, ?string $version=null): bool
+        {
+            $package_entry = $this->getPackage($package);
+            if($package_entry == null)
+                return false;
+
+            if($version !== null)
+            {
+                try
+                {
+                    $version_entry = $package_entry->getVersion($version);
+                }
+                catch (VersionNotFoundException $e)
+                {
+                    unset($e);
+                    return false;
+                }
+
+                if($version_entry == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /**

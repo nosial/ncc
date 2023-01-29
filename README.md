@@ -4,38 +4,60 @@ Nosial Code Compiler is a program written in PHP designed to be a multi-purpose 
 This program is a complete re-write of the now defunct [PHP Package Manager (PPM)](https://git.n64.cc/intellivoid/ppm)
 toolkit offering more features, security and proper code licensing and copyrighting for the components used for the project.
 
-NCC Cannot compile, read or use PPM packages (.ppm) files or work with project sources designed to be built with PPM, however
-a PPM extension may be built in the future to allow for backwards compatibility.
+## Alpha Stage
+
+NCC is currently in alpha stage, meaning that it's not fully functional and may not work on your system. If you find any bugs
+or issues please report them to the [GitHub Issue Tracker](https://git.n64.cc/intellivoid/ncc/issues).
+
+At the moment NCC is currently being used while developing other software, this serves as a test run to
+improve on changes for the next version.
+
+## Version History
+
+ - 1.0.0 Alpha - Initial release ([changelog](changelog/v1.0.0_alpha.md))
+
+## Repository Mirrors
+
+The official repository for NCC is hosted on [GitLab](https://git.n64.cc/intellivoid/ncc), however, you can also find
+mirrors of the repository mirrored on different platforms, including 
+community powered mirrors. (more to come)
+
+ - [git.it-kuny.ch](https://git.it-kuny.ch)
+ - [git.martinvlba.eu](https://git.martinvlba.eu/Nosial/ncc)
 
 
-## Notes
+# Contributing
 
- > While NCC has windows compatibility in mind, not all compiler extensions or features will work correctly. NCC is
- > designed to be used in production in a Unix environment and Windows should only be used for development purposes.
+We welcome contributions to NCC! If you have an idea for how to improve the project, please don't hesitate to reach out.
+There are many ways to contribute, and we appreciate all forms of support.
 
- > Compiler extensions requires their own set of dependencies to be met, for example Java compilers will require JDK
+For more information on how to contribute, please read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
- > NCC is designed to run only on a PHP 8.0+ environment, compiler extensions can have support for different PHP versions.
 
- > Third-party dependencies and included libraries has a dedicated namespace for `ncc` to avoid user land conflicts if
- > the user wishes to install and use one of the same dependencies that NCC uses.
+# Code of Conduct
 
-## Authors
- - Zi Xing Narrakas (netkas) <[netkas@n64.cc](mailto:netkas@64.cc)>
+We are committed to maintaining a welcoming and inclusive environment for all contributors. Please read and follow our
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Special Thanks
- - Marc Gutt (mgutt) <[marc@gutt.it](mailto:marc@gutt.it)>
- - Debusschère Alexandre ([debuss](https://github.com/debuss)) 
+# Authors
 
-## Copyright
-- Copyright (c) 2022-2022, Nosial - All Rights Reserved
-- Copyright (c) 2004-2022, Fabien Potencier
-- Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
-- Copyright (c) 2013 Austin Hyde
-- Copyright (C) 2009-2016 Laurent Jouanneau
-- Copyright (c) 2011, Nikita Popov
-- Copyright (c) 2010-2016 Arne Blankerts <arne@blankerts.de> and Contributors
+- Zi Xing Narrakas (netkas) <[netkas@n64.cc](mailto:netkas@64.cc)>
+
+
+# Special Thanks
+
+- Marc Gutt (mgutt) <[marc@gutt.it](mailto:marc@gutt.it)>
+- Debusschère Alexandre ([debuss](https://github.com/debuss))
+
+
+# Copyright
+
+- Copyright (c) 2022-2023, Nosial - All Rights Reserved
+
 
 # Licenses
 
-Multiple licenses can be found at [LICENSE](LICENSE)
+NCC is licensed under the MIT License, see [LICENSE](LICENSE) for more information.
+
+Multiple licenses for the open source components used in this
+project can be found at [LICENSE](LICENSES)

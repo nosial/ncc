@@ -1,4 +1,24 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -20,7 +40,6 @@
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\UnsupportedCompilerExtensionException;
-    use ncc\Exceptions\UnsupportedRunnerException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
@@ -140,12 +159,12 @@
             $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
 
             // Generate configurations
-            $DebugConfiguration = new ProjectConfiguration\BuildConfiguration();
+            $DebugConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $DebugConfiguration->Name = 'debug';
             $DebugConfiguration->OutputPath = 'build/debug';
             $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
             $this->ProjectConfiguration->Build->Configurations[] = $DebugConfiguration;
-            $ReleaseConfiguration = new ProjectConfiguration\BuildConfiguration();
+            $ReleaseConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $ReleaseConfiguration->Name = 'release';
             $ReleaseConfiguration->OutputPath = 'build/release';
             $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
@@ -172,14 +191,10 @@
             // Process options
             foreach($options as $option)
             {
-                switch($option)
-                {
-                    case InitializeProjectOptions::CREATE_SOURCE_DIRECTORY:
-                        if(!file_exists($this->ProjectConfiguration->Build->SourcePath))
-                        {
-                            mkdir($this->ProjectConfiguration->Build->SourcePath);
-                        }
-                        break;
+                if ($option == InitializeProjectOptions::CREATE_SOURCE_DIRECTORY) {
+                    if (!file_exists($this->ProjectConfiguration->Build->SourcePath)) {
+                        mkdir($this->ProjectConfiguration->Build->SourcePath);
+                    }
                 }
             }
         }
@@ -207,7 +222,7 @@
          * @throws FileNotFoundException
          * @throws IOException
          */
-        public function load()
+        public function load(): void
         {
             if(!file_exists($this->ProjectFilePath) && !is_file($this->ProjectFilePath))
                 throw new ProjectConfigurationNotFoundException('The project configuration file \'' . $this->ProjectFilePath . '\' was not found');
@@ -221,7 +236,7 @@
          * @return void
          * @throws MalformedJsonException
          */
-        public function save()
+        public function save(): void
         {
             if(!$this->projectLoaded())
                 return;
@@ -274,7 +289,6 @@
          * @throws BuildException
          * @throws PackagePreparationFailedException
          * @throws UnsupportedCompilerExtensionException
-         * @throws UnsupportedRunnerException
          */
         public function build(string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
         {

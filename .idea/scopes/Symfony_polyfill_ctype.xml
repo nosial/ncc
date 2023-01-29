@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Symfony\polyfill-ctype" pattern="file[ncc]:src/ncc/ThirdParty/Symfony/polyfill-ctype//*" />
+</component>

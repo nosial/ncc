@@ -1,4 +1,24 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -9,6 +29,7 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\InvalidBuildConfigurationException;
     use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
     use ncc\Exceptions\InvalidProjectConfigurationException;
@@ -21,7 +42,7 @@
     use ncc\Exceptions\UnsupportedExtensionVersionException;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
-    use ncc\Objects\ProjectConfiguration\BuildConfiguration;
+    use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Objects\ProjectConfiguration\Project;
@@ -93,6 +114,7 @@
          * @throws UndefinedExecutionPolicyException
          * @throws UnsupportedCompilerExtensionException
          * @throws UnsupportedExtensionVersionException
+         * @throws InvalidBuildConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -114,6 +136,41 @@
                 if($throw_exception)
                     throw $e;
                 return false;
+            }
+
+            if($this->Build->Main !== null)
+            {
+                if($this->ExecutionPolicies == null || count($this->ExecutionPolicies) == 0)
+                {
+                    if($throw_exception)
+                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->Build->Main));
+                    return false;
+                }
+
+
+                $found = false;
+                foreach($this->ExecutionPolicies as $policy)
+                {
+                    if($policy->Name == $this->Build->Main)
+                    {
+                        $found = true;
+                        break;
+                    }
+                }
+
+                if(!$found)
+                {
+                    if($throw_exception)
+                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->Build->Main));
+                    return false;
+                }
+
+                if($this->Build->Main == BuildConfigurationValues::AllConfigurations)
+                {
+                    if($throw_exception)
+                        throw new InvalidBuildConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::AllConfigurations));
+                    return false;
+                }
             }
 
             return true;

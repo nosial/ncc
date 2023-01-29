@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Symfony\Filesystem" pattern="file[ncc]:src/ncc/ThirdParty/Symfony/Filesystem//*" />
+</component>

@@ -1,4 +1,24 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpPropertyOnlyWrittenInspection */
     /** @noinspection PhpMissingFieldTypeInspection */
@@ -13,7 +33,6 @@
     use ncc\Exceptions\ComponentChecksumException;
     use ncc\Exceptions\ComponentDecodeException;
     use ncc\Exceptions\FileNotFoundException;
-    use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NoUnitsFoundException;
     use ncc\Exceptions\ResourceChecksumException;
@@ -31,7 +50,6 @@
     use ncc\ThirdParty\theseer\Autoload\Factory;
     use ncc\Utilities\Base64;
     use ncc\Utilities\IO;
-    use ncc\ZiProto\ZiProto;
     use ReflectionClass;
     use ReflectionException;
     use RuntimeException;
@@ -115,24 +133,8 @@
          */
         public function postInstall(InstallationPaths $installationPaths): void
         {
-            $static_files_exists = false;
-            if($this->package->Header->Options !== null && isset($this->package->Header->Options['static_files']))
-            {
-                $static_files = $this->package->Header->Options['static_files'];
-                $static_files_path = $installationPaths->getBinPath() . DIRECTORY_SEPARATOR . 'static_autoload.bin';
-
-                foreach($static_files as $file)
-                {
-                    if(!file_exists($file))
-                        throw new InstallationException(sprintf('Static file %s does not exist', $file));
-                }
-
-                $static_files_exists = true;
-                IO::fwrite($static_files_path, ZiProto::encode($static_files));
-            }
-
             $autoload_path = $installationPaths->getBinPath() . DIRECTORY_SEPARATOR . 'autoload.php';
-            $autoload_src = $this->generateAutoload($installationPaths->getSourcePath(), $autoload_path, $static_files_exists);
+            $autoload_src = $this->generateAutoload($installationPaths->getSourcePath(), $autoload_path);
             IO::fwrite($autoload_path, $autoload_src);
         }
 
@@ -286,15 +288,13 @@
          *
          * @param string $src
          * @param string $output
-         * @param bool $ignore_units
          * @return string
          * @throws AccessDeniedException
          * @throws CollectorException
          * @throws FileNotFoundException
          * @throws IOException
-         * @throws NoUnitsFoundException
          */
-        private function generateAutoload(string $src, string $output, bool $ignore_units=false): string
+        private function generateAutoload(string $src, string $output): string
         {
             // Construct configuration
             $configuration = new Config([$src]);
@@ -315,10 +315,6 @@
             $result = self::runCollector($factory, $configuration);
 
             // Exception raises when there are no files in the project that can be processed by the autoloader
-            if(!$result->hasUnits() && !$ignore_units)
-            {
-                throw new NoUnitsFoundException('No units were found in the project');
-            }
 
             $template = IO::fread($configuration->getTemplate());
 
