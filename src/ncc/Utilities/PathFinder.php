@@ -1,9 +1,32 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-    namespace ncc\Utilities;
+namespace ncc\Utilities;
 
     use ncc\Abstracts\Scopes;
+    use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\RunnerExecutionException;
+    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
 
     class PathFinder
     {
@@ -171,6 +194,28 @@
         }
 
         /**
+         * @param string $scope
+         * @param bool $win32
+         * @return string
+         * @throws InvalidScopeException
+         */
+        public static function getRemoteSources(string $scope=Scopes::Auto, bool $win32=false): string
+        {
+            return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'sources';
+        }
+
+        /**
+         * @param string $scope
+         * @param bool $win32
+         * @return string
+         * @throws InvalidScopeException
+         */
+        public static function getSymlinkDictionary(string $scope=Scopes::Auto, bool $win32=false): string
+        {
+            return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'symlinks';
+        }
+
+        /**
          * Returns an array of all the package lock files the current user can access (For global-cross referencing)
          *
          * @param bool $win32
@@ -188,6 +233,22 @@
             }
 
             return $results;
+        }
+
+        /**
+         * Returns the path where package data is located
+         *
+         * @param string $package
+         * @return string
+         * @throws InvalidPackageNameException
+         * @throws InvalidScopeException
+         */
+        public static function getPackageDataPath(string $package): string
+        {
+            if(!Validate::packageName($package))
+                throw new InvalidPackageNameException($package);
+
+            return self::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $package;
         }
 
         /**
@@ -212,5 +273,33 @@
         public static function getConfigurationFile(): string
         {
             return self::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'ncc.yaml';
+        }
+
+        /**
+         * Attempts to locate the executable path of the given program name
+         *
+         * @param string $runner
+         * @return string
+         * @throws RunnerExecutionException
+         */
+        public static function findRunner(string $runner): string
+        {
+            $executable_finder = new ExecutableFinder();
+
+            $config_value = Functions::getConfigurationProperty(sprintf('runners.%s', $runner));
+            if($config_value !== null)
+            {
+                if(file_exists($config_value) && is_executable($config_value))
+                    return $config_value;
+
+                Console::outWarning(sprintf('The configured \'%s\' executable path is invalid, trying to find it automatically...', $runner));
+            }
+
+            $exec_path = $executable_finder->find($runner);
+
+            if($exec_path !== null)
+                return $exec_path;
+
+            throw new RunnerExecutionException(sprintf('Unable to find \'%s\' executable', $runner));
         }
     }

@@ -1,0 +1,6 @@
+{
+  "name": "github",
+  "type": "github",
+  "host": "api.github.com",
+  "ssl": true
+}

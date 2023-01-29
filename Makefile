@@ -1,5 +1,5 @@
-PHPCC=/usr/bin/php
-PHPAB=/usr/bin/phpab
+PHPCC:=$(shell which php)
+PHPAB:=$(shell which phpab)
 BUILD_PATH=build
 SRC_PATH=src
 
@@ -80,25 +80,28 @@ $(SRC_PATH)/ncc/autoload_spl.php:
 		$(SRC_PATH)/ncc/Objects \
 		$(SRC_PATH)/ncc/Runtime \
 		$(SRC_PATH)/ncc/Utilities \
-	  	$(SRC_PATH)/ncc/ncc.php
+	  	$(SRC_PATH)/ncc/ncc.php \
+	  	$(SRC_PATH)/ncc/Runtime.php
 
 redist: autoload
 	rm -rf $(BUILD_PATH)/src
 	mkdir -p $(BUILD_PATH)/src
 	cp -rf $(SRC_PATH)/ncc/* $(BUILD_PATH)/src
-	cp $(SRC_PATH)/installer/installer $(BUILD_PATH)/$(SRC_PATH)/INSTALL
-	cp $(SRC_PATH)/installer/ncc.sh $(BUILD_PATH)/$(SRC_PATH)/ncc.sh
-	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/$(SRC_PATH)/default_config.yaml;
-	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/$(SRC_PATH)/CLI/template_config.yaml;
-	cp $(SRC_PATH)/installer/extension $(BUILD_PATH)/$(SRC_PATH)/extension
-	chmod +x $(BUILD_PATH)/$(SRC_PATH)/INSTALL
-	cp LICENSE $(BUILD_PATH)/$(SRC_PATH)/LICENSE
-	cp README.md $(BUILD_PATH)/$(SRC_PATH)/README.md
-	cp $(SRC_PATH)/installer/hash_check.php $(BUILD_PATH)/$(SRC_PATH)/hash_check.php; $(PHPCC) $(BUILD_PATH)/$(SRC_PATH)/hash_check.php; rm $(BUILD_PATH)/$(SRC_PATH)/hash_check.php
-	cp $(SRC_PATH)/installer/generate_build_files.php $(BUILD_PATH)/$(SRC_PATH)/generate_build_files.php; $(PHPCC) $(BUILD_PATH)/$(SRC_PATH)/generate_build_files.php; rm $(BUILD_PATH)/$(SRC_PATH)/generate_build_files.php
+	cp $(SRC_PATH)/installer/installer $(BUILD_PATH)/src/INSTALL
+	cp $(SRC_PATH)/installer/ncc.sh $(BUILD_PATH)/src/ncc.sh
+	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/src/default_config.yaml;
+	cp $(SRC_PATH)/config/ncc.yaml $(BUILD_PATH)/src/CLI/template_config.yaml;
+	cp $(SRC_PATH)/installer/extension $(BUILD_PATH)/src/extension
+	chmod +x $(BUILD_PATH)/src/INSTALL
+	cp LICENSE $(BUILD_PATH)/src/LICENSE
+	cp README.md $(BUILD_PATH)/src/README.md
+	cp $(SRC_PATH)/installer/hash_check.php $(BUILD_PATH)/src/hash_check.php; $(PHPCC) $(BUILD_PATH)/src/hash_check.php; rm $(BUILD_PATH)/src/hash_check.php
+	cp $(SRC_PATH)/installer/generate_build_files.php $(BUILD_PATH)/src/generate_build_files.php; $(PHPCC) $(BUILD_PATH)/src/generate_build_files.php; rm $(BUILD_PATH)/src/generate_build_files.php
+	mkdir -p $(BUILD_PATH)/src/repositories
+	cp -rf $(SRC_PATH)/default_repositories/*.json $(BUILD_PATH)/src/repositories
 
 tar: redist
-	cd $(BUILD_PATH)/src; tar -czvf ../ncc.tar.gz *
+	cd $(BUILD_PATH)/src; tar -czvf ../build.tar.gz *
 
 clean:
 	rm -rf $(BUILD_PATH)

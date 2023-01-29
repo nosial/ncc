@@ -1,4 +1,24 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -6,8 +26,10 @@
 
     use ncc\Abstracts\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
+    use ncc\Exceptions\InvalidBuildConfigurationException;
     use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
+    use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
 
@@ -107,17 +129,55 @@
         }
 
         /**
+         * Adds a new dependency to the build, if it doesn't already exist
+         *
+         * @param Dependency $dependency
+         * @return void
+         */
+        public function addDependency(Dependency $dependency): void
+        {
+            foreach($this->Dependencies as $dep)
+            {
+                if($dep->Name == $dependency->Name)
+                {
+                    $this->removeDependency($dep->Name);
+                    break;
+                }
+            }
+
+            $this->Dependencies[] = $dependency;
+        }
+
+        /**
+         * Removes a dependency from the build
+         *
+         * @param string $name
+         * @return void
+         */
+        private function removeDependency(string $name): void
+        {
+            foreach($this->Dependencies as $key => $dep)
+            {
+                if($dep->Name == $name)
+                {
+                    unset($this->Dependencies[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
          * Validates the build configuration object
          *
          * @param bool $throw_exception
          * @return bool
+         * @throws BuildConfigurationNotFoundException
+         * @throws InvalidBuildConfigurationException
          * @throws InvalidConstantNameException
          * @throws InvalidProjectBuildConfiguration
          */
         public function validate(bool $throw_exception=True): bool
         {
-            // TODO: Implement validation for Configurations, Dependencies and ExcludedFiles
-
             // Check the defined constants
             foreach($this->DefineConstants as $name => $value)
             {
@@ -139,6 +199,37 @@
                     return false;
                 }
             }
+
+            foreach($this->Configurations as $configuration)
+            {
+                try
+                {
+                    if (!$configuration->validate($throw_exception))
+                        return false;
+                }
+                catch (InvalidBuildConfigurationException $e)
+                {
+                    throw new InvalidBuildConfigurationException(sprintf('Error in build configuration \'%s\'', $configuration->Name), $e);
+                }
+            }
+
+            if($this->DefaultConfiguration == null)
+            {
+                if($throw_exception)
+                    throw new InvalidProjectBuildConfiguration('The default build configuration is not set');
+
+                return false;
+            }
+
+            if(!Validate::nameFriendly($this->DefaultConfiguration))
+            {
+                if($throw_exception)
+                    throw new InvalidProjectBuildConfiguration('The default build configuration name \'' . $this->DefaultConfiguration . '\' is not valid');
+
+                return false;
+            }
+
+            $this->getBuildConfiguration($this->DefaultConfiguration);
 
             return true;
         }
@@ -206,7 +297,7 @@
            if($this->Scope !== null)
                 $ReturnResults[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->Scope;
            if($this->Main !== null)
-                $ReturnResults[($bytecode ? Functions::cbc('main') : 'main')] = $this->Main;
+               $ReturnResults[($bytecode ? Functions::cbc('main') : 'main')] = $this->Main;
            if($this->DefineConstants !== null && count($this->DefineConstants) > 0)
                 $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
            if($this->PreBuild !== null && count($this->PreBuild) > 0)

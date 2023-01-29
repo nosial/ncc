@@ -1,4 +1,24 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -25,6 +45,11 @@
          * @var array
          */
         public $Options;
+
+        /**
+         * @var UpdateSource|null
+         */
+        public $UpdateSource;
 
         /**
          * Public Constructor
@@ -63,8 +88,11 @@
         {
             $ReturnResults = [];
 
-            $ReturnResults[($bytecode ? Functions::cbc('compiler') : 'compiler')] = $this->Compiler->toArray($bytecode);
+            $ReturnResults[($bytecode ? Functions::cbc('compiler') : 'compiler')] = $this->Compiler->toArray();
             $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
+
+            if($this->UpdateSource !== null)
+                $ReturnResults[($bytecode ? Functions::cbc('update_source') : 'update_source')] = $this->UpdateSource->toArray($bytecode);
 
             return $ReturnResults;
         }
@@ -87,6 +115,11 @@
             if(Functions::array_bc($data, 'options') !== null)
             {
                 $ProjectObject->Options = Functions::array_bc($data, 'options');
+            }
+
+            if(Functions::array_bc($data, 'update_source') !== null)
+            {
+                $ProjectObject->UpdateSource = UpdateSource::fromArray(Functions::array_bc($data, 'update_source'));
             }
 
             return $ProjectObject;

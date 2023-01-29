@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="theseer\DirectoryScanner" pattern="file[ncc]:src/ncc/ThirdParty/theseer/DirectoryScanner//*" />
+</component>

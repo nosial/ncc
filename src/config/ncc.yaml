@@ -19,12 +19,6 @@ ncc:
 php:
   # The main executable path for PHP that NCC should use
   executable_path: "/usr/bin/php"
-  runtime:
-    # Whether to initialize NCC when running `require('ncc');`
-    initialize_on_require: true
-
-    # if NCC should handle fatal exceptions during execution
-    handle_exceptions: true
 
 git:
   # if git is enabled or not
@@ -55,10 +49,10 @@ composer:
     quiet: false
 
     # Disable ANSI output
-    no_ansi: false
+    no_ansi: true
 
     # Do not ask any interactive question
-    no_interaction: false
+    no_interaction: true
 
     # Display timing and memory usage information
     profile: false

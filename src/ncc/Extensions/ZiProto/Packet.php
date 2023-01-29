@@ -1,6 +1,26 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-    namespace ncc\ZiProto;
+namespace ncc\ZiProto;
 
     use function array_values;
     use function chr;
@@ -92,7 +112,7 @@
          * @param $value
          * @return false|string
          */
-        public function encode($value)
+        public function encode($value): false|string
         {
             if (is_int($value))
             {
@@ -165,7 +185,7 @@
         /**
          * @return string
          */
-        public function encodeNil()
+        public function encodeNil(): string
         {
             return "\xc0";
         }
@@ -174,7 +194,7 @@
          * @param $bool
          * @return string
          */
-        public function encodeBool($bool)
+        public function encodeBool($bool): string
         {
             return $bool ? "\xc3" : "\xc2";
         }
@@ -183,7 +203,7 @@
          * @param $int
          * @return string
          */
-        public function encodeInt($int)
+        public function encodeInt($int): string
         {
             if ($int >= 0)
             {
@@ -237,7 +257,7 @@
          * @param $float
          * @return string
          */
-        public function encodeFloat($float)
+        public function encodeFloat($float): string
         {
             return $this->isForceFloat32
                 ? "\xca". pack('G', $float)
@@ -248,7 +268,7 @@
          * @param $str
          * @return string
          */
-        public function encodeStr($str)
+        public function encodeStr($str): string
         {
             $length = strlen($str);
 
@@ -274,7 +294,7 @@
          * @param $str
          * @return string
          */
-        public function encodeBin($str)
+        public function encodeBin($str): string
         {
             $length = strlen($str);
 
@@ -293,9 +313,9 @@
 
         /**
          * @param $array
-         * @return false|string
+         * @return string
          */
-        public function encodeArray($array)
+        public function encodeArray($array): string
         {
             $data = $this->encodeArrayHeader(count($array));
 
@@ -311,7 +331,7 @@
          * @param $size
          * @return string
          */
-        public function encodeArrayHeader($size)
+        public function encodeArrayHeader($size): string
         {
             if ($size <= 0xf)
             {
@@ -328,9 +348,9 @@
 
         /**
          * @param $map
-         * @return false|string
+         * @return string
          */
-        public function encodeMap($map)
+        public function encodeMap($map): string
         {
             $data = $this->encodeMapHeader(count($map));
 
@@ -371,7 +391,7 @@
          * @param $size
          * @return string
          */
-        public function encodeMapHeader($size)
+        public function encodeMapHeader($size): string
         {
             if ($size <= 0xf)
             {
@@ -391,7 +411,7 @@
          * @param $data
          * @return string
          */
-        public function encodeExt($type, $data)
+        public function encodeExt($type, $data): string
         {
             $length = strlen($data);
 

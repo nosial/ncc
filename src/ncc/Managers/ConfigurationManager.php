@@ -1,17 +1,37 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\LogLevel;
     use ncc\Abstracts\Scopes;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
     use ncc\ThirdParty\Symfony\Yaml\Yaml;
+    use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
@@ -49,6 +69,8 @@
          */
         public function load(): void
         {
+            Console::outDebug(sprintf('loading configuration file from %s', PathFinder::getConfigurationFile()));
+
             $this->Configuration = RuntimeCache::get('ncc.yaml');
             if($this->Configuration !== null)
                 return;
@@ -67,6 +89,8 @@
          */
         public function save(): void
         {
+            Console::outDebug(sprintf('saving configuration file to %s', PathFinder::getConfigurationFile()));
+
             if(Resolver::resolveScope() !== Scopes::System)
                 throw new AccessDeniedException('Cannot save configuration file, insufficient permissions');
 
@@ -88,6 +112,9 @@
          */
         public function getProperty(string $property)
         {
+            Console::outDebug(sprintf('getting property %s', $property));
+
+            Console::outDebug($property);
             $current_selection = $this->getConfiguration();
             foreach(explode('.', strtolower($property)) as $property)
             {
@@ -119,202 +146,20 @@
          */
         public function updateProperty(string $property, $value): bool
         {
-            // composer.options.quiet
-            $result = match (strtolower(explode('.', $property)[0]))
-            {
-                'ncc' => $this->updateNccProperties($property, $value),
-                'php' => $this->updatePhpProperties($property, $value),
-                'git' => $this->updateGitProperties($property, $value),
-                'runners' => $this->updateRunnerProperties($property, $value),
-                'composer' => $this->updateComposerProperties($property, $value),
-                default => false,
-            };
+            Console::outDebug(sprintf('updating property %s', $property));
 
+            $keys = explode('.', $property);
+            $current = &$this->Configuration;
+            foreach ($keys as $k)
+            {
+                if (!array_key_exists($k, $current))
+                {
+                    return false;
+                }
+                $current = &$current[$k];
+            }
+            $current = Functions::stringTypeCast($value);
             $this->save();
-            return $result;
-        }
-
-        /**
-         * Updates NCC configuration properties in the configuration
-         *
-         * @param string $property
-         * @param $value
-         * @return bool
-         */
-        private function updateNccProperties(string $property, $value): bool
-        {
-            $delete = false;
-            if(is_null($value))
-                $delete = true;
-
-            switch(strtolower($property))
-            {
-                case 'ncc.cli.no_colors':
-                    $this->Configuration['ncc']['cli']['no_colors'] = Functions::cbool($value);
-                    break;
-                case 'ncc.cli.basic_ascii':
-                    $this->Configuration['ncc']['cli']['basic_ascii'] = Functions::cbool($value);
-                    break;
-                case 'ncc.cli.logging':
-                    $this->Configuration['ncc']['cli']['logging'] = ($delete ? LogLevel::Info : (string)$value);
-                    break;
-
-                default:
-                    return false;
-            }
-
-            return true;
-        }
-
-        /**
-         * Updates PHP properties in the configuraiton
-         *
-         * @param string $property
-         * @param $value
-         * @return bool
-         */
-        private function updatePhpProperties(string $property, $value): bool
-        {
-            $delete = false;
-            if(is_null($value))
-                $delete = true;
-
-            switch(strtolower($property))
-            {
-                case 'php.executable_path':
-                    $this->Configuration['php']['executable_path'] = ($delete ? null : (string)$value);
-                    break;
-                case 'php.runtime.initialize_on_require':
-                    $this->Configuration['php']['runtime']['initialize_on_require'] = Functions::cbool($value);
-                    break;
-                case 'php.runtime.handle_exceptions':
-                    $this->Configuration['php']['runtime']['handle_exceptions'] = Functions::cbool($value);
-                    break;
-
-                default:
-                    return false;
-            }
-
-            return true;
-        }
-
-        /**
-         * Updated git properties
-         *
-         * @param string $property
-         * @param $value
-         * @return bool
-         */
-        private function updateGitProperties(string $property, $value): bool
-        {
-            $delete = false;
-            if(is_null($value))
-                $delete = true;
-
-            switch(strtolower($property))
-            {
-                case 'git.enabled':
-                    $this->Configuration['git']['enabled'] = Functions::cbool($value);
-                    break;
-                case 'git.executable_path':
-                    $this->Configuration['git']['executable_path'] = ($delete? null : (string)$value);
-                    break;
-                default:
-                    return false;
-            }
-
-            return true;
-        }
-
-        /**
-         * Updaters runner properties
-         *
-         * @param string $property
-         * @param $value
-         * @return bool
-         */
-        private function updateRunnerProperties(string $property, $value): bool
-        {
-            $delete = false;
-            if(is_null($value))
-                $delete = true;
-
-            switch(strtolower($property))
-            {
-                case 'runners.php':
-                    $this->Configuration['runners']['php'] = ($delete? null : (string)$value);
-                    break;
-                case 'runners.bash':
-                    $this->Configuration['runners']['bash'] = ($delete? null : (string)$value);
-                    break;
-                case 'runners.sh':
-                    $this->Configuration['runners']['sh'] = ($delete? null : (string)$value);
-                    break;
-                case 'runners.python':
-                    $this->Configuration['runners']['python'] = ($delete? null : (string)$value);
-                    break;
-                case 'runners.python3':
-                    $this->Configuration['runners']['python3'] = ($delete? null : (string)$value);
-                    break;
-                case 'runners.python2':
-                    $this->Configuration['runners']['python2'] = ($delete? null : (string)$value);
-                    break;
-
-                default:
-                    return false;
-            }
-
-            return true;
-        }
-
-        /**
-         * Updates a composer property value
-         *
-         * @param string $property
-         * @param $value
-         * @return bool
-         */
-        private function updateComposerProperties(string $property, $value): bool
-        {
-            $delete = false;
-            if(is_null($value))
-                $delete = true;
-
-            switch(strtolower($property))
-            {
-                case 'composer.enabled':
-                    $this->Configuration['composer']['enabled'] = Functions::cbool($value);
-                    break;
-                case 'composer.enable_internal_composer':
-                    $this->Configuration['composer']['enable_internal_composer'] = Functions::cbool($value);
-                    break;
-                case 'composer.executable_path':
-                    $this->Configuration['composer']['executable_path'] = ($delete? null : (string)$value);
-                    break;
-                case 'composer.options.quiet':
-                    $this->Configuration['composer']['options']['quiet'] = Functions::cbool($value);
-                    break;
-                case 'composer.options.no_ansi':
-                    $this->Configuration['composer']['options']['no_ansi'] = Functions::cbool($value);
-                    break;
-                case 'composer.options.no_interaction':
-                    $this->Configuration['composer']['options']['no_interaction'] = Functions::cbool($value);
-                    break;
-                case 'composer.options.profile':
-                    $this->Configuration['composer']['options']['profile'] = Functions::cbool($value);
-                    break;
-                case 'composer.options.no_scripts':
-                    $this->Configuration['composer']['options']['no_scripts'] = Functions::cbool($value);
-                    break;
-                case 'composer.options.no_cache':
-                    $this->Configuration['composer']['options']['no_cache'] = Functions::cbool($value);
-                    break;
-                case 'composer.options.logging':
-                    $this->Configuration['composer']['options']['logging'] = ((int)$value > 0 ? (int)$value : 1);
-                    break;
-                default:
-                    return false;
-            }
 
             return true;
         }

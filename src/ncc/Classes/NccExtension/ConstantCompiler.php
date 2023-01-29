@@ -1,14 +1,33 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2023, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-    namespace ncc\Classes\NccExtension;
+namespace ncc\Classes\NccExtension;
 
     use ncc\Abstracts\SpecialConstants\BuildConstants;
     use ncc\Abstracts\SpecialConstants\DateTimeConstants;
     use ncc\Abstracts\SpecialConstants\InstallConstants;
     use ncc\Abstracts\SpecialConstants\AssemblyConstants;
+    use ncc\Abstracts\SpecialConstants\RuntimeConstants;
     use ncc\Objects\InstallationPaths;
-    use ncc\Objects\Package;
-    use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Assembly;
 
     class ConstantCompiler
@@ -123,6 +142,30 @@
             $input = str_replace(DateTimeConstants::c, date('c', $timestamp), $input);
             $input = str_replace(DateTimeConstants::r, date('r', $timestamp), $input);
             $input = str_replace(DateTimeConstants::u, date('u', $timestamp), $input);
+
+            return $input;
+        }
+
+        /**
+         * @param string|null $input
+         * @return string|null
+         * @noinspection PhpUnnecessaryLocalVariableInspection
+         */
+        public static function compileRuntimeConstants(?string $input): ?string
+        {
+            if ($input == null)
+                return null;
+
+            if(function_exists('getcwd'))
+                $input = str_replace(RuntimeConstants::CWD, getcwd(), $input);
+            if(function_exists('getmypid'))
+                $input = str_replace(RuntimeConstants::PID, getmypid(), $input);
+            if(function_exists('getmyuid'))
+                $input = str_replace(RuntimeConstants::UID, getmyuid(), $input);
+            if(function_exists('getmygid'))
+                $input = str_replace(RuntimeConstants::GID, getmygid(), $input);
+            if(function_exists('get_current_user'))
+                $input = str_replace(RuntimeConstants::User, get_current_user(), $input);
 
             return $input;
         }

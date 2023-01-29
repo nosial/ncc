@@ -14,8 +14,10 @@
 
     use ncc\Abstracts\ConsoleColors;
     use ncc\Exceptions\FileNotFoundException;
+    use ncc\Managers\RemoteSourcesManager;
     use ncc\ncc;
     use ncc\Objects\CliHelpSection;
+    use ncc\Objects\DefinedRemoteSource;
     use ncc\ThirdParty\Symfony\Filesystem\Exception\IOException;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\Symfony\Process\Exception\ProcessFailedException;
@@ -712,7 +714,6 @@
         $config_obj['composer']['enable_internal_composer'] = false;
         if($config_obj['composer']['executable_path'] == null)
         {
-            // TODO: Implement Configuration Tools
             Console::outWarning('Cannot locate the executable path for \'composer\', run \'ncc config --composer.executable_path="composer.phar"\' as root to update the path');
         }
     }
@@ -724,7 +725,7 @@
     {
         if ($NCC_FILESYSTEM->exists(PathFinder::getConfigurationFile()))
         {
-            $config_backup = IO::fread(PathFinder::getConfigurationFile());
+            $config_backup = Yaml::parseFile(PathFinder::getConfigurationFile());
         }
     }
     catch (Exception $e)
@@ -736,33 +737,73 @@
     // Create/Update configuration file
     $config_obj = Yaml::parseFile(__DIR__ . DIRECTORY_SEPARATOR . 'default_config.yaml');
 
-    // Update the old configuration
-    if($config_backup !== null)
+    if(!function_exists('array_replace_recursive'))
     {
-        $old_config_obj = Yaml::parse($config_backup);
-        foreach($old_config_obj as $section => $value)
+        /**
+         * @param $array
+         * @param $array1
+         * @return array|mixed
+         * @author <msahagian@dotink.org>
+         * @noinspection PhpMissingReturnTypeInspection
+         */
+        function array_replace_recursive($array, $array1)
         {
-            if(isset($config_obj[$section]))
+            // handle the arguments, merge one by one
+            $args = func_get_args();
+            $array = $args[0];
+            if (!is_array($array))
             {
-                foreach($value as $section_item => $section_value)
+                return $array;
+            }
+            for ($i = 1; $i < count($args); $i++)
+            {
+                if (is_array($args[$i]))
                 {
-                    if(!isset($config_obj[$section][$section_item]))
-                    {
-                        $config_obj[$section][$section_item] = $section_value;
-                    }
+                    $array = recurse($array, $args[$i]);
                 }
             }
-            else
-            {
-                $config_obj[$section] = $value;
-            }
+            return $array;
         }
     }
+
+    if(!function_exists('recurse'))
+    {
+        /**
+         * @param $array
+         * @param $array1
+         * @return mixed
+         * @author <msahagian@dotink.org>
+         * @noinspection PhpMissingReturnTypeInspection
+         */
+        function recurse($array, $array1)
+        {
+            foreach ($array1 as $key => $value)
+            {
+                // create new key in $array, if it is empty or not an array
+                /** @noinspection PhpConditionAlreadyCheckedInspection */
+                if (!isset($array[$key]) || (isset($array[$key]) && !is_array($array[$key])))
+                {
+                    $array[$key] = array();
+                }
+
+                // overwrite the value in the base array
+                if (is_array($value))
+                {
+                    $value = recurse($array[$key], $value);
+                }
+                $array[$key] = $value;
+            }
+            return $array;
+        }
+    }
+
+
+    if($config_backup !== null)
+        $config_obj = array_replace_recursive($config_obj, $config_backup);
 
     if($config_backup == null)
     {
         Console::out('Generating ncc.yaml');
-
     }
     else
     {
@@ -777,6 +818,57 @@
     {
         Console::outException($e->getMessage(), $e, 1);
         return;
+    }
+
+    if($NCC_FILESYSTEM->exists(__DIR__ . DIRECTORY_SEPARATOR . 'repositories'))
+    {
+        if(!$NCC_FILESYSTEM->exists(__DIR__ . DIRECTORY_SEPARATOR . 'repositories' . DIRECTORY_SEPARATOR . 'custom_repositories.json'))
+            return;
+
+        try
+        {
+            $custom_repositories = Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'repositories' . DIRECTORY_SEPARATOR . 'custom_repositories.json', Functions::FORCE_ARRAY);
+        }
+        catch(Exception $e)
+        {
+            $custom_repositories = null;
+            Console::outWarning(sprintf('Failed to load custom repositories: %s', $e->getMessage()));
+        }
+
+        if($custom_repositories !== null)
+        {
+            $source_manager = new RemoteSourcesManager();
+            foreach($custom_repositories as $repository)
+            {
+                $repo_path = __DIR__ . DIRECTORY_SEPARATOR . 'repositories' . DIRECTORY_SEPARATOR . $repository;
+                if($NCC_FILESYSTEM->exists($repo_path))
+                {
+                    try
+                    {
+                        $definedEntry = DefinedRemoteSource::fromArray(Functions::loadJsonFile($repo_path, Functions::FORCE_ARRAY));
+                        if(!$source_manager->getRemoteSource($definedEntry->Name))
+                            $source_manager->addRemoteSource($definedEntry);
+                    }
+                    catch(Exception $e)
+                    {
+                        Console::outWarning(sprintf('Failed to load custom repository %s: %s', $repository, $e->getMessage()));
+                    }
+                }
+                else
+                {
+                    Console::outWarning(sprintf('Failed to load custom repository %s, file does not exist', $repository));
+                }
+            }
+
+            try
+            {
+                $source_manager->save();
+            } 
+            catch (\ncc\Exceptions\IOException $e) 
+            {
+                Console::outWarning(sprintf('Failed to save sources: %s', $e->getMessage()));
+            }
+        }
     }
 
     Console::out('NCC version: ' . NCC_VERSION_NUMBER . ' has been successfully installed');
