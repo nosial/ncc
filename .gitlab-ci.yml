@@ -24,10 +24,11 @@ build:
 
 release:
     script:
-        - make tar
-        - mv build/build.tar.gz build/ncc_$CI_COMMIT_TAG.tar.gz
+    - make redist
+    - mkdir ncc_$CI_COMMIT_TAG
+    - cp -r build/src/* ncc_$CI_COMMIT_TAG/
     artifacts:
         paths:
-            - build/ncc_$CI_COMMIT_TAG.tar.gz
+        - ncc_$CI_COMMIT_TAG/
     rules:
-        - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_TAG
