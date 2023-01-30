@@ -112,7 +112,7 @@
                 return false;
             }
 
-            if(!Validate::version($this->Version))
+            if($this->Version !== null && !Validate::version($this->Version))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The version number is invalid', 'Assembly.Version');
@@ -120,7 +120,7 @@
                 return false;
             }
 
-            if(!preg_match(RegexPatterns::PackageNameFormat, $this->Package))
+            if($this->Package !== null && !preg_match(RegexPatterns::PackageNameFormat, $this->Package))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The package name is invalid', 'Assembly.Package');
@@ -128,7 +128,7 @@
                 return false;
             }
 
-            if(strlen($this->Name) > 126)
+            if($this->Name !== null && strlen($this->Name) > 126)
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The name cannot be larger than 126 characters', 'Assembly.Name');
@@ -136,7 +136,7 @@
                 return false;
             }
 
-            if(strlen($this->Description) > 512)
+            if($this->Description !== null && strlen($this->Description) > 512)
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The description cannot be larger than 512 characters', 'Assembly.Description');
@@ -144,7 +144,7 @@
                 return false;
             }
 
-            if(strlen($this->Company) > 126)
+            if($this->Company !== null && strlen($this->Company) > 126)
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The company cannot be larger than 126 characters', 'Assembly.Company');
@@ -152,7 +152,7 @@
                 return false;
             }
 
-            if(strlen($this->Product) > 256)
+            if($this->Product !== null && strlen($this->Product) > 256)
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The company cannot be larger than 256 characters', 'Assembly.Product');
@@ -160,7 +160,7 @@
                 return false;
             }
 
-            if(strlen($this->Copyright) > 256)
+            if($this->Copyright !== null && strlen($this->Copyright) > 256)
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The copyright cannot be larger than 256 characters', 'Assembly.Copyright');
@@ -168,7 +168,7 @@
                 return false;
             }
 
-            if(strlen($this->Trademark) > 256)
+            if($this->Trademark !== null && strlen($this->Trademark) > 256)
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The trademark cannot be larger than 256 characters', 'Assembly.Trademark');

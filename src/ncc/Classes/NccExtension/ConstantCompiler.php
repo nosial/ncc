@@ -45,15 +45,24 @@ namespace ncc\Classes\NccExtension;
             if($input == null)
                 return null;
 
-            $input = str_replace(AssemblyConstants::AssemblyName, $assembly->Name, $input);
-            $input = str_replace(AssemblyConstants::AssemblyPackage, $assembly->Package, $input);
-            $input = str_replace(AssemblyConstants::AssemblyDescription, $assembly->Description, $input);
-            $input = str_replace(AssemblyConstants::AssemblyCompany, $assembly->Company, $input);
-            $input = str_replace(AssemblyConstants::AssemblyProduct, $assembly->Product, $input);
-            $input = str_replace(AssemblyConstants::AssemblyCopyright, $assembly->Copyright, $input);
-            $input = str_replace(AssemblyConstants::AssemblyTrademark, $assembly->Trademark, $input);
-            $input = str_replace(AssemblyConstants::AssemblyVersion, $assembly->Version, $input);
-            $input = str_replace(AssemblyConstants::AssemblyUid, $assembly->UUID, $input);
+            if($assembly->Name !== null)
+                $input = str_replace(AssemblyConstants::AssemblyName, $assembly->Name, $input);
+            if($assembly->Package !== null)
+                $input = str_replace(AssemblyConstants::AssemblyPackage, $assembly->Package, $input);
+            if($assembly->Description !== null)
+                $input = str_replace(AssemblyConstants::AssemblyDescription, $assembly->Description, $input);
+            if($assembly->Company !== null)
+                $input = str_replace(AssemblyConstants::AssemblyCompany, $assembly->Company, $input);
+            if($assembly->Product !== null)
+                $input = str_replace(AssemblyConstants::AssemblyProduct, $assembly->Product, $input);
+            if($assembly->Copyright !== null)
+                $input = str_replace(AssemblyConstants::AssemblyCopyright, $assembly->Copyright, $input);
+            if($assembly->Trademark !== null)
+                $input = str_replace(AssemblyConstants::AssemblyTrademark, $assembly->Trademark, $input);
+            if($assembly->Version !== null)
+                $input = str_replace(AssemblyConstants::AssemblyVersion, $assembly->Version, $input);
+            if($assembly->UUID !== null)
+                $input = str_replace(AssemblyConstants::AssemblyUid, $assembly->UUID, $input);
 
             return $input;
         }
