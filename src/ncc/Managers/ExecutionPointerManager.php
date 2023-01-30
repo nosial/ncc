@@ -48,6 +48,7 @@
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\Symfony\Process\Process;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
@@ -407,6 +408,12 @@
             else
             {
                 $process->enableOutput();
+            }
+
+            if($process->isTty() && !Functions::isTtyMode())
+            {
+                Console::outWarning('The process is configured to use a TTY, but the current environment does not support it');
+                $process->setTty(false);
             }
 
             Console::outDebug(sprintf('working_directory=%s', $process->getWorkingDirectory()));

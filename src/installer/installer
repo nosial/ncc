@@ -502,11 +502,30 @@
             '--filename=composer.phar'
         ]));
         $Process->setWorkingDirectory($NCC_INSTALL_PATH);
-        $Process->setTty(true);
+        $Process->setTty(Functions::isTtyMode());
 
         try
         {
-            $Process->mustRun();
+            if($Process->isTty())
+            {
+                $Process->run();
+            }
+            else
+            {
+                Console::outWarning('Composer is running in non-interactive mode, this may cause issues');
+
+                $Process->run(function ($type, $buffer)
+                {
+                    if (Process::ERR === $type)
+                    {
+                        Console::outError($buffer);
+                    }
+                    else
+                    {
+                        Console::out($buffer);
+                    }
+                });
+            }
         }
         catch(ProcessFailedException $e)
         {
