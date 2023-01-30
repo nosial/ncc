@@ -627,6 +627,7 @@
             try
             {
                 IO::fwrite($path . DIRECTORY_SEPARATOR . 'ncc', $executable_shortcut);
+                $NCC_FILESYSTEM->chmod([$path . DIRECTORY_SEPARATOR . 'ncc'], 0755);
             }
             catch (Exception $e)
             {
