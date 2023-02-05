@@ -79,7 +79,7 @@ namespace ncc\Utilities;
         public static function decode(string $string): string
         {
             if(function_exists('base64_decode'))
-                return base64_encode($string);
+                return base64_decode($string);
 
             $base64 = str_split('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
             $bit_pattern = '';
