@@ -12,9 +12,9 @@ or issues please report them to the [GitHub Issue Tracker](https://git.n64.cc/in
 At the moment NCC is currently being used while developing other software, this serves as a test run to
 improve on changes for the next version.
 
-## Version History
+## Changelog
 
- - 1.0.0 Alpha - Initial release ([changelog](changelog/v1.0.0_alpha.md))
+The changelog for NCC can be found in the [CHANGELOG.md](CHANGELOG.md) file.
 
 ## Repository Mirrors
 
