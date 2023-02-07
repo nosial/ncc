@@ -49,8 +49,10 @@ namespace ncc\CLI;
                 $basic_ascii = true;
             }
 
-            // TODO: Make copyright not hard-coded.
-            print(Functions::getBanner(NCC_VERSION_BRANCH . ' ' . NCC_VERSION_NUMBER, 'Copyright (c) 2022-2022 Nosial', $basic_ascii) . PHP_EOL);
+            Console::out(Functions::getBanner(
+                sprintf('%s %s', NCC_VERSION_BRANCH, NCC_VERSION_NUMBER),
+                sprintf('Copyright (c) 2022-%s Nosial', date('Y')), $basic_ascii)
+            );
 
             Console::out('Usage: ncc COMMAND [options]');
             Console::out('Alternative Usage: ncc.php --ncc-cli=COMMAND [options]' . PHP_EOL);

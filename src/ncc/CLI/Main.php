@@ -125,6 +125,12 @@
                     Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
                 }
 
+                if(isset(self::$args['version']))
+                {
+                    self::displayVersion();
+                    exit(0);
+                }
+
                 try
                 {
                     switch(strtolower(self::$args['ncc-cli']))
@@ -162,7 +168,7 @@
                             break;
 
                         case 'version':
-                            Console::out(sprintf('NCC version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
+                            self::displayVersion();
                             break;
 
                         case '1':
@@ -179,6 +185,11 @@
 
                 exit(0);
             }
+        }
+
+        private static function displayVersion()
+        {
+            Console::out(sprintf('NCC version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
         }
 
         /**
