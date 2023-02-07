@@ -54,6 +54,28 @@ namespace ncc\Classes;
             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $request->Headers);
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $request->Type);
+            curl_setopt($curl, CURLOPT_NOPROGRESS, false);
+            curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, function($curl, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($request)
+            {
+                if($downloadSize > 0 && ($downloaded !== $downloadSize))
+                {
+                    if(Main::getLogLevel() !== null)
+                    {
+                        switch(Main::getLogLevel())
+                        {
+                            case LogLevel::Verbose:
+                            case LogLevel::Debug:
+                            case LogLevel::Silent:
+                                Console::outVerbose(sprintf(' <= %s of %s bytes downloaded', $downloaded, $downloadSize));
+                                break;
+
+                            default:
+                                Console::inlineProgressBar($downloaded, $downloadSize + 1);
+                                break;
+                        }
+                    }
+                }
+            });
 
             switch($request->Type)
             {
@@ -186,35 +208,6 @@ namespace ncc\Classes;
 
             curl_close($curl);
             fclose($fp);
-        }
-
-        /**
-         * Displays the download progress in the console
-         *
-         * @param $downloadSize
-         * @param $downloaded
-         * @return void
-         */
-        public static function displayProgress($downloadSize, $downloaded): void
-        {
-            if(Main::getLogLevel() !== null)
-            {
-                switch(Main::getLogLevel())
-                {
-                    case LogLevel::Verbose:
-                    case LogLevel::Debug:
-                    case LogLevel::Silent:
-                        Console::outVerbose(sprintf(' <= %s of %s bytes downloaded', $downloaded, $downloadSize));
-                        break;
-
-                    default:
-                        if ($downloadSize > 0)
-                            Console::inlineProgressBar($downloaded, $downloadSize);
-                        break;
-                }
-            }
-
-
         }
 
         /**
