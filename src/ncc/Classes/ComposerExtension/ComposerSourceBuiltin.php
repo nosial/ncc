@@ -519,13 +519,23 @@ namespace ncc\Classes\ComposerExtension;
             Console::outVerbose(sprintf('Getting composer path for %s', Functions::getConfigurationProperty('composer.path')));
 
             $composer_enabled = Functions::getConfigurationProperty('composer.enabled');
+            $internal_composer_enabled = Functions::getConfigurationProperty('composer.enable_internal_composer');
             if ($composer_enabled !== null && $composer_enabled === false)
                 throw new ComposerDisabledException('Composer is disabled by the configuration `composer.enabled`');
 
             $config_property = Functions::getConfigurationProperty('composer.executable_path');
 
             Console::outDebug(sprintf('composer.enabled = %s', ($composer_enabled ?? 'n/a')));
+            Console::outDebug(sprintf('composer.enable_internal_composer = %s', ($internal_composer_enabled ?? 'n/a')));
             Console::outDebug(sprintf('composer.executable_path = %s', ($config_property ?? 'n/a')));
+
+            if ($internal_composer_enabled && defined('NCC_EXEC_LOCATION'))
+            {
+                if (!file_exists(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'))
+                    throw new InternalComposerNotAvailableException(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar');
+                Console::outDebug(sprintf('using composer path from NCC_EXEC_LOCATION: %s', NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'));
+                return NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar';
+            }
 
             if ($config_property !== null && strlen($config_property) > 0)
             {
@@ -538,14 +548,6 @@ namespace ncc\Classes\ComposerExtension;
                     Console::outDebug(sprintf('using composer path from configuration: %s', $config_property));
                     return $config_property;
                 }
-            }
-
-            if (defined('NCC_EXEC_LOCATION'))
-            {
-                if (!file_exists(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'))
-                    throw new InternalComposerNotAvailableException(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar');
-                Console::outDebug(sprintf('using composer path from NCC_EXEC_LOCATION: %s', NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'));
-                return NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar';
             }
 
             throw new ComposerNotAvailableException('No composer executable path is configured');

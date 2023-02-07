@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bug fix where resources are not decoded correctly when installing packages [#31](https://git.n64.cc/nosial/ncc/-/issues/42)
 - Fixed issue where dependency conflicts are thrown even when `--reinstall` is used
+- Properly implemented `composer.enable_internal_composer` so that warnings regarding improper configuration values are not thrown
 
 ### Changed
 
