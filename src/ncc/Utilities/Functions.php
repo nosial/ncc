@@ -62,6 +62,7 @@ namespace ncc\Utilities;
     use ncc\Objects\RepositoryQueryResults;
     use ncc\Objects\RepositoryQueryResults\Files;
     use ncc\Objects\Vault\Entry;
+    use ncc\Runtime;
     use ncc\ThirdParty\jelix\Version\Parser;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
@@ -599,6 +600,9 @@ namespace ncc\Utilities;
          */
         public static function downloadGitServiceFile(string $url, ?Entry $entry=null): string
         {
+            if(RuntimeCache::get('download_cache.' . $url) !== null)
+                return RuntimeCache::get('download_cache.' . $url);
+
             $out_path = Functions::getTmpDir() . "/" . basename($url);
 
             $httpRequest = new HttpRequest();
@@ -608,6 +612,7 @@ namespace ncc\Utilities;
 
             Console::out('Downloading file ' . $url);
             HttpClient::download($httpRequest, $out_path);
+            RuntimeCache::set('download_cache.' . $url, $out_path);
 
             return $out_path;
         }
