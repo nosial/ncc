@@ -373,11 +373,31 @@ namespace ncc\Classes\ComposerExtension;
          */
         private static function getOptions(): array
         {
+            $results = [];
+            $arguments = Main::getArgs();
+
+            // Anything beginning with --composer- is a composer option
+            foreach ($arguments as $argument => $value)
+            {
+                if (str_starts_with($argument, 'composer-') && !in_array($argument, $results))
+                {
+                    if(is_bool($value) && $value)
+                    {
+                        $results[] = '--' . str_ireplace('composer-', '', $argument);
+
+                    }
+                    else
+                    {
+                        $results[] = '--' . str_ireplace('composer-', '', $argument) . '=' . $value;
+                    }
+                }
+            }
+
+
             $options = Functions::getConfigurationProperty('composer.options');
             if ($options == null || !is_array($options))
-                return [];
+                return $results;
 
-            $results = [];
             if (isset($options['quiet']) && $options['quiet'])
                 $results[] = '--quiet';
             if (isset($options['no_asni']) && $options['no_asni'])

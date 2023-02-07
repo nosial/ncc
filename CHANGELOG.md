@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added file downloads progress
+- Added pass-through arguments to `composer` command, all arguments beginning with `--composer-` will be passed to the 
+  `composer` command, for example `--composer-dev` will be passed as `--dev` to the `composer` command
 
 ### Fixed
 
