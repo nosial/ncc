@@ -428,7 +428,7 @@ namespace ncc\CLI\Management;
                 Console::out('  Trademark: ' . Console::formatColor($package->Assembly->Trademark, ConsoleColors::LightGreen));
             Console::out((string)null);
 
-            if(count($package->Dependencies) > 0 && !in_array(InstallPackageOptions::Reinstall, $installer_options))
+            if(count($package->Dependencies) > 0)
             {
                 $dependencies = [];
                 foreach($package->Dependencies as $dependency)
@@ -496,8 +496,6 @@ namespace ncc\CLI\Management;
 
             if(!$user_confirmation)
                 $user_confirmation = Console::getBooleanInput(sprintf('Do you want to install %s', $package->Assembly->Package));
-
-
 
             if($user_confirmation)
             {

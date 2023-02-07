@@ -71,6 +71,7 @@
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
+    use ncc\Utilities\RuntimeCache;
     use ncc\Utilities\Validate;
     use ncc\ZiProto\ZiProto;
     use SplFileInfo;
@@ -133,6 +134,12 @@
 
             $package = Package::load($package_path);
 
+            if(RuntimeCache::get(sprintf('installed.%s=%s', $package->Assembly->Package, $package->Assembly->Version)))
+            {
+                Console::outDebug(sprintf('skipping installation of %s=%s, already processed', $package->Assembly->Package, $package->Assembly->Version));
+                return $package->Assembly->Package;
+            }
+
             $extension = $package->Header->CompilerExtension->Extension;
             $installation_paths = new InstallationPaths($this->PackagesPath . DIRECTORY_SEPARATOR . $package->Assembly->Package . '=' . $package->Assembly->Version);
 
@@ -187,7 +194,7 @@
                         }
                     }
 
-                    $this->processDependency($dependency, $package, $package_path, $entry);
+                    $this->processDependency($dependency, $package, $package_path, $entry, $options);
                 }
             }
 
@@ -406,6 +413,8 @@
             $this->getPackageLockManager()->getPackageLock()->addPackage($package, $installation_paths->getInstallationPath());
             $this->getPackageLockManager()->save();
 
+            RuntimeCache::set(sprintf('installed.%s=%s', $package->Assembly->Package, $package->Assembly->Version), true);
+
             return $package->Assembly->Package;
         }
 
@@ -567,16 +576,17 @@
          *
          * @param string $source
          * @param Entry|null $entry
+         * @param array $options
          * @return string
          * @throws InstallationException
          */
-        public function installFromSource(string $source, ?Entry $entry): string
+        public function installFromSource(string $source, ?Entry $entry, array $options=[]): string
         {
             try
             {
                 Console::outVerbose(sprintf('Installing package from source %s', $source));
                 $package = $this->fetchFromSource($source, $entry);
-                return $this->install($package, $entry);
+                return $this->install($package, $entry, $options);
             }
             catch(Exception $e)
             {
@@ -589,6 +599,7 @@
          * @param Package $package
          * @param string $package_path
          * @param Entry|null $entry
+         * @param array $options
          * @return void
          * @throws AccessDeniedException
          * @throws FileNotFoundException
@@ -602,13 +613,19 @@
          * @throws PackageLockException
          * @throws PackageNotFoundException
          * @throws PackageParsingException
+         * @throws RunnerExecutionException
          * @throws SymlinkException
          * @throws UnsupportedCompilerExtensionException
          * @throws VersionNotFoundException
-         * @throws RunnerExecutionException
          */
-        private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null): void
+        private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
+            if(RuntimeCache::get(sprintf('depndency_installed.%s=%s', $dependency->Name, $dependency->Version ?? 'null')))
+            {
+                Console::outDebug(sprintf('dependency %s=%s already processed, skipping', $dependency->Name, $dependency->Version ?? 'null'));
+                return;
+            }
+
             Console::outVerbose('processing dependency ' . $dependency->Name . ' (' . $dependency->Version . ')');
             $dependent_package = $this->getPackage($dependency->Name);
             $dependency_met = false;
@@ -638,7 +655,8 @@
                         $basedir = dirname($package_path);
                         if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->Source))
                             throw new FileNotFoundException($basedir . DIRECTORY_SEPARATOR . $dependency->Source);
-                        $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->Source);
+                        $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->Source, null, $options);
+                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version), true);
                         break;
 
                     case DependencySourceType::StaticLinking:
@@ -646,7 +664,8 @@
 
                     case DependencySourceType::RemoteSource:
                         Console::outDebug('installing from remote source ' . $dependency->Source);
-                        $this->installFromSource($dependency->Source, $entry);
+                        $this->installFromSource($dependency->Source, $entry, $options);
+                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version), true);
                         break;
 
                     default:
