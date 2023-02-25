@@ -14,24 +14,24 @@ namespace ncc\ThirdParty\Symfony\Process\Exception;
 use ncc\ThirdParty\Symfony\Process\Process;
 
 /**
- * Exception that is thrown when a Process has been signaled.
+ * Exception that is thrown when a process has been signaled.
  *
  * @author Sullivan Senechal <soullivaneuh@gmail.com>
  */
 final class ProcessSignaledException extends RuntimeException
 {
-    private $Process;
+    private $process;
 
-    public function __construct(Process $Process)
+    public function __construct(Process $process)
     {
-        $this->Process = $Process;
+        $this->process = $process;
 
-        parent::__construct(sprintf('The Process has been signaled with signal "%s".', $Process->getTermSignal()));
+        parent::__construct(sprintf('The process has been signaled with signal "%s".', $process->getTermSignal()));
     }
 
     public function getProcess(): Process
     {
-        return $this->Process;
+        return $this->process;
     }
 
     public function getSignal(): int

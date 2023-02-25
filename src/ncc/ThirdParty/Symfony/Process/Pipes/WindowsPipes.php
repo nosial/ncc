@@ -60,7 +60,7 @@ class WindowsPipes extends AbstractPipes
                             continue 2;
                         }
                         restore_error_handler();
-                        throw new RuntimeException('A temporary file could not be opened to write the Process output: '.$lastError);
+                        throw new RuntimeException('A temporary file could not be opened to write the process output: '.$lastError);
                     }
                     if (!flock($h, \LOCK_EX | \LOCK_NB)) {
                         continue 2;
@@ -103,9 +103,6 @@ class WindowsPipes extends AbstractPipes
         $this->close();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDescriptors(): array
     {
         if (!$this->haveReadSupport) {
@@ -120,7 +117,7 @@ class WindowsPipes extends AbstractPipes
 
         // We're not using pipe on Windows platform as it hangs (https://bugs.php.net/51800)
         // We're not using file handles as it can produce corrupted output https://bugs.php.net/65650
-        // So we redirect output within the commandline and pass the nul device to the Process
+        // So we redirect output within the commandline and pass the nul device to the process
         return [
             ['pipe', 'r'],
             ['file', 'NUL', 'w'],
@@ -128,17 +125,11 @@ class WindowsPipes extends AbstractPipes
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getFiles(): array
     {
         return $this->files;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function readAndWrite(bool $blocking, bool $close = false): array
     {
         $this->unblock();
@@ -171,25 +162,16 @@ class WindowsPipes extends AbstractPipes
         return $read;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function haveReadSupport(): bool
     {
         return $this->haveReadSupport;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function areOpen(): bool
     {
         return $this->pipes && $this->fileHandles;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function close()
     {
         parent::close();

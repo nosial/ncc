@@ -14,41 +14,41 @@ namespace ncc\ThirdParty\Symfony\Process\Exception;
 use ncc\ThirdParty\Symfony\Process\Process;
 
 /**
- * Exception for failed Processes.
+ * Exception for failed processes.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class ProcessFailedException extends RuntimeException
 {
-    private $Process;
+    private $process;
 
-    public function __construct(Process $Process)
+    public function __construct(Process $process)
     {
-        if ($Process->isSuccessful()) {
-            throw new InvalidArgumentException('Expected a failed Process, but the given Process was successful.');
+        if ($process->isSuccessful()) {
+            throw new InvalidArgumentException('Expected a failed process, but the given process was successful.');
         }
 
         $error = sprintf('The command "%s" failed.'."\n\nExit Code: %s(%s)\n\nWorking directory: %s",
-            $Process->getCommandLine(),
-            $Process->getExitCode(),
-            $Process->getExitCodeText(),
-            $Process->getWorkingDirectory()
+            $process->getCommandLine(),
+            $process->getExitCode(),
+            $process->getExitCodeText(),
+            $process->getWorkingDirectory()
         );
 
-        if (!$Process->isOutputDisabled()) {
+        if (!$process->isOutputDisabled()) {
             $error .= sprintf("\n\nOutput:\n================\n%s\n\nError Output:\n================\n%s",
-                $Process->getOutput(),
-                $Process->getErrorOutput()
+                $process->getOutput(),
+                $process->getErrorOutput()
             );
         }
 
         parent::__construct($error);
 
-        $this->Process = $Process;
+        $this->process = $process;
     }
 
     public function getProcess()
     {
-        return $this->Process;
+        return $this->process;
     }
 }

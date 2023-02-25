@@ -5,13 +5,13 @@ CHANGELOG
 -----
 
  * added `Process::setOptions()` to set `Process` specific options
- * added option `create_new_console` to allow a subProcess to continue
+ * added option `create_new_console` to allow a subprocess to continue
    to run after the main script exited, both on Linux and on Windows
 
 5.1.0
 -----
 
- * added `Process::getStartTime()` to retrieve the start time of the Process as float
+ * added `Process::getStartTime()` to retrieve the start time of the process as float
 
 5.0.0
 -----
@@ -33,7 +33,7 @@ CHANGELOG
  * added the `Process::fromShellCommandline()` to run commands in a shell wrapper
  * deprecated passing a command as string when creating a `Process` instance
  * deprecated the `Process::setCommandline()` and the `PhpProcess::setPhpBinary()` methods
- * added the `Process::waitUntil()` method to wait for the Process only for a
+ * added the `Process::waitUntil()` method to wait for the process only for a
    specific output, then continue the normal execution of your application
 
 4.1.0
@@ -41,7 +41,7 @@ CHANGELOG
 
  * added the `Process::isTtySupported()` method that allows to check for TTY support
  * made `PhpExecutableFinder` look for the `PHP_BINARY` env var when searching the php binary
- * added the `ProcessSignaledException` class to properly catch signaled Process errors
+ * added the `ProcessSignaledException` class to properly catch signaled process errors
 
 4.0.0
 -----
@@ -109,8 +109,8 @@ CHANGELOG
 2.1.0
 -----
 
- * added support for non-blocking Processes (start(), wait(), isRunning(), stop())
+ * added support for non-blocking processes (start(), wait(), isRunning(), stop())
  * enhanced Windows compatibility
  * added Process::getExitCodeText() that returns a string representation for
-   the exit code returned by the Process
+   the exit code returned by the process
  * added ProcessBuilder
