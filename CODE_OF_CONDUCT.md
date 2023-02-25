@@ -1,4 +1,3 @@
-
 # Code of Conduct
 
 We are committed to maintaining a welcoming and inclusive environment for all contributors. In order to ensure that
