@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - Updated `Symfony\Filesystem` to version 6.2.5
  - Updated `Symfony\polyfill-ctype` to version 1.27.0
-
+ - Updated `Symfony\polyfill-mbstring` to version 1.27.0
 
 ## [1.0.1] - 2023-02-07
 
