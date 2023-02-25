@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.2] - Unreleased
 
+### Fixed
+ - Fixed issue where error states are not properly handled in `ExecutionPointerManager` issue [#44](https://git.n64.cc/nosial/ncc/-/issues/44)
+
 ### Changed
  - Updated `Symfony\Filesystem` to version 6.2.5
  - Updated `Symfony\polyfill-ctype` to version 1.27.0

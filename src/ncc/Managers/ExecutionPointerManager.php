@@ -437,11 +437,17 @@
             }
             catch(Exception $e)
             {
-                unset($e);
-                $this->handleExit($package, $version, $unit->ExecutionPolicy->ExitHandlers->Error);
-            }
+                if($unit->ExecutionPolicy->ExitHandlers !== null && $unit->ExecutionPolicy->ExitHandlers->Error !== null)
+                {
+                    $this->handleExit($package, $version, $unit->ExecutionPolicy->ExitHandlers->Error);
+                }
 
-            Console::outDebug(sprintf('exit_code=%s', $process->getExitCode()));
+                Console::outException(sprintf('An error occurred while executing the unit \'%s\' for \'%s\' (exit code %s)', $unit->ExecutionPolicy->Name, $package, $process->getExitCode()), $e);
+            }
+            finally
+            {
+                Console::outDebug(sprintf('exit_code=%s', $process->getExitCode()));
+            }
 
             if($unit->ExecutionPolicy->ExitHandlers !== null)
             {
