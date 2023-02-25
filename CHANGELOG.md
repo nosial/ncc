@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.2] - Unreleased
 
+### Changed
+ - Updated `Symfony\Filesystem` to version 6.2.5
+
 
 ## [1.0.1] - 2023-02-07
 
