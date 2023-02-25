@@ -9,14 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\Uid\Factory;
+namespace ncc\ThirdParty\Symfony\Uid;
 
-use ncc\ThirdParty\Symfony\Uid\Ulid;
-
-class UlidFactory
+class MaxUlid extends Ulid
 {
-    public function create(\DateTimeInterface $time = null): Ulid
+    public function __construct()
     {
-        return new Ulid(null === $time ? null : Ulid::generate($time));
+        $this->uid = parent::MAX;
     }
 }

@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\uid\Command;
+namespace ncc\ThirdParty\Symfony\Uid\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,7 +21,7 @@ use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use ncc\ThirdParty\Symfony\Uid\Factory\UuidFactory;
-use ncc\ThirdParty\Symfony\uid\Uuid;
+use ncc\ThirdParty\Symfony\Uid\Uuid;
 
 #[AsCommand(name: 'uuid:generate', description: 'Generate a UUID')]
 class GenerateUuidCommand extends Command
@@ -35,9 +35,6 @@ class GenerateUuidCommand extends Command
         parent::__construct();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function configure(): void
     {
         $this
@@ -87,9 +84,6 @@ EOF
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output);

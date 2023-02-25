@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\uid\Factory;
+namespace ncc\ThirdParty\Symfony\Uid\Factory;
 
-use ncc\ThirdParty\Symfony\uid\Uuid;
-use ncc\ThirdParty\Symfony\uid\UuidV1;
-use ncc\ThirdParty\Symfony\uid\UuidV4;
-use ncc\ThirdParty\Symfony\uid\UuidV5;
-use ncc\ThirdParty\Symfony\uid\UuidV6;
+use ncc\ThirdParty\Symfony\Uid\Uuid;
+use ncc\ThirdParty\Symfony\Uid\UuidV1;
+use ncc\ThirdParty\Symfony\Uid\UuidV4;
+use ncc\ThirdParty\Symfony\Uid\UuidV5;
+use ncc\ThirdParty\Symfony\Uid\UuidV6;
 
 class UuidFactory
 {
@@ -44,7 +44,7 @@ class UuidFactory
         $this->nameBasedNamespace = $nameBasedNamespace;
     }
 
-    public function create(): UuidV6|UuidV4|UuidV1
+    public function create(): Uuid
     {
         $class = $this->defaultClass;
 

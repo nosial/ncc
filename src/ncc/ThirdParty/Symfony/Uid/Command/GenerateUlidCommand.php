@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\uid\Command;
+namespace ncc\ThirdParty\Symfony\Uid\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -40,9 +40,6 @@ class GenerateUlidCommand extends Command
         parent::__construct();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function configure(): void
     {
         $this
@@ -72,9 +69,6 @@ EOF
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output);

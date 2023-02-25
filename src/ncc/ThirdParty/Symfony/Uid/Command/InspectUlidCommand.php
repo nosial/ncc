@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\uid\Command;
+namespace ncc\ThirdParty\Symfony\Uid\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,14 +19,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use ncc\ThirdParty\Symfony\uid\Ulid;
+use ncc\ThirdParty\Symfony\Uid\Ulid;
 
 #[AsCommand(name: 'ulid:inspect', description: 'Inspect a ULID')]
 class InspectUlidCommand extends Command
 {
-    /**
-     * {@inheritdoc}
-     */
     protected function configure(): void
     {
         $this
@@ -44,9 +41,6 @@ EOF
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output);
@@ -63,6 +57,7 @@ EOF
             ['toBase32 (canonical)', (string) $ulid],
             ['toBase58', $ulid->toBase58()],
             ['toRfc4122', $ulid->toRfc4122()],
+            ['toHex', $ulid->toHex()],
             new TableSeparator(),
             ['Time', $ulid->getDateTime()->format('Y-m-d H:i:s.v \U\T\C')],
         ]);

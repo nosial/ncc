@@ -12,15 +12,13 @@
 namespace ncc\ThirdParty\Symfony\Uid;
 
 /**
- * A v3 UUID contains an MD5 hash of another UUID and a name.
+ * A v8 UUID has no explicit requirements except embedding its version + variant bits.
  *
- * Use Uuid::v3() to compute one.
- *
- * @author Grégoire Pineau <lyrixx@lyrixx.info>
+ * @author Nicolas Grekas <p@tchwork.com>
  */
-class UuidV3 extends Uuid
+class UuidV8 extends Uuid
 {
-    protected const TYPE = 3;
+    protected const TYPE = 8;
 
     public function __construct(string $uuid)
     {

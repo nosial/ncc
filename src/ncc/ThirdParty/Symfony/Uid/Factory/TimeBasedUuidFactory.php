@@ -9,11 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace ncc\ThirdParty\Symfony\uid\Factory;
+namespace ncc\ThirdParty\Symfony\Uid\Factory;
 
-use ncc\ThirdParty\Symfony\uid\Uuid;
-use ncc\ThirdParty\Symfony\uid\UuidV1;
-use ncc\ThirdParty\Symfony\uid\UuidV6;
+use ncc\ThirdParty\Symfony\Uid\TimeBasedUidInterface;
+use ncc\ThirdParty\Symfony\Uid\Uuid;
 
 class TimeBasedUuidFactory
 {
@@ -26,7 +25,7 @@ class TimeBasedUuidFactory
         $this->node = $node;
     }
 
-    public function create(\DateTimeInterface $time = null): UuidV6|UuidV1
+    public function create(\DateTimeInterface $time = null): Uuid&TimeBasedUidInterface
     {
         $class = $this->class;
 
