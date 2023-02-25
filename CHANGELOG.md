@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Updated `Symfony\polyfill-uuid` to version 1.27.0
  - Updated `Symfony\Process` to version 6.2.5
  - Updated `Symfony\Uid` to version 6.2.5
+ - Updated `Symfony\Yaml` to version 6.2.5
 
 ## [1.0.1] - 2023-02-07
 
