@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
  - Fixed issue where error states are not properly handled in `ExecutionPointerManager` issue [#44](https://git.n64.cc/nosial/ncc/-/issues/44)
+ - Updated \ncc\Managers > ExecutionPointerManager > executeUnit to set processes to run forever if a timeout is not set/null
 
 ### Changed
  - Updated `Symfony\Filesystem` to version 6.2.5
