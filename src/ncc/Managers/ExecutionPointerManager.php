@@ -394,6 +394,11 @@
             {
                 $process->setTimeout((float)$unit->ExecutionPolicy->Execute->Timeout);
             }
+            else
+            {
+                Console::outDebug('timeout is not set, using the default value (forever)');
+                $process->setTimeout(null);
+            }
 
             if($unit->ExecutionPolicy->Execute->Silent)
             {
