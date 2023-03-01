@@ -467,7 +467,15 @@
                 }
             }
 
-            return $process->getExitCode();
+            $exit_code = $process->getExitCode();
+
+            if($exit_code == null)
+            {
+                Console::outError(sprintf('The unit \'%s\' for \'%s\' exited with an unknown code', $unit->ExecutionPolicy->Name, $package));
+                return 1;
+            }
+
+            return $exit_code;
         }
 
         /**
