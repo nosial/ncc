@@ -1,4 +1,4 @@
-ncc-build:
+build:
     image: php:8.1
 
     before_script:
@@ -16,23 +16,38 @@ ncc-build:
 
         # install phpab
         - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+    script:
+      - make tar
+    rules:
+      - if: $CI_COMMIT_BRANCH
 
-    build:
-        script:
-            - make tar
-        rules:
-            - if: $CI_COMMIT_BRANCH
+release:
+  image: php:8.1
 
-    release:
-        script:
-        - make redist
-        - mkdir ncc_$CI_COMMIT_TAG
-        - cp -r build/src/* ncc_$CI_COMMIT_TAG/
-        artifacts:
-            paths:
-            - ncc_$CI_COMMIT_TAG/
-        rules:
-        - if: $CI_COMMIT_TAG
+  before_script:
+      # Install some stuff that the image doesn't come with
+      - apt update -yqq
+      - apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
+
+      # Install phive
+      - wget -O phive.phar https://phar.io/releases/phive.phar
+      - wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
+      - gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
+      - gpg --verify phive.phar.asc phive.phar
+      - chmod +x phive.phar
+      - mv phive.phar /usr/local/bin/phive
+
+      # install phpab
+      - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+  script:
+    - make redist
+    - mkdir ncc_$CI_COMMIT_TAG
+    - cp -r build/src/* ncc_$CI_COMMIT_TAG/
+  artifacts:
+    paths:
+      - ncc_$CI_COMMIT_TAG/
+  rules:
+    - if: $CI_COMMIT_TAG
 
 ncc-docker-build:
   image: docker:latest
