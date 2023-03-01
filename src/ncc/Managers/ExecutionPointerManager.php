@@ -471,8 +471,7 @@
 
             if($exit_code == null)
             {
-                Console::outError(sprintf('The unit \'%s\' for \'%s\' exited with an unknown code', $unit->ExecutionPolicy->Name, $package));
-                return 1;
+                return 0;
             }
 
             return $exit_code;
