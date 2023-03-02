@@ -23,8 +23,7 @@
 #
 
 FROM php:8.1 AS builder
-RUN mkdir -p /usr/src
-WORKDIR /usr/src
+WORKDIR /tmp
 
 # Install some stuff the default image doesn't come with
 RUN apt update -yqq;                                                            \
@@ -38,18 +37,19 @@ RUN wget -O phive.phar https://phar.io/releases/phive.phar;                     
     rm phive.phar.asc
 
 # Download the latest version of ncc (Nosial Code Compiler)
-RUN git clone https://git.n64.cc/nosial/ncc.git;                                \
-    cd ncc;                                                                     \
-    make redist
+RUN git clone https://git.n64.cc/nosial/ncc.git
+WORKDIR /tmp/ncc
+RUN make redist
 
 #
 # Main stage: Copies downloaded files and installs all
 #
 
 FROM php:8.1-alpine
+WORKDIR /tmp
 
 # Copy downloaded files
-COPY --from=builder /usr/src/. .
+COPY --from=builder /tmp/. .
 
 # Install phive...
 RUN chmod +x phive.phar;                                                        \
@@ -59,6 +59,5 @@ RUN chmod +x phive.phar;                                                        
     phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C;           \
 
     # ... and ncc.
-    cd ncc;                                                                     \
-    php build/src/INSTALL --auto --install-composer;                            \
-    cd .. && rm -rf ./*
+    php /tmp/ncc/build/src/INSTALL --auto --install-composer;                   \
+    rm -rf /tmp/*
