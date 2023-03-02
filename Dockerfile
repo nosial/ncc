@@ -23,7 +23,8 @@
 #
 
 FROM php:8.1 AS builder
-WORKDIR /tmp
+RUN mkdir -p /usr/src
+WORKDIR /usr/src
 
 # Install some stuff the default image doesn't come with
 RUN apt update -yqq;                                                            \
@@ -48,7 +49,7 @@ RUN git clone https://git.n64.cc/nosial/ncc.git;                                
 FROM php:8.1-alpine
 
 # Copy downloaded files
-COPY --from=builder /tmp/. .
+COPY --from=builder /usr/src/. .
 
 # Install phive...
 RUN chmod +x phive.phar;                                                        \
