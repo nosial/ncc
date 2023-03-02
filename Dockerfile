@@ -37,16 +37,14 @@ RUN wget -O phive.phar https://phar.io/releases/phive.phar;                     
     rm phive.phar.asc
 
 # Download the latest version of ncc (Nosial Code Compiler)
-RUN git clone https://git.n64.cc/nosial/ncc.git
-WORKDIR /tmp/ncc
-RUN make redist
+RUN git clone https://git.n64.cc/nosial/ncc.git;                                \
+    cd ncc; make redist
 
 #
 # Main stage: Copies downloaded files and installs all
 #
 
 FROM php:8.1-alpine
-WORKDIR /tmp
 
 # Copy downloaded files
 COPY --from=builder /tmp/. .
@@ -59,5 +57,4 @@ RUN chmod +x phive.phar;                                                        
     phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C;           \
 
     # ... and ncc.
-    php /tmp/ncc/build/src/INSTALL --auto --install-composer;                   \
-    rm -rf /tmp/*
+    cd ncc; php build/src/INSTALL --auto --install-composer; cd ..; rm -rf ./* 
