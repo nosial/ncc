@@ -18,26 +18,46 @@
 #   This image is intended to be used as a base for projects using ncc.
 #
 
-FROM php:8.1
+#
+# Builder stage: downloads necessary files and serves them on a silver platter.
+#
+
+FROM php:8.1 AS builder
+WORKDIR /tmp
 
 # Install some stuff the default image doesn't come with
 RUN apt update -yqq;                                                            \
     apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
 
-# Install phive...
+# Download phive
 RUN wget -O phive.phar https://phar.io/releases/phive.phar;                     \
     wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc;             \
     gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79;     \
     gpg --verify phive.phar.asc phive.phar;                                     \
-    chmod +x phive.phar;                                                        \
-    mv phive.phar /usr/local/bin/phive;                                         \
-    
-    # ... and phab
-    phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+    rm phive.phar.asc
 
-# Install the latest version of ncc (Nosial Code Compiler)
+# Download the latest version of ncc (Nosial Code Compiler)
 RUN git clone https://git.n64.cc/nosial/ncc.git;                                \
     cd ncc;                                                                     \
-    make redist;                                                                \
+    make redist
+
+#
+# Main stage: Copies downloaded files and installs all
+#
+
+FROM php:8.1-alpine
+
+# Copy downloaded files
+COPY --from=builder /tmp/. .
+
+# Install phive...
+RUN chmod +x phive.phar;                                                        \
+    mv phive.phar /usr/local/bin/phive;                                         \
+
+    # ... and phab...
+    phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C;           \
+
+    # ... and ncc.
+    cd ncc;                                                                     \
     php build/src/INSTALL --auto --install-composer;                            \
-    cd .. && rm -rf ncc
+    cd .. && rm -rf ./*
