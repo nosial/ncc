@@ -52,9 +52,5 @@ COPY --from=builder /tmp/. .
 # Install phive...
 RUN chmod +x phive.phar;                                                        \
     mv phive.phar /usr/local/bin/phive;                                         \
-
-    # ... and phab...
     phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C;           \
-
-    # ... and ncc.
     cd ncc; php build/src/INSTALL --auto --install-composer; cd ..; rm -rf ./* 
