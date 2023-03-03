@@ -61,4 +61,4 @@ RUN install-php-extensions mbstring     \
     chmod +x phive.phar;                                                        \
     mv phive.phar /usr/local/bin/phive;                                         \
     phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C;           \
-    cd ncc; php build/src/INSTALL --auto --install-composer; cd ..; rm -rf ./* 
+    cd ncc; php build/src/INSTALL --auto --install-composer; cd ..; rm -rf ncc
