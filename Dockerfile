@@ -34,7 +34,7 @@ RUN wget -O phive.phar https://phar.io/releases/phive.phar;                     
     wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc;             \
     gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79;     \
     gpg --verify phive.phar.asc phive.phar;                                     \
-    rm phive.phar.asc; ./phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+    rm phive.phar.asc; chmod +x phive.phar; ./phive.phar install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
 
 # Download the latest version of ncc (Nosial Code Compiler)
 RUN git clone https://git.n64.cc/nosial/ncc.git;                                \
