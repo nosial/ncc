@@ -57,8 +57,11 @@ RUN install-php-extensions mbstring     \
                            ctype        \
                            common;                                              \
     
-    # Install phive, phab and ncc
+    # Install phive, phab and ncc; create workdir
     chmod +x phive.phar;                                                        \
     mv phive.phar /usr/local/bin/phive;                                         \
     phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C;           \
-    cd ncc; php build/src/INSTALL --auto --install-composer; cd ..; rm -rf ncc
+    cd ncc; php build/src/INSTALL --auto --install-composer; cd ..; rm -rf ncc; \
+    mkdir /app
+
+WORKDIR /app
