@@ -339,6 +339,8 @@
             // Install execution units
             if($package->ExecutionUnits !== null && count($package->ExecutionUnits) > 0)
             {
+                Console::outDebug('package contains execution units, processing');
+
                 $execution_pointer_manager = new ExecutionPointerManager();
                 $unit_paths = [];
 
@@ -353,12 +355,18 @@
 
                 IO::fwrite($installation_paths->getDataPath() . DIRECTORY_SEPARATOR . 'exec', ZiProto::encode($unit_paths));
             }
+            else
+            {
+                Console::outDebug('package does not contain execution units, skipping');
+            }
 
             // After execution units are installed, create a symlink if needed
             if(isset($package->Header->Options['create_symlink']) && $package->Header->Options['create_symlink'])
             {
                 if($package->MainExecutionPolicy === null)
                     throw new InstallationException('Cannot create symlink, no main execution policy is defined');
+
+                Console::outDebug(sprintf('creating symlink to %s', $package->Assembly->Package));
 
                 $SymlinkManager = new SymlinkManager();
                 $SymlinkManager->add($package->Assembly->Package, $package->MainExecutionPolicy);
@@ -367,6 +375,7 @@
             // Execute the post-installation stage after the installation is complete
             try
             {
+                Console::outDebug('executing post-installation stage');
                 $installer->postInstall($installation_paths);
                 $current_steps += 1;
                 Console::inlineProgressBar($current_steps, $steps);
@@ -378,6 +387,8 @@
 
             if($package->Installer?->PostInstall !== null && count($package->Installer->PostInstall) > 0)
             {
+                Console::outDebug('executing post-installation units');
+
                 foreach($package->Installer->PostInstall as $unit_name)
                 {
                     try
@@ -392,6 +403,10 @@
                     $current_steps += 1;
                     Console::inlineProgressBar($current_steps, $steps);
                 }
+            }
+            else
+            {
+                Console::outDebug('no post-installation units to execute');
             }
 
             if($package->Header->UpdateSource !== null && $package->Header->UpdateSource->Repository !== null)
@@ -620,7 +635,7 @@
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
-            if(RuntimeCache::get(sprintf('depndency_installed.%s=%s', $dependency->Name, $dependency->Version ?? 'null')))
+            if(RuntimeCache::get(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version ?? 'null')))
             {
                 Console::outDebug(sprintf('dependency %s=%s already processed, skipping', $dependency->Name, $dependency->Version ?? 'null'));
                 return;
