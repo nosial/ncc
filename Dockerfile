@@ -57,6 +57,9 @@ RUN install-php-extensions mbstring     \
                            ctype        \
                            common;                                              \
     
+    # Add git and tar
+    apk add git tar;                                                            \
+    
     # Install phive, phab and ncc; create workdir
     chmod +x phive.phar;                                                        \
     mv phive.phar /usr/local/bin/phive;                                         \
