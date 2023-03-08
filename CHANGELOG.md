@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Updated `Symfony\Process` to version 6.2.5
  - Updated `Symfony\Uid` to version 6.2.5
  - Updated `Symfony\Yaml` to version 6.2.5
+ - Updated `\ncc\Managers > PackageManager` to display more logging messages
 
 ## [1.0.1] - 2023-02-07
 
