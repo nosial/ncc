@@ -22,7 +22,7 @@ The official repository for NCC is hosted on [GitLab](https://git.n64.cc/intelli
 mirrors of the repository mirrored on different platforms, including 
 community powered mirrors. (more to come)
 
- - [git.it-kuny.ch](https://git.it-kuny.ch)
+ - [git.it-kuny.ch](https://git.it-kuny.ch/Nosial)
  - [git.martinvlba.eu](https://git.martinvlba.eu/Nosial/ncc)
 
 
