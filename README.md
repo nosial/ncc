@@ -7,7 +7,7 @@ toolkit offering more features, security and proper code licensing and copyright
 ## Alpha Stage
 
 NCC is currently in alpha stage, meaning that it's not fully functional and may not work on your system. If you find any bugs
-or issues please report them to the [GitHub Issue Tracker](https://git.n64.cc/intellivoid/ncc/issues).
+or issues please report them to the [GitHub Issue Tracker](https://git.n64.cc/nosial/ncc/issues).
 
 At the moment NCC is currently being used while developing other software, this serves as a test run to
 improve on changes for the next version.
@@ -18,7 +18,7 @@ The changelog for NCC can be found in the [CHANGELOG.md](CHANGELOG.md) file.
 
 ## Repository Mirrors
 
-The official repository for NCC is hosted on [GitLab](https://git.n64.cc/intellivoid/ncc), however, you can also find
+The official repository for NCC is hosted on [GitLab](https://git.n64.cc/nosial/ncc), however, you can also find
 mirrors of the repository mirrored on different platforms, including 
 community powered mirrors. (more to come)
 
