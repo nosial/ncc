@@ -4,7 +4,7 @@ namespace ncc\Defuse\Crypto;
 
 /**
  * Class DerivedKeys
- * @package ncc\Defuse\Crypto
+ * @package Defuse\Crypto
  */
 final class DerivedKeys
 {
