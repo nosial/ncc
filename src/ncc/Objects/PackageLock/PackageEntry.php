@@ -85,19 +85,24 @@
          */
         public function getVersion(string $version, bool $throw_exception=false): ?VersionEntry
         {
-            if($version == Versions::Latest)
+            if($version === Versions::Latest && $this->LatestVersion !== null)
+            {
+                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
                 $version = $this->LatestVersion;
+            }
 
             foreach($this->Versions as $versionEntry)
             {
-                if($versionEntry->Version == $version)
+                if($versionEntry->Version === $version)
                 {
                     return $versionEntry;
                 }
             }
 
             if($throw_exception)
+            {
                 throw new VersionNotFoundException('The version entry is not found');
+            }
 
             return null;
         }
@@ -113,15 +118,16 @@
         {
             $count = 0;
             $found_node = false;
+
             foreach($this->Versions as $versionEntry)
             {
-                if($versionEntry->Version == $version)
+                if($versionEntry->Version === $version)
                 {
                     $found_node = true;
                     break;
                 }
 
-                $count += 1;
+                ++$count;
             }
 
             if($found_node)
@@ -150,7 +156,11 @@
             {
                 if ($this->getVersion($package->Assembly->Version) !== null)
                 {
-                    if (!$overwrite) return false;
+                    if(!$overwrite)
+                    {
+                        return false;
+                    }
+
                     $this->removeVersion($package->Assembly->Version);
                 }
             }
@@ -167,7 +177,9 @@
             $version->Location = $install_path;
 
             foreach($version->ExecutionUnits as $unit)
+            {
                 $unit->Data = null;
+            }
 
             foreach($package->Dependencies as $dependency)
             {
@@ -187,16 +199,21 @@
         private function updateLatestVersion(): void
         {
             $latest_version = null;
+
             foreach($this->Versions as $version)
             {
                 $version = $version->Version;
-                if($latest_version == null)
+
+                if($latest_version === null)
                 {
                     $latest_version = $version;
                     continue;
                 }
+
                 if(VersionComparator::compareVersion($version, $latest_version))
+                {
                     $latest_version = $version;
+                }
             }
 
             $this->LatestVersion = $latest_version;
@@ -236,7 +253,7 @@
         {
             $path = PathFinder::getPackageDataPath($this->Name);
 
-            if(!file_exists($path) && Resolver::resolveScope() == Scopes::System)
+            if(!file_exists($path) && Resolver::resolveScope() === Scopes::System)
             {
                 $filesystem = new Filesystem();
                 $filesystem->mkdir($path);
@@ -254,6 +271,7 @@
         public function toArray(bool $bytecode=false): array
         {
             $versions = [];
+
             foreach($this->Versions as $version)
             {
                 $versions[] = $version->toArray($bytecode);
@@ -263,12 +281,12 @@
                 ($bytecode ? Functions::cbc('name')  : 'name')  => $this->Name,
                 ($bytecode ? Functions::cbc('latest_version')  : 'latest_version')  => $this->LatestVersion,
                 ($bytecode ? Functions::cbc('versions')  : 'versions')  => $versions,
-                ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->UpdateSource?->toArray($bytecode) ?? null),
+                ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->UpdateSource?->toArray($bytecode)),
             ];
         }
 
         /**
-         * Constructs object from an array representation
+         * Constructs an object from an array representation
          *
          * @param array $data
          * @return PackageEntry
@@ -279,11 +297,13 @@
 
             $object->Name = Functions::array_bc($data, 'name');
             $object->LatestVersion = Functions::array_bc($data, 'latest_version');
-            $versions = Functions::array_bc($data, 'versions');
             $object->UpdateSource = Functions::array_bc($data, 'update_source');
+            $versions = Functions::array_bc($data, 'versions');
 
             if($object->UpdateSource !== null)
+            {
                 $object->UpdateSource = UpdateSource::fromArray($object->UpdateSource);
+            }
 
             if($versions !== null)
             {
