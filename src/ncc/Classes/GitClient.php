@@ -44,7 +44,7 @@ namespace ncc\Classes;
         {
             Console::outVerbose('Cloning repository: ' . $url);
             $path = Functions::getTmpDir();
-            $process = new Process(["git", "clone", $url, $path]);
+            $process = new Process(["git", "clone", "--recurse-submodules", $url, $path]);
             $process->setTimeout(3600); // 1 hour
             $process->run(function ($type, $buffer)
             {

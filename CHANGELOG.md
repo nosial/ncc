@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - Refactored `\ncc\Objects > PackageLock`
  - Updated `defuse\php-encryption` to version 2.4.0
+ - Updated `\ncc\Classes > GitClient > cloneRepositor()` to clone submodules recursively by default
 
 
 ## [1.0.2] - 2023-06-29
