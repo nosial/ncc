@@ -22,7 +22,7 @@
 # Builder stage: downloads necessary files and serves them on a silver platter.
 #
 
-FROM php:8.1 AS builder
+FROM php:8.1-fpm AS builder
 WORKDIR /tmp
 
 # Install some stuff the default image doesn't come with
@@ -44,7 +44,7 @@ RUN git clone https://git.n64.cc/nosial/ncc.git;                                
 # Main stage: Copies downloaded files and installs all
 #
 
-FROM php:8.1-alpine
+FROM php:8.1-fpm-alpine
 
 # Add extensions
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
