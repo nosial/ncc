@@ -63,9 +63,15 @@ namespace ncc\CLI\Commands;
                 return;
             }
 
+            if($package_entry === null)
+            {
+                Console::outError('Package ' . $package . ' is not installed', true, 1);
+                return;
+            }
+
             try
             {
-                $version_entry = $package_entry->getVersion($version);
+                $version_entry = $package_entry->getVersion($version, true);
             }
             catch(Exception $e)
             {
