@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Updated `defuse\php-encryption` to version 2.4.0
  - Updated `\ncc\Classes > GitClient > cloneRepositor()` to clone submodules recursively by default
 
+### Fixed
+ - Fixed issue in `\ncc\Managers > ExecutionPointerManager > executeUnit()` where if ttyMode is enabled in a non-tty
+   environment, the process will throw an exception
+   "/etc/ncc/ThirdParty/Symfony/Process/Process.php:1019 Error: TTY mode requires /dev/tty to be read/writable.", now
+   ncc will display a warning if TTY mode cannot be enabled
+
 
 ## [1.0.2] - 2023-06-29
 

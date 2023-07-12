@@ -400,26 +400,37 @@
                 $process->setTimeout(null);
             }
 
-            if($unit->ExecutionPolicy->Execute->Silent)
+            try
             {
-                $process->disableOutput();
-                $process->setTty(false);
+                if($unit->ExecutionPolicy->Execute->Silent)
+                {
+                    $process->disableOutput();
+                    $process->setTty(false);
+                }
+                elseif($unit->ExecutionPolicy->Execute->Tty)
+                {
+                    $process->enableOutput();
+                    $process->setTty(true);
+                }
+                else
+                {
+                    $process->enableOutput();
+                }
             }
-            elseif($unit->ExecutionPolicy->Execute->Tty)
+            catch(Exception $e)
             {
                 $process->enableOutput();
-                $process->setTty(true);
+                Console::outWarning('The process is configured to use a TTY, but the current environment does not support it');
             }
-            else
+            finally
             {
-                $process->enableOutput();
+                if($process->isTty() && !Functions::isTtyMode())
+                {
+                    Console::outWarning('The process is configured to use a TTY, but the current environment does not support it');
+                    $process->setTty(false);
+                }
             }
 
-            if($process->isTty() && !Functions::isTtyMode())
-            {
-                Console::outWarning('The process is configured to use a TTY, but the current environment does not support it');
-                $process->setTty(false);
-            }
 
             Console::outDebug(sprintf('working_directory=%s', $process->getWorkingDirectory()));
             Console::outDebug(sprintf('timeout=%s', ($process->getTimeout() ?? 0)));
