@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Refactored `\ncc\Objects > PackageLock`
  - Updated `defuse\php-encryption` to version 2.4.0
  - Updated `\ncc\Classes > GitClient > cloneRepositor()` to clone submodules recursively by default
+ - Updated `\ncc\Classes > GitClient > checkout()` to update submoudles.
 
 ### Fixed
  - Fixed issue in `\ncc\Managers > ExecutionPointerManager > executeUnit()` where if ttyMode is enabled in a non-tty
