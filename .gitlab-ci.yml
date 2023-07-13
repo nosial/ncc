@@ -64,7 +64,7 @@ ncc-docker-build:
         tag=":$CI_COMMIT_REF_SLUG"
         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
       fi
-    - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
+    - docker build --no-cache --pull -t "$CI_REGISTRY_IMAGE${tag}" .
     - docker push "$CI_REGISTRY_IMAGE${tag}"
   rules:
     - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev'
