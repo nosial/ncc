@@ -44,7 +44,7 @@ RUN git clone https://git.n64.cc/nosial/ncc.git;                                
 # Main stage: Copies downloaded files and installs all
 #
 
-FROM php:8.1-fpm
+FROM php:8.1-fpm-alpine
 
 # Add extensions
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
@@ -57,8 +57,8 @@ RUN install-php-extensions mbstring     \
                            ctype        \
                            common;                                              \
     
-    # Add git
-    apt install -y git;                                                         \
+    # Add git and tar
+    apk add git tar;                                                            \
     
     # Install phive, phab and ncc; create workdir
     chmod +x phive.phar;                                                        \
