@@ -51,6 +51,7 @@ release:
 
 ncc-docker:
   image: docker:latest
+  stage: build
   services:
     - docker:dind
   before_script:
@@ -65,6 +66,7 @@ ncc-docker:
 
 ncc-docker-debian:
   image: docker:latest
+  stage: build
   services:
     - docker:dind
   before_script:
