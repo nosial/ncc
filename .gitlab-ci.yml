@@ -63,16 +63,16 @@ ncc-docker:
       exists:
         - Dockerfile
 
-ncc-docker-alpine:
+ncc-docker-debian:
   image: docker:latest
   services:
     - docker:dind
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}-alpine" .
-    - docker push "$CI_REGISTRY_IMAGE${tag}-alpine"
+    - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}-debian" .
+    - docker push "$CI_REGISTRY_IMAGE${tag}-debian"
   rules:
     - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev'
       exists:
-        - Dockerfile.alpine
+        - Dockerfile.debian
