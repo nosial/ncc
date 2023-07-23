@@ -56,10 +56,8 @@ COPY --from=builder /tmp/. .
 RUN install-php-extensions mbstring     \
                            ctype        \
                            common;                                              \
-    
     # Add git
     apt install -y git;                                                         \
-    
     # Install phive, phab and ncc; create workdir
     chmod +x phive.phar;                                                        \
     mv phive.phar /usr/local/bin/phive;                                         \
