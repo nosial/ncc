@@ -1,62 +1,46 @@
-stages:
-  - prepare
-  - build
-  - package
-  - release
-  - docker-build
+build:
+  image: php:8.1
 
-variables:
-  PACKAGE_PATH: "build/build.tar.gz"
-
-.before_script_template: &before_script_definition
   before_script:
+    # Install some stuff that the image doesn't come with
     - apt update -yqq
     - apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
+
+    # Install phive
     - wget -O phive.phar https://phar.io/releases/phive.phar
     - wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
     - gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
     - gpg --verify phive.phar.asc phive.phar
     - chmod +x phive.phar
     - mv phive.phar /usr/local/bin/phive
-    - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
 
-prepare:
-  image: php:8.1
-  stage: prepare
-  <<: *before_script_definition
+    # install phpab
+    - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
   script:
-    - echo "Preparation completed"
+    - make tar
   rules:
     - if: $CI_COMMIT_BRANCH
 
-build:
-  image: php:8.1
-  stage: build
-  <<: *before_script_definition
-  script:
-    - make tar
-
-package:
-  image: php:8.1
-  stage: package
-  <<: *before_script_definition
-  script:
-    - make tar
-    - mkdir -p package/$CI_COMMIT_REF_NAME
-    - cp $PACKAGE_PATH package/$CI_COMMIT_REF_NAME/
-    - curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file build/build.tar.gz "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/package-name/$CI_COMMIT_TAG/build.tar.gz"
-  artifacts:
-    paths:
-      - package/$CI_COMMIT_REF_NAME/build.tar.gz
-  rules:
-    - if: $CI_COMMIT_TAG
-
 release:
   image: php:8.1
-  stage: release
-  <<: *before_script_definition
+
+  before_script:
+    # Install some stuff that the image doesn't come with
+    - apt update -yqq
+    - apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
+
+    # Install phive
+    - wget -O phive.phar https://phar.io/releases/phive.phar
+    - wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
+    - gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
+    - gpg --verify phive.phar.asc phive.phar
+    - chmod +x phive.phar
+    - mv phive.phar /usr/local/bin/phive
+
+    # install phpab
+    - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
   script:
-    - make tar
+    - make redist
     - mkdir ncc_$CI_COMMIT_TAG
     - cp -r build/src/* ncc_$CI_COMMIT_TAG/
   artifacts:
@@ -65,32 +49,24 @@ release:
   rules:
     - if: $CI_COMMIT_TAG
 
-ncc-docker:
+ncc-docker-build:
   image: docker:latest
-  stage: docker-build
   services:
     - docker:dind
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        tag=""
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+      else
+        tag=":$CI_COMMIT_REF_SLUG"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - docker build --no-cache --pull -t "$CI_REGISTRY_IMAGE${tag}" .
+    - docker push "$CI_REGISTRY_IMAGE${tag}"
   rules:
-    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev' || $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev'
       exists:
         - Dockerfile
-
-ncc-docker-debian:
-  image: docker:latest
-  stage: docker-build
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker build -f Dockerfile.debian --pull -t "$CI_REGISTRY_IMAGE:debian-$CI_COMMIT_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:debian-$CI_COMMIT_TAG"
-  rules:
-    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_TAG
-      exists:
-        - Dockerfile.debian
