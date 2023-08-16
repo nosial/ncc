@@ -9,6 +9,7 @@ stages:
 before_script:
   - apt update -yqq
   - apt install -yqq git libzip-dev zip make wget gnupg2 libonig-dev libcurl4-openssl-dev
+  - export PATH=$PATH:/usr/local/bin
 
 # Prepare the environment
 setup:
