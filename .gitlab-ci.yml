@@ -1,14 +1,14 @@
 stages:
-  - prepare
   - build
-  - package
-  - release
-  - docker-build
+  - deploy
 
 variables:
-  PACKAGE_PATH: "build/build.tar.gz"
+  PACKAGE_NAME: $CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+  PACKAGE_PATH: $CI_PROJECT_DIR/build
 
-.before_script_template: &before_script_definition
+# Job: build
+build:
+  image: php:8.1
   before_script:
     - apt update -yqq
     - apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
@@ -19,78 +19,30 @@ variables:
     - chmod +x phive.phar
     - mv phive.phar /usr/local/bin/phive
     - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
-
-prepare:
-  image: php:8.1
-  stage: prepare
-  <<: *before_script_definition
   script:
-    - echo "Preparation completed"
+    - make tar
+    - mkdir -p $PACKAGE_PATH
+    - mv build/*.tar.gz $PACKAGE_PATH/$PACKAGE_NAME.tar.gz
+  artifacts:
+    paths:
+      - $PACKAGE_PATH/$PACKAGE_NAME.tar.gz
   rules:
     - if: $CI_COMMIT_BRANCH
 
-build:
+# Job: tag_release
+tag_release:
   image: php:8.1
-  stage: build
-  <<: *before_script_definition
   script:
-    - make tar
-
-package:
-  image: php:8.1
-  stage: package
-  <<: *before_script_definition
-  script:
-    - make tar
-    - mkdir -p package/$CI_COMMIT_REF_NAME
-    - cp $PACKAGE_PATH package/$CI_COMMIT_REF_NAME/
-    - curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file build/build.tar.gz "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/package-name/$CI_COMMIT_TAG/build.tar.gz"
-  artifacts:
-    paths:
-      - package/$CI_COMMIT_REF_NAME/build.tar.gz
+    - echo "Uploading the package under the new tag"
+  dependencies:
+    - build
   rules:
     - if: $CI_COMMIT_TAG
-
-release:
-  image: php:8.1
-  stage: release
-  <<: *before_script_definition
-  script:
-    - make tar
-    - mkdir ncc_$CI_COMMIT_TAG
-    - cp -r build/src/* ncc_$CI_COMMIT_TAG/
-  artifacts:
-    paths:
-      - ncc_$CI_COMMIT_TAG/
-  rules:
-    - if: $CI_COMMIT_TAG
-
-ncc-docker:
-  image: docker:latest
-  stage: docker-build
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
-  rules:
-    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev' || $CI_COMMIT_TAG
-      exists:
-        - Dockerfile
-
-ncc-docker-debian:
-  image: docker:latest
-  stage: docker-build
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker build -f Dockerfile.debian --pull -t "$CI_REGISTRY_IMAGE:debian-$CI_COMMIT_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:debian-$CI_COMMIT_TAG"
-  rules:
-    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_TAG
-      exists:
-        - Dockerfile.debian
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    tag_name: '$CI_COMMIT_TAG'
+    description: 'Release $CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: $PACKAGE_NAME.tar.gz
+          url: $CI_PROJECT_URL/-/packages/$CI_PROJECT_ID/package_files/$PACKAGE_NAME.tar.gz
