@@ -1,16 +1,19 @@
+image: php:8.2
+
 stages:
   - setup
   - install
   - build
   - publish
 
+before_script:
+  - apt update -yqq
+  - apt install -yqq git libzip-dev zip make wget gnupg2 libonig-dev libcurl4-openssl-dev
+
 # Prepare the environment
 setup:
   stage: setup
-  image: php:8.2
   script:
-    - apt update -yqq
-    - apt install git libzip-dev zip make wget libonig-dev libcurl4-openssl-dev -yqq
     - docker-php-ext-install mbstring ctype posix zip curl fileinfo
 
 # Install Phive and Phpab
@@ -19,6 +22,8 @@ install:
   script:
     - wget -O phive.phar https://phar.io/releases/phive.phar
     - wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
+    - gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
+    - gpg --verify phive.phar.asc phive.phar
     - chmod +x phive.phar
     - mv phive.phar /usr/local/bin/phive
     - phive install phpab --global
