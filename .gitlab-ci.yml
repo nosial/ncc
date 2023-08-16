@@ -41,7 +41,7 @@ package:
   stage: package
   <<: *before_script_definition
   script:
-    - make redist
+    - make tar
     - mkdir -p package/$CI_COMMIT_REF_NAME
     - cp $PACKAGE_PATH package/$CI_COMMIT_REF_NAME/
   artifacts:
@@ -55,7 +55,7 @@ release:
   stage: release
   <<: *before_script_definition
   script:
-    - make redist
+    - make tar
     - mkdir ncc_$CI_COMMIT_TAG
     - cp -r build/src/* ncc_$CI_COMMIT_TAG/
   artifacts:
