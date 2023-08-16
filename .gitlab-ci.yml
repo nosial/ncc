@@ -10,7 +10,7 @@ setup:
   image: php:8.2
   script:
     - apt update -yqq
-    - apt install git libzip-dev zip make wget gnupg -yqq
+    - apt install git libzip-dev zip make wget gnupg libonig-dev -yqq
     - docker-php-ext-install mbstring ctype tokenizer posix zip
 
 # Install Phive and Phpab
