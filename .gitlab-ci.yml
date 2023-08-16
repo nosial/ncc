@@ -11,7 +11,7 @@ setup:
   script:
     - apt update -yqq
     - apt install git libzip-dev zip make wget gnupg libonig-dev -yqq
-    - docker-php-ext-install mbstring ctype tokenizer posix zip curl fileinfo
+    - docker-php-ext-install mbstring ctype posix zip curl fileinfo
 
 # Install Phive and Phpab
 install:
