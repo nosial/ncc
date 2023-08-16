@@ -26,7 +26,7 @@ install:
     - gpg --verify phive.phar.asc phive.phar
     - chmod +x phive.phar
     - mv phive.phar /usr/local/bin/phive
-    - phive install phpab --global
+    - phive install phpab --global --trust-gpg-keys 9D8A98B29B2D5D79
 
 # Build the project using the Makefile
 build:
