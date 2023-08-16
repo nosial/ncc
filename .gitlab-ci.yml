@@ -10,7 +10,7 @@ setup:
   image: php:8.2
   script:
     - apt update -yqq
-    - apt install git libzip-dev zip make wget gnupg libonig-dev -yqq
+    - apt install git libzip-dev zip make wget gnupg libonig-dev libcurl4-openssl-dev -yqq
     - docker-php-ext-install mbstring ctype posix zip curl fileinfo
 
 # Install Phive and Phpab
