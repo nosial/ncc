@@ -84,9 +84,33 @@ namespace ncc\Classes;
             });
 
             if (!$process->isSuccessful())
+            {
                 throw new GitCheckoutException($process->getErrorOutput());
+            }
 
             Console::outVerbose('Checked out branch: ' . $branch);
+
+            Console::outVerbose('Updating submodules');
+            $process = new Process(["git", "submodule", "update", "--init", "--recursive"], $path);
+            $process->setTimeout(3600); // 1 hour
+            $process->run(function ($type, $buffer)
+            {
+                if (Process::ERR === $type)
+                {
+                    Console::outWarning($buffer);
+                }
+                else
+                {
+                    Console::outVerbose($buffer);
+                }
+            });
+
+            if (!$process->isSuccessful())
+            {
+                throw new GitCheckoutException($process->getErrorOutput());
+            }
+
+            Console::outVerbose('Submodules updated');
         }
 
         /**
