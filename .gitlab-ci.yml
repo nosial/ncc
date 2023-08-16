@@ -37,18 +37,14 @@ publish:
   script:
     - |
       if [[ ! -z "$CI_COMMIT_TAG" ]]; then
-        # If this is a tagged commit, use the tag name as package name
-        PACKAGE_NAME=$CI_COMMIT_TAG
+        PACKAGE_NAME="ncc-$CI_COMMIT_TAG"
       else
-        # Otherwise, use the branch name as the package name
-        PACKAGE_NAME=$CI_COMMIT_REF_NAME
+        PACKAGE_NAME="ncc-$CI_COMMIT_REF_NAME"
       fi
-      
-      echo "Package Name: $PACKAGE_NAME"
-      
+      mv build/*.tar.gz build/$PACKAGE_NAME.tar.gz
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-           --upload-file build/*.tar.gz \
-           "https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$CI_PIPELINE_ID/file.tar.gz"
+           --upload-file build/$PACKAGE_NAME.tar.gz \
+           "https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$CI_PIPELINE_ID/$PACKAGE_NAME.tar.gz"
   only:
     - branches
     - tags
