@@ -2,14 +2,12 @@ image: php:8.2
 
 stages:
   - setup
-  - install
   - build
   - publish
 
 before_script:
   - apt update -yqq
   - apt install -yqq git libzip-dev zip make wget gnupg2 libonig-dev libcurl4-openssl-dev
-  - export PATH=$PATH:/usr/local/bin
 
 # Prepare the environment
 setup:
@@ -17,20 +15,15 @@ setup:
   script:
     - docker-php-ext-install mbstring ctype posix zip curl fileinfo
 
-# Install Phive and Phpab
-install:
-  stage: install
+# Build the project using the Makefile
+build:
+  stage: build
   script:
     - wget -O phive.phar https://phar.io/releases/phive.phar
     - wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
     - chmod +x phive.phar
     - mv phive.phar /usr/local/bin/phive
     - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
-
-# Build the project using the Makefile
-build:
-  stage: build
-  script:
     - make autoload
     - make redist
     - make tar
