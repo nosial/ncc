@@ -20,7 +20,7 @@
  *
  */
 
-namespace ncc\Classes\GitlabExtension;
+    namespace ncc\Classes\GitlabExtension;
 
     use ncc\Abstracts\Versions;
     use ncc\Classes\HttpClient;
@@ -67,15 +67,18 @@ namespace ncc\Classes\GitlabExtension;
 
             $response = HttpClient::request($httpRequest, true);
 
-            if($response->StatusCode != 200)
+            if($response->StatusCode !== 200)
+            {
                 throw new GitlabServiceException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
+
+            }
 
             $response_decoded = Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
 
             $query = new RepositoryQueryResults();
             $query->Files->GitSshUrl = ($response_decoded['ssh_url_to_repo'] ?? null);
             $query->Files->GitHttpUrl = ($response_decoded['http_url_to_repo'] ?? null);
-            $query->Version = Functions::convertToSemVer($response_decoded['default_branch']) ?? null;
+            $query->Version = Functions::convertToSemVer($response_decoded['default_branch']);
             $query->ReleaseDescription = ($response_decoded['description'] ?? null);
             $query->ReleaseName = ($response_decoded['name'] ?? null);
 
@@ -100,22 +103,26 @@ namespace ncc\Classes\GitlabExtension;
             $releases = self::getReleases($packageInput->Vendor, $packageInput->Package, $definedRemoteSource, $entry);
 
             if(count($releases) === 0)
+            {
                 throw new VersionNotFoundException('No releases found for the given repository.');
+            }
 
             // Query the latest package only
-            if($packageInput->Version == Versions::Latest)
+            if($packageInput->Version === Versions::Latest)
             {
                 $latest_version = null;
                 foreach($releases as $release)
                 {
-                    if($latest_version == null)
+                    if($latest_version === null)
                     {
                         $latest_version = $release->Version;
                         continue;
                     }
 
-                    if(VersionComparator::compareVersion($release->Version, $latest_version) == 1)
+                    if(VersionComparator::compareVersion($release->Version, $latest_version) === 1)
+                    {
                         $latest_version = $release->Version;
+                    }
                 }
 
                 return $releases[$latest_version];
@@ -128,18 +135,22 @@ namespace ncc\Classes\GitlabExtension;
                 $selected_version = null;
                 foreach($releases as $version => $url)
                 {
-                    if($selected_version == null)
+                    if($selected_version === null)
                     {
                         $selected_version = $version;
                         continue;
                     }
 
-                    if(VersionComparator::compareVersion($version, $packageInput->Version) == 1)
+                    if(VersionComparator::compareVersion($version, $packageInput->Version) === 1)
+                    {
                         $selected_version = $version;
+                    }
                 }
 
-                if($selected_version == null)
+                if($selected_version === null)
+                {
                     throw new VersionNotFoundException('No releases found for the given repository.');
+                }
             }
             else
             {
@@ -147,7 +158,10 @@ namespace ncc\Classes\GitlabExtension;
             }
 
             if(!isset($releases[$selected_version]))
+            {
                 throw new VersionNotFoundException(sprintf('No releases found for the given repository. (Selected version: %s)', $selected_version));
+
+            }
 
             return $releases[$selected_version];
         }
@@ -191,13 +205,17 @@ namespace ncc\Classes\GitlabExtension;
 
             $response = HttpClient::request($httpRequest, true);
 
-            if($response->StatusCode != 200)
-               throw new GitlabServiceException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
+            if($response->StatusCode !== 200)
+            {
+                throw new GitlabServiceException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
+            }
 
             $response_decoded = Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
 
-            if(count($response_decoded) == 0)
+            if(count($response_decoded) === 0)
+            {
                 return [];
+            }
 
             $return = [];
             foreach($response_decoded as $release)
@@ -207,29 +225,26 @@ namespace ncc\Classes\GitlabExtension;
                 $query_results->ReleaseDescription = ($release['description'] ?? null);
                 $query_results->Version = Functions::convertToSemVer($release['tag_name']);
 
-                if(isset($release['assets']) && isset($release['assets']['sources']))
+                if(isset($release['assets']['sources']) && count($release['assets']['sources']) > 0)
                 {
-                    if(count($release['assets']['sources']) > 0)
+                    foreach($release['assets']['sources'] as $source)
                     {
-                        foreach($release['assets']['sources'] as $source)
+                        if($source['format'] === 'zip')
                         {
-                            if($source['format'] == 'zip')
-                            {
-                                $query_results->Files->ZipballUrl = $source['url'];
-                                break;
-                            }
+                            $query_results->Files->ZipballUrl = $source['url'];
+                            break;
+                        }
 
-                            if($source['format'] == 'tar.gz')
-                            {
-                                $query_results->Files->ZipballUrl = $source['url'];
-                                break;
-                            }
+                        if($source['format'] === 'tar.gz')
+                        {
+                            $query_results->Files->ZipballUrl = $source['url'];
+                            break;
+                        }
 
-                            if($source['format'] == 'ncc')
-                            {
-                                $query_results->Files->PackageUrl = $source['url'];
-                                break;
-                            }
+                        if($source['format'] === 'ncc')
+                        {
+                            $query_results->Files->PackageUrl = $source['url'];
+                            break;
                         }
                     }
                 }
