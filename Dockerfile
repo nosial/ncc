@@ -22,7 +22,7 @@
 # Builder stage: downloads necessary files and serves them on a silver platter.
 #
 
-FROM php:8.1-fpm AS builder
+FROM php:8.2-fpm AS builder
 WORKDIR /tmp
 
 # Install some stuff the default image doesn't come with
@@ -36,15 +36,18 @@ RUN wget -O phive.phar https://phar.io/releases/phive.phar;                     
     gpg --verify phive.phar.asc phive.phar;                                     \
     rm phive.phar.asc; chmod +x phive.phar; ./phive.phar install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
 
+# Copy the local repository to the image
+COPY . /tmp/ncc
+
 # Download the latest version of ncc (Nosial Code Compiler)
-RUN git clone https://git.n64.cc/nosial/ncc.git;                                \
-    cd ncc; make redist
+RUN cd /tmp/ncc && make redist
+
 
 #
 # Main stage: Copies downloaded files and installs all
 #
 
-FROM php:8.1-fpm-alpine
+FROM php:8.2-fpm-alpine
 
 # Add extensions
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/

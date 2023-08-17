@@ -8,6 +8,7 @@ stages:
 before_script:
   - apt update -yqq
   - apt install -yqq git libzip-dev zip make wget gnupg2 libonig-dev libcurl4-openssl-dev
+  - apt-get clean
 
 # Prepare the environment
 setup:
@@ -30,6 +31,37 @@ build:
   artifacts:
     paths:
       - build/*.tar.gz
+
+# Build the Alpine Docker image
+build-docker-alpine:
+  stage: build-docker
+  script:
+    - |
+      if [[ ! -z "$CI_COMMIT_TAG" ]]; then
+        DOCKER_TAG="$CI_COMMIT_TAG-alpine"
+      else
+        DOCKER_TAG="$CI_COMMIT_REF_SLUG-alpine"
+      fi
+      
+      echo "Building Docker image with tag: $DOCKER_TAG"
+      docker build -f Dockerfile -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
+      docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
+
+# Build the Debian Docker image
+build-docker-debian:
+  stage: build-docker
+  script:
+    - |
+      if [[ ! -z "$CI_COMMIT_TAG" ]]; then
+        DOCKER_TAG="$CI_COMMIT_TAG-debian"
+      else
+        DOCKER_TAG="$CI_COMMIT_REF_SLUG-debian"
+      fi
+      
+      echo "Building Docker image with tag: $DOCKER_TAG"
+      docker build -f Dockerfile.debian -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
+      docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
+
 
 # Publish the package
 publish:
