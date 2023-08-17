@@ -38,31 +38,58 @@ namespace ncc\Classes\NccExtension;
          * @param string|null $input
          * @param Assembly $assembly
          * @return string|null
-         * @noinspection PhpUnnecessaryLocalVariableInspection
          */
         public static function compileAssemblyConstants(?string $input, Assembly $assembly): ?string
         {
-            if($input == null)
+            if($input === null)
+            {
                 return null;
+            }
 
             if($assembly->Name !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyName, $assembly->Name, $input);
+            }
+
             if($assembly->Package !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyPackage, $assembly->Package, $input);
+            }
+
             if($assembly->Description !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyDescription, $assembly->Description, $input);
+            }
+
             if($assembly->Company !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyCompany, $assembly->Company, $input);
+            }
+
             if($assembly->Product !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyProduct, $assembly->Product, $input);
+            }
+
             if($assembly->Copyright !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyCopyright, $assembly->Copyright, $input);
+            }
+
             if($assembly->Trademark !== null)
-                $input = str_replace(AssemblyConstants::AssemblyTrademark, $assembly->Trademark, $input);
+            {
+                $input =str_replace(AssemblyConstants::AssemblyTrademark, $assembly->Trademark, $input);
+            }
+
             if($assembly->Version !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyVersion, $assembly->Version, $input);
+            }
+
             if($assembly->UUID !== null)
+            {
                 $input = str_replace(AssemblyConstants::AssemblyUid, $assembly->UUID, $input);
+            }
 
             return $input;
         }
@@ -72,19 +99,27 @@ namespace ncc\Classes\NccExtension;
          *
          * @param string|null $input
          * @return string|null
-         * @noinspection PhpUnnecessaryLocalVariableInspection
          */
         public static function compileBuildConstants(?string $input): ?string
         {
-            if($input == null)
+            if($input === null)
+            {
                 return null;
+            }
 
-            $input = str_replace(BuildConstants::CompileTimestamp, time(), $input);
-            $input = str_replace(BuildConstants::NccBuildVersion, NCC_VERSION_NUMBER, $input);
-            $input = str_replace(BuildConstants::NccBuildFlags, implode(' ', NCC_VERSION_FLAGS), $input);
-            $input = str_replace(BuildConstants::NccBuildBranch, NCC_VERSION_BRANCH, $input);
-
-            return $input;
+            return str_replace(
+                [
+                    BuildConstants::CompileTimestamp,
+                    BuildConstants::NccBuildVersion,
+                    BuildConstants::NccBuildFlags,
+                    BuildConstants::NccBuildBranch
+                ],
+                [
+                    time(),
+                    NCC_VERSION_NUMBER,
+                    implode(' ', NCC_VERSION_FLAGS), NCC_VERSION_BRANCH
+                ], $input
+            );
         }
 
         /**
@@ -93,19 +128,27 @@ namespace ncc\Classes\NccExtension;
          * @param string|null $input
          * @param InstallationPaths $installationPaths
          * @return string|null
-         * @noinspection PhpUnnecessaryLocalVariableInspection
          */
         public static function compileInstallConstants(?string $input, InstallationPaths $installationPaths): ?string
         {
-            if($input == null)
+            if($input === null)
+            {
                 return null;
+            }
 
-            $input = str_replace(InstallConstants::InstallationPath, $installationPaths->getInstallationPath(), $input);
-            $input = str_replace(InstallConstants::BinPath, $installationPaths->getBinPath(), $input);
-            $input = str_replace(InstallConstants::SourcePath, $installationPaths->getSourcePath(), $input);
-            $input = str_replace(InstallConstants::DataPath, $installationPaths->getDataPath(), $input);
-
-            return $input;
+            return str_replace(
+                [
+                    InstallConstants::InstallationPath,
+                    InstallConstants::BinPath,
+                    InstallConstants::SourcePath,
+                    InstallConstants::DataPath
+                ],
+                [
+                    $installationPaths->getInstallationPath(),
+                    $installationPaths->getBinPath(),
+                    $installationPaths->getSourcePath(),
+                    $installationPaths->getDataPath()
+                ], $input);
         }
 
         /**
@@ -114,67 +157,116 @@ namespace ncc\Classes\NccExtension;
          * @param string|null $input
          * @param int $timestamp
          * @return string|null
-         * @noinspection PhpUnnecessaryLocalVariableInspection
          */
         public static function compileDateTimeConstants(?string $input, int $timestamp): ?string
         {
-            if($input == null)
+            if($input === null)
+            {
                 return null;
+            }
 
-            $input = str_replace(DateTimeConstants::d, date('d', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::D, date('D', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::j, date('j', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::l, date('l', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::N, date('N', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::S, date('S', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::w, date('w', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::z, date('z', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::W, date('W', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::F, date('F', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::m, date('m', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::M, date('M', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::n, date('n', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::t, date('t', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::L, date('L', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::o, date('o', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::Y, date('Y', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::y, date('y', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::a, date('a', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::A, date('A', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::B, date('B', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::g, date('g', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::G, date('G', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::h, date('h', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::H, date('H', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::i, date('i', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::s, date('s', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::c, date('c', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::r, date('r', $timestamp), $input);
-            $input = str_replace(DateTimeConstants::u, date('u', $timestamp), $input);
+            return str_replace([
+                DateTimeConstants::d,
+                DateTimeConstants::D,
+                DateTimeConstants::j,
+                DateTimeConstants::l,
+                DateTimeConstants::N,
+                DateTimeConstants::S,
+                DateTimeConstants::w,
+                DateTimeConstants::z,
+                DateTimeConstants::W,
+                DateTimeConstants::F,
+                DateTimeConstants::m,
+                DateTimeConstants::M,
+                DateTimeConstants::n,
+                DateTimeConstants::t,
+                DateTimeConstants::L,
+                DateTimeConstants::o,
+                DateTimeConstants::Y,
+                DateTimeConstants::y,
+                DateTimeConstants::a,
+                DateTimeConstants::A,
+                DateTimeConstants::B,
+                DateTimeConstants::g,
+                DateTimeConstants::G,
+                DateTimeConstants::h,
+                DateTimeConstants::H,
+                DateTimeConstants::i,
+                DateTimeConstants::s,
+                DateTimeConstants::c,
+                DateTimeConstants::r,
+                DateTimeConstants::u
+            ],
+            [
+                date('d', $timestamp),
+                date('D', $timestamp),
+                date('j', $timestamp),
+                date('l', $timestamp),
+                date('N', $timestamp),
+                date('S', $timestamp),
+                date('w', $timestamp),
+                date('z', $timestamp),
+                date('W', $timestamp),
+                date('F', $timestamp),
+                date('m', $timestamp),
+                date('M', $timestamp),
+                date('n', $timestamp),
+                date('t', $timestamp),
+                date('L', $timestamp),
+                date('o', $timestamp),
+                date('Y', $timestamp),
+                date('y', $timestamp),
+                date('a', $timestamp),
+                date('A', $timestamp),
+                date('B', $timestamp),
+                date('g', $timestamp),
+                date('G', $timestamp),
+                date('h', $timestamp),
+                date('H', $timestamp),
+                date('i', $timestamp),
+                date('s', $timestamp),
+                date('c', $timestamp),
+                date('r', $timestamp),
+                date('u', $timestamp)
+            ], $input);
 
-            return $input;
         }
 
         /**
          * @param string|null $input
          * @return string|null
-         * @noinspection PhpUnnecessaryLocalVariableInspection
          */
         public static function compileRuntimeConstants(?string $input): ?string
         {
-            if ($input == null)
+            if ($input === null)
+            {
                 return null;
+            }
 
             if(function_exists('getcwd'))
+            {
                 $input = str_replace(RuntimeConstants::CWD, getcwd(), $input);
+            }
+
             if(function_exists('getmypid'))
+            {
                 $input = str_replace(RuntimeConstants::PID, getmypid(), $input);
+            }
+
             if(function_exists('getmyuid'))
+            {
                 $input = str_replace(RuntimeConstants::UID, getmyuid(), $input);
+            }
+
             if(function_exists('getmygid'))
+            {
                 $input = str_replace(RuntimeConstants::GID, getmygid(), $input);
+            }
+
             if(function_exists('get_current_user'))
+            {
                 $input = str_replace(RuntimeConstants::User, get_current_user(), $input);
+            }
 
             return $input;
         }
