@@ -50,29 +50,25 @@ namespace ncc\Classes;
             curl_setopt($curl, CURLOPT_MAXREDIRS, 5);
             curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
             curl_setopt($curl, CURLOPT_TIMEOUT, 10);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $request->Headers);
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $request->Type);
             curl_setopt($curl, CURLOPT_NOPROGRESS, false);
-            curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, function($curl, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($request)
-            {
-                if($downloadSize > 0 && ($downloaded !== $downloadSize))
-                {
-                    if(Main::getLogLevel() !== null)
-                    {
-                        switch(Main::getLogLevel())
-                        {
-                            case LogLevel::Verbose:
-                            case LogLevel::Debug:
-                            case LogLevel::Silent:
-                                Console::outVerbose(sprintf(' <= %s of %s bytes downloaded', $downloaded, $downloadSize));
-                                break;
 
-                            default:
-                                Console::inlineProgressBar($downloaded, $downloadSize + 1);
-                                break;
-                        }
+            curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function($curl, $downloadSize, $downloaded)
+            {
+                if($downloadSize > 0 && ($downloaded !== $downloadSize) && Main::getLogLevel() !== null)
+                {
+                    switch(Main::getLogLevel())
+                    {
+                        case LogLevel::Verbose:
+                        case LogLevel::Debug:
+                        case LogLevel::Silent:
+                            Console::outVerbose(sprintf(' <= %s of %s bytes downloaded', $downloaded, $downloadSize));
+                            break;
+
+                        default:
+                            Console::inlineProgressBar($downloaded, $downloadSize + 1);
+                            break;
                     }
                 }
             });
@@ -86,13 +82,17 @@ namespace ncc\Classes;
                 case HttpRequestType::POST:
                     curl_setopt($curl, CURLOPT_POST, true);
                     if($request->Body !== null)
+                    {
                         curl_setopt($curl, CURLOPT_POSTFIELDS, $request->Body);
+                    }
                     break;
 
                 case HttpRequestType::PUT:
                     curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
                     if($request->Body !== null)
+                    {
                         curl_setopt($curl, CURLOPT_POSTFIELDS, $request->Body);
+                    }
                     break;
 
                 case HttpRequestType::DELETE:
@@ -110,7 +110,9 @@ namespace ncc\Classes;
             }
 
             foreach ($request->Options as $option => $value)
+            {
                 curl_setopt($curl, $option, $value);
+            }
 
             return $curl;
         }
@@ -128,21 +130,27 @@ namespace ncc\Classes;
             if($cache)
             {
                 /** @var HttpResponseCache $cache */
-                $cache = RuntimeCache::get(sprintf('http_cache_%s', $httpRequest->requestHash()));
-                if($cache !== null && $cache->getTtl() > time())
+                $cache_value = RuntimeCache::get(sprintf('http_cache_%s', $httpRequest->requestHash()));
+                if($cache_value !== null && $cache_value->getTtl() > time())
                 {
                     Console::outDebug(sprintf('using cached response for %s', $httpRequest->requestHash()));
-                    return $cache->getHttpResponse();
+                    return $cache_value->getHttpResponse();
                 }
             }
 
             $curl = self::prepareCurl($httpRequest);
 
             Console::outDebug(sprintf(' => %s request %s', $httpRequest->Type, $httpRequest->Url));
+
             if($httpRequest->Headers !== null && count($httpRequest->Headers) > 0)
+            {
                 Console::outDebug(sprintf(' => headers: %s', implode(', ', $httpRequest->Headers)));
+            }
+
             if($httpRequest->Body !== null)
+            {
                 Console::outDebug(sprintf(' => body: %s', $httpRequest->Body));
+            }
 
             $response = curl_exec($curl);
 
@@ -162,12 +170,9 @@ namespace ncc\Classes;
             $httpResponse->Headers = self::parseHeaders($headers);
             $httpResponse->Body = $body;
 
-            Console::outDebug(sprintf(' <= %s response', $httpResponse->StatusCode));/** @noinspection PhpConditionAlreadyCheckedInspection */
-            if($httpResponse->Headers !== null && count($httpResponse->Headers) > 0)
-                Console::outDebug(sprintf(' <= headers: %s', implode(', ', $httpResponse->Headers)));
-            /** @noinspection PhpConditionAlreadyCheckedInspection */
-            if($httpResponse->Body !== null)
-                Console::outDebug(sprintf(' <= body: %s', $httpResponse->Body));
+            Console::outDebug(sprintf(' <= %s response', $httpResponse->StatusCode));
+            Console::outDebug(sprintf(' <= headers: %s', (implode(', ', $httpResponse->Headers))));
+            Console::outDebug(sprintf(' <= body: %s', $httpResponse->Body));
 
             curl_close($curl);
 
@@ -194,7 +199,7 @@ namespace ncc\Classes;
         {
             $curl = self::prepareCurl($httpRequest);
 
-            $fp = fopen($path, 'w');
+            $fp = fopen($path, 'wb');
             curl_setopt($curl, CURLOPT_FILE, $fp);
             curl_setopt($curl, CURLOPT_HEADER, 0);
             $response = curl_exec($curl);
@@ -222,9 +227,11 @@ namespace ncc\Classes;
             $lines = explode("\n", $input);
             $headers['HTTP'] = array_shift($lines);
 
-            foreach ($lines as $line) {
+            foreach ($lines as $line)
+            {
                 $header = explode(':', $line, 2);
-                if (count($header) == 2) {
+                if (count($header) === 2)
+                {
                     $headers[trim($header[0])] = trim($header[1]);
                 }
             }
