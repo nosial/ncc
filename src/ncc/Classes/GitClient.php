@@ -48,11 +48,19 @@ namespace ncc\Classes;
             $process->setTimeout(3600); // 1 hour
             $process->run(function ($type, $buffer)
             {
-                Console::outVerbose($buffer);
+                if(Process::ERR === $type)
+                {
+                    Console::outWarning($buffer);
+                }
+                {
+                    Console::outVerbose($buffer);
+                }
             });
 
             if (!$process->isSuccessful())
+            {
                 throw new GitCloneException($process->getErrorOutput());
+            }
 
             Console::outVerbose('Repository cloned to: ' . $path);
 
@@ -131,7 +139,9 @@ namespace ncc\Classes;
             });
 
             if (!$process->isSuccessful())
+            {
                 throw new GitTagsException($process->getErrorOutput());
+            }
 
             $process = new Process(['git', '--no-pager', 'tag', '-l'] , $path);
 
@@ -141,10 +151,12 @@ namespace ncc\Classes;
             });
 
             if (!$process->isSuccessful())
+            {
                 throw new GitTagsException($process->getErrorOutput());
+            }
 
             $tags = explode(PHP_EOL, $process->getOutput());
-            $tags = array_filter($tags, function ($tag)
+            $tags = array_filter($tags, static function ($tag)
             {
                 return !empty($tag);
             });
