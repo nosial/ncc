@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
  - Corrected code-smell and code style issues in `\ncc\Classes > HttpClient`
- - Corrected code-smell and code style issues in `\ncc\Classes > GitClient`
+ - Corrected code-smell and code style issues in `\ncc\Classes > BashExtension > BashRunner` 
 
 
 

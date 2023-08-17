@@ -36,12 +36,16 @@ namespace ncc\Classes\BashExtension;
          */
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
-            $execution_unit = new ExecutionUnit();
             if(!file_exists($path) && !is_file($path))
+            {
                 throw new FileNotFoundException($path);
-            $policy->Execute->Target = null;
+            }
+
+            $execution_unit = new ExecutionUnit();
             $execution_unit->ExecutionPolicy = $policy;
             $execution_unit->Data = IO::fread($path);
+
+            $policy->Execute->Target = null;
 
             return $execution_unit;
         }
