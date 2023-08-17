@@ -35,9 +35,13 @@ build:
       - build/*.tar.gz
 
 # Build the Alpine Docker image
-build-docker-alpine:
+ncc-docker-build:
   image: docker:latest
   stage: build-docker
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - |
       if [[ ! -z "$CI_COMMIT_TAG" ]]; then
@@ -45,15 +49,22 @@ build-docker-alpine:
       else
         DOCKER_TAG="$CI_COMMIT_REF_SLUG-alpine"
       fi
-      
-      echo "Building Docker image with tag: $DOCKER_TAG"
-      docker build -f Dockerfile -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
-      docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
+    - docker build -f Dockerfile -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev'
+      exists:
+        - Dockerfile
+
 
 # Build the Debian Docker image
-build-docker-debian:
+ncc-docker-build-debian:
   image: docker:latest
   stage: build-docker
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - |
       if [[ ! -z "$CI_COMMIT_TAG" ]]; then
@@ -61,10 +72,12 @@ build-docker-debian:
       else
         DOCKER_TAG="$CI_COMMIT_REF_SLUG-debian"
       fi
-      
-      echo "Building Docker image with tag: $DOCKER_TAG"
-      docker build -f Dockerfile.debian -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
-      docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
+    - docker build -f Dockerfile.debian -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'dev'
+      exists:
+        - Dockerfile.debian
 
 
 # Publish the package
