@@ -36,6 +36,7 @@ build:
 
 # Build the Alpine Docker image
 build-docker-alpine:
+  image: docker:latest
   stage: build-docker
   script:
     - |
@@ -51,6 +52,7 @@ build-docker-alpine:
 
 # Build the Debian Docker image
 build-docker-debian:
+  image: docker:latest
   stage: build-docker
   script:
     - |
