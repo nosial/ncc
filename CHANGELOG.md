@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.3] - Unreleased
+## [1.0.3] - 2023-08-16
 
 ### Changed
  - Refactored `\ncc\Objects > PackageLock`
  - Updated `defuse\php-encryption` to version 2.4.0
  - Updated `\ncc\Classes > GitClient > cloneRepositor()` to clone submodules recursively by default
  - Updated `\ncc\Classes > GitClient > checkout()` to update submoudles.
+ - Updated build system for Gitlab
 
 ### Fixed
  - Fixed issue in `\ncc\Managers > ExecutionPointerManager > executeUnit()` where if ttyMode is enabled in a non-tty
