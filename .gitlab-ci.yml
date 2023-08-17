@@ -89,8 +89,10 @@ publish:
         PACKAGE_NAME=$CI_COMMIT_TAG
         FILE_NAME="ncc-$CI_COMMIT_TAG.tar.gz"
       else
-        PACKAGE_NAME=$CI_COMMIT_REF_NAME
-        FILE_NAME="ncc-$CI_COMMIT_REF_NAME.tar.gz"
+        BRANCH_NAME=$(echo $CI_COMMIT_REF_NAME | sed 's/\//-/g')
+        COMMIT_ID=${CI_COMMIT_SHORT_SHA}
+        PACKAGE_NAME="$BRANCH_NAME-$COMMIT_ID"
+        FILE_NAME="ncc-$PACKAGE_NAME.tar.gz"
       fi
       
       mv build/*.tar.gz build/$FILE_NAME
