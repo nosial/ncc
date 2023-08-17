@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Corrected code-smell and code style issues in `\ncc\Classes > HttpClient`
  - Corrected code-smell and code style issues in `\ncc\Classes > BashExtension > BashRunner` 
  - Corrected code-smell and code style issues in `\ncc\Classes > ComposerExtension > ComposerSourceBuiltin`
+ - Corrected code-smell and code style issues in `\ncc\Classes > GithubExtension > GithubService`
 
 
 

@@ -72,7 +72,6 @@ namespace ncc\Classes\GithubExtension;
             $query->ReleaseDescription = ($response_decoded['description'] ?? null);
             $query->ReleaseName = ($response_decoded['name'] ?? null);
 
-
             return $query;
         }
 
@@ -135,8 +134,10 @@ namespace ncc\Classes\GithubExtension;
             $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/repos/$owner_f/$repository/releases";
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
-            if(count($response_decoded) == 0)
+            if(count($response_decoded) === 0)
+            {
                 return [];
+            }
 
             $return = [];
             foreach($response_decoded as $release)
@@ -154,7 +155,9 @@ namespace ncc\Classes\GithubExtension;
                     {
                         $parsed_asset = self::parseAsset($asset);
                         if($parsed_asset !== null)
+                        {
                             $query_results->Files->PackageUrl = $parsed_asset;
+                        }
                     }
                 }
 
@@ -175,8 +178,10 @@ namespace ncc\Classes\GithubExtension;
             if(isset($asset['browser_download_url']))
             {
                 $file_extension = pathinfo($asset['browser_download_url'], PATHINFO_EXTENSION);
-                if($file_extension == 'ncc')
+                if($file_extension === 'ncc')
+                {
                     return $asset['browser_download_url'];
+                }
             }
 
             return null;
@@ -201,8 +206,10 @@ namespace ncc\Classes\GithubExtension;
 
             $response = HttpClient::request($httpRequest, true);
 
-            if ($response->StatusCode != 200)
+            if ($response->StatusCode !== 200)
+            {
                 throw new GithubServiceException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
+            }
 
             return Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
         }
@@ -224,21 +231,25 @@ namespace ncc\Classes\GithubExtension;
             $releases = self::getReleases($packageInput, $definedRemoteSource, $entry);
 
             if (count($releases) === 0)
+            {
                 throw new VersionNotFoundException('No releases found for the given repository.');
+            }
 
-            if ($packageInput->Version == Versions::Latest)
+            if ($packageInput->Version === Versions::Latest)
             {
                 $latest_version = null;
                 foreach ($releases as $release)
                 {
-                    if ($latest_version == null)
+                    if ($latest_version === null)
                     {
                         $latest_version = $release->Version;
                         continue;
                     }
 
-                    if (VersionComparator::compareVersion($release->Version, $latest_version) == 1)
+                    if (VersionComparator::compareVersion($release->Version, $latest_version) === 1)
+                    {
                         $latest_version = $release->Version;
+                    }
                 }
 
                 return $releases[$latest_version];
@@ -251,18 +262,22 @@ namespace ncc\Classes\GithubExtension;
                 $selected_version = null;
                 foreach ($releases as $version => $url)
                 {
-                    if ($selected_version == null)
+                    if ($selected_version === null)
                     {
                         $selected_version = $version;
                         continue;
                     }
 
-                    if (VersionComparator::compareVersion($version, $packageInput->Version) == 1)
+                    if (VersionComparator::compareVersion($version, $packageInput->Version) === 1)
+                    {
                         $selected_version = $version;
+                    }
                 }
 
-                if ($selected_version == null)
+                if ($selected_version === null)
+                {
                     throw new VersionNotFoundException('No releases found for the given repository.');
+                }
             }
             else
             {
@@ -270,7 +285,9 @@ namespace ncc\Classes\GithubExtension;
             }
 
             if (!isset($releases[$selected_version]))
+            {
                 throw new VersionNotFoundException(sprintf('No releases found for the given repository. (Selected version: %s)', $selected_version));
+            }
 
             return $releases[$selected_version];
         }
