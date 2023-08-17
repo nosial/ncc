@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - Unreleased
 
+## Added
+ - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
+
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
 
 ### Changed
  - Corrected code-smell and code style issues in `\ncc\Classes > HttpClient`
  - Corrected code-smell and code style issues in `\ncc\Classes > BashExtension > BashRunner` 
+ - Corrected code-smell and code style issues in `\ncc\Classes > ComposerExtension > ComposerSourceBuiltin`
 
 
 

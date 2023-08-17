@@ -24,6 +24,7 @@ namespace ncc\Classes\ComposerExtension;
 
     use Exception;
     use FilesystemIterator;
+    use JsonException;
     use ncc\Abstracts\CompilerExtensions;
     use ncc\Abstracts\CompilerExtensionSupportedVersions;
     use ncc\Abstracts\ComponentFileExtensions;
@@ -104,12 +105,15 @@ namespace ncc\Classes\ComposerExtension;
         {
             $package_path = self::require($packageInput->Vendor, $packageInput->Package, $packageInput->Version);
             $packages = self::compilePackages($package_path . DIRECTORY_SEPARATOR . 'composer.lock');
-            RuntimeCache::setFileAsTemporary($package_path);
             $real_package_name = explode('=', $packageInput->toStandard(false))[0];
+
+            RuntimeCache::setFileAsTemporary($package_path);
             foreach($packages as $package => $path)
             {
-                if(explode('=', $package)[0] == $real_package_name)
+                if(explode('=', $package)[0] === $real_package_name)
+                {
                     return $path;
+                }
             }
 
             throw new RuntimeException(sprintf('Could not find package %s in the compiled packages', $packageInput->toStandard()));
@@ -142,7 +146,9 @@ namespace ncc\Classes\ComposerExtension;
         {
             // Check if the file composer.json exists
             if (!file_exists($path . DIRECTORY_SEPARATOR . 'composer.json'))
+            {
                 throw new FileNotFoundException(sprintf('File "%s" not found', $path . DIRECTORY_SEPARATOR . 'composer.json'));
+            }
 
             // Execute composer with options
             $options = self::getOptions();
@@ -151,16 +157,30 @@ namespace ncc\Classes\ComposerExtension;
             self::prepareProcess($process, $path, $options);
 
             Console::outDebug(sprintf('executing %s', $process->getCommandLine()));
-            $process->run(function ($type, $buffer) {
-                Console::out($buffer, false);
+            $process->run(function ($type, $buffer)
+            {
+                if($type === Process::ERR)
+                {
+                    Console::outWarning($buffer, false);
+                }
+                else
+                {
+                    Console::out($buffer, false);
+                }
             });
 
-            if (!$process->isSuccessful())
+            if(!$process->isSuccessful())
+            {
                 throw new ComposerException($process->getErrorOutput());
+            }
 
             $filesystem = new Filesystem();
+
             if($filesystem->exists($path . DIRECTORY_SEPARATOR . 'build'))
+            {
                 $filesystem->remove($path . DIRECTORY_SEPARATOR . 'build');
+            }
+
             $filesystem->mkdir($path . DIRECTORY_SEPARATOR . 'build');
 
             // Compile dependencies
@@ -169,8 +189,8 @@ namespace ncc\Classes\ComposerExtension;
             $composer_lock = Functions::loadJson(IO::fread($path . DIRECTORY_SEPARATOR . 'composer.lock'), Functions::FORCE_ARRAY);
             $version_map = self::getVersionMap(ComposerLock::fromArray($composer_lock));
 
-            // Finally convert the main package's composer.json to package.json and compile it
-            ComposerSourceBuiltin::convertProject($path, $version_map);
+            // Finally, convert the main package's composer.json to package.json and compile it
+            self::convertProject($path, $version_map);
             $project_manager = new ProjectManager($path);
             $project_manager->load();
             $built_package = $project_manager->build();
@@ -202,7 +222,16 @@ namespace ncc\Classes\ComposerExtension;
             }
 
             $base_dir = dirname($composer_lock_path);
-            $composer_lock = ComposerLock::fromArray(json_decode(IO::fread($composer_lock_path), true));
+
+            try
+            {
+                $composer_lock = ComposerLock::fromArray(json_decode(IO::fread($composer_lock_path), true, 512, JSON_THROW_ON_ERROR));
+            }
+            catch(JsonException $e)
+            {
+                throw new MalformedJsonException($composer_lock_path, $e);
+            }
+
             $filesystem = new Filesystem();
             $built_packages = [];
 
@@ -220,10 +249,12 @@ namespace ncc\Classes\ComposerExtension;
 
                 // Load the composer lock file
                 $composer_package = $composer_lock->getPackage($package->Name);
-                if ($composer_package == null)
+                if ($composer_package === null)
+                {
                     throw new PackageNotFoundException(sprintf('Package "%s" not found in composer lock file', $package->Name));
+                }
 
-                // Convert it to a NCC project configuration
+                // Convert it to an NCC project configuration
                 $project_configuration = self::convertProject($package_path, $version_map, $composer_package);
 
                 // Load the project
@@ -265,13 +296,13 @@ namespace ncc\Classes\ComposerExtension;
          */
         private static function toPackageName(string $input): ?string
         {
-            if (stripos($input, ':'))
+            if (strpos($input, ':'))
             {
                 $input = explode(':', $input)[0];
             }
 
             $parsed_input = explode("/", $input);
-            if (count($parsed_input) == 2)
+            if (count($parsed_input) === 2)
             {
                 return str_ireplace(
                     "-", "_", 'com.' . $parsed_input[0] . "." . $parsed_input[1]
@@ -312,14 +343,24 @@ namespace ncc\Classes\ComposerExtension;
             $project_configuration = new ProjectConfiguration();
 
             if (isset($composer_package->Name))
+            {
                 $project_configuration->Assembly->Name = $composer_package->Name;
+            }
+
             if (isset($composer_package->Description))
+            {
                 $project_configuration->Assembly->Description = $composer_package->Description;
+            }
 
             if(isset($version_map[$composer_package->Name]))
+            {
                 $project_configuration->Assembly->Version = self::versionMap($composer_package->Name, $version_map);
-            if($project_configuration->Assembly->Version == null || $project_configuration->Assembly->Version == '')
+            }
+
+            if($project_configuration->Assembly->Version === null || $project_configuration->Assembly->Version === '')
+            {
                 $project_configuration->Assembly->Version = '1.0.0';
+            }
 
 
             $project_configuration->Assembly->UUID = Uuid::v1()->toRfc4122();
@@ -337,8 +378,12 @@ namespace ncc\Classes\ComposerExtension;
                 {
                     // Check if the dependency is already in the project configuration
                     $package_name = self::toPackageName($item->PackageName);
-                    if ($package_name == null)
+
+                    if($package_name === null)
+                    {
                         continue;
+                    }
+
                     $dependency = new ProjectConfiguration\Dependency();
                     $dependency->Name = $package_name;
                     $dependency->SourceType = DependencySourceType::Local;
@@ -358,7 +403,7 @@ namespace ncc\Classes\ComposerExtension;
             $project_configuration->Build->DefaultConfiguration = 'default';
             $project_configuration->Build->SourcePath = '.src';
 
-            // Apply compiler extension
+            // Apply a compiler extension
             $project_configuration->Project->Compiler->Extension = CompilerExtensions::PHP;
             $project_configuration->Project->Compiler->MinimumVersion = CompilerExtensionSupportedVersions::PHP[0];
             $project_configuration->Project->Compiler->MaximumVersion = CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)];
@@ -379,9 +424,9 @@ namespace ncc\Classes\ComposerExtension;
             // Anything beginning with --composer- is a composer option
             foreach ($arguments as $argument => $value)
             {
-                if (str_starts_with($argument, 'composer-') && !in_array($argument, $results))
+                if (str_starts_with($argument, 'composer-') && !in_array($argument, $results, true))
                 {
-                    if(is_bool($value) && $value)
+                    if (is_bool($value) && $value)
                     {
                         $results[] = '--' . str_ireplace('composer-', '', $argument);
 
@@ -395,36 +440,55 @@ namespace ncc\Classes\ComposerExtension;
 
 
             $options = Functions::getConfigurationProperty('composer.options');
-            if ($options == null || !is_array($options))
+
+            if (!is_array($options))
+            {
                 return $results;
+            }
 
             if (isset($options['quiet']) && $options['quiet'])
+            {
                 $results[] = '--quiet';
+            }
+
             if (isset($options['no_asni']) && $options['no_asni'])
+            {
                 $results[] = '--no-asni';
+            }
+
             if (isset($options['no_interaction']) && $options['no_interaction'])
+            {
                 $results[] = '--no-interaction';
-            if (isset($options['profile']) && $options['profile'])
+            }
+
+            if(isset($options['profile']) && $options['profile'])
+            {
                 $results[] = '--profile';
-            if (isset($options['no_scripts']) && $options['no_scripts']) {
+            }
+
+            if (isset($options['no_scripts']) && $options['no_scripts'])
+            {
                 $results[] = '--no-scripts';
                 $results[] = '--no-plugins'; // Also include this for safe measures
             }
+
             if (isset($options['no_cache']) && $options['no_cache'])
+            {
                 $results[] = '--no-cache';
+            }
 
             // Determine the logging option
             if (isset($options['logging']))
             {
-                if ((int)$options['logging'] == 3)
+                if ((int)$options['logging'] === 3)
                 {
                     $results[] = '-vvv';
                 }
-                elseif ((int)$options['logging'] == 2)
+                elseif ((int)$options['logging'] === 2)
                 {
                     $results[] = '-vv';
                 }
-                elseif ((int)$options['logging'] == 1)
+                elseif ((int)$options['logging'] === 1)
                 {
                     $results[] = '-v';
                 }
@@ -449,8 +513,10 @@ namespace ncc\Classes\ComposerExtension;
                             break;
 
                         case LogLevel::Silent:
-                            if (!in_array('--quiet', $results))
+                            if (!in_array('--quiet', $results, true))
+                            {
                                 $results[] = '--quiet';
+                            }
                             break;
                     }
                 }
@@ -460,7 +526,7 @@ namespace ncc\Classes\ComposerExtension;
         }
 
         /**
-         * Uses composer's require command to temporarily create a
+         * Uses composers require command to temporarily create a
          * composer.json file and install the specified package
          *
          * @param string $vendor
@@ -480,16 +546,26 @@ namespace ncc\Classes\ComposerExtension;
         private static function require(string $vendor, string $package, ?string $version = null): string
         {
             if (Resolver::resolveScope() !== Scopes::System)
+            {
                 throw new AccessDeniedException('Insufficient permissions to require');
+            }
 
-            if ($version == null)
+            if ($version === null)
+            {
                 $version = '*';
-            if($version == 'latest')
+            }
+
+            if($version === 'latest')
+            {
                 $version = '*';
+            }
 
             $tpl_file = __DIR__ . DIRECTORY_SEPARATOR . 'composer.jtpl';
+
             if (!file_exists($tpl_file))
+            {
                 throw new FileNotFoundException($tpl_file);
+            }
 
             $composer_exec = self::getComposerPath();
 
@@ -521,7 +597,9 @@ namespace ncc\Classes\ComposerExtension;
             });
 
             if (!$process->isSuccessful())
+            {
                 throw new ComposerException($process->getErrorOutput());
+            }
 
             return $tmp_dir;
         }
@@ -541,7 +619,9 @@ namespace ncc\Classes\ComposerExtension;
             $composer_enabled = Functions::getConfigurationProperty('composer.enabled');
             $internal_composer_enabled = Functions::getConfigurationProperty('composer.enable_internal_composer');
             if ($composer_enabled !== null && $composer_enabled === false)
+            {
                 throw new ComposerDisabledException('Composer is disabled by the configuration `composer.enabled`');
+            }
 
             $config_property = Functions::getConfigurationProperty('composer.executable_path');
 
@@ -552,12 +632,15 @@ namespace ncc\Classes\ComposerExtension;
             if ($internal_composer_enabled && defined('NCC_EXEC_LOCATION'))
             {
                 if (!file_exists(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'))
+                {
                     throw new InternalComposerNotAvailableException(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar');
+                }
+
                 Console::outDebug(sprintf('using composer path from NCC_EXEC_LOCATION: %s', NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'));
                 return NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar';
             }
 
-            if ($config_property !== null && strlen($config_property) > 0)
+            if ($config_property !== null && $config_property !== '')
             {
                 if (!file_exists($config_property))
                 {
@@ -585,13 +668,16 @@ namespace ncc\Classes\ComposerExtension;
             $process->setWorkingDirectory($path);
 
             // Check if scripts are enabled while running as root
-            if (!in_array('--no-scripts', $options) && Resolver::resolveScope() == Scopes::System)
+            if (!in_array('--no-scripts', $options, true) && Resolver::resolveScope() === Scopes::System)
             {
                 Console::outWarning('composer scripts are enabled while running as root, this can allow malicious scripts to run as root');
+
                 if (!isset($options['--no-interaction']))
                 {
-                    if (!Console::getBooleanInput('Do you want to continue?'))
+                    if(!Console::getBooleanInput('Do you want to continue?'))
+                    {
                         throw new UserAbortedOperationException('The operation was aborted by the user');
+                    }
 
                     // The user understands the risks and wants to continue
                     $process->setEnv(['COMPOSER_ALLOW_SUPERUSER' => 1]);
@@ -619,18 +705,24 @@ namespace ncc\Classes\ComposerExtension;
          */
         private static function convertProject(string $package_path, array $version_map, ?ComposerJson $composer_package=null): ProjectConfiguration
         {
-            if($composer_package == null)
+            if($composer_package === null)
+            {
                 $composer_package = ComposerJson::fromArray(Functions::loadJsonFile($package_path . DIRECTORY_SEPARATOR . 'composer.json', Functions::FORCE_ARRAY));
+            }
 
-            $project_configuration = ComposerSourceBuiltin::generateProjectConfiguration($composer_package, $version_map);
+            $project_configuration = self::generateProjectConfiguration($composer_package, $version_map);
             $filesystem = new Filesystem();
 
             // Process the source files
             if ($composer_package->Autoload !== null)
             {
                 $source_directory = $package_path . DIRECTORY_SEPARATOR . '.src';
-                if ($filesystem->exists($source_directory))
+
+                if($filesystem->exists($source_directory))
+                {
                     $filesystem->remove($source_directory);
+                }
+
                 $filesystem->mkdir($source_directory);
                 $source_directories = [];
                 $static_files = [];
@@ -641,7 +733,7 @@ namespace ncc\Classes\ComposerExtension;
                     Console::outVerbose('Extracting PSR-4 source directories');
                     foreach ($composer_package->Autoload->Psr4 as $namespace_pointer)
                     {
-                        if ($namespace_pointer->Path !== null && !in_array($namespace_pointer->Path, $source_directories))
+                        if ($namespace_pointer->Path !== null && !in_array($namespace_pointer->Path, $source_directories, true))
                         {
                             $source_directories[] = $package_path . DIRECTORY_SEPARATOR . $namespace_pointer->Path;
                         }
@@ -653,7 +745,7 @@ namespace ncc\Classes\ComposerExtension;
                     Console::outVerbose('Extracting PSR-0 source directories');
                     foreach ($composer_package->Autoload->Psr0 as $namespace_pointer)
                     {
-                        if ($namespace_pointer->Path !== null && !in_array($namespace_pointer->Path, $source_directories))
+                        if ($namespace_pointer->Path !== null && !in_array($namespace_pointer->Path, $source_directories, true))
                         {
                             $source_directories[] = $package_path . DIRECTORY_SEPARATOR . $namespace_pointer->Path;
                         }
@@ -690,11 +782,12 @@ namespace ncc\Classes\ComposerExtension;
                 foreach ($source_directories as $directory)
                 {
                     /** @var SplFileInfo $item */
-                    /** @noinspection PhpRedundantOptionalArgumentInspection */
-                    foreach ($DirectoryScanner($directory, True) as $item)
+                    foreach ($DirectoryScanner($directory) as $item)
                     {
-                        if (is_dir($item->getPathName()))
+                        if(is_dir($item->getPathName()))
+                        {
                             continue;
+                        }
 
                         $parsed_path = str_ireplace($package_path . DIRECTORY_SEPARATOR, '', $item->getPathName());
 
@@ -712,8 +805,8 @@ namespace ncc\Classes\ComposerExtension;
                         $parsed_path = str_ireplace($package_path . DIRECTORY_SEPARATOR, '', $file);
                         Console::outDebug(sprintf('copying file %s for package %s', $parsed_path, $composer_package->Name));
                         $filesystem->copy($file, $source_directory . DIRECTORY_SEPARATOR . $parsed_path);
+                        unset($file);
                     }
-                    unset($file);
                 }
             }
 
@@ -726,48 +819,44 @@ namespace ncc\Classes\ComposerExtension;
                     'LICENSE',
                     'license',
                     'LICENSE.txt',
-                    'license.txt'
+                    'license.txt',
+                    'LICENSE.md',
+                    'license.md',
                 ];
 
                 foreach($license_files as $license_file)
                 {
-                    if($filesystem->exists($package_path . DIRECTORY_SEPARATOR . $license_file))
+                    // Check configuration if composer.extension.display_licenses is set
+                    if($filesystem->exists($package_path . DIRECTORY_SEPARATOR . $license_file) && Functions::cbool(Functions::getConfigurationProperty('composer.extension.display_licenses')))
                     {
-                        // Check configuration if composer.extension.display_licenses is set
-                        if(Functions::cbool(Functions::getConfigurationProperty('composer.extension.display_licenses')))
-                        {
-                            Console::out(sprintf('License for package %s:', $composer_package->Name));
-                            Console::out(IO::fread($package_path . DIRECTORY_SEPARATOR . $license_file));
-                            break;
-                        }
+                        Console::out(sprintf('License for package %s:', $composer_package->Name));
+                        Console::out(IO::fread($package_path . DIRECTORY_SEPARATOR . $license_file));
+                        break;
                     }
                 }
 
-                if(Functions::cbool(Functions::getConfigurationProperty('composer.extension.display_authors')))
+                if(Functions::cbool(Functions::getConfigurationProperty('composer.extension.display_authors')) && !is_null($composer_package->Authors) && count($composer_package->Authors) > 0)
                 {
-                    if($composer_package->Authors !== null && count($composer_package->Authors) > 0)
+                    Console::out(sprintf('Authors for package %s:', $composer_package->Name));
+                    foreach($composer_package->Authors as $author)
                     {
-                        Console::out(sprintf('Authors for package %s:', $composer_package->Name));
-                        foreach($composer_package->Authors as $author)
+                        Console::out(sprintf(' - %s', $author->Name));
+
+                        if($author->Email !== null)
                         {
-                            Console::out(sprintf(' - %s', $author->Name));
-
-                            if($author->Email !== null)
-                            {
-                                Console::out(sprintf('   %s', $author->Email));
-                            }
-
-                            if($author->Homepage !== null)
-                            {
-                                Console::out(sprintf('   %s', $author->Homepage));
-                            }
-
-                            if($author->Role !== null)
-                            {
-                                Console::out(sprintf('   %s', $author->Role));
-                            }
-
+                            Console::out(sprintf('   %s', $author->Email));
                         }
+
+                        if($author->Homepage !== null)
+                        {
+                            Console::out(sprintf('   %s', $author->Homepage));
+                        }
+
+                        if($author->Role !== null)
+                        {
+                            Console::out(sprintf('   %s', $author->Role));
+                        }
+
                     }
                 }
             }
