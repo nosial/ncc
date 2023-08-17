@@ -3,7 +3,9 @@ image: php:8.2
 stages:
   - setup
   - build
+  - build-docker
   - publish
+  - publish-docker
 
 before_script:
   - apt update -yqq
