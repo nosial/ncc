@@ -40,7 +40,7 @@ namespace ncc\Classes\PerlExtension;
             $policy->Execute->Target = null;
             if(!file_exists($path) && !is_file($path))
                 throw new FileNotFoundException($path);
-            $execution_unit->ExecutionPolicy = $policy;
+            $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);
 
             return $execution_unit;

@@ -1,30 +1,30 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Objects;
 
-    use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\ExecutionPointers\ExecutionPointer;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Utilities\Functions;
@@ -35,17 +35,17 @@
         /**
          * @var string
          */
-        private $Package;
+        private $package;
 
         /**
          * @var string
          */
-        private $Version;
+        private $version;
 
         /**
          * @var ExecutionPointer[]
          */
-        private $Pointers;
+        private $pointers;
 
         /**
          * @param string|null $package
@@ -53,9 +53,9 @@
          */
         public function __construct(?string $package=null, ?string $version=null)
         {
-            $this->Package = $package;
-            $this->Version = $version;
-            $this->Pointers = [];
+            $this->package = $package;
+            $this->version = $version;
+            $this->pointers = [];
         }
 
         /**
@@ -65,26 +65,30 @@
          * @param string $bin_file
          * @param bool $overwrite
          * @return bool
-         * @throws FileNotFoundException
+         * @throws PathNotFoundException
          */
         public function addUnit(ExecutionUnit $unit, string $bin_file, bool $overwrite=true): bool
         {
             if(Validate::exceedsPathLength($bin_file))
+            {
                 return false;
+            }
 
             if(!file_exists($bin_file))
-                throw new FileNotFoundException('The file ' . $unit->Data . ' does not exist, cannot add unit \'' . $unit->ExecutionPolicy->Name . '\'');
+            {
+                throw new PathNotFoundException($bin_file);
+            }
 
             if($overwrite)
             {
-                $this->deleteUnit($unit->ExecutionPolicy->Name);
+                $this->deleteUnit($unit->execution_policy->Name);
             }
-            elseif($this->getUnit($unit->ExecutionPolicy->Name) !== null)
+            elseif($this->getUnit($unit->execution_policy->Name) !== null)
             {
                 return false;
             }
 
-            $this->Pointers[] = new ExecutionPointer($unit, $bin_file);
+            $this->pointers[] = new ExecutionPointer($unit, $bin_file);
             return true;
         }
 
@@ -97,17 +101,22 @@
         public function deleteUnit(string $name): bool
         {
             $unit = $this->getUnit($name);
-            if($unit == null)
-                return false;
 
-            $new_pointers = [];
-            foreach($this->Pointers as $pointer)
+            if($unit === null)
             {
-                if($pointer->ExecutionPolicy->Name !== $name)
-                    $new_pointers[] = $pointer;
+                return false;
             }
 
-            $this->Pointers = $new_pointers;
+            $new_pointers = [];
+            foreach($this->pointers as $pointer)
+            {
+                if($pointer->execution_policy->Name !== $name)
+                {
+                    $new_pointers[] = $pointer;
+                }
+            }
+
+            $this->pointers = $new_pointers;
             return true;
         }
 
@@ -120,10 +129,12 @@
         public function getUnit(string $name): ?ExecutionPointer
         {
             /** @var ExecutionPointer $pointer */
-            foreach($this->Pointers as $pointer)
+            foreach($this->pointers as $pointer)
             {
-                if($pointer->ExecutionPolicy->Name == $name)
+                if($pointer->execution_policy->Name === $name)
+                {
                     return $pointer;
+                }
             }
 
             return null;
@@ -136,7 +147,7 @@
          */
         public function getPointers(): array
         {
-            return $this->Pointers;
+            return $this->pointers;
         }
 
         /**
@@ -146,7 +157,7 @@
          */
         public function getVersion(): string
         {
-            return $this->Version;
+            return $this->version;
         }
 
         /**
@@ -156,7 +167,7 @@
          */
         public function getPackage(): string
         {
-            return $this->Package;
+            return $this->package;
         }
 
         /**
@@ -168,13 +179,13 @@
         public function toArray(bool  $bytecode=false): array
         {
             $pointers = [];
-            foreach($this->Pointers as $pointer)
+            foreach($this->pointers as $pointer)
             {
                 $pointers[] = $pointer->toArray($bytecode);
             }
             return [
-                ($bytecode ? Functions::cbc('package') : 'package')  => $this->Package,
-                ($bytecode ? Functions::cbc('version') : 'version')  => $this->Version,
+                ($bytecode ? Functions::cbc('package') : 'package')  => $this->package,
+                ($bytecode ? Functions::cbc('version') : 'version')  => $this->version,
                 ($bytecode ? Functions::cbc('pointers') : 'pointers') => $pointers
             ];
         }
@@ -189,18 +200,18 @@
         {
             $object = new self();
 
-            $object->Version = Functions::array_bc($data, 'version');
-            $object->Package = Functions::array_bc($data, 'package');
-            $object->Pointers = Functions::array_bc($data, 'pointers');
+            $object->version = Functions::array_bc($data, 'version');
+            $object->package = Functions::array_bc($data, 'package');
+            $object->pointers = Functions::array_bc($data, 'pointers');
 
-            if($object->Pointers !== null)
+            if($object->pointers !== null)
             {
                 $pointers = [];
-                foreach($object->Pointers as $pointer)
+                foreach($object->pointers as $pointer)
                 {
                     $pointers[] = ExecutionPointer::fromArray($pointer);
                 }
-                $object->Pointers = $pointers;
+                $object->pointers = $pointers;
             }
 
             return $object;

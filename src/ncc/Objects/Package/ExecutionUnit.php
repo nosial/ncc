@@ -32,14 +32,14 @@
         /**
          * @var string|null
          */
-        private $ID;
+        private $id;
 
         /**
          * The execution policy for this execution unit
          *
          * @var ExecutionPolicy
          */
-        public $ExecutionPolicy;
+        public $execution_policy;
 
         /**
          * The data of the unit to execute
@@ -57,7 +57,7 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('execution_policy') : 'execution_policy') => $this->ExecutionPolicy->toArray($bytecode),
+                ($bytecode ? Functions::cbc('execution_policy') : 'execution_policy') => $this->execution_policy->toArray($bytecode),
                 ($bytecode ? Functions::cbc('data') : 'data') => $this->Data,
             ];
         }
@@ -72,11 +72,11 @@
         {
             $object = new self();
 
-            $object->ExecutionPolicy = Functions::array_bc($data, 'execution_policy');
+            $object->execution_policy = Functions::array_bc($data, 'execution_policy');
             $object->Data = Functions::array_bc($data, 'data');
 
-            if($object->ExecutionPolicy !== null)
-                $object->ExecutionPolicy = ExecutionPolicy::fromArray($object->ExecutionPolicy);
+            if($object->execution_policy !== null)
+                $object->execution_policy = ExecutionPolicy::fromArray($object->execution_policy);
 
             return $object;
         }
@@ -84,11 +84,11 @@
         /**
          * @return string
          */
-        public function getID(): string
+        public function getId(): string
         {
-            if($this->ID == null)
-                $this->ID = hash('sha1', $this->ExecutionPolicy->Name);
-            return $this->ID;
+            if($this->id == null)
+                $this->id = hash('sha1', $this->execution_policy->Name);
+            return $this->id;
         }
 
     }

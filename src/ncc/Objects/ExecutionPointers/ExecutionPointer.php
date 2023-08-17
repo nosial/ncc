@@ -33,21 +33,21 @@
         /**
          * @var string
          */
-        public $ID;
+        public $id;
 
         /**
          * The execution policy for this execution unit
          *
          * @var ExecutionPolicy
          */
-        public $ExecutionPolicy;
+        public $execution_policy;
 
         /**
          * The file pointer for where the target script should be executed
          *
          * @var string
          */
-        public $FilePointer;
+        public $file_pointer;
 
         /**
          * Public Constructor with optional ExecutionUnit parameter to construct object from
@@ -57,12 +57,14 @@
          */
         public function __construct(?ExecutionUnit $unit=null, ?string $bin_file=null)
         {
-            if($unit == null)
+            if($unit === null)
+            {
                 return;
+            }
 
-            $this->ID = $unit->getID();
-            $this->ExecutionPolicy = $unit->ExecutionPolicy;
-            $this->FilePointer = $bin_file;
+            $this->id = $unit->getId();
+            $this->execution_policy = $unit->execution_policy;
+            $this->file_pointer = $bin_file;
         }
 
         /**
@@ -74,14 +76,14 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('id') : 'id') => $this->ID,
-                ($bytecode ? Functions::cbc('execution_policy') : 'execution_policy') => $this->ExecutionPolicy->toArray($bytecode),
-                ($bytecode ? Functions::cbc('file_pointer') : 'file_pointer') => $this->FilePointer,
+                ($bytecode ? Functions::cbc('id') : 'id') => $this->id,
+                ($bytecode ? Functions::cbc('execution_policy') : 'execution_policy') => $this->execution_policy->toArray($bytecode),
+                ($bytecode ? Functions::cbc('file_pointer') : 'file_pointer') => $this->file_pointer,
             ];
         }
 
         /**
-         * Constructs object from an array representation
+         * Constructs an object from an array representation
          *
          * @param array $data
          * @return ExecutionPointer
@@ -90,12 +92,14 @@
         {
             $object = new self();
 
-            $object->ID = Functions::array_bc($data, 'id');
-            $object->ExecutionPolicy = Functions::array_bc($data, 'execution_policy');
-            $object->FilePointer = Functions::array_bc($data, 'file_pointer');
+            $object->id = Functions::array_bc($data, 'id');
+            $object->execution_policy = Functions::array_bc($data, 'execution_policy');
+            $object->file_pointer = Functions::array_bc($data, 'file_pointer');
 
-            if($object->ExecutionPolicy !== null)
-                $object->ExecutionPolicy = ExecutionPolicy::fromArray($object->ExecutionPolicy);
+            if($object->execution_policy !== null)
+            {
+                $object->execution_policy = ExecutionPolicy::fromArray($object->execution_policy);
+            }
 
             return $object;
         }

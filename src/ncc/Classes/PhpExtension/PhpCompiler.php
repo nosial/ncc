@@ -169,10 +169,10 @@
                         continue;
 
                     $Component = new Package\Component();
-                    $Component->Name = Functions::removeBasename($item->getPathname(), $this->path);
+                    $Component->name = Functions::removeBasename($item->getPathname(), $this->path);
                     $this->package->Components[] = $Component;
 
-                    Console::outVerbose(sprintf('Found component %s', $Component->Name));
+                    Console::outVerbose(sprintf('Found component %s', $Component->name));
                 }
 
                 if(count($this->package->Components) > 0)
@@ -396,7 +396,7 @@
                     Console::inlineProgressBar($processed_items, $total_items);
                 }
 
-                $content = IO::fread(Functions::correctDirectorySeparator($this->path . $component->Name));
+                $content = IO::fread(Functions::correctDirectorySeparator($this->path . $component->name));
                 $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 
                 try
@@ -407,30 +407,30 @@
 
                     if($encoded === false)
                     {
-                        $component->DataType = ComponentDataType::BASE64_ENCODED;
-                        $component->Data = Base64::encode($content);
+                        $component->data_types = ComponentDataType::BASE64_ENCODED;
+                        $component->data = Base64::encode($content);
                     }
                     else
                     {
-                        $component->DataType = ComponentDataType::AST;
-                        $component->Data = json_decode($encoded, true);
+                        $component->data_types = ComponentDataType::AST;
+                        $component->data = json_decode($encoded, true);
                     }
                 }
                 catch(Exception $e)
                 {
-                    $component->DataType = ComponentDataType::BASE64_ENCODED;
-                    $component->Data = Base64::encode($content);
+                    $component->data_types = ComponentDataType::BASE64_ENCODED;
+                    $component->data = Base64::encode($content);
                     unset($e);
                 }
 
                 unset($parser);
 
-                $component->Name = str_replace($this->project->Build->SourcePath, (string)null, $component->Name);
+                $component->name = str_replace($this->project->Build->SourcePath, (string)null, $component->name);
                 $component->updateChecksum();
                 $components[] = $component;
                 $processed_items += 1;
 
-                Console::outDebug(sprintf('processed component %s (%s)', $component->Name, $component->DataType));
+                Console::outDebug(sprintf('processed component %s (%s)', $component->name, $component->data_types));
             }
 
             // Update the components

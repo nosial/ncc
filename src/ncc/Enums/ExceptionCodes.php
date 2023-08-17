@@ -23,6 +23,7 @@
 namespace ncc\Enums;
 
     use ncc\Exceptions\InvalidDependencyConfiguration;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\SymlinkException;
     use ncc\Exceptions\UnsupportedArchiveException;
 
@@ -36,16 +37,6 @@ namespace ncc\Enums;
          * @see InvalidProjectConfigurationException
          */
         public const INVALID_PROJECT_CONFIGURATION = -1700;
-
-        /**
-         * @see FileNotFoundException;
-         */
-        public const FILE_NOT_FOUND = -1701;
-
-        /**
-         * @see DirectoryNotFoundException
-         */
-        public const DIRECTORY_NOT_FOUND = -1702;
 
         /**
          * @see InvalidScopeException
@@ -368,12 +359,15 @@ namespace ncc\Enums;
         public const SYMLINK_EXCEPTION = -1768;
 
         /**
+         * @see PathNotFoundException
+         */
+        public const PATH_NOT_FOUND = -1769;
+
+        /**
          * All the exception codes from NCC
          */
         public const All = [
             self::INVALID_PROJECT_CONFIGURATION,
-            self::FILE_NOT_FOUND,
-            self::DIRECTORY_NOT_FOUND,
             self::INVALID_SCOPE,
             self::ACCESS_DENIED,
             self::MALFORMED_JSON,
@@ -435,5 +429,6 @@ namespace ncc\Enums;
             self::INVALID_BUILD_CONFIGURATION,
             self::INVALID_DEPENDENCY_CONFIGURATION,
             self::SYMLINK_EXCEPTION,
+            self::PATH_NOT_FOUND
         ];
     }

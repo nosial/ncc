@@ -1,28 +1,29 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Utilities;
+    namespace ncc\Utilities;
 
     use Exception;
+    use JsonException;
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\DefinedRemoteSourceType;
     use ncc\Enums\HttpRequestType;
@@ -41,12 +42,11 @@ namespace ncc\Utilities;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ArchiveException;
     use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\GitlabServiceException;
     use ncc\Exceptions\HttpException;
-    use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\UnsupportedArchiveException;
     use ncc\Managers\ConfigurationManager;
@@ -62,7 +62,6 @@ namespace ncc\Utilities;
     use ncc\Objects\RepositoryQueryResults;
     use ncc\Objects\RepositoryQueryResults\Files;
     use ncc\Objects\Vault\Entry;
-    use ncc\Runtime;
     use ncc\ThirdParty\jelix\Version\Parser;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
@@ -70,6 +69,7 @@ namespace ncc\Utilities;
     use ncc\ThirdParty\Symfony\Process\Process;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
+    use RuntimeException;
     use Throwable;
 
     /**
@@ -78,10 +78,19 @@ namespace ncc\Utilities;
      */
     class Functions
     {
+        /**
+         * Forces the output to be an array
+         */
         public const FORCE_ARRAY = 0b0001;
 
+        /**
+         * Forces the output to be pretty
+         */
         public const PRETTY = 0b0010;
 
+        /**
+         * Escapes unicode characters
+         */
         public const ESCAPE_UNICODE = 0b0100;
 
         /**
@@ -92,11 +101,7 @@ namespace ncc\Utilities;
          */
         public static function cbc(string $input): string
         {
-            $cache = RuntimeCache::get("cbc_$input");
-            if($cache !== null)
-                return $cache;
-
-            return RuntimeCache::set("cbc_$input", hash('crc32', $input, true));
+            return RuntimeCache::get("cbc_$input") ?? RuntimeCache::set("cbc_$input", hash('crc32', $input, true));
         }
 
         /**
@@ -106,17 +111,10 @@ namespace ncc\Utilities;
          * @param array $data
          * @param string $select
          * @return mixed|null
-         * @noinspection PhpMissingReturnTypeInspection
          */
-        public static function array_bc(array $data, string $select)
+        public static function array_bc(array $data, string $select): mixed
         {
-            if(isset($data[$select]))
-                return $data[$select];
-
-            if(isset($data[self::cbc($select)]))
-                return $data[self::cbc($select)];
-
-            return null;
+            return $data[$select] ?? $data[self::cbc($select)] ?? null;
         }
 
         /**
@@ -126,16 +124,15 @@ namespace ncc\Utilities;
          * @param int $flags
          * @return mixed
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
-         * @noinspection PhpMissingReturnTypeInspection
+         * @throws PathNotFoundException
          */
-        public static function loadJsonFile(string $path, int $flags=0)
+        public static function loadJsonFile(string $path, int $flags=0): mixed
         {
             if(!file_exists($path))
             {
-                throw new FileNotFoundException($path);
+                throw new PathNotFoundException($path);
             }
 
             return self::loadJson(IO::fread($path), $flags);
@@ -148,19 +145,17 @@ namespace ncc\Utilities;
          * @param int $flags
          * @return mixed
          * @throws MalformedJsonException
-         * @noinspection PhpMissingReturnTypeInspection
          */
-        public static function loadJson(string $json, int $flags=0)
+        public static function loadJson(string $json, int $flags=0): mixed
         {
-            $forceArray = (bool) ($flags & self::FORCE_ARRAY);
-            $json_decoded = json_decode($json, $forceArray, 512, JSON_BIGINT_AS_STRING);
-
-            if($json_decoded == null && json_last_error() !== JSON_ERROR_NONE)
+            try
             {
-                throw new MalformedJsonException(json_last_error_msg() . ' (' . json_last_error() . ')');
+                return json_decode($json, ($flags & self::FORCE_ARRAY), 512, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
             }
-
-            return $json_decoded;
+            catch(Throwable $e)
+            {
+                throw new MalformedJsonException($e->getMessage(), $e);
+            }
         }
 
         /**
@@ -170,39 +165,41 @@ namespace ncc\Utilities;
          * @param int $flags
          * @return string
          * @throws MalformedJsonException
-         * @noinspection PhpMissingParamTypeInspection
-         * @noinspection PhpUnusedLocalVariableInspection
          */
-        public static function encodeJson($value, int $flags=0): string
+        public static function encodeJson(mixed $value, int $flags=0): string
         {
             $flags = ($flags & self::ESCAPE_UNICODE ? 0 : JSON_UNESCAPED_UNICODE)
                 | JSON_UNESCAPED_SLASHES
                 | ($flags & self::PRETTY ? JSON_PRETTY_PRINT : 0)
                 | (defined('JSON_PRESERVE_ZERO_FRACTION') ? JSON_PRESERVE_ZERO_FRACTION : 0); // since PHP 5.6.6 & PECL JSON-C 1.3.7
 
-            $json = json_encode($value, $flags);
-            if ($error = json_last_error())
+            try
             {
-                throw new MalformedJsonException(json_last_error_msg() . ' (' . json_last_error() . ')');
+                return json_encode($value, JSON_THROW_ON_ERROR | $flags);
             }
-            return $json;
+            catch (JsonException $e)
+            {
+                throw new MalformedJsonException($e->getMessage(), $e);
+            }
         }
 
         /**
          * Writes a json file to disk
          *
-         * @param $value
+         * @param mixed $value
          * @param string $path
          * @param int $flags
          * @return void
          * @throws MalformedJsonException
          */
-        public static function encodeJsonFile($value, string $path, int $flags=0): void
+        public static function encodeJsonFile(mixed $value, string $path, int $flags=0): void
         {
             file_put_contents($path, self::encodeJson($value, $flags));
         }
 
         /**
+         * Returns the current working directory
+         *
          * @param CliHelpSection[] $input
          * @return int
          */
@@ -235,7 +232,6 @@ namespace ncc\Utilities;
          * @param bool $basic_ascii
          * @return string
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
          */
         public static function getBanner(string $version, string $copyright, bool $basic_ascii=false): string
@@ -253,10 +249,7 @@ namespace ncc\Utilities;
             $banner_copyright = str_pad($copyright, 30);
 
             $banner = str_ireplace('%A', $banner_version, $banner);
-            /** @noinspection PhpUnnecessaryLocalVariableInspection */
-            $banner = str_ireplace('%B', $banner_copyright, $banner);
-
-            return $banner;
+            return str_ireplace('%B', $banner_copyright, $banner);
         }
 
         /**
@@ -264,23 +257,25 @@ namespace ncc\Utilities;
          * current working directory, optionally accepts a different basename using the $basename parameter.
          *
          * @param string $path
-         * @param string|null $basename
+         * @param string|null $base_name
          * @return string
          */
-        public static function removeBasename(string $path, ?string $basename=null): string
+        public static function removeBasename(string $path, ?string $base_name=null): string
         {
-            if($basename == null)
-                $basename = getcwd();
+            if($base_name === null)
+            {
+                $base_name = getcwd();
+            }
 
             // Append the trailing slash if it's not already there
             // "/etc/foo" becomes "/etc/foo/"
-            if(substr($basename, -1) !== DIRECTORY_SEPARATOR)
+            if(substr($base_name, -1) !== DIRECTORY_SEPARATOR)
             {
-                $basename .= DIRECTORY_SEPARATOR;
+                $base_name .= DIRECTORY_SEPARATOR;
             }
 
             // If the path is "/etc/foo/text.txt" and the basename is "/etc" then the returned path will be "foo/test.txt"
-            return str_replace($basename, (string)null, $path);
+            return str_replace($base_name, (string)null, $path);
         }
 
         /**
@@ -300,20 +295,21 @@ namespace ncc\Utilities;
          * @param ExecutionPolicy $policy
          * @return ExecutionUnit
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
+         * @throws PathNotFoundException
          * @throws RunnerExecutionException
          */
         public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
-            return match (strtolower($policy->Runner)) {
+            return match (strtolower($policy->Runner))
+            {
                 Runners::BASH => BashRunner::processUnit($path, $policy),
                 Runners::PHP => PhpRunner::processUnit($path, $policy),
                 Runners::PERL => PerlRunner::processUnit($path, $policy),
                 Runners::PYTHON => PythonRunner::processUnit($path, $policy),
                 Runners::PYTHON_2 => Python2Runner::processUnit($path, $policy),
                 Runners::PYTHON_3 => Python3Runner::processUnit($path, $policy),
-                Runners::lua => LuaRunner::processUnit($path, $policy),
+                Runners::LUA => LuaRunner::processUnit($path, $policy),
                 default => throw new RunnerExecutionException('The runner \'' . $policy->Runner . '\' is not supported'),
             };
         }
@@ -354,7 +350,7 @@ namespace ncc\Utilities;
         {
             $size = array('B','kB','MB','GB','TB','PB','EB','ZB','YB');
             $factor = floor((strlen($bytes) - 1) / 3);
-            return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$size[$factor];
+            return sprintf("%.{$decimals}f", $bytes / (1024 ** $factor)) . @$size[$factor];
         }
 
         /**
@@ -362,12 +358,14 @@ namespace ncc\Utilities;
          *
          * @return void
          * @throws AccessDeniedException
-         * @throws InvalidScopeException
+         * @noinspection PhpRedundantOptionalArgumentInspection
          */
         public static function initializeFiles(): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
                 throw new AccessDeniedException('Cannot initialize NCC files, insufficient permissions');
+            }
 
             Console::outVerbose('Initializing NCC files');
 
@@ -381,21 +379,18 @@ namespace ncc\Utilities;
             if(!$filesystem->exists(PathFinder::getCachePath(Scopes::SYSTEM)))
             {
                 Console::outDebug(sprintf('Initializing %s', PathFinder::getCachePath(Scopes::SYSTEM)));
-                /** @noinspection PhpRedundantOptionalArgumentInspection */
                 $filesystem->mkdir(PathFinder::getCachePath(Scopes::SYSTEM), 0777);
             }
 
             if(!$filesystem->exists(PathFinder::getRunnerPath(Scopes::SYSTEM)))
             {
                 Console::outDebug(sprintf('Initializing %s', PathFinder::getRunnerPath(Scopes::SYSTEM)));
-                /** @noinspection PhpRedundantOptionalArgumentInspection */
                 $filesystem->mkdir(PathFinder::getRunnerPath(Scopes::SYSTEM), 0755);
             }
 
             if(!$filesystem->exists(PathFinder::getPackagesPath(Scopes::SYSTEM)))
             {
                 Console::outDebug(sprintf('Initializing %s', PathFinder::getPackagesPath(Scopes::SYSTEM)));
-                /** @noinspection PhpRedundantOptionalArgumentInspection */
                 $filesystem->mkdir(PathFinder::getPackagesPath(Scopes::SYSTEM), 0755);
             }
 
@@ -430,14 +425,21 @@ namespace ncc\Utilities;
          * @param string $path
          * @return ComposerJson
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
-         * @noinspection PhpUnused
+         * @throws MalformedJsonException
          */
         public static function loadComposerJson(string $path): ComposerJson
         {
             $json_contents = IO::fread($path);
-            return ComposerJson::fromArray(json_decode($json_contents, true));
+
+            try
+            {
+                return ComposerJson::fromArray(json_decode($json_contents, true, 512, JSON_THROW_ON_ERROR));
+            }
+            catch(JsonException $e)
+            {
+                throw new MalformedJsonException('Cannot parse composer.json, ' . $e->getMessage(), $e);
+            }
         }
 
         /**
@@ -449,7 +451,10 @@ namespace ncc\Utilities;
         public static function cbool($value): bool
         {
             if(is_null($value))
+            {
                 return false;
+            }
+
             if(is_string($value))
             {
                 switch(strtolower($value))
@@ -470,15 +475,6 @@ namespace ncc\Utilities;
                 }
             }
 
-            if(is_int($value))
-            {
-                if ($value == 0)
-                    return false;
-                if ($value == 1)
-                    return true;
-                return false;
-            }
-
             return (bool)$value;
         }
 
@@ -491,8 +487,7 @@ namespace ncc\Utilities;
          */
         public static function getConfigurationProperty(string $property)
         {
-            $config_manager = new ConfigurationManager();
-            return $config_manager->getProperty($property);
+            return (new ConfigurationManager())->getProperty($property);
         }
 
         /**
@@ -504,9 +499,10 @@ namespace ncc\Utilities;
          */
         public static function parseVersion(string $version): string
         {
-            /** @noinspection PhpStrFunctionsInspection */
-            if(substr($version, 0, 1) === 'v')
+            if(str_starts_with(strtolower($version), 'v'))
+            {
                 $version = substr($version, 1);
+            }
 
             return Parser::parse($version)->toString();
         }
@@ -517,16 +513,25 @@ namespace ncc\Utilities;
          * @param int $length
          * @return string
          */
-        public static function randomString(int $length = 32): string
+        public static function randomString(int $length=32): string
         {
             $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $charactersLength = strlen($characters);
-            $randomString = '';
-            for ($i = 0; $i < $length; $i++)
+            $characters_length = strlen($characters);
+            $random_string = '';
+
+            for($i = 0; $i < $length; $i++)
             {
-                $randomString .= $characters[rand(0, $charactersLength - 1)];
+                try
+                {
+                    $random_string .= $characters[random_int(0, $characters_length - 1)];
+                }
+                catch (Exception $e)
+                {
+                    throw new RuntimeException('Cannot generate random string, ' . $e->getMessage(), $e->getCode(), $e);
+                }
             }
-            return $randomString;
+
+            return $random_string;
         }
 
         /**
@@ -535,42 +540,49 @@ namespace ncc\Utilities;
          * @param bool $create
          * @param bool $set_as_tmp
          * @return string
-         * @throws InvalidScopeException
          */
         public static function getTmpDir(bool $create=true, bool $set_as_tmp=true): string
         {
             $path = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . self::randomString(16);
+
             if($create)
             {
                 $filesystem = new Filesystem();
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
                 $filesystem->mkdir($path, 0777);
             }
+
             if($set_as_tmp)
+            {
                 RuntimeCache::setFileAsTemporary($path);
+            }
+
             return $path;
         }
 
         /**
          * Applies the authentication to the given HTTP request.
          *
-         * @param HttpRequest $httpRequest
+         * @param HttpRequest $http_request
          * @param Entry|null $entry
          * @param bool $expect_json
          * @return HttpRequest
          * @throws AuthenticationException
          * @throws GitlabServiceException
          */
-        public static function prepareGitServiceRequest(HttpRequest $httpRequest, ?Entry $entry=null, bool $expect_json=true): HttpRequest
+        public static function prepareGitServiceRequest(HttpRequest $http_request, ?Entry $entry=null, bool $expect_json=true): HttpRequest
         {
             if($entry !== null)
             {
-                if (!$entry->isCurrentlyDecrypted())
+                if(!$entry->isCurrentlyDecrypted())
+                {
                     throw new GitlabServiceException('The given Vault entry is not decrypted.');
+                }
 
-                switch ($entry->getPassword()->getAuthenticationType()) {
+                switch ($entry->getPassword()?->getAuthenticationType())
+                {
                     case AuthenticationType::ACCESS_TOKEN:
-                        $httpRequest->Headers[] = "Authorization: Bearer " . $entry->getPassword();
+                        $http_request->Headers[] = "Authorization: Bearer " . $entry->getPassword();
                         break;
 
                     case AuthenticationType::USERNAME_PASSWORD:
@@ -580,11 +592,11 @@ namespace ncc\Utilities;
 
             if($expect_json)
             {
-                $httpRequest->Headers[] = "Accept: application/json";
-                $httpRequest->Headers[] = "Content-Type: application/json";
+                $http_request->Headers[] = "Accept: application/json";
+                $http_request->Headers[] = "Content-Type: application/json";
             }
 
-            return $httpRequest;
+            return $http_request;
         }
 
         /**
@@ -595,23 +607,23 @@ namespace ncc\Utilities;
          * @return string
          * @throws AuthenticationException
          * @throws GitlabServiceException
-         * @throws InvalidScopeException
          * @throws HttpException
          */
         public static function downloadGitServiceFile(string $url, ?Entry $entry=null): string
         {
             if(RuntimeCache::get('download_cache.' . $url) !== null)
+            {
                 return RuntimeCache::get('download_cache.' . $url);
+            }
 
-            $out_path = Functions::getTmpDir() . "/" . basename($url);
-
-            $httpRequest = new HttpRequest();
-            $httpRequest->Url = $url;
-            $httpRequest->Type = HttpRequestType::GET;
-            $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry, false);
+            $out_path = self::getTmpDir() . "/" . basename($url);
+            $http_request = new HttpRequest();
+            $http_request->Url = $url;
+            $http_request->Type = HttpRequestType::GET;
+            $http_request = self::prepareGitServiceRequest($http_request, $entry, false);
 
             Console::out('Downloading file ' . $url);
-            HttpClient::download($httpRequest, $out_path);
+            HttpClient::download($http_request, $out_path);
             RuntimeCache::set('download_cache.' . $url, $out_path);
 
             return $out_path;
@@ -632,7 +644,9 @@ namespace ncc\Utilities;
             $filesystem = new Filesystem();
 
             if(!$filesystem->exists($out_path))
+            {
                 $filesystem->mkdir($out_path);
+            }
 
             RuntimeCache::setFileAsTemporary($out_path);
 
@@ -651,13 +665,10 @@ namespace ncc\Utilities;
                     'multipart/x-zip'
                 ]);
             }
-            else
+            elseif(RuntimeCache::get('warning_zip_shown') !== true)
             {
-                if(RuntimeCache::get('warning_zip_shown') !== true)
-                {
-                    Console::out('unzip executable not found. ZIP archives will not be supported.');
-                    RuntimeCache::set('warning_zip_shown', true);
-                }
+                Console::out('unzip executable not found. ZIP archives will not be supported.');
+                RuntimeCache::set('warning_zip_shown', true);
             }
 
             if($tar_executable !== null)
@@ -669,17 +680,16 @@ namespace ncc\Utilities;
                     'application/x-xz'
                 ]);
             }
-            else
+            elseif(RuntimeCache::get('warning_tar_shown') !== true)
             {
-                if(RuntimeCache::get('warning_tar_shown') !== true)
-                {
-                    Console::outWarning('tar executable not found. TAR archives will not be supported.');
-                    RuntimeCache::set('warning_tar_shown', true);
-                }
+                Console::outWarning('tar executable not found. TAR archives will not be supported.');
+                RuntimeCache::set('warning_tar_shown', true);
             }
 
-            if (!in_array($mimeType, $supportedTypes))
+            if(!in_array($mimeType, $supportedTypes, true))
+            {
                 throw new UnsupportedArchiveException("Unsupported archive type: $mimeType");
+            }
 
             $command = match ($mimeType) {
                 'application/zip' => [$unzip_executable, $path, '-d', $out_path],
@@ -693,12 +703,15 @@ namespace ncc\Utilities;
             $process = new Process($command);
 
             // display the output of the command
-            $process->run(function ($type, $buffer) {
+            $process->run(function ($type, $buffer)
+            {
                 Console::outVerbose($buffer);
             });
 
-            if (!$process->isSuccessful())
+            if(!$process->isSuccessful())
+            {
                 throw new ArchiveException($process->getErrorOutput());
+            }
 
             return $out_path;
         }
@@ -712,15 +725,19 @@ namespace ncc\Utilities;
          */
         public static function searchDirectory(string $path, array $files): ?string
         {
-            if (!is_dir($path))
+            if(!is_dir($path))
+            {
                 return null;
+            }
 
             // Search files in the given directory recursively
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
             foreach ($iterator as $file)
             {
-                if (in_array($file->getFilename(), $files))
+                if(in_array($file->getFilename(), $files, true))
+                {
                     return $file->getPathname();
+                }
             }
 
             return null;
@@ -734,8 +751,11 @@ namespace ncc\Utilities;
          */
         public static function convertToSemVer($version): string
         {
-            if(stripos($version, 'v') === 0)
+            if(stripos(strtolower($version), 'v') === 0)
+            {
                 $version = substr($version, 1);
+            }
+
             if(!Validate::version($version))
             {
                 $parts = explode('.', $version);
@@ -744,17 +764,28 @@ namespace ncc\Utilities;
                 $patch = (string)null;
 
                 if(count($parts) >= 1)
+                {
                     $major = $parts[0];
+                }
+
                 if(count($parts) >= 2)
+                {
                     $minor = $parts[1];
+                }
+
                 if(count($parts) >= 3)
+                {
                     $patch = $parts[2];
+                }
 
                 // Assemble the SemVer compatible string
                 $version = "$major.$minor.$patch";
             }
+
             if(!Validate::version($version))
+            {
                 return '1.0.0';
+            }
 
             return $version;
         }
@@ -803,8 +834,11 @@ namespace ncc\Utilities;
                 $results->ReleaseName = ($release_results->ReleaseName ?? null);
                 $results->ReleaseDescription = ($release_results->ReleaseDescription ?? null);
                 $results->Files = self::mergeFilesResults($release_results->Files, ($results->Files ?? null));
+
                 if($release_results->Version !== null)
+                {
                     $results->Version = $release_results->Version;
+                }
             }
 
             try
@@ -819,27 +853,31 @@ namespace ncc\Utilities;
 
             if($git_results !== null)
             {
-                if($results->ReleaseName == null)
+                if($results->ReleaseName === null)
                 {
                     $results->ReleaseName = ($git_results->ReleaseName ?? null);
                 }
                 elseif($git_results->ReleaseName !== null)
                 {
                     if(strlen($git_results->ReleaseName) > strlen($results->ReleaseName))
+                    {
                         $results->ReleaseName = $git_results->ReleaseName;
+                    }
                 }
 
-                if($results->ReleaseDescription == null)
+                if($results->ReleaseDescription === null)
                 {
                     $results->ReleaseDescription = ($git_results->ReleaseDescription ?? null);
                 }
                 elseif($git_results->ReleaseDescription !== null)
                 {
                     if(strlen($git_results->ReleaseDescription) > strlen($results->ReleaseDescription))
+                    {
                         $results->ReleaseDescription = $git_results->ReleaseDescription;
+                    }
                 }
 
-                if($results->Version == null)
+                if($results->Version === null)
                 {
                     $results->Version = ($git_results->Version ?? null);
                 }
@@ -847,7 +885,9 @@ namespace ncc\Utilities;
                 {
                     // Version compare
                     if(VersionComparator::compareVersion($git_results->Version, $results->Version) > 0)
+                    {
                         $results->Version = $git_results->Version;
+                    }
                 }
 
                 $results->Files = self::mergeFilesResults($git_results->Files, ($results->Files ?? null));
@@ -865,27 +905,31 @@ namespace ncc\Utilities;
 
             if($ncc_package_results !== null)
             {
-                if($results->ReleaseName == null)
+                if($results->ReleaseName === null)
                 {
                     $results->ReleaseName = ($ncc_package_results->ReleaseName ?? null);
                 }
                 elseif($ncc_package_results->ReleaseName !== null)
                 {
                     if(strlen($ncc_package_results->ReleaseName) > strlen($results->ReleaseName))
+                    {
                         $results->ReleaseName = $ncc_package_results->ReleaseName;
+                    }
                 }
 
-                if($results->ReleaseDescription == null)
+                if($results->ReleaseDescription === null)
                 {
                     $results->ReleaseDescription = ($ncc_package_results->ReleaseDescription ?? null);
                 }
                 elseif($ncc_package_results->ReleaseDescription !== null)
                 {
                     if(strlen($ncc_package_results->ReleaseDescription) > strlen($results->ReleaseDescription))
+                    {
                         $results->ReleaseDescription = $ncc_package_results->ReleaseDescription;
+                    }
                 }
 
-                if($results->Version == null)
+                if($results->Version === null)
                 {
                     $results->Version = ($ncc_package_results->Version ?? null);
                 }
@@ -893,7 +937,9 @@ namespace ncc\Utilities;
                 {
                     // Version compare
                     if(VersionComparator::compareVersion($ncc_package_results->Version, $results->Version) > 0)
+                    {
                         $results->Version = $ncc_package_results->Version;
+                    }
                 }
 
                 $results->Files = self::mergeFilesResults($ncc_package_results->Files, ($results->Files ?? null));
@@ -903,7 +949,7 @@ namespace ncc\Utilities;
         }
 
         /**
-         * Merges the given Files object with another Files object
+         * Merges the given Files an object with another Files object
          *
          * @param Files $input
          * @param Files|null $selected
@@ -911,26 +957,40 @@ namespace ncc\Utilities;
          */
         private static function mergeFilesResults(RepositoryQueryResults\Files $input, ?RepositoryQueryResults\Files $selected=null): RepositoryQueryResults\Files
         {
-            if($selected == null)
+            if($selected === null)
+            {
                 $selected = new RepositoryQueryResults\Files();
+            }
 
             if($input->GitSshUrl !== null)
+            {
                 $selected->GitSshUrl = $input->GitSshUrl;
+            }
 
             if($input->GitHttpUrl !== null)
+            {
                 $selected->GitHttpUrl = $input->GitHttpUrl;
+            }
 
             if($input->SourceUrl !== null)
+            {
                 $selected->SourceUrl = $input->SourceUrl;
+            }
 
             if($input->TarballUrl !== null)
+            {
                 $selected->TarballUrl = $input->TarballUrl;
+            }
 
             if($input->ZipballUrl !== null)
+            {
                 $selected->ZipballUrl = $input->ZipballUrl;
+            }
 
             if($input->PackageUrl !== null)
+            {
                 $selected->PackageUrl = $input->PackageUrl;
+            }
 
             return $selected;
         }
@@ -946,10 +1006,14 @@ namespace ncc\Utilities;
             if (is_numeric($input))
             {
                 if (str_contains($input, '.'))
+                {
                     return (float)$input;
+                }
 
                 if (ctype_digit($input))
+                {
                     return (int)$input;
+                }
             }
             elseif (in_array(strtolower($input), ['true', 'false']))
             {
@@ -963,12 +1027,13 @@ namespace ncc\Utilities;
          * Finalizes the permissions
          *
          * @return void
-         * @throws InvalidScopeException
          */
         public static function finalizePermissions(): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
                 return;
+            }
 
             Console::outVerbose('Finalizing permissions...');
             $filesystem = new Filesystem();
@@ -976,7 +1041,9 @@ namespace ncc\Utilities;
             try
             {
                 if($filesystem->exists(PathFinder::getDataPath(Scopes::SYSTEM)))
+                {
                     $filesystem->chmod(PathFinder::getDataPath(Scopes::SYSTEM), 0777, 0000, true);
+                }
             }
             catch(Exception $e)
             {
@@ -986,7 +1053,9 @@ namespace ncc\Utilities;
             try
             {
                 if($filesystem->exists(PathFinder::getCachePath(Scopes::SYSTEM)))
+                {
                     $filesystem->chmod(PathFinder::getCachePath(Scopes::SYSTEM), 0777, 0000, true);
+                }
             }
             catch(Exception $e)
             {
@@ -1003,10 +1072,14 @@ namespace ncc\Utilities;
         public static function isTtyMode(): bool
         {
             if(!is_null(RuntimeCache::get('posix_isatty')))
+            {
                 return RuntimeCache::get('posix_isatty');
+            }
 
             if(function_exists('posix_isatty') === false)
+            {
                 return false;
+            }
 
             RuntimeCache::set('posix_isatty', posix_isatty(STDOUT));
             return (bool)RuntimeCache::get('posix_isatty');

@@ -38,8 +38,7 @@ namespace ncc\Classes\ComposerExtension;
     use ncc\Exceptions\ComposerDisabledException;
     use ncc\Exceptions\ComposerException;
     use ncc\Exceptions\ComposerNotAvailableException;
-    use ncc\Exceptions\DirectoryNotFoundException;
-    use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\InternalComposerNotAvailableException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
@@ -88,14 +87,13 @@ namespace ncc\Classes\ComposerExtension;
          * @throws ComposerDisabledException
          * @throws ComposerException
          * @throws ComposerNotAvailableException
-         * @throws DirectoryNotFoundException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
          * @throws InvalidScopeException
          * @throws MalformedJsonException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
+         * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
          * @throws RuntimeException
          * @throws UnsupportedCompilerExtensionException
@@ -103,7 +101,7 @@ namespace ncc\Classes\ComposerExtension;
          */
         public static function fetch(RemotePackageInput $packageInput): string
         {
-            $package_path = self::require($packageInput->Vendor, $packageInput->Package, $packageInput->Version);
+            $package_path = self::require($packageInput->vendor, $packageInput->package, $packageInput->version);
             $packages = self::compilePackages($package_path . DIRECTORY_SEPARATOR . 'composer.lock');
             $real_package_name = explode('=', $packageInput->toStandard(false))[0];
 
@@ -131,13 +129,12 @@ namespace ncc\Classes\ComposerExtension;
          * @throws ComposerDisabledException
          * @throws ComposerException
          * @throws ComposerNotAvailableException
-         * @throws DirectoryNotFoundException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
          * @throws MalformedJsonException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
+         * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
          * @throws UnsupportedCompilerExtensionException
          * @throws UserAbortedOperationException
@@ -147,7 +144,7 @@ namespace ncc\Classes\ComposerExtension;
             // Check if the file composer.json exists
             if (!file_exists($path . DIRECTORY_SEPARATOR . 'composer.json'))
             {
-                throw new FileNotFoundException(sprintf('File "%s" not found', $path . DIRECTORY_SEPARATOR . 'composer.json'));
+                throw new PathNotFoundException(sprintf('File "%s" not found', $path . DIRECTORY_SEPARATOR . 'composer.json'));
             }
 
             // Execute composer with options
@@ -205,12 +202,11 @@ namespace ncc\Classes\ComposerExtension;
          * @throws AccessDeniedException
          * @throws BuildConfigurationNotFoundException
          * @throws BuildException
-         * @throws DirectoryNotFoundException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
+         * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
          * @throws UnsupportedCompilerExtensionException
          */
@@ -218,7 +214,7 @@ namespace ncc\Classes\ComposerExtension;
         {
             if (!file_exists($composer_lock_path))
             {
-                throw new FileNotFoundException($composer_lock_path);
+                throw new PathNotFoundException($composer_lock_path);
             }
 
             $base_dir = dirname($composer_lock_path);
@@ -537,7 +533,7 @@ namespace ncc\Classes\ComposerExtension;
          * @throws ComposerDisabledException
          * @throws ComposerException
          * @throws ComposerNotAvailableException
-         * @throws FileNotFoundException
+         * @throws PathNotFoundException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
          * @throws InvalidScopeException
@@ -564,7 +560,7 @@ namespace ncc\Classes\ComposerExtension;
 
             if (!file_exists($tpl_file))
             {
-                throw new FileNotFoundException($tpl_file);
+                throw new PathNotFoundException($tpl_file);
             }
 
             $composer_exec = self::getComposerPath();
@@ -698,7 +694,6 @@ namespace ncc\Classes\ComposerExtension;
          * @param mixed $composer_package
          * @return ProjectConfiguration
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PackagePreparationFailedException
@@ -707,7 +702,7 @@ namespace ncc\Classes\ComposerExtension;
         {
             if($composer_package === null)
             {
-                $composer_package = ComposerJson::fromArray(Functions::loadJsonFile($package_path . DIRECTORY_SEPARATOR . 'composer.json', Functions::FORCE_ARRAY));
+                $composer_package = Functions::loadComposerJson($package_path . DIRECTORY_SEPARATOR . 'composer.json');
             }
 
             $project_configuration = self::generateProjectConfiguration($composer_package, $version_map);

@@ -22,7 +22,7 @@
 
 namespace ncc\Classes\BashExtension;
 
-    use ncc\Exceptions\FileNotFoundException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
@@ -33,16 +33,17 @@ namespace ncc\Classes\BashExtension;
 
         /**
          * @inheritDoc
+         * @throws PathNotFoundException
          */
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
             if(!file_exists($path) && !is_file($path))
             {
-                throw new FileNotFoundException($path);
+                throw new PathNotFoundException($path);
             }
 
             $execution_unit = new ExecutionUnit();
-            $execution_unit->ExecutionPolicy = $policy;
+            $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);
 
             $policy->Execute->Target = null;

@@ -209,7 +209,7 @@
         {
             foreach($this->ExecutionUnits as $unit)
             {
-                if($unit->ExecutionPolicy->Name == $name)
+                if($unit->execution_policy->Name == $name)
                     return $unit;
             }
 

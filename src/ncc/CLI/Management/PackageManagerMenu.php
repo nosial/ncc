@@ -225,7 +225,7 @@ namespace ncc\CLI\Management;
                 Console::out('components:');
                 foreach($package->Components as $component)
                 {
-                    Console::out('  - ' . sprintf('#%s %s - %s', $component->DataType, $component->Name, json_encode(($component->Flags ?? []), JSON_UNESCAPED_SLASHES)));
+                    Console::out('  - ' . sprintf('#%s %s - %s', $component->data_types, $component->name, json_encode(($component->flags ?? []), JSON_UNESCAPED_SLASHES)));
                 }
             }
             else
@@ -363,7 +363,7 @@ namespace ncc\CLI\Management;
             $path = $package;
             $parsed_source = new RemotePackageInput($path);
 
-            if($parsed_source->Vendor !== null && $parsed_source->Package !== null && $parsed_source->Source !== null)
+            if($parsed_source->vendor !== null && $parsed_source->package !== null && $parsed_source->source !== null)
             {
                 try
                 {

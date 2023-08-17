@@ -1,5 +1,7 @@
 # ![NCC](assets/icon/ncc@32px.png "NCC")   NCC
 
+[![wakatime](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada.svg)](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada)
+
 Nosial Code Compiler is a program written in PHP designed to be a multi-purpose compiler, package manager and toolkit.
 This program is a complete re-write of the now defunct [PHP Package Manager (PPM)](https://git.n64.cc/intellivoid/ppm)
 toolkit offering more features, security and proper code licensing and copyrighting for the components used for the project.

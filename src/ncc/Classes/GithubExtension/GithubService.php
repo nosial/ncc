@@ -59,9 +59,9 @@ namespace ncc\Classes\GithubExtension;
         {
             $httpRequest = new HttpRequest();
             $protocol = ($definedRemoteSource->SSL ? "https" : "http");
-            $owner_f = str_ireplace("/", "%2F", $packageInput->Vendor);
+            $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
-            $repository = urlencode($packageInput->Package);
+            $repository = urlencode($packageInput->package);
             $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/repos/$owner_f/$repository";
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
@@ -128,9 +128,9 @@ namespace ncc\Classes\GithubExtension;
         {
             $httpRequest = new HttpRequest();
             $protocol = ($definedRemoteSource->SSL ? "https" : "http");
-            $owner_f = str_ireplace("/", "%2F", $packageInput->Vendor);
+            $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
-            $repository = urlencode($packageInput->Package);
+            $repository = urlencode($packageInput->package);
             $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/repos/$owner_f/$repository/releases";
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
@@ -235,7 +235,7 @@ namespace ncc\Classes\GithubExtension;
                 throw new VersionNotFoundException('No releases found for the given repository.');
             }
 
-            if ($packageInput->Version === Versions::LATEST)
+            if ($packageInput->version === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach ($releases as $release)
@@ -256,7 +256,7 @@ namespace ncc\Classes\GithubExtension;
             }
 
             // Query a specific version
-            if (!isset($releases[$packageInput->Version]))
+            if (!isset($releases[$packageInput->version]))
             {
                 // Find the closest thing to the requested version
                 $selected_version = null;
@@ -268,7 +268,7 @@ namespace ncc\Classes\GithubExtension;
                         continue;
                     }
 
-                    if (VersionComparator::compareVersion($version, $packageInput->Version) === 1)
+                    if (VersionComparator::compareVersion($version, $packageInput->version) === 1)
                     {
                         $selected_version = $version;
                     }
@@ -281,7 +281,7 @@ namespace ncc\Classes\GithubExtension;
             }
             else
             {
-                $selected_version = $packageInput->Version;
+                $selected_version = $packageInput->version;
             }
 
             if (!isset($releases[$selected_version]))

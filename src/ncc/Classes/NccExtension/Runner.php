@@ -54,7 +54,7 @@ namespace ncc\Classes\NccExtension;
 
             $ExecutionPointerManager = new ExecutionPointerManager();
             $ExecutionPointerManager->addUnit($package, $version, $unit, true);
-            $ExecutionPointerManager->executeUnit($package, $version, $unit->ExecutionPolicy->Name);
+            $ExecutionPointerManager->executeUnit($package, $version, $unit->execution_policy->Name);
             $ExecutionPointerManager->cleanTemporaryUnits();
         }
     }

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
  - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
+ - Added new exception `PathNotFoundException` and implemented it in replacement for `DirectoryNotFoundException` and
+   `FileNotFoundException` in `\ncc\Exceptions`
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -52,6 +54,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Updated class type to "final class" in `\ncc\Enums > Scopes`
  - Updated class type to "final class" in `\ncc\Enums > Versions`
  - Corrected code-smell and code style issues in `src/installer/hash_check.php`
+ - Corrected code-smell and code style issues in `\ncc\Managers > ProjectManager`
+ - Corrected code-smell and code style issues in `\ncc\Objects\NccVersionInformation > Component`
+ - Corrected code-smell and code style issues in `\ncc\Objects\Package > Component`
+ - Corrected code-smell and code style issues in `\ncc\Managers > ConfigurationManager`
+ - Corrected code-smell and code style issues in `\ncc\Managers > CredentialManager`
+ - Refactored `\ncc\Utilities > PathFinder` to remove all Win32 references
+ - Corrected code-smell and code style issues in `\ncc\Objects > ExecutionPointers`
+ - Corrected code-smell and code style issues in `\ncc\Managers > ExecutionPointerManager`
+ - Corrected code-smell and code style issues in `\ncc\Utilities > Functions`
+ - Corrected code-smell and code style issues in `\ncc\Managers > PackageManager`
+ - Corrected code-smell and code style issues in `\ncc\Utilities > IO`
+ - Corrected code-smell and code style issues in `\ncc > ncc`
+ - Corrected code-smell and code style issues in `\ncc\CLI > Main`
+
+## Removed
+ - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
+ - Removed the use of `InvalidScopeException` across the project
+ - Removed references of Win32 from the project as Windows is not going supported
+ - Removed unused exception `FileNotFoundException` in `\ncc\CLI > HelpMenu`
 
 
 

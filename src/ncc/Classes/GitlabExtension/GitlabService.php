@@ -58,9 +58,9 @@
         {
             $httpRequest = new HttpRequest();
             $protocol = ($definedRemoteSource->SSL ? "https" : "http");
-            $owner_f = str_ireplace("/", "%2F", $packageInput->Vendor);
+            $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
-            $project_f = str_ireplace("/", "%2F", $packageInput->Package);
+            $project_f = str_ireplace("/", "%2F", $packageInput->package);
             $project_f = str_ireplace(".", "%2F", $project_f);
             $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/api/v4/projects/$owner_f%2F$project_f";
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry);
@@ -100,7 +100,7 @@
          */
         public static function getRelease(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
-            $releases = self::getReleases($packageInput->Vendor, $packageInput->Package, $definedRemoteSource, $entry);
+            $releases = self::getReleases($packageInput->vendor, $packageInput->package, $definedRemoteSource, $entry);
 
             if(count($releases) === 0)
             {
@@ -108,7 +108,7 @@
             }
 
             // Query the latest package only
-            if($packageInput->Version === Versions::LATEST)
+            if($packageInput->version === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach($releases as $release)
@@ -129,7 +129,7 @@
             }
 
             // Query a specific version
-            if(!isset($releases[$packageInput->Version]))
+            if(!isset($releases[$packageInput->version]))
             {
                 // Find the closest thing to the requested version
                 $selected_version = null;
@@ -141,7 +141,7 @@
                         continue;
                     }
 
-                    if(VersionComparator::compareVersion($version, $packageInput->Version) === 1)
+                    if(VersionComparator::compareVersion($version, $packageInput->version) === 1)
                     {
                         $selected_version = $version;
                     }
@@ -154,7 +154,7 @@
             }
             else
             {
-                $selected_version = $packageInput->Version;
+                $selected_version = $packageInput->version;
             }
 
             if(!isset($releases[$selected_version]))

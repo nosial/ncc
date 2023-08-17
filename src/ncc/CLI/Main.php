@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -34,10 +34,7 @@
     use ncc\CLI\Management\PackageManagerMenu;
     use ncc\CLI\Management\ProjectMenu;
     use ncc\CLI\Management\SourcesMenu;
-    use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\FileNotFoundException;
-    use ncc\Exceptions\IOException;
-    use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\ncc;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -61,9 +58,6 @@
          *
          * @param $argv
          * @return void
-         * @throws RuntimeException
-         * @throws AccessDeniedException
-         * @throws IOException
          */
         public static function start($argv): void
         {
@@ -76,13 +70,13 @@
                 {
                     ncc::initialize();
                 }
-                catch (FileNotFoundException $e)
+                catch (PathNotFoundException $e)
                 {
                     Console::outException('Cannot initialize NCC, one or more files were not found.', $e, 1);
                 }
-                catch (RuntimeException $e)
+                catch (Exception $e)
                 {
-                    Console::outException('Cannot initialize NCC due to a runtime error.', $e, 1);
+                    Console::outException('Cannot initialize NCC due to an unexpected error.', $e, 1);
                 }
 
                 define('NCC_CLI_MODE', 1);
@@ -116,11 +110,13 @@
                 if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
                 {
                     Console::outDebug('Debug logging enabled');
+                    /** @noinspection JsonEncodingApiUsageInspection */
                     Console::outDebug(sprintf('const: %s', json_encode(ncc::getConstants(), JSON_UNESCAPED_SLASHES)));
+                    /** @noinspection JsonEncodingApiUsageInspection */
                     Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
                 }
 
-                if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS))
+                if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS, true))
                 {
                     Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
                 }
@@ -187,18 +183,26 @@
             }
         }
 
-        private static function displayVersion()
+        /**
+         * Displays the current version of NCC
+         *
+         * @return void
+         */
+        private static function displayVersion(): void
         {
             Console::out(sprintf('NCC version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
         }
 
         /**
+         * Returns the arguments passed to NCC
+         *
          * @return array
          */
         public static function getArgs(): array
         {
-            if (self::$args == null)
+            if (self::$args === null)
             {
+                /** @noinspection IssetArgumentExistenceInspection */
                 if(isset($argv))
                 {
                     self::$args = Resolver::parseArguments(implode(' ', $argv));
@@ -217,8 +221,11 @@
          */
         public static function getLogLevel(): string
         {
-            if(self::$log_level == null)
+            if(self::$log_level === null)
+            {
                 self::$log_level = LogLevel::INFO;
+            }
+
             return self::$log_level;
         }
 

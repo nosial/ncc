@@ -24,60 +24,59 @@
 
     namespace ncc\Objects;
 
+    use InvalidArgumentException;
     use ncc\Enums\RegexPatterns;
 
     class RemotePackageInput
     {
         /**
-         * @var string|null
+         * @var string
          */
-        public $Vendor;
+        public $vendor;
+
+        /**
+         * @var string
+         */
+        public $package;
 
         /**
          * @var string|null
          */
-        public $Package;
+        public $version;
 
         /**
          * @var string|null
          */
-        public $Version;
+        public $branch;
 
         /**
-         * @var string|null
+         * @var string
          */
-        public $Branch;
-
-        /**
-         * @var string|null
-         */
-        public $Source;
+        public $source;
 
         /**
          * Public Constructor & String Parser
          *
          * @param string|null $input
          */
-        public function __construct(?string $input=null)
+        public function __construct(?string $input = null)
         {
-            if($input !== null && preg_match(RegexPatterns::REMOTE_PACKAGE, $input, $matches))
+            if ($input !== null && preg_match(RegexPatterns::REMOTE_PACKAGE, $input, $matches))
             {
-                $this->Vendor = $matches['vendor'];
-                $this->Package = $matches['package'];
-                $this->Version = $matches['version'];
-                $this->Branch = $matches['branch'];
-                $this->Source = $matches['source'];
+                if ($matches['source'] === null || $matches['package'] === null || $matches['vendor'] === null)
+                {
+                    throw new InvalidArgumentException('Package, version, and source are required.');
+                }
 
-                if(strlen($this->Vendor) == 0)
-                    $this->Vendor = null;
-                if(strlen($this->Package) == 0)
-                    $this->Package = null;
-                if(strlen($this->Version) == 0)
-                    $this->Version = null;
-                if(strlen($this->Branch) == 0)
-                    $this->Branch = null;
-                if(strlen($this->Source) == 0)
-                    $this->Source = null;
+                $this->vendor = $matches['vendor'];
+                $this->package = $matches['package'];
+                $this->source = $matches['source'];
+                $this->version = empty($matches['version']) ? null : $matches['version'];
+                $this->branch = empty($matches['branch']) ? null : $matches['branch'];
+            }
+            else
+            {
+                throw new InvalidArgumentException('Input does not match the expected pattern.');
             }
         }
 
@@ -88,19 +87,27 @@
          */
         public function toString(): string
         {
-            if($this->Vendor == null || $this->Package == null)
+            if($this->vendor === null || $this->package === null)
             {
                 return '';
             }
 
-            $results = $this->Vendor . '/' . $this->Package;
+            $results = $this->vendor . '/' . $this->package;
 
-            if($this->Version !== null)
-                $results .= '=' . $this->Version;
-            if($this->Branch !== null)
-                $results .= ':' . $this->Branch;
-            if($this->Source !== null)
-                $results .= '@' . $this->Source;
+            if($this->version !== null)
+            {
+                $results .= '=' . $this->version;
+            }
+
+            if($this->branch !== null)
+            {
+                $results .= ':' . $this->branch;
+            }
+
+            if($this->source !== null)
+            {
+                $results .= '@' . $this->source;
+            }
 
             return $results;
         }
@@ -114,7 +121,10 @@
         public function toStandard(bool $version=true): string
         {
             if($version)
-                return str_replace('-', '_', sprintf('com.%s.%s=%s', $this->Vendor, $this->Package, $this->Version));
-            return str_replace('-', '_', sprintf('com.%s.%s', $this->Vendor, $this->Package));
+            {
+                return str_replace('-', '_', sprintf('com.%s.%s=%s', $this->vendor, $this->package, $this->version));
+            }
+
+            return str_replace('-', '_', sprintf('com.%s.%s', $this->vendor, $this->package));
         }
     }

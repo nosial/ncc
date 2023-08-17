@@ -37,7 +37,7 @@ namespace ncc\Classes\LuaExtension;
         {
             $execution_unit = new ExecutionUnit();
             $policy->Execute->Target = null;
-            $execution_unit->ExecutionPolicy = $policy;
+            $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);
 
             return $execution_unit;

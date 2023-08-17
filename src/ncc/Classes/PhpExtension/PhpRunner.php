@@ -46,7 +46,7 @@ namespace ncc\Classes\PhpExtension;
             if(!file_exists($path) && !is_file($path))
                 throw new FileNotFoundException($path);
             $policy->Execute->Target = null;
-            $execution_unit->ExecutionPolicy = $policy;
+            $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);
 
             return $execution_unit;

@@ -1,26 +1,27 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
 
     /** @noinspection PhpMissingFieldTypeInspection */
+
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     namespace ncc\Managers;
 
@@ -30,13 +31,13 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
-    use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PackagePreparationFailedException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\UnsupportedCompilerExtensionException;
@@ -44,6 +45,7 @@
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
     use ncc\Utilities\Validate;
+    use RuntimeException;
 
     class ProjectManager
     {
@@ -52,41 +54,37 @@
          *
          * @var string
          */
-        private $ProjectFilePath;
+        private $project_file_path;
 
         /**
          * The path that points the project's main directory
          *
          * @var string
          */
-        private $ProjectPath;
+        private $project_path;
 
         /**
          * The loaded project configuration, null if no project file is loaded
          *
          * @var ProjectConfiguration|null
          */
-        private $ProjectConfiguration;
+        private $project_configuration;
 
         /**
          * Public Constructor
          *
          * @param string $path
          * @throws AccessDeniedException
-         * @throws DirectoryNotFoundException
          * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
+         * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
          */
         public function __construct(string $path)
         {
-            $this->ProjectFilePath = null;
-            $this->ProjectPath = null;
-
             // Auto-resolve the trailing slash
-            /** @noinspection PhpStrFunctionsInspection */
-            if(substr($path, -1) !== '/')
+            if(!str_ends_with($path, '/'))
             {
                 $path .= DIRECTORY_SEPARATOR;
             }
@@ -94,14 +92,16 @@
             // Detect if the folder exists or not
             if(!file_exists($path) || !is_dir($path))
             {
-                throw new DirectoryNotFoundException('The given directory \'' . $path .'\' does not exist');
+                throw new PathNotFoundException($path);
             }
 
-            $this->ProjectPath = $path;
-            $this->ProjectFilePath = $path . 'project.json';
+            $this->project_path = $path;
+            $this->project_file_path = $path . 'project.json';
 
-            if(file_exists($this->ProjectFilePath))
+            if(file_exists($this->project_file_path))
+            {
                 $this->load();
+            }
         }
 
         /**
@@ -130,71 +130,79 @@
                 throw new InvalidProjectNameException('The given project name \'' . $name . '\' is not valid');
             }
 
-            if(file_exists($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json'))
+            if(file_exists($this->project_path . DIRECTORY_SEPARATOR . 'project.json'))
             {
-                throw new ProjectAlreadyExistsException('A project has already been initialized in \'' . $this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json' . '\'');
+                throw new ProjectAlreadyExistsException('A project has already been initialized in \'' . $this->project_path . DIRECTORY_SEPARATOR . 'project.json' . '\'');
             }
 
-            $this->ProjectConfiguration = new ProjectConfiguration();
+            $this->project_configuration = new ProjectConfiguration();
 
             // Set the compiler information
-            $this->ProjectConfiguration->Project->Compiler = $compiler;
+            $this->project_configuration->Project->Compiler = $compiler;
 
             // Set the assembly information
-            $this->ProjectConfiguration->Assembly->Name = $name;
-            $this->ProjectConfiguration->Assembly->Package = $package;
-            $this->ProjectConfiguration->Assembly->Version = '1.0.0';
-            $this->ProjectConfiguration->Assembly->UUID = Uuid::v1()->toRfc4122();
+            $this->project_configuration->Assembly->Name = $name;
+            $this->project_configuration->Assembly->Package = $package;
+            $this->project_configuration->Assembly->Version = '1.0.0';
+            $this->project_configuration->Assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
-            $this->ProjectConfiguration->Build->SourcePath = $src;
-            if($this->ProjectConfiguration->Build->SourcePath == null)
-                $this->ProjectConfiguration->Build->SourcePath = $this->ProjectPath;
-            $this->ProjectConfiguration->Build->DefaultConfiguration = 'debug';
+            $this->project_configuration->Build->SourcePath = $src;
+
+            if($this->project_configuration->Build->SourcePath === null)
+            {
+                $this->project_configuration->Build->SourcePath = $this->project_path;
+            }
+
+            $this->project_configuration->Build->DefaultConfiguration = 'debug';
 
             // Assembly constants if the program wishes to check for this
-            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
-            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
-            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
-            $this->ProjectConfiguration->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
+            $this->project_configuration->Build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
+            $this->project_configuration->Build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
+            $this->project_configuration->Build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
+            $this->project_configuration->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
 
             // Generate configurations
             $DebugConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $DebugConfiguration->Name = 'debug';
             $DebugConfiguration->OutputPath = 'build/debug';
             $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
-            $this->ProjectConfiguration->Build->Configurations[] = $DebugConfiguration;
+            $this->project_configuration->Build->Configurations[] = $DebugConfiguration;
             $ReleaseConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $ReleaseConfiguration->Name = 'release';
             $ReleaseConfiguration->OutputPath = 'build/release';
             $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
-            $this->ProjectConfiguration->Build->Configurations[] = $ReleaseConfiguration;
+            $this->project_configuration->Build->Configurations[] = $ReleaseConfiguration;
 
-            // Finally create project.json
-            $this->ProjectConfiguration->toFile($this->ProjectPath . DIRECTORY_SEPARATOR . 'project.json');
+            // Finally, create project.json
+            $this->project_configuration->toFile($this->project_path . DIRECTORY_SEPARATOR . 'project.json');
 
             // And create the project directory for additional assets/resources
             $Folders = [
-                $this->ProjectPath . DIRECTORY_SEPARATOR . 'ncc',
-                $this->ProjectPath . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'cache',
-                $this->ProjectPath . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'config',
+                $this->project_path . DIRECTORY_SEPARATOR . 'ncc',
+                $this->project_path . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'cache',
+                $this->project_path . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'config',
             ];
 
             foreach($Folders as $folder)
             {
-                if(!file_exists($folder))
+                if(!file_exists($folder) && !mkdir($folder) && !is_dir($folder))
                 {
-                    mkdir($folder);
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $folder));
                 }
             }
 
             // Process options
             foreach($options as $option)
             {
-                if ($option == InitializeProjectOptions::CREATE_SOURCE_DIRECTORY) {
-                    if (!file_exists($this->ProjectConfiguration->Build->SourcePath)) {
-                        mkdir($this->ProjectConfiguration->Build->SourcePath);
-                    }
+                if (
+                    $option === InitializeProjectOptions::CREATE_SOURCE_DIRECTORY &&
+                    !file_exists($this->project_configuration->Build->SourcePath) &&
+                    !mkdir($concurrentDirectory = $this->project_configuration->Build->SourcePath) &&
+                    !is_dir($concurrentDirectory)
+                )
+                {
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
                 }
             }
         }
@@ -206,10 +214,7 @@
          */
         public function projectLoaded(): bool
         {
-            if($this->ProjectConfiguration == null)
-                return false;
-
-            return true;
+            return $this->project_configuration !== null;
         }
 
         /**
@@ -224,10 +229,12 @@
          */
         public function load(): void
         {
-            if(!file_exists($this->ProjectFilePath) && !is_file($this->ProjectFilePath))
-                throw new ProjectConfigurationNotFoundException('The project configuration file \'' . $this->ProjectFilePath . '\' was not found');
+            if(!file_exists($this->project_file_path) && !is_file($this->project_file_path))
+            {
+                throw new ProjectConfigurationNotFoundException('The project configuration file \'' . $this->project_file_path . '\' was not found');
+            }
 
-            $this->ProjectConfiguration = ProjectConfiguration::fromFile($this->ProjectFilePath);
+            $this->project_configuration = ProjectConfiguration::fromFile($this->project_file_path);
         }
 
         /**
@@ -239,16 +246,21 @@
         public function save(): void
         {
             if(!$this->projectLoaded())
+            {
                 return;
-            $this->ProjectConfiguration->toFile($this->ProjectFilePath);
+            }
+
+            $this->project_configuration->toFile($this->project_file_path);
         }
 
         /**
+         * Returns the project's file path.
+         *
          * @return string|null
          */
         public function getProjectFilePath(): ?string
         {
-            return $this->ProjectFilePath;
+            return $this->project_file_path;
         }
 
         /**
@@ -261,17 +273,22 @@
          */
         public function getProjectConfiguration(): ?ProjectConfiguration
         {
-            if($this->ProjectConfiguration == null)
+            if($this->project_configuration === null)
+            {
                 $this->load();
-            return $this->ProjectConfiguration;
+            }
+
+            return $this->project_configuration;
         }
 
         /**
+         * Returns the project's path.
+         *
          * @return string|null
          */
         public function getProjectPath(): ?string
         {
-            return $this->ProjectPath;
+            return $this->project_path;
         }
 
 

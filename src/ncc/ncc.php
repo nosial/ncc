@@ -1,31 +1,34 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
 
-namespace ncc;
+    /** @noinspection PhpMissingFieldTypeInspection */
+
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
+
+    namespace ncc;
     
     use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Objects\NccVersionInformation;
     use ncc\Utilities\Functions;
@@ -42,15 +45,7 @@ namespace ncc;
          *
          * @var NccVersionInformation|null
          */
-        private static $VersionInformation;
-
-        /**
-         * NCC Public Constructor
-         */
-        public function __construct()
-        {
-            
-        }
+        private static $version_information;
 
         /**
          * Returns the version information object about the current build of NCC
@@ -58,40 +53,41 @@ namespace ncc;
          * @param boolean $reload Indicates if the cached version is to be ignored and the version file to be reloaded and validated
          * @return NccVersionInformation
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
-         * @throws RuntimeException
+         * @throws PathNotFoundException
          */
         public static function getVersionInformation(bool $reload=False): NccVersionInformation
         {
-            if(self::$VersionInformation !== null && !$reload)
-                return self::$VersionInformation;
+            if(self::$version_information !== null && !$reload)
+            {
+                return self::$version_information;
+            }
 
             if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'version.json'))
             {
-                throw new RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
+                throw new \RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
             }
 
             try
             {
-                self::$VersionInformation = NccVersionInformation::fromArray(Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', Functions::FORCE_ARRAY));
+                self::$version_information = NccVersionInformation::fromArray(Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', Functions::FORCE_ARRAY));
             }
             catch(MalformedJsonException $e)
             {
-                throw new RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
+                throw new \RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
             }
 
-            if(self::$VersionInformation->Version == null)
+            if(self::$version_information->Version === null)
             {
-                throw new RuntimeException('The version number is not specified in the version information file');
+                throw new \RuntimeException('The version number is not specified in the version information file');
             }
 
-            if(self::$VersionInformation->Branch == null)
+            if(self::$version_information->Branch === null)
             {
-                throw new RuntimeException('The version branch is not specified in the version information file');
+                throw new \RuntimeException('The version branch is not specified in the version information file');
             }
 
-            return self::$VersionInformation;
+            return self::$version_information;
         }
 
         /**
@@ -99,15 +95,16 @@ namespace ncc;
          *
          * @return bool
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
-         * @throws RuntimeException
+         * @throws PathNotFoundException
          */
         public static function initialize(): bool
         {
             if(defined('NCC_INIT'))
+            {
                 return false;
-            
+            }
+
             // Set debugging/troubleshooting constants
             define('NCC_EXEC_LOCATION', __DIR__); // The directory of where ncc.php is located
             define('NCC_EXEC_IWD', getcwd()); // The initial working directory when NCC was first invoked
@@ -130,27 +127,20 @@ namespace ncc;
          */
         public static function cliMode(): bool
         {
-            // TODO: Optimize this function to reduce redundant calls
-
-            if(defined('NCC_CLI_MODE') && NCC_CLI_MODE == 1)
-            {
-                return true;
-            }
-
-            return false;
+            return defined('NCC_CLI_MODE') && NCC_CLI_MODE === 1;
         }
 
         /**
          * Returns the constants set by NCC
          *
          * @return array
-         * @throws RuntimeException
          */
         public static function getConstants(): array
         {
             if(!defined('NCC_INIT'))
             {
-                throw new RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getConstants()');
+                /** @noinspection ClassConstantCanBeUsedInspection */
+                throw new \RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getConstants()');
             }
 
             return [

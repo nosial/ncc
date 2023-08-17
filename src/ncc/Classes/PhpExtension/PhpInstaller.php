@@ -89,35 +89,35 @@
          */
         public function processComponent(Package\Component $component): ?string
         {
-            if($component->Data == null)
+            if($component->data == null)
                 return null;
 
-            if(!$component->validateChecksum())
-                throw new ComponentChecksumException('Checksum validation failed for component ' . $component->Name . ', the package may be corrupted.');
+            if(!$component->validate_checksum())
+                throw new ComponentChecksumException('Checksum validation failed for component ' . $component->name . ', the package may be corrupted.');
 
-            switch($component->DataType)
+            switch($component->data_types)
             {
                 case ComponentDataType::AST:
                     try
                     {
-                        $stmts = $this->decodeRecursive($component->Data);
+                        $stmts = $this->decodeRecursive($component->data);
                     }
                     catch (Exception $e)
                     {
-                        throw new ComponentDecodeException('Cannot decode component: ' . $component->Name . ', ' . $e->getMessage(), $e);
+                        throw new ComponentDecodeException('Cannot decode component: ' . $component->name . ', ' . $e->getMessage(), $e);
                     }
 
                     $prettyPrinter = new Standard();
                     return $prettyPrinter->prettyPrintFile($stmts);
 
                 case ComponentDataType::BASE64_ENCODED:
-                   return Base64::decode($component->Data);
+                   return Base64::decode($component->data);
 
                 case ComponentDataType::PLAIN:
-                    return $component->Data;
+                    return $component->data;
 
                 default:
-                    throw new UnsupportedComponentTypeException('Unsupported component type \'' . $component->DataType . '\'');
+                    throw new UnsupportedComponentTypeException('Unsupported component type \'' . $component->data_types . '\'');
             }
         }
 

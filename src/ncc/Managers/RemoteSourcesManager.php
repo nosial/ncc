@@ -131,7 +131,9 @@
             foreach($this->Sources as $source)
             {
                 if($source->Name === $name)
+                {
                     return $source;
+                }
             }
 
             return null;
