@@ -24,7 +24,7 @@ namespace ncc\Exceptions;
 
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     class RuntimeException extends Exception
@@ -35,6 +35,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::RuntimeException, $previous);
+            parent::__construct($message, ExceptionCodes::RUNTIME, $previous);
         }
     }

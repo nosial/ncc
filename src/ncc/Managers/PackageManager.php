@@ -25,14 +25,14 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\CompilerExtensions;
-    use ncc\Abstracts\ConstantReferences;
-    use ncc\Abstracts\DependencySourceType;
-    use ncc\Abstracts\LogLevel;
-    use ncc\Abstracts\Options\InstallPackageOptions;
-    use ncc\Abstracts\RemoteSourceType;
-    use ncc\Abstracts\Scopes;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\ConstantReferences;
+    use ncc\Enums\DependencySourceType;
+    use ncc\Enums\LogLevel;
+    use ncc\Enums\Options\InstallPackageOptions;
+    use ncc\Enums\RemoteSourceType;
+    use ncc\Enums\Scopes;
+    use ncc\Enums\Versions;
     use ncc\Classes\ComposerExtension\ComposerSourceBuiltin;
     use ncc\Classes\GitClient;
     use ncc\Classes\NccExtension\PackageCompiler;
@@ -95,7 +95,7 @@
          */
         public function __construct()
         {
-            $this->PackagesPath = PathFinder::getPackagesPath(Scopes::System);
+            $this->PackagesPath = PathFinder::getPackagesPath(Scopes::SYSTEM);
             $this->PackageLockManager = new PackageLockManager();
             $this->PackageLockManager->load();
         }
@@ -126,7 +126,7 @@
          */
         public function install(string $package_path, ?Entry $entry=null, array $options=[]): string
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient permission to install packages');
 
             if(!file_exists($package_path) || !is_file($package_path) || !is_readable($package_path))
@@ -151,7 +151,7 @@
 
             if($this->getPackageVersion($package->Assembly->Package, $package->Assembly->Version) !== null)
             {
-                if(in_array(InstallPackageOptions::Reinstall, $options))
+                if(in_array(InstallPackageOptions::REINSTALL, $options))
                 {
                     if($this->getPackageLockManager()->getPackageLock()->packageExists(
                         $package->Assembly->Package, $package->Assembly->Version
@@ -170,15 +170,15 @@
 
             $execution_pointer_manager = new ExecutionPointerManager();
             PackageCompiler::compilePackageConstants($package, [
-                ConstantReferences::Install => $installation_paths
+                ConstantReferences::INSTALL => $installation_paths
             ]);
 
             // Process all the required dependencies before installing the package
-            if($package->Dependencies !== null && count($package->Dependencies) > 0 && !in_array(InstallPackageOptions::SkipDependencies, $options))
+            if($package->Dependencies !== null && count($package->Dependencies) > 0 && !in_array(InstallPackageOptions::SKIP_DEPENDENCIES, $options))
             {
                 foreach($package->Dependencies as $dependency)
                 {
-                    if(in_array(InstallPackageOptions::Reinstall, $options))
+                    if(in_array(InstallPackageOptions::REINSTALL, $options))
                     {
                         // Uninstall the dependency if the option Reinstall is passed on
                         if($this->getPackageLockManager()->getPackageLock()->packageExists($dependency->Name, $dependency->Version))
@@ -200,7 +200,7 @@
 
             Console::outVerbose(sprintf('Installing %s', $package_path));
 
-            if(Resolver::checkLogLevel(LogLevel::Debug, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
                 Console::outDebug(sprintf('installer.install_path: %s', $installation_paths->getInstallationPath()));
                 Console::outDebug(sprintf('installer.data_path:    %s', $installation_paths->getDataPath()));
@@ -450,12 +450,12 @@
             if($input->Package == null)
                 throw new PackageFetchException('No package specified');
             if($input->Version == null)
-                $input->Version = Versions::Latest;
+                $input->Version = Versions::LATEST;
 
             Console::outVerbose('Fetching package ' . $input->Package . ' from ' . $input->Source . ' (' . $input->Version . ')');
 
             $remote_source_type = Resolver::detectRemoteSourceType($input->Source);
-            if($remote_source_type == RemoteSourceType::Builtin)
+            if($remote_source_type == RemoteSourceType::BUILTIN)
             {
                 Console::outDebug('using builtin source ' . $input->Source);
                 switch($input->Source)
@@ -475,7 +475,7 @@
                 }
             }
 
-            if($remote_source_type == RemoteSourceType::Defined)
+            if($remote_source_type == RemoteSourceType::DEFINED)
             {
                 Console::outDebug('using defined source ' . $input->Source);
                 $remote_source_manager = new RemoteSourcesManager();
@@ -665,7 +665,7 @@
                 Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->Name, $dependency->Version, $package->Assembly->Package, $package->Assembly->Version));
                 switch ($dependency->SourceType)
                 {
-                    case DependencySourceType::Local:
+                    case DependencySourceType::LOCAL:
                         Console::outDebug('installing from local source ' . $dependency->Source);
                         $basedir = dirname($package_path);
                         if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->Source))
@@ -674,10 +674,10 @@
                         RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version), true);
                         break;
 
-                    case DependencySourceType::StaticLinking:
+                    case DependencySourceType::STATIC:
                         throw new PackageNotFoundException('Static linking not possible, package ' . $dependency->Name . ' is not installed');
 
-                    case DependencySourceType::RemoteSource:
+                    case DependencySourceType::REMOTE:
                         Console::outDebug('installing from remote source ' . $dependency->Source);
                         $this->installFromSource($dependency->Source, $entry, $options);
                         RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version), true);
@@ -855,7 +855,7 @@
          */
         public function uninstallPackageVersion(string $package, string $version): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient permission to uninstall packages');
 
             $version_entry = $this->getPackageVersion($package, $version);
@@ -924,7 +924,7 @@
          */
         public function uninstallPackage(string $package): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient permission to uninstall packages');
 
             $package_entry = $this->getPackage($package);

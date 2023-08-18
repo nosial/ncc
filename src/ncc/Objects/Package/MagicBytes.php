@@ -24,8 +24,8 @@
 
     namespace ncc\Objects\Package;
 
-    use ncc\Abstracts\EncoderType;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\EncoderType;
+    use ncc\Enums\Versions;
 
     class MagicBytes
     {
@@ -76,8 +76,8 @@
          */
         public function __construct()
         {
-            $this->PackageStructureVersion = Versions::PackageStructureVersion;
-            $this->Encoder = EncoderType::ZiProto;
+            $this->PackageStructureVersion = Versions::PACKAGE_STRUCTURE_VERSION;
+            $this->Encoder = EncoderType::ZI_PROTO;
             $this->IsCompressed = false;
             $this->IsEncrypted = false;
             $this->IsInstallable = false;

@@ -23,8 +23,8 @@
 namespace ncc\Classes;
 
     use CurlHandle;
-    use ncc\Abstracts\HttpRequestType;
-    use ncc\Abstracts\LogLevel;
+    use ncc\Enums\HttpRequestType;
+    use ncc\Enums\LogLevel;
     use ncc\CLI\Main;
     use ncc\Exceptions\HttpException;
     use ncc\Objects\HttpRequest;
@@ -60,9 +60,9 @@ namespace ncc\Classes;
                 {
                     switch(Main::getLogLevel())
                     {
-                        case LogLevel::Verbose:
-                        case LogLevel::Debug:
-                        case LogLevel::Silent:
+                        case LogLevel::VERBOSE:
+                        case LogLevel::DEBUG:
+                        case LogLevel::SILENT:
                             Console::outVerbose(sprintf(' <= %s of %s bytes downloaded', $downloaded, $downloadSize));
                             break;
 

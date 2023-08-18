@@ -27,8 +27,8 @@
 
     use ArrayIterator;
     use Exception;
-    use ncc\Abstracts\ComponentDataType;
-    use ncc\Abstracts\ComponentFileExtensions;
+    use ncc\Enums\ComponentDataType;
+    use ncc\Enums\ComponentFileExtensions;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ComponentChecksumException;
     use ncc\Exceptions\ComponentDecodeException;
@@ -110,10 +110,10 @@
                     $prettyPrinter = new Standard();
                     return $prettyPrinter->prettyPrintFile($stmts);
 
-                case ComponentDataType::b64encoded:
+                case ComponentDataType::BASE64_ENCODED:
                    return Base64::decode($component->Data);
 
-                case ComponentDataType::Plain:
+                case ComponentDataType::PLAIN:
                     return $component->Data;
 
                 default:
@@ -303,7 +303,7 @@
             $configuration->setOutputFile($output);
             $configuration->setStaticMode(false);
             // Official PHP file extensions that are missing from the default configuration (whatever)
-            $configuration->setInclude(ComponentFileExtensions::Php);
+            $configuration->setInclude(ComponentFileExtensions::PHP);
             $configuration->setQuietMode(true);
             $configuration->setTolerantMode(true);
 

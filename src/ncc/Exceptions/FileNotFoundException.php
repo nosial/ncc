@@ -23,7 +23,7 @@
 namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     /**
@@ -38,6 +38,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $path = "", ?Throwable $previous = null)
         {
-            parent::__construct('The file \'' . realpath($path) . '\' was not found', ExceptionCodes::FileNotFoundException, $previous);
+            parent::__construct('The file \'' . realpath($path) . '\' was not found', ExceptionCodes::FILE_NOT_FOUND, $previous);
         }
     }

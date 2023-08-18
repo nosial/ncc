@@ -23,7 +23,7 @@
 namespace ncc\CLI\Commands;
 
     use Exception;
-    use ncc\Abstracts\Options\BuildConfigurationValues;
+    use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
     use ncc\Utilities\Console;
@@ -91,7 +91,7 @@ namespace ncc\CLI\Commands;
             // Build the project
             try
             {
-                $build_configuration = BuildConfigurationValues::DefaultConfiguration;
+                $build_configuration = BuildConfigurationValues::DEFAULT;
                 if(isset($args['config']))
                 {
                     $build_configuration = $args['config'];

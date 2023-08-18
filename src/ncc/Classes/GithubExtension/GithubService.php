@@ -22,8 +22,8 @@
 
 namespace ncc\Classes\GithubExtension;
 
-    use ncc\Abstracts\HttpRequestType;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\HttpRequestType;
+    use ncc\Enums\Versions;
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GithubServiceException;
@@ -235,7 +235,7 @@ namespace ncc\Classes\GithubExtension;
                 throw new VersionNotFoundException('No releases found for the given repository.');
             }
 
-            if ($packageInput->Version === Versions::Latest)
+            if ($packageInput->Version === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach ($releases as $release)

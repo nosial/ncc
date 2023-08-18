@@ -23,7 +23,7 @@
 namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
 
     class ComposerNotAvailableException extends Exception
     {
@@ -33,6 +33,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $message = "", $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::ComposerNotAvailableException, $previous);
+            parent::__construct($message, ExceptionCodes::COMPOSER_NOT_AVAILABLE, $previous);
         }
     }

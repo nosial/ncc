@@ -24,7 +24,7 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -60,7 +60,7 @@
          */
         public function __construct()
         {
-            $this->PackageLockVersion = Versions::PackageLockVersion;
+            $this->PackageLockVersion = Versions::PACKAGE_LOCK_VERSION;
             $this->Packages = [];
         }
 
@@ -71,7 +71,7 @@
          */
         private function update(): void
         {
-            $this->PackageLockVersion = Versions::PackageLockVersion;
+            $this->PackageLockVersion = Versions::PACKAGE_LOCK_VERSION;
             $this->LastUpdatedTimestamp = time();
         }
 

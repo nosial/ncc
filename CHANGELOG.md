@@ -20,6 +20,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Corrected code-smell and code style issues in `\ncc\Classes > GithubExtension > GithubService`
  - Corrected code-smell and code style issues in `\ncc\Classes > GitlabExtension > GitlabService`
  - Corrected code-smell and code style issues in `\ncc\Classes > NccExtension > ConstantCompiler`
+ - Renamed `Abstracts` namespace to `Enums`
+ - Updated class type to "final class" in `\ncc\Enums\Options > BuildConfigurationValues`
+ - Updated class type to "final class" in `\ncc\Enums\Options > InitializeProjectOptions`
+ - Updated class type to "final class" in `\ncc\Enums\Options > InstallPackageOptions`
+ - Updated class type to "final class" in `\ncc\Enums\SpecialConstants > AssemblyConstants`
+ - Updated class type to "final class" in `\ncc\Enums\SpecialConstants > BuildConstants`
+ - Updated class type to "final class" in `\ncc\Enums\SpecialConstants > DateTimeConstants`
+ - Updated class type to "final class" in `\ncc\Enums\SpecialConstants > InstallConstants`
+ - Updated class type to "final class" in `\ncc\Enums\SpecialConstants > RuntimeConstants`
+ - Updated class type to "final class" in `\ncc\Enums > AuthenticationType`
+ - Updated class type to "final class" in `\ncc\Enums > CompilerExtensionDefaultVersions`
+ - Updated class type to "final class" in `\ncc\Enums > CompilerExtensions`
+ - Updated class type to "final class" in `\ncc\Enums > CompilerExtensionSupportedVersions`
+ - Updated class type to "final class" in `\ncc\Enums > ComponentDataType`
+ - Updated class type to "final class" in `\ncc\Enums > ComponentFileExtensions`
+ - Updated class type to "final class" in `\ncc\Enums > ComposerPackageTypes`
+ - Updated class type to "final class" in `\ncc\Enums > ComposerStabilityTypes`
+ - Updated class type to "final class" in `\ncc\Enums > EncoderType`
+ - Updated class type to "final class" in `\ncc\Enums > ExceptionCodes`
+ - Updated class type to "final class" in `\ncc\Enums > HttpRequestType`
+ - Updated class type to "final class" in `\ncc\Enums > HttpStatusCodes`
+ - Updated class type to "final class" in `\ncc\Enums > LogLevel`
+ - Updated class type to "final class" in `\ncc\Enums > NccBuildFlags`
+ - Updated class type to "final class" in `\ncc\Enums > PackageStandardVersions`
+ - Updated class type to "final class" in `\ncc\Enums > PackageStructureVersions`
+ - Updated class type to "final class" in `\ncc\Enums > ProjectType`
+ - Updated class type to "final class" in `\ncc\Enums > RegexPattern`
+ - Updated class type to "final class" in `\ncc\Enums > RemoteSourceType`
+ - Updated class type to "final class" in `\ncc\Enums > Runners`
+ - Updated class type to "final class" in `\ncc\Enums > Scopes`
+ - Updated class type to "final class" in `\ncc\Enums > Versions`
 
 
 
@@ -37,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    environment, the process will throw an exception
    "/etc/ncc/ThirdParty/Symfony/Process/Process.php:1019 Error: TTY mode requires /dev/tty to be read/writable.", now
    ncc will display a warning if TTY mode cannot be enabled
+
 
 
 ## [1.0.2] - 2023-06-29
@@ -58,6 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
  - Dockerfile for building a docker image of NCC
 
+
+
 ## [1.0.1] - 2023-02-07
 
 ### Added
@@ -73,6 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
  - File downloads now cache the URL as a pointer to the file reducing the number of times the same file is downloaded
+
+
 
 ## [1.0.0] - 2022-01-29
 

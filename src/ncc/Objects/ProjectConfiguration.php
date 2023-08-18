@@ -25,7 +25,7 @@
     namespace ncc\Objects;
 
     use Exception;
-    use ncc\Abstracts\Options\BuildConfigurationValues;
+    use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
@@ -129,7 +129,7 @@
 
             try
             {
-                $this->getRequiredExecutionPolicies(BuildConfigurationValues::AllConfigurations);
+                $this->getRequiredExecutionPolicies(BuildConfigurationValues::ALL);
             }
             catch(Exception $e)
             {
@@ -165,10 +165,10 @@
                     return false;
                 }
 
-                if($this->Build->Main == BuildConfigurationValues::AllConfigurations)
+                if($this->Build->Main == BuildConfigurationValues::ALL)
                 {
                     if($throw_exception)
-                        throw new InvalidBuildConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::AllConfigurations));
+                        throw new InvalidBuildConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
                     return false;
                 }
             }
@@ -199,7 +199,7 @@
          * @throws BuildConfigurationNotFoundException
          * @throws UndefinedExecutionPolicyException
          */
-        public function getRequiredExecutionPolicies(string $build_configuration=BuildConfigurationValues::DefaultConfiguration): array
+        public function getRequiredExecutionPolicies(string $build_configuration=BuildConfigurationValues::DEFAULT): array
         {
             if($this->ExecutionPolicies == null || count($this->ExecutionPolicies) == 0)
                 return [];
@@ -257,7 +257,7 @@
 
             switch($build_configuration)
             {
-                case BuildConfigurationValues::AllConfigurations:
+                case BuildConfigurationValues::ALL:
                     /** @var BuildConfiguration $configuration */
                     foreach($this->Build->Configurations as $configuration)
                     {

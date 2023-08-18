@@ -25,8 +25,8 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\Runners;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Runners;
+    use ncc\Enums\Scopes;
     use ncc\Classes\BashExtension\BashRunner;
     use ncc\Classes\LuaExtension\LuaRunner;
     use ncc\Classes\NccExtension\ConstantCompiler;
@@ -90,7 +90,7 @@
          */
         public function __construct()
         {
-            $this->RunnerPath = PathFinder::getRunnerPath(Scopes::System);
+            $this->RunnerPath = PathFinder::getRunnerPath(Scopes::SYSTEM);
             $this->TemporaryUnits = [];
         }
 
@@ -170,7 +170,7 @@
          */
         public function addUnit(string $package, string $version, ExecutionUnit $unit, bool $temporary=false): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot add new ExecutionUnit \'' . $unit->ExecutionPolicy->Name .'\' for ' . $package . ', insufficient permissions');
 
             Console::outVerbose(sprintf('Adding new ExecutionUnit \'%s\' for %s', $unit->ExecutionPolicy->Name, $package));
@@ -200,12 +200,12 @@
             $bin_file = $package_bin_path . DIRECTORY_SEPARATOR . hash('haval128,4', $unit->ExecutionPolicy->Name);
             $bin_file .= match ($unit->ExecutionPolicy->Runner)
             {
-                Runners::bash => BashRunner::getFileExtension(),
-                Runners::php => PhpRunner::getFileExtension(),
-                Runners::perl => PerlRunner::getFileExtension(),
-                Runners::python => PythonRunner::getFileExtension(),
-                Runners::python2 => Python2Runner::getFileExtension(),
-                Runners::python3 => Python3Runner::getFileExtension(),
+                Runners::BASH => BashRunner::getFileExtension(),
+                Runners::PHP => PhpRunner::getFileExtension(),
+                Runners::PERL => PerlRunner::getFileExtension(),
+                Runners::PYTHON => PythonRunner::getFileExtension(),
+                Runners::PYTHON_2 => Python2Runner::getFileExtension(),
+                Runners::PYTHON_3 => Python3Runner::getFileExtension(),
                 Runners::lua => LuaRunner::getFileExtension(),
                 default => throw new RunnerExecutionException('The runner \'' . $unit->ExecutionPolicy->Runner . '\' is not supported'),
             };
@@ -259,7 +259,7 @@
          */
         public function removeUnit(string $package, string $version, string $name): bool
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot remove ExecutionUnit \'' . $name .'\' for ' . $package . ', insufficient permissions');
 
             Console::outVerbose(sprintf('Removing ExecutionUnit \'%s\' for %s', $name, $package));

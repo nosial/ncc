@@ -24,7 +24,7 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\HttpRequestType;
+    use ncc\Enums\HttpRequestType;
 
     class HttpRequest
     {

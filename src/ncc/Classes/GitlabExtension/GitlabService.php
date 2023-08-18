@@ -22,7 +22,7 @@
 
     namespace ncc\Classes\GitlabExtension;
 
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\Versions;
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GitlabServiceException;
@@ -108,7 +108,7 @@
             }
 
             // Query the latest package only
-            if($packageInput->Version === Versions::Latest)
+            if($packageInput->Version === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach($releases as $release)

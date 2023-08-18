@@ -23,9 +23,9 @@
 namespace ncc\CLI\Management;
 
     use Exception;
-    use ncc\Abstracts\CompilerExtensionDefaultVersions;
-    use ncc\Abstracts\CompilerExtensions;
-    use ncc\Abstracts\CompilerExtensionSupportedVersions;
+    use ncc\Enums\CompilerExtensionDefaultVersions;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\CompilerExtensionSupportedVersions;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\DirectoryNotFoundException;
     use ncc\Exceptions\FileNotFoundException;
@@ -123,7 +123,7 @@ namespace ncc\CLI\Management;
             {
                 $compiler_extension = strtolower(($args['extension'] ?? $args['ext']));
 
-                if(in_array($compiler_extension, CompilerExtensions::All))
+                if(in_array($compiler_extension, CompilerExtensions::ALL))
                 {
                     $Compiler->Extension = $compiler_extension;
                 }

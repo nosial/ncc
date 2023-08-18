@@ -23,7 +23,7 @@
 namespace ncc\CLI\Management;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\IOException;
     use ncc\Managers\RemoteSourcesManager;
     use ncc\Objects\CliHelpSection;
@@ -117,7 +117,7 @@ namespace ncc\CLI\Management;
          */
         public static function addEntry($args): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
                 Console::outError('Insufficient permissions to add entry.', true, 1);
                 return;
@@ -187,7 +187,7 @@ namespace ncc\CLI\Management;
         {
             $ResolvedScope = Resolver::resolveScope();
 
-            if($ResolvedScope !== Scopes::System)
+            if($ResolvedScope !== Scopes::SYSTEM)
                 Console::outError('Insufficient permissions to remove entries');
 
             $name = $args['name'] ?? null;

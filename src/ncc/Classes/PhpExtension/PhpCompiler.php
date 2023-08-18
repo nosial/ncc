@@ -26,11 +26,11 @@
 
     use Exception;
     use FilesystemIterator;
-    use ncc\Abstracts\ComponentFileExtensions;
-    use ncc\Abstracts\ComponentDataType;
-    use ncc\Abstracts\ConstantReferences;
-    use ncc\Abstracts\DependencySourceType;
-    use ncc\Abstracts\Options\BuildConfigurationValues;
+    use ncc\Enums\ComponentFileExtensions;
+    use ncc\Enums\ComponentDataType;
+    use ncc\Enums\ConstantReferences;
+    use ncc\Enums\DependencySourceType;
+    use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Classes\NccExtension\PackageCompiler;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
@@ -90,7 +90,7 @@
          * @throws PackagePreparationFailedException
          * @throws BuildConfigurationNotFoundException
          */
-        public function prepare(string $build_configuration=BuildConfigurationValues::DefaultConfiguration): void
+        public function prepare(string $build_configuration=BuildConfigurationValues::DEFAULT): void
         {
             try
             {
@@ -149,7 +149,7 @@
             }
 
             // Include file components that can be compiled
-            $DirectoryScanner->setIncludes(ComponentFileExtensions::Php);
+            $DirectoryScanner->setIncludes(ComponentFileExtensions::PHP);
             if($selected_build_configuration->ExcludeFiles !== null && count($selected_build_configuration->ExcludeFiles) > 0)
                 $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
             $source_path = $this->path . $this->project->Build->SourcePath;
@@ -191,11 +191,11 @@
                 // Ignore component files
                 if($selected_build_configuration->ExcludeFiles !== null && count($selected_build_configuration->ExcludeFiles) > 0)
                 {
-                    $DirectoryScanner->setExcludes(array_merge($selected_build_configuration->ExcludeFiles, ComponentFileExtensions::Php));
+                    $DirectoryScanner->setExcludes(array_merge($selected_build_configuration->ExcludeFiles, ComponentFileExtensions::PHP));
                 }
                 else
                 {
-                    $DirectoryScanner->setExcludes(ComponentFileExtensions::Php);
+                    $DirectoryScanner->setExcludes(ComponentFileExtensions::PHP);
                 }
 
                 Console::outVerbose('Scanning for resources... ');
@@ -249,7 +249,7 @@
                     Console::outVerbose(sprintf('processing dependency %s', $dependency->Name));
                     switch($dependency->SourceType)
                     {
-                        case DependencySourceType::StaticLinking:
+                        case DependencySourceType::STATIC:
 
                             try
                             {
@@ -277,7 +277,7 @@
                             break;
 
                         default:
-                        case DependencySourceType::RemoteSource:
+                        case DependencySourceType::REMOTE:
                             break;
                     }
 
@@ -312,9 +312,9 @@
             $this->compileResources();
 
             PackageCompiler::compilePackageConstants($this->package, [
-                ConstantReferences::Assembly => $this->project->Assembly,
-                ConstantReferences::Build => null,
-                ConstantReferences::DateTime => time()
+                ConstantReferences::ASSEMBLY => $this->project->Assembly,
+                ConstantReferences::BUILD => null,
+                ConstantReferences::DATE_TIME => time()
             ]);
 
             return $this->getPackage();
@@ -407,7 +407,7 @@
 
                     if($encoded === false)
                     {
-                        $component->DataType = ComponentDataType::b64encoded;
+                        $component->DataType = ComponentDataType::BASE64_ENCODED;
                         $component->Data = Base64::encode($content);
                     }
                     else
@@ -418,7 +418,7 @@
                 }
                 catch(Exception $e)
                 {
-                    $component->DataType = ComponentDataType::b64encoded;
+                    $component->DataType = ComponentDataType::BASE64_ENCODED;
                     $component->Data = Base64::encode($content);
                     unset($e);
                 }

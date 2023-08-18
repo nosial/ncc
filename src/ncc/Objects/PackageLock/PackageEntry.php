@@ -24,8 +24,8 @@
 
     namespace ncc\Objects\PackageLock;
 
-    use ncc\Abstracts\Scopes;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\Scopes;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -85,7 +85,7 @@
          */
         public function getVersion(string $version, bool $throw_exception=false): ?VersionEntry
         {
-            if($version === Versions::Latest && $this->LatestVersion !== null)
+            if($version === Versions::LATEST && $this->LatestVersion !== null)
             {
                 /** @noinspection CallableParameterUseCaseInTypeContextInspection */
                 $version = $this->LatestVersion;
@@ -253,7 +253,7 @@
         {
             $path = PathFinder::getPackageDataPath($this->Name);
 
-            if(!file_exists($path) && Resolver::resolveScope() === Scopes::System)
+            if(!file_exists($path) && Resolver::resolveScope() === Scopes::SYSTEM)
             {
                 $filesystem = new Filesystem();
                 $filesystem->mkdir($path);

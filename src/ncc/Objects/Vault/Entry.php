@@ -24,7 +24,7 @@
 
     namespace ncc\Objects\Vault;
 
-    use ncc\Abstracts\AuthenticationType;
+    use ncc\Enums\AuthenticationType;
     use ncc\Defuse\Crypto\Crypto;
     use ncc\Defuse\Crypto\Exception\EnvironmentIsBrokenException;
     use ncc\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
@@ -96,7 +96,7 @@
 
             switch($this->Password->getAuthenticationType())
             {
-                case AuthenticationType::UsernamePassword:
+                case AuthenticationType::USERNAME_PASSWORD:
                     if(!($this->Password instanceof UsernamePassword))
                         return false;
 
@@ -114,7 +114,7 @@
 
                     return $username == $this->Password->getUsername() && $password == $this->Password->getPassword();
 
-                case AuthenticationType::AccessToken:
+                case AuthenticationType::ACCESS_TOKEN:
                     if(!($this->Password instanceof AccessToken))
                         return false;
 
@@ -294,8 +294,8 @@
                 {
                     $self->Password = match (Functions::array_bc($password, 'authentication_type'))
                     {
-                        AuthenticationType::UsernamePassword => UsernamePassword::fromArray($password),
-                        AuthenticationType::AccessToken => AccessToken::fromArray($password)
+                        AuthenticationType::USERNAME_PASSWORD => UsernamePassword::fromArray($password),
+                        AuthenticationType::ACCESS_TOKEN => AccessToken::fromArray($password)
                     };
                 }
             }

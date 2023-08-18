@@ -25,7 +25,7 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\SymlinkException;
     use ncc\Objects\SymlinkDictionary\SymlinkEntry;
@@ -64,7 +64,7 @@
         {
             try
             {
-                $this->SymlinkDictionaryPath = PathFinder::getSymlinkDictionary(Scopes::System);
+                $this->SymlinkDictionaryPath = PathFinder::getSymlinkDictionary(Scopes::SYSTEM);
                 $this->load();
             }
             catch(Exception $e)
@@ -134,7 +134,7 @@
          */
         private function save(bool $throw_exception=true): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient Permissions to write to the system symlink dictionary');
 
             Console::outDebug(sprintf('saving symlink dictionary to %s', $this->SymlinkDictionaryPath));
@@ -206,7 +206,7 @@
          */
         public function add(string $package, string $unit='main'): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient Permissions to add to the system symlink dictionary');
 
             if($this->exists($package))
@@ -230,7 +230,7 @@
          */
         public function remove(string $package): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient Permissions to remove from the system symlink dictionary');
 
             if(!$this->exists($package))
@@ -291,7 +291,7 @@
          */
         public function sync(): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Insufficient Permissions to sync the system symlink dictionary');
 
             $filesystem = new Filesystem();

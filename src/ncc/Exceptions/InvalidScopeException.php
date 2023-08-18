@@ -23,7 +23,7 @@
 namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     class InvalidScopeException extends Exception
@@ -34,6 +34,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $scope = "", ?Throwable $previous = null)
         {
-            parent::__construct('The given scope \'' . $scope . '\' is not valid', ExceptionCodes::InvalidScopeException, $previous);
+            parent::__construct('The given scope \'' . $scope . '\' is not valid', ExceptionCodes::INVALID_SCOPE, $previous);
         }
     }

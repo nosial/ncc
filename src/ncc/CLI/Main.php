@@ -25,8 +25,8 @@
     namespace ncc\CLI;
 
     use Exception;
-    use ncc\Abstracts\LogLevel;
-    use ncc\Abstracts\NccBuildFlags;
+    use ncc\Enums\LogLevel;
+    use ncc\Enums\NccBuildFlags;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecCommand;
     use ncc\CLI\Management\ConfigMenu;
@@ -92,35 +92,35 @@
                 {
                     switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
                     {
-                        case LogLevel::Silent:
-                        case LogLevel::Fatal:
-                        case LogLevel::Error:
-                        case LogLevel::Warning:
-                        case LogLevel::Info:
-                        case LogLevel::Debug:
-                        case LogLevel::Verbose:
+                        case LogLevel::SILENT:
+                        case LogLevel::FATAL:
+                        case LogLevel::ERROR:
+                        case LogLevel::WARNING:
+                        case LogLevel::INFO:
+                        case LogLevel::DEBUG:
+                        case LogLevel::VERBOSE:
                             self::$log_level = strtolower(self::$args['l'] ?? self::$args['log-level']);
                             break;
 
                         default:
                             Console::outWarning('Unknown log level: ' . (self::$args['l'] ?? self::$args['log-level']) . ', using \'info\'');
-                            self::$log_level = LogLevel::Info;
+                            self::$log_level = LogLevel::INFO;
                             break;
                     }
                 }
                 else
                 {
-                    self::$log_level = LogLevel::Info;
+                    self::$log_level = LogLevel::INFO;
                 }
 
-                if(Resolver::checkLogLevel(self::$log_level, LogLevel::Debug))
+                if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
                 {
                     Console::outDebug('Debug logging enabled');
                     Console::outDebug(sprintf('const: %s', json_encode(ncc::getConstants(), JSON_UNESCAPED_SLASHES)));
                     Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
                 }
 
-                if(in_array(NccBuildFlags::Unstable, NCC_VERSION_FLAGS))
+                if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS))
                 {
                     Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
                 }
@@ -218,7 +218,7 @@
         public static function getLogLevel(): string
         {
             if(self::$log_level == null)
-                self::$log_level = LogLevel::Info;
+                self::$log_level = LogLevel::INFO;
             return self::$log_level;
         }
 

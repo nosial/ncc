@@ -22,9 +22,9 @@
 
 namespace ncc\Utilities;
 
-    use ncc\Abstracts\LogLevel;
-    use ncc\Abstracts\RegexPatterns;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\LogLevel;
+    use ncc\Enums\RegexPatterns;
+    use ncc\Enums\Scopes;
 
     /**
      * @author Zi Xing Narrakas
@@ -76,13 +76,13 @@ namespace ncc\Utilities;
          */
         public static function version(string $input): bool
         {
-            if(preg_match(RegexPatterns::SemanticVersioning2, $input))
+            if(preg_match(RegexPatterns::SEMANTIC_VERSIONING_2, $input))
                 return true;
 
-            if(preg_match(RegexPatterns::ComposerVersionFormat, $input))
+            if(preg_match(RegexPatterns::COMPOSER_VERSION_FORMAT, $input))
                 return true;
 
-            if(preg_match(RegexPatterns::PythonVersionFormat, $input))
+            if(preg_match(RegexPatterns::PYTHON_VERSION_FORMAT, $input))
                 return true;
 
             return false;
@@ -105,8 +105,8 @@ namespace ncc\Utilities;
 
             switch($input)
             {
-                case Scopes::System:
-                case Scopes::User:
+                case Scopes::SYSTEM:
+                case Scopes::USER:
                     return true;
 
                 default:
@@ -124,7 +124,7 @@ namespace ncc\Utilities;
         {
             $input = Resolver::resolveScope($input);
 
-            if($input == Scopes::System && posix_getuid() !== 0)
+            if($input == Scopes::SYSTEM && posix_getuid() !== 0)
                 return false;
 
             return true;
@@ -143,7 +143,7 @@ namespace ncc\Utilities;
                 return false;
             }
 
-            if(!preg_match(RegexPatterns::PackageNameFormat, $input))
+            if(!preg_match(RegexPatterns::PACKAGE_NAME_FORMAT, $input))
             {
                 return false;
             }
@@ -185,7 +185,7 @@ namespace ncc\Utilities;
          */
         public static function unixFilepath($input): bool
         {
-            if(preg_match(RegexPatterns::UnixPath, $input))
+            if(preg_match(RegexPatterns::UNIX_PATH, $input))
             {
                 return true;
             }
@@ -201,7 +201,7 @@ namespace ncc\Utilities;
          */
         public static function windowsFilepath($input): bool
         {
-            if(preg_match(RegexPatterns::WindowsPath, $input))
+            if(preg_match(RegexPatterns::WINDOWS_PATH, $input))
             {
                 return true;
             }
@@ -243,7 +243,7 @@ namespace ncc\Utilities;
                 return false;
             }
 
-            if(!preg_match(RegexPatterns::ExecutionPolicyName, $input))
+            if(!preg_match(RegexPatterns::EXECUTION_POLICY_NAME, $input))
             {
                 return false;
             }
@@ -259,7 +259,7 @@ namespace ncc\Utilities;
          */
         public static function checkLogLevel(string $input): bool
         {
-            if(!in_array(strtolower($input), LogLevel::All))
+            if(!in_array(strtolower($input), LogLevel::ALL))
                 return false;
 
             return true;

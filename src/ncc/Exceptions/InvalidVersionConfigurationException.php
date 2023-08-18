@@ -23,7 +23,7 @@
 namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     class InvalidVersionConfigurationException extends Exception
@@ -34,6 +34,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::InvalidVersionConfigurationException, $previous);
+            parent::__construct($message, ExceptionCodes::INVALID_VERSION_CONFIGURATION, $previous);
         }
     }

@@ -25,12 +25,12 @@ namespace ncc\Classes\ComposerExtension;
     use Exception;
     use FilesystemIterator;
     use JsonException;
-    use ncc\Abstracts\CompilerExtensions;
-    use ncc\Abstracts\CompilerExtensionSupportedVersions;
-    use ncc\Abstracts\ComponentFileExtensions;
-    use ncc\Abstracts\DependencySourceType;
-    use ncc\Abstracts\LogLevel;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\CompilerExtensionSupportedVersions;
+    use ncc\Enums\ComponentFileExtensions;
+    use ncc\Enums\DependencySourceType;
+    use ncc\Enums\LogLevel;
+    use ncc\Enums\Scopes;
     use ncc\CLI\Main;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
@@ -386,7 +386,7 @@ namespace ncc\Classes\ComposerExtension;
 
                     $dependency = new ProjectConfiguration\Dependency();
                     $dependency->Name = $package_name;
-                    $dependency->SourceType = DependencySourceType::Local;
+                    $dependency->SourceType = DependencySourceType::LOCAL;
                     $dependency->Version = self::versionMap($item->PackageName, $version_map);
                     $dependency->Source = $package_name . '.ncc';
                     $project_configuration->Build->addDependency($dependency);
@@ -497,22 +497,22 @@ namespace ncc\Classes\ComposerExtension;
                     switch (Main::getLogLevel())
                     {
                         default:
-                        case LogLevel::Fatal:
-                        case LogLevel::Warning:
-                        case LogLevel::Error:
-                        case LogLevel::Info:
+                        case LogLevel::FATAL:
+                        case LogLevel::WARNING:
+                        case LogLevel::ERROR:
+                        case LogLevel::INFO:
                             $results[] = '-v';
                             break;
 
-                        case LogLevel::Verbose:
+                        case LogLevel::VERBOSE:
                             $results[] = '-vv';
                             break;
 
-                        case LogLevel::Debug:
+                        case LogLevel::DEBUG:
                             $results[] = '-vvv';
                             break;
 
-                        case LogLevel::Silent:
+                        case LogLevel::SILENT:
                             if (!in_array('--quiet', $results, true))
                             {
                                 $results[] = '--quiet';
@@ -545,7 +545,7 @@ namespace ncc\Classes\ComposerExtension;
          */
         private static function require(string $vendor, string $package, ?string $version = null): string
         {
-            if (Resolver::resolveScope() !== Scopes::System)
+            if (Resolver::resolveScope() !== Scopes::SYSTEM)
             {
                 throw new AccessDeniedException('Insufficient permissions to require');
             }
@@ -575,7 +575,7 @@ namespace ncc\Classes\ComposerExtension;
             $template = str_ireplace('%VERSION%', $version, $template);
 
             $filesystem = new Filesystem();
-            $tmp_dir = PathFinder::getCachePath(Scopes::System) . DIRECTORY_SEPARATOR . hash('haval128,3', $template);
+            $tmp_dir = PathFinder::getCachePath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . hash('haval128,3', $template);
             $composer_json_path = $tmp_dir . DIRECTORY_SEPARATOR . 'composer.json';
             if ($filesystem->exists($tmp_dir)) {
                 Console::outVerbose(sprintf('Deleting already existing %s', $tmp_dir));
@@ -668,7 +668,7 @@ namespace ncc\Classes\ComposerExtension;
             $process->setWorkingDirectory($path);
 
             // Check if scripts are enabled while running as root
-            if (!in_array('--no-scripts', $options, true) && Resolver::resolveScope() === Scopes::System)
+            if (!in_array('--no-scripts', $options, true) && Resolver::resolveScope() === Scopes::SYSTEM)
             {
                 Console::outWarning('composer scripts are enabled while running as root, this can allow malicious scripts to run as root');
 
@@ -777,7 +777,7 @@ namespace ncc\Classes\ComposerExtension;
                 }
 
                 // Include file components that can be compiled
-                $DirectoryScanner->setIncludes(ComponentFileExtensions::Php);
+                $DirectoryScanner->setIncludes(ComponentFileExtensions::PHP);
 
                 foreach ($source_directories as $directory)
                 {

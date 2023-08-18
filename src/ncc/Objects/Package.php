@@ -25,8 +25,8 @@
     namespace ncc\Objects;
 
     use Exception;
-    use ncc\Abstracts\EncoderType;
-    use ncc\Abstracts\PackageStructureVersions;
+    use ncc\Enums\EncoderType;
+    use ncc\Enums\PackageStructureVersions;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidPackageException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
@@ -271,25 +271,25 @@
             switch($encoding_type)
             {
                 case '300':
-                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
                     $magic_bytes->IsCompressed = false;
                     $magic_bytes->IsEncrypted = false;
                     break;
 
                 case '301':
-                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
                     $magic_bytes->IsCompressed = true;
                     $magic_bytes->IsEncrypted = false;
                     break;
 
                 case '310':
-                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
                     $magic_bytes->IsCompressed = false;
                     $magic_bytes->IsEncrypted = true;
                     break;
 
                 case '311':
-                    $magic_bytes->Encoder = EncoderType::ZiProto;
+                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
                     $magic_bytes->IsCompressed = true;
                     $magic_bytes->IsEncrypted = true;
                     break;

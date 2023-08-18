@@ -24,7 +24,7 @@ namespace ncc\Exceptions;
 
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     class ConstantReadonlyException extends Exception

@@ -25,7 +25,7 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidScopeException;
@@ -91,7 +91,7 @@
         {
             Console::outDebug(sprintf('saving configuration file to %s', PathFinder::getConfigurationFile()));
 
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot save configuration file, insufficient permissions');
 
             if($this->Configuration == null)

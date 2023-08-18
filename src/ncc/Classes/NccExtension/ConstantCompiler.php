@@ -22,11 +22,11 @@
 
 namespace ncc\Classes\NccExtension;
 
-    use ncc\Abstracts\SpecialConstants\BuildConstants;
-    use ncc\Abstracts\SpecialConstants\DateTimeConstants;
-    use ncc\Abstracts\SpecialConstants\InstallConstants;
-    use ncc\Abstracts\SpecialConstants\AssemblyConstants;
-    use ncc\Abstracts\SpecialConstants\RuntimeConstants;
+    use ncc\Enums\SpecialConstants\BuildConstants;
+    use ncc\Enums\SpecialConstants\DateTimeConstants;
+    use ncc\Enums\SpecialConstants\InstallConstants;
+    use ncc\Enums\SpecialConstants\AssemblyConstants;
+    use ncc\Enums\SpecialConstants\RuntimeConstants;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\ProjectConfiguration\Assembly;
 
@@ -48,47 +48,47 @@ namespace ncc\Classes\NccExtension;
 
             if($assembly->Name !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyName, $assembly->Name, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_NAME, $assembly->Name, $input);
             }
 
             if($assembly->Package !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyPackage, $assembly->Package, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PACKAGE, $assembly->Package, $input);
             }
 
             if($assembly->Description !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyDescription, $assembly->Description, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->Description, $input);
             }
 
             if($assembly->Company !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyCompany, $assembly->Company, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->Company, $input);
             }
 
             if($assembly->Product !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyProduct, $assembly->Product, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->Product, $input);
             }
 
             if($assembly->Copyright !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyCopyright, $assembly->Copyright, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->Copyright, $input);
             }
 
             if($assembly->Trademark !== null)
             {
-                $input =str_replace(AssemblyConstants::AssemblyTrademark, $assembly->Trademark, $input);
+                $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->Trademark, $input);
             }
 
             if($assembly->Version !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyVersion, $assembly->Version, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_VERSION, $assembly->Version, $input);
             }
 
             if($assembly->UUID !== null)
             {
-                $input = str_replace(AssemblyConstants::AssemblyUid, $assembly->UUID, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_UID, $assembly->UUID, $input);
             }
 
             return $input;
@@ -109,10 +109,10 @@ namespace ncc\Classes\NccExtension;
 
             return str_replace(
                 [
-                    BuildConstants::CompileTimestamp,
-                    BuildConstants::NccBuildVersion,
-                    BuildConstants::NccBuildFlags,
-                    BuildConstants::NccBuildBranch
+                    BuildConstants::COMPILE_TIMESTAMP,
+                    BuildConstants::NCC_BUILD_VERSION,
+                    BuildConstants::NCC_BUILD_FLAGS,
+                    BuildConstants::NCC_BUILD_BRANCH
                 ],
                 [
                     time(),
@@ -138,10 +138,10 @@ namespace ncc\Classes\NccExtension;
 
             return str_replace(
                 [
-                    InstallConstants::InstallationPath,
-                    InstallConstants::BinPath,
-                    InstallConstants::SourcePath,
-                    InstallConstants::DataPath
+                    InstallConstants::INSTALL_PATH,
+                    InstallConstants::INSTALL_PATH_BIN,
+                    InstallConstants::INSTALL_PATH_SRC,
+                    InstallConstants::INSTALL_PATH_DATA
                 ],
                 [
                     $installationPaths->getInstallationPath(),
@@ -265,7 +265,7 @@ namespace ncc\Classes\NccExtension;
 
             if(function_exists('get_current_user'))
             {
-                $input = str_replace(RuntimeConstants::User, get_current_user(), $input);
+                $input = str_replace(RuntimeConstants::USER, get_current_user(), $input);
             }
 
             return $input;

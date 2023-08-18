@@ -24,8 +24,8 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\ComposerPackageTypes;
-    use ncc\Abstracts\ComposerStabilityTypes;
+    use ncc\Enums\ComposerPackageTypes;
+    use ncc\Enums\ComposerStabilityTypes;
     use ncc\Objects\ComposerJson\Author;
     use ncc\Objects\ComposerJson\Autoloader;
     use ncc\Objects\ComposerJson\PackageLink;
@@ -296,8 +296,8 @@
 
         public function __construct()
         {
-            $this->Type = ComposerPackageTypes::Library;
-            $this->MinimumStability = ComposerStabilityTypes::Stable;
+            $this->Type = ComposerPackageTypes::LIBRARY;
+            $this->MinimumStability = ComposerStabilityTypes::STABLE;
             $this->PreferStable = false;
             $this->Abandoned = false;
         }

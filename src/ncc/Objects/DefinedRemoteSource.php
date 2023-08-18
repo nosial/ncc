@@ -24,7 +24,7 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\DefinedRemoteSourceType;
+    use ncc\Enums\DefinedRemoteSourceType;
     use ncc\Utilities\Functions;
 
     class DefinedRemoteSource

@@ -23,7 +23,7 @@
 namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     /**
@@ -44,7 +44,7 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $message = "", ?string $property=null, ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::InvalidProjectConfigurationException, $previous);
+            parent::__construct($message, ExceptionCodes::INVALID_PROJECT_CONFIGURATION, $previous);
             $this->property = $property;
         }
 

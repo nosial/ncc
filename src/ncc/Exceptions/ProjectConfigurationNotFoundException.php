@@ -23,7 +23,7 @@
 namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Abstracts\ExceptionCodes;
+    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     class ProjectConfigurationNotFoundException extends Exception
@@ -34,6 +34,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::ProjectConfigurationNotFoundException, $previous);
+            parent::__construct($message, ExceptionCodes::PROJECT_CONFIGURATION_NOT_FOUND, $previous);
         }
     }

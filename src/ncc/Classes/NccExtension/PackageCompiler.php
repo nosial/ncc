@@ -23,11 +23,11 @@
 namespace ncc\Classes\NccExtension;
 
     use Exception;
-    use ncc\Abstracts\CompilerExtensions;
-    use ncc\Abstracts\ConstantReferences;
-    use ncc\Abstracts\LogLevel;
-    use ncc\Abstracts\Options\BuildConfigurationValues;
-    use ncc\Abstracts\ProjectType;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\ConstantReferences;
+    use ncc\Enums\LogLevel;
+    use ncc\Enums\Options\BuildConfigurationValues;
+    use ncc\Enums\ProjectType;
     use ncc\Classes\ComposerExtension\ComposerSourceBuiltin;
     use ncc\Classes\PhpExtension\PhpCompiler;
     use ncc\CLI\Main;
@@ -71,11 +71,11 @@ namespace ncc\Classes\NccExtension;
          * @throws ProjectConfigurationNotFoundException
          * @throws UnsupportedCompilerExtensionException
          */
-        public static function compile(ProjectManager $manager, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
+        public static function compile(ProjectManager $manager, string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
             $configuration = $manager->getProjectConfiguration();
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::Debug, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
                 foreach($configuration->Assembly->toArray() as $prop => $value)
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
@@ -121,11 +121,11 @@ namespace ncc\Classes\NccExtension;
 
             try
             {
-                if($project_type->ProjectType == ProjectType::Composer)
+                if($project_type->ProjectType == ProjectType::COMPOSER)
                 {
                     $project_path = ComposerSourceBuiltin::fromLocal($project_type->ProjectPath);
                 }
-                elseif($project_type->ProjectType == ProjectType::Ncc)
+                elseif($project_type->ProjectType == ProjectType::NCC)
                 {
                     $project_manager = new ProjectManager($project_type->ProjectPath);
                     $project_manager->getProjectConfiguration()->Assembly->Version = $version;
@@ -204,7 +204,7 @@ namespace ncc\Classes\NccExtension;
          * @throws BuildConfigurationNotFoundException
          * @throws IOException
          */
-        public static function writePackage(string $path, Package $package, ProjectConfiguration $configuration, string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
+        public static function writePackage(string $path, Package $package, ProjectConfiguration $configuration, string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
             Console::outVerbose(sprintf('Writing package to %s', $path));
 
@@ -373,19 +373,19 @@ namespace ncc\Classes\NccExtension;
             if($value == null)
                 return null;
 
-            if(isset($refs[ConstantReferences::Assembly]))
-                $value = ConstantCompiler::compileAssemblyConstants($value, $refs[ConstantReferences::Assembly]);
+            if(isset($refs[ConstantReferences::ASSEMBLY]))
+                $value = ConstantCompiler::compileAssemblyConstants($value, $refs[ConstantReferences::ASSEMBLY]);
 
-            if(isset($refs[ConstantReferences::Build]))
+            if(isset($refs[ConstantReferences::BUILD]))
                 $value = ConstantCompiler::compileBuildConstants($value);
 
-            if(isset($refs[ConstantReferences::DateTime]))
-                $value = ConstantCompiler::compileDateTimeConstants($value, $refs[ConstantReferences::DateTime]);
+            if(isset($refs[ConstantReferences::DATE_TIME]))
+                $value = ConstantCompiler::compileDateTimeConstants($value, $refs[ConstantReferences::DATE_TIME]);
 
-            if(isset($refs[ConstantReferences::Install]))
-                $value = ConstantCompiler::compileInstallConstants($value, $refs[ConstantReferences::Install]);
+            if(isset($refs[ConstantReferences::INSTALL]))
+                $value = ConstantCompiler::compileInstallConstants($value, $refs[ConstantReferences::INSTALL]);
 
-            if(isset($refs[ConstantReferences::Runtime]))
+            if(isset($refs[ConstantReferences::RUNTIME]))
                 $value = ConstantCompiler::compileRuntimeConstants($value);
 
             return $value;

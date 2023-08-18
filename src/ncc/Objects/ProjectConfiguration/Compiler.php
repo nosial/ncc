@@ -25,8 +25,8 @@
     namespace ncc\Objects\ProjectConfiguration;
 
     use Exception;
-    use ncc\Abstracts\CompilerExtensions;
-    use ncc\Abstracts\CompilerExtensionSupportedVersions;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\CompilerExtensionSupportedVersions;
     use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\InvalidVersionConfigurationException;
     use ncc\Exceptions\RuntimeException;
@@ -110,7 +110,7 @@
                 throw new RuntimeException('Version comparison failed: ' . $e->getMessage());
             }
 
-            if(!in_array($this->Extension, CompilerExtensions::All))
+            if(!in_array($this->Extension, CompilerExtensions::ALL))
              {
                 if($throw_exception)
                     throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $this->Extension . '\' is not supported');

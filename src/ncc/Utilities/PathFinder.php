@@ -22,7 +22,7 @@
 
 namespace ncc\Utilities;
 
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\RunnerExecutionException;
@@ -67,7 +67,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getHomePath(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getHomePath(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             $scope = Resolver::resolveScope($scope);
 
@@ -80,20 +80,20 @@ namespace ncc\Utilities;
             {
                 switch($scope)
                 {
-                    case Scopes::User:
+                    case Scopes::USER:
                         return self::getRootPath($win32) . 'ncc' . DIRECTORY_SEPARATOR . 'user_home';
-                    case Scopes::System:
+                    case Scopes::SYSTEM:
                         return self::getRootPath($win32) . 'ncc' . DIRECTORY_SEPARATOR . 'system_home';
                 }
             }
 
             switch($scope)
             {
-                case Scopes::User:
+                case Scopes::USER:
                     $uid = posix_getuid();
                     return posix_getpwuid($uid)['dir'] . DIRECTORY_SEPARATOR . '.ncc';
 
-                case Scopes::System:
+                case Scopes::SYSTEM:
                     return posix_getpwuid(0)['dir'] . DIRECTORY_SEPARATOR . '.ncc';
             }
 
@@ -108,7 +108,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getDataPath(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getDataPath(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             $scope = Resolver::resolveScope($scope);
 
@@ -121,20 +121,20 @@ namespace ncc\Utilities;
             {
                 switch($scope)
                 {
-                    case Scopes::User:
+                    case Scopes::USER:
                         return self::getRootPath($win32) . 'ncc' . DIRECTORY_SEPARATOR . 'user';
-                    case Scopes::System:
+                    case Scopes::SYSTEM:
                         return self::getRootPath($win32) . 'ncc' . DIRECTORY_SEPARATOR . 'system';
                 }
             }
 
             switch($scope)
             {
-                case Scopes::User:
+                case Scopes::USER:
                     $uid = posix_getuid();
                     return posix_getpwuid($uid)['dir'] . DIRECTORY_SEPARATOR . '.ncc' . DIRECTORY_SEPARATOR . 'data';
 
-                case Scopes::System:
+                case Scopes::SYSTEM:
                     return self::getRootPath() . 'var' . DIRECTORY_SEPARATOR . 'ncc';
             }
 
@@ -149,7 +149,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getPackagesPath(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getPackagesPath(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'packages';
         }
@@ -162,7 +162,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getCachePath(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getCachePath(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'cache';
         }
@@ -175,7 +175,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getRunnerPath(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getRunnerPath(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'runners';
         }
@@ -188,7 +188,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getPackageLock(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getPackageLock(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'package.lck';
         }
@@ -199,7 +199,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getRemoteSources(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getRemoteSources(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'sources';
         }
@@ -210,7 +210,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getSymlinkDictionary(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getSymlinkDictionary(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'symlinks';
         }
@@ -225,11 +225,11 @@ namespace ncc\Utilities;
         public static function getPackageLockFiles(bool $win32=false): array
         {
             $results = [];
-            $results[] = self::getPackageLock(Scopes::System, $win32);
+            $results[] = self::getPackageLock(Scopes::SYSTEM, $win32);
 
-            if(!in_array(self::getPackageLock(Scopes::User, $win32), $results))
+            if(!in_array(self::getPackageLock(Scopes::USER, $win32), $results))
             {
-                $results[] = self::getPackageLock(Scopes::User, $win32);
+                $results[] = self::getPackageLock(Scopes::USER, $win32);
             }
 
             return $results;
@@ -248,7 +248,7 @@ namespace ncc\Utilities;
             if(!Validate::packageName($package))
                 throw new InvalidPackageNameException($package);
 
-            return self::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $package;
+            return self::getDataPath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $package;
         }
 
         /**
@@ -259,7 +259,7 @@ namespace ncc\Utilities;
          * @return string
          * @throws InvalidScopeException
          */
-        public static function getExtensionPath(string $scope=Scopes::Auto, bool $win32=false): string
+        public static function getExtensionPath(string $scope=Scopes::AUTO, bool $win32=false): string
         {
             return self::getDataPath($scope, $win32) . DIRECTORY_SEPARATOR . 'ext';
         }
@@ -272,7 +272,7 @@ namespace ncc\Utilities;
          */
         public static function getConfigurationFile(): string
         {
-            return self::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'ncc.yaml';
+            return self::getDataPath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . 'ncc.yaml';
         }
 
         /**

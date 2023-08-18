@@ -24,7 +24,7 @@
 
     namespace ncc\Objects\Vault\Password;
 
-    use ncc\Abstracts\AuthenticationType;
+    use ncc\Enums\AuthenticationType;
     use ncc\Interfaces\PasswordInterface;
     use ncc\Utilities\Functions;
 
@@ -46,7 +46,7 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::AccessToken,
+                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::ACCESS_TOKEN,
                 ($bytecode ? Functions::cbc('access_token') : 'access_token') => $this->AccessToken,
             ];
         }
@@ -79,7 +79,7 @@
          */
         public function getAuthenticationType(): string
         {
-            return AuthenticationType::AccessToken;
+            return AuthenticationType::ACCESS_TOKEN;
         }
 
         /**

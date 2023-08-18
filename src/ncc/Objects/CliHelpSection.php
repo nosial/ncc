@@ -24,7 +24,7 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\ConsoleColors;
+    use ncc\Enums\ConsoleColors;
     use ncc\Utilities\Console;
 
     class CliHelpSection
@@ -120,7 +120,7 @@
 
                     if(!$basic)
                     {
-                        $result = Console::formatColor($result, ConsoleColors::Green);
+                        $result = Console::formatColor($result, ConsoleColors::GREEN);
                     }
 
                     $out[] .= $result;
@@ -133,7 +133,7 @@
                     }
                     else
                     {
-                        $out[] .= Console::formatColor(implode(' ', $this->Parameters), ConsoleColors::Green);
+                        $out[] .= Console::formatColor(implode(' ', $this->Parameters), ConsoleColors::GREEN);
                     }
                 }
             }

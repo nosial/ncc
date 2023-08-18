@@ -25,8 +25,8 @@
     namespace ncc\Utilities;
 
     use Exception;
-    use ncc\Abstracts\ConsoleColors;
-    use ncc\Abstracts\LogLevel;
+    use ncc\Enums\ConsoleColors;
+    use ncc\Enums\LogLevel;
     use ncc\CLI\Main;
     use ncc\ncc;
     use Throwable;
@@ -62,9 +62,9 @@
             {
                 switch(Main::getLogLevel())
                 {
-                    case LogLevel::Verbose:
-                    case LogLevel::Debug:
-                    case LogLevel::Silent:
+                    case LogLevel::VERBOSE:
+                    case LogLevel::DEBUG:
+                    case LogLevel::SILENT:
                         return;
 
                     default:
@@ -133,13 +133,13 @@
         private static function setPrefix(string $log_level, string $input): string
         {
             $input = match ($log_level) {
-                LogLevel::Verbose => self::formatColor('VRB:', ConsoleColors::LightCyan) . " $input",
-                LogLevel::Debug => self::formatColor('DBG:', ConsoleColors::LightMagenta) . " $input",
-                LogLevel::Info => self::formatColor('INF:', ConsoleColors::White) . " $input",
-                LogLevel::Warning => self::formatColor('WRN:', ConsoleColors::Yellow) . " $input",
-                LogLevel::Error => self::formatColor('ERR:', ConsoleColors::LightRed) . " $input",
-                LogLevel::Fatal => self::formatColor('FTL:', ConsoleColors::LightRed) . " $input",
-                default => self::formatColor('MSG:', ConsoleColors::Default) . " $input",
+                LogLevel::VERBOSE => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN) . " $input",
+                LogLevel::DEBUG => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA) . " $input",
+                LogLevel::INFO => self::formatColor('INF:', ConsoleColors::WHITE) . " $input",
+                LogLevel::WARNING => self::formatColor('WRN:', ConsoleColors::YELLOW) . " $input",
+                LogLevel::ERROR => self::formatColor('ERR:', ConsoleColors::LIGHT_RED) . " $input",
+                LogLevel::FATAL => self::formatColor('FTL:', ConsoleColors::LIGHT_RED) . " $input",
+                default => self::formatColor('MSG:', ConsoleColors::DEFAULT) . " $input",
             };
 
             $tick_time = (string)microtime(true);
@@ -162,11 +162,11 @@
 
                 if ($timeDiff > 1.0)
                 {
-                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LightRed);
+                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LIGHT_RED);
                 }
                 elseif ($timeDiff > 0.5)
                 {
-                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LightYellow);
+                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW);
                 }
             }
 
@@ -187,11 +187,11 @@
             if(!ncc::cliMode())
                 return;
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::Info, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::INFO, Main::getLogLevel()))
                 return;
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::Verbose, Main::getLogLevel()) && !$no_prefix)
-                $message = self::setPrefix(LogLevel::Info, $message);
+            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()) && !$no_prefix)
+                $message = self::setPrefix(LogLevel::INFO, $message);
 
             if($newline)
             {
@@ -214,7 +214,7 @@
             if(!ncc::cliMode())
                 return;
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::Debug, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
                 return;
 
             $backtrace = null;
@@ -223,22 +223,22 @@
             $trace_msg = null;
             if($backtrace !== null && isset($backtrace[1]))
             {
-                $trace_msg = Console::formatColor($backtrace[1]['class'], ConsoleColors::LightGray);
+                $trace_msg = Console::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY);
                 $trace_msg .= $backtrace[1]['type'];
-                $trace_msg .= Console::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LightGreen);
+                $trace_msg .= Console::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN);
                 $trace_msg .= ' > ';
             }
 
             /**  Apply syntax highlighting using regular expressions  */
 
             // Hyperlinks
-            $message = preg_replace('/(https?:\/\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LightBlue), $message);
+            $message = preg_replace('/(https?:\/\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LIGHT_BLUE), $message);
 
             // File Paths
-            $message = preg_replace('/(\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LightCyan), $message);
+            $message = preg_replace('/(\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LIGHT_CYAN), $message);
 
             /** @noinspection PhpUnnecessaryStringCastInspection */
-            $message = self::setPrefix(LogLevel::Debug, (string)$trace_msg . $message);
+            $message = self::setPrefix(LogLevel::DEBUG, (string)$trace_msg . $message);
 
             self::out($message, $newline, true);
         }
@@ -255,10 +255,10 @@
             if(!ncc::cliMode())
                 return;
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::Verbose, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
                 return;
 
-            self::out(self::setPrefix(LogLevel::Verbose, $message), $newline, true);
+            self::out(self::setPrefix(LogLevel::VERBOSE, $message), $newline, true);
         }
 
 
@@ -279,7 +279,7 @@
 
             if($persist)
             {
-                return $color_code . $input . ConsoleColors::Default;
+                return $color_code . $input . ConsoleColors::DEFAULT;
             }
 
             return $color_code . $input;
@@ -297,16 +297,16 @@
             if(!ncc::cliMode())
                 return;
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::Warning, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::WARNING, Main::getLogLevel()))
                 return;
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::Verbose, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
-                self::out(self::setPrefix(LogLevel::Warning, $message), $newline, true);
+                self::out(self::setPrefix(LogLevel::WARNING, $message), $newline, true);
                 return;
             }
 
-            self::out(self::formatColor('Warning: ', ConsoleColors::Yellow) . $message, $newline);
+            self::out(self::formatColor('Warning: ', ConsoleColors::YELLOW) . $message, $newline);
         }
 
         /**
@@ -322,16 +322,16 @@
             if(!ncc::cliMode())
                 return;
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::Error, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
                 return;
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::Verbose, Main::getLogLevel()))
+            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
-                self::out(self::setPrefix(LogLevel::Error, $message), $newline, true);
+                self::out(self::setPrefix(LogLevel::ERROR, $message), $newline, true);
             }
             else
             {
-                self::out(self::formatColor(ConsoleColors::Red, 'Error: ') . $message, $newline);
+                self::out(self::formatColor(ConsoleColors::RED, 'Error: ') . $message, $newline);
             }
 
             if($exit_code !== null)
@@ -353,9 +353,9 @@
             if(!ncc::cliMode())
                 return;
 
-            if(strlen($message) > 0 && Resolver::checkLogLevel(LogLevel::Error, Main::getLogLevel()))
+            if(strlen($message) > 0 && Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
             {
-                self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::Red) . $message);
+                self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED) . $message);
             }
 
             Console::out(PHP_EOL . '===== Exception Details =====');
@@ -381,8 +381,8 @@
 
             // Exception name without namespace
 
-            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::Magenta);
-            $trace_error = self::formatColor( 'Error: ', ConsoleColors::Red);
+            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::MAGENTA);
+            $trace_error = self::formatColor( 'Error: ', ConsoleColors::RED);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());
             self::out(sprintf('Exception: %s', get_class($e)));
             self::out(sprintf('Error code: %s', $e->getCode()));
@@ -392,7 +392,7 @@
                 self::out('Stack Trace:');
                 foreach($trace as $item)
                 {
-                    self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::Red) . ':' . $item['line']);
+                    self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED) . ':' . $item['line']);
                 }
             }
 

@@ -22,7 +22,7 @@
 
 namespace ncc\Interfaces;
 
-    use ncc\Abstracts\Options\BuildConfigurationValues;
+    use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\FileNotFoundException;
@@ -46,7 +46,7 @@ namespace ncc\Interfaces;
          * @param string $build_configuration The build configuration to use to build the project
          * @return void
          */
-        public function prepare(string $build_configuration=BuildConfigurationValues::DefaultConfiguration): void;
+        public function prepare(string $build_configuration=BuildConfigurationValues::DEFAULT): void;
 
         /**
          * Executes the compile process in the correct order and returns the finalized Package object

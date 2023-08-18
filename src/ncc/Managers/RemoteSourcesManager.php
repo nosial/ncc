@@ -25,7 +25,7 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\DefinedRemoteSource;
@@ -56,7 +56,7 @@
          */
         public function __construct()
         {
-            $this->DefinedSourcesPath = PathFinder::getRemoteSources(Scopes::System);
+            $this->DefinedSourcesPath = PathFinder::getRemoteSources(Scopes::SYSTEM);
 
             $this->load();
         }

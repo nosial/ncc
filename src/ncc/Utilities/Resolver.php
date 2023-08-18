@@ -24,11 +24,11 @@
 
     namespace ncc\Utilities;
 
-    use ncc\Abstracts\BuiltinRemoteSourceType;
-    use ncc\Abstracts\LogLevel;
-    use ncc\Abstracts\ProjectType;
-    use ncc\Abstracts\RemoteSourceType;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\BuiltinRemoteSourceType;
+    use ncc\Enums\LogLevel;
+    use ncc\Enums\ProjectType;
+    use ncc\Enums\RemoteSourceType;
+    use ncc\Enums\Scopes;
     use ncc\Managers\RemoteSourcesManager;
     use ncc\Objects\ProjectDetectionResults;
 
@@ -50,7 +50,7 @@
             // Set the scope to automatic if it's null
             if($input == null)
             {
-                $input = Scopes::Auto;
+                $input = Scopes::AUTO;
             }
 
             $input = strtoupper($input);
@@ -59,22 +59,22 @@
                 self::$UserIdCache = posix_getuid();
 
             // Resolve the scope if it's set to automatic
-            if($input == Scopes::Auto)
+            if($input == Scopes::AUTO)
             {
                 if(self::$UserIdCache == 0)
                 {
-                    $input = Scopes::System;
+                    $input = Scopes::SYSTEM;
                 }
                 else
                 {
-                    $input = Scopes::User;
+                    $input = Scopes::USER;
                 }
             }
 
             // Auto-Correct the scope if the current user ID is 0
-            if($input == Scopes::User && self::$UserIdCache == 0)
+            if($input == Scopes::USER && self::$UserIdCache == 0)
             {
-                $input = Scopes::System;
+                $input = Scopes::SYSTEM;
             }
 
             return $input;
@@ -201,68 +201,68 @@
 
             switch($current_level)
             {
-                case LogLevel::Debug:
+                case LogLevel::DEBUG:
                     $levels = [
-                        LogLevel::Debug,
-                        LogLevel::Verbose,
-                        LogLevel::Info,
-                        LogLevel::Warning,
-                        LogLevel::Fatal,
-                        LogLevel::Error
+                        LogLevel::DEBUG,
+                        LogLevel::VERBOSE,
+                        LogLevel::INFO,
+                        LogLevel::WARNING,
+                        LogLevel::FATAL,
+                        LogLevel::ERROR
                     ];
                     if(in_array($input, $levels))
                         return true;
                     return false;
 
-                case LogLevel::Verbose:
+                case LogLevel::VERBOSE:
                     $levels = [
-                        LogLevel::Verbose,
-                        LogLevel::Info,
-                        LogLevel::Warning,
-                        LogLevel::Fatal,
-                        LogLevel::Error
+                        LogLevel::VERBOSE,
+                        LogLevel::INFO,
+                        LogLevel::WARNING,
+                        LogLevel::FATAL,
+                        LogLevel::ERROR
                     ];
                     if(in_array($input, $levels))
                         return true;
                     return false;
 
-                case LogLevel::Info:
+                case LogLevel::INFO:
                     $levels = [
-                        LogLevel::Info,
-                        LogLevel::Warning,
-                        LogLevel::Fatal,
-                        LogLevel::Error
+                        LogLevel::INFO,
+                        LogLevel::WARNING,
+                        LogLevel::FATAL,
+                        LogLevel::ERROR
                     ];
                     if(in_array($input, $levels))
                         return true;
                     return false;
 
-                case LogLevel::Warning:
+                case LogLevel::WARNING:
                     $levels = [
-                        LogLevel::Warning,
-                        LogLevel::Fatal,
-                        LogLevel::Error
+                        LogLevel::WARNING,
+                        LogLevel::FATAL,
+                        LogLevel::ERROR
                     ];
                     if(in_array($input, $levels))
                         return true;
                     return false;
 
-                case LogLevel::Error:
+                case LogLevel::ERROR:
                     $levels = [
-                        LogLevel::Fatal,
-                        LogLevel::Error
+                        LogLevel::FATAL,
+                        LogLevel::ERROR
                     ];
                     if(in_array($input, $levels))
                         return true;
                     return false;
 
-                case LogLevel::Fatal:
-                    if($input == LogLevel::Fatal)
+                case LogLevel::FATAL:
+                    if($input == LogLevel::FATAL)
                         return true;
                     return false;
 
                 default:
-                case LogLevel::Silent:
+                case LogLevel::SILENT:
                     return false;
             }
         }
@@ -277,15 +277,15 @@
          */
         public static function detectRemoteSourceType(string $input): string
         {
-            if(in_array($input, BuiltinRemoteSourceType::All))
-                return RemoteSourceType::Builtin;
+            if(in_array($input, BuiltinRemoteSourceType::ALL))
+                return RemoteSourceType::BUILTIN;
 
             $source_manager = new RemoteSourcesManager();
             $defined_source = $source_manager->getRemoteSource($input);
             if($defined_source == null)
-                return RemoteSourceType::Unknown;
+                return RemoteSourceType::UNKNOWN;
 
-            return RemoteSourceType::Defined;
+            return RemoteSourceType::DEFINED;
         }
 
         /**
@@ -304,7 +304,7 @@
             $project_file = Functions::searchDirectory($path, $project_files);
 
             $project_detection_results = new ProjectDetectionResults();
-            $project_detection_results->ProjectType = ProjectType::Unknown;
+            $project_detection_results->ProjectType = ProjectType::UNKNOWN;
 
             if($project_file == null)
             {
@@ -315,11 +315,11 @@
             switch(basename($project_file))
             {
                 case 'project.json':
-                    $project_detection_results->ProjectType = ProjectType::Ncc;
+                    $project_detection_results->ProjectType = ProjectType::NCC;
                     break;
 
                 case 'composer.json':
-                    $project_detection_results->ProjectType = ProjectType::Composer;
+                    $project_detection_results->ProjectType = ProjectType::COMPOSER;
                     break;
             }
 

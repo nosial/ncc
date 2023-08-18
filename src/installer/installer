@@ -12,7 +12,7 @@
 
 <?PHP
 
-    use ncc\Abstracts\ConsoleColors;
+    use ncc\Enums\ConsoleColors;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Managers\RemoteSourcesManager;
     use ncc\ncc;
@@ -249,11 +249,11 @@
     {
         if($installed)
         {
-            Console::out("$ext ... " . Console::formatColor("installed", ConsoleColors::LightGreen));
+            Console::out("$ext ... " . Console::formatColor("installed", ConsoleColors::LIGHT_GREEN));
         }
         else
         {
-            Console::out("$ext ... " . Console::formatColor("missing", ConsoleColors::LightRed));
+            Console::out("$ext ... " . Console::formatColor("missing", ConsoleColors::LIGHT_RED));
         }
     }
 
@@ -295,11 +295,11 @@
 
         try
         {
-            Console::out(Console::formatColor($full_name, ConsoleColors::Green) . ' Version: ' . Console::formatColor($component->getVersion(), ConsoleColors::LightMagenta));
+            Console::out(Console::formatColor($full_name, ConsoleColors::GREEN) . ' Version: ' . Console::formatColor($component->getVersion(), ConsoleColors::LIGHT_MAGENTA));
         }
         catch (Exception $e)
         {
-            Console::outWarning('Cannot determine component version of ' . Console::formatColor($full_name, ConsoleColors::Green));
+            Console::outWarning('Cannot determine component version of ' . Console::formatColor($full_name, ConsoleColors::GREEN));
         }
     }
 

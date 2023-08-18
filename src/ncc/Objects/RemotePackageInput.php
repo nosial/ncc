@@ -24,7 +24,7 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\RegexPatterns;
+    use ncc\Enums\RegexPatterns;
 
     class RemotePackageInput
     {
@@ -60,7 +60,7 @@
          */
         public function __construct(?string $input=null)
         {
-            if($input !== null && preg_match(RegexPatterns::RemotePackage, $input, $matches))
+            if($input !== null && preg_match(RegexPatterns::REMOTE_PACKAGE, $input, $matches))
             {
                 $this->Vendor = $matches['vendor'];
                 $this->Package = $matches['package'];

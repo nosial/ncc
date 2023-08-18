@@ -24,7 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
-    use ncc\Abstracts\RegexPatterns;
+    use ncc\Enums\RegexPatterns;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
@@ -120,7 +120,7 @@
                 return false;
             }
 
-            if($this->Package !== null && !preg_match(RegexPatterns::PackageNameFormat, $this->Package))
+            if($this->Package !== null && !preg_match(RegexPatterns::PACKAGE_NAME_FORMAT, $this->Package))
             {
                 if($throw_exception)
                     throw new InvalidProjectConfigurationException('The package name is invalid', 'Assembly.Package');

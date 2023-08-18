@@ -22,7 +22,7 @@
 
 namespace ncc\CLI\Management;
 
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
@@ -101,7 +101,7 @@ namespace ncc\CLI\Management;
 
                 if(isset($args['v']))
                 {
-                    if(Resolver::resolveScope() !== Scopes::System)
+                    if(Resolver::resolveScope() !== Scopes::SYSTEM)
                     {
                         Console::outError('Insufficient permissions, cannot modify configuration values', true, 1);
                         return;

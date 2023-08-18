@@ -24,8 +24,8 @@
 
     namespace ncc\Managers;
 
-    use ncc\Abstracts\Options\BuildConfigurationValues;
-    use ncc\Abstracts\Options\InitializeProjectOptions;
+    use ncc\Enums\Options\BuildConfigurationValues;
+    use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Classes\NccExtension\PackageCompiler;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
@@ -290,7 +290,7 @@
          * @throws PackagePreparationFailedException
          * @throws UnsupportedCompilerExtensionException
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DefaultConfiguration): string
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
             return PackageCompiler::compile($this, $build_configuration);
         }

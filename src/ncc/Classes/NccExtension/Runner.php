@@ -22,7 +22,7 @@
 
 namespace ncc\Classes\NccExtension;
 
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\IOException;
@@ -49,7 +49,7 @@ namespace ncc\Classes\NccExtension;
          */
         public static function temporaryExecute(string $package, string $version, ExecutionUnit $unit): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot temporarily execute a unit with insufficient permissions');
 
             $ExecutionPointerManager = new ExecutionPointerManager();

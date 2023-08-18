@@ -23,9 +23,9 @@
 namespace ncc\CLI\Management;
 
     use Exception;
-    use ncc\Abstracts\ConsoleColors;
-    use ncc\Abstracts\Options\InstallPackageOptions;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\ConsoleColors;
+    use ncc\Enums\Options\InstallPackageOptions;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\RuntimeException;
@@ -133,9 +133,9 @@ namespace ncc\CLI\Management;
         private static function printTree($data, string $prefix=''): void
         {
             $symbols = [
-                'corner' => Console::formatColor(' └─', ConsoleColors::LightRed),
-                'line' => Console::formatColor(' │ ', ConsoleColors::LightRed),
-                'cross' => Console::formatColor(' ├─', ConsoleColors::LightRed),
+                'corner' => Console::formatColor(' └─', ConsoleColors::LIGHT_RED),
+                'line' => Console::formatColor(' │ ', ConsoleColors::LIGHT_RED),
+                'cross' => Console::formatColor(' ├─', ConsoleColors::LIGHT_RED),
             ];
 
             $keys = array_keys($data);
@@ -278,8 +278,8 @@ namespace ncc\CLI\Management;
                                 continue;
 
                             Console::out(sprintf('%s=%s (%s)',
-                                Console::formatColor($package, ConsoleColors::LightGreen),
-                                Console::formatColor($version, ConsoleColors::LightMagenta),
+                                Console::formatColor($package, ConsoleColors::LIGHT_GREEN),
+                                Console::formatColor($version, ConsoleColors::LIGHT_MAGENTA),
                                 $package_manager->getPackageVersion($package, $version)->Compiler->Extension
                             ));
                         }
@@ -287,9 +287,9 @@ namespace ncc\CLI\Management;
                         {
                             unset($e);
                             Console::out(sprintf('%s=%s (%s)',
-                                Console::formatColor($package, ConsoleColors::LightGreen),
-                                Console::formatColor($version, ConsoleColors::LightMagenta),
-                                Console::formatColor('N/A', ConsoleColors::LightRed)
+                                Console::formatColor($package, ConsoleColors::LIGHT_GREEN),
+                                Console::formatColor($version, ConsoleColors::LIGHT_MAGENTA),
+                                Console::formatColor('N/A', ConsoleColors::LIGHT_RED)
                             ));
                         }
                     }
@@ -307,7 +307,7 @@ namespace ncc\CLI\Management;
             $package = ($args['package'] ?? $args['p']);
             $package_manager = new PackageManager();
 
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
                 Console::outError('Insufficient permissions to install packages', true, 1);
                 return;
@@ -389,12 +389,12 @@ namespace ncc\CLI\Management;
 
             if((Functions::cbool($args['skip-dependencies'] ?? false)))
             {
-                $installer_options[] = InstallPackageOptions::SkipDependencies;
+                $installer_options[] = InstallPackageOptions::SKIP_DEPENDENCIES;
             }
 
             if(Functions::cbool($args['reinstall'] ?? false))
             {
-                $installer_options[] = InstallPackageOptions::Reinstall;
+                $installer_options[] = InstallPackageOptions::REINSTALL;
             }
 
             try
@@ -409,23 +409,23 @@ namespace ncc\CLI\Management;
 
             Console::out('Package installation details' . PHP_EOL);
             if(!is_null($package->Assembly->UUID))
-                Console::out('  UUID: ' . Console::formatColor($package->Assembly->UUID, ConsoleColors::LightGreen));
+                Console::out('  UUID: ' . Console::formatColor($package->Assembly->UUID, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Package))
-                Console::out('  Package: ' . Console::formatColor($package->Assembly->Package, ConsoleColors::LightGreen));
+                Console::out('  Package: ' . Console::formatColor($package->Assembly->Package, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Name))
-                Console::out('  Name: ' . Console::formatColor($package->Assembly->Name, ConsoleColors::LightGreen));
+                Console::out('  Name: ' . Console::formatColor($package->Assembly->Name, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Version))
-                Console::out('  Version: ' . Console::formatColor($package->Assembly->Version, ConsoleColors::LightGreen));
+                Console::out('  Version: ' . Console::formatColor($package->Assembly->Version, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Description))
-                Console::out('  Description: ' . Console::formatColor($package->Assembly->Description, ConsoleColors::LightGreen));
+                Console::out('  Description: ' . Console::formatColor($package->Assembly->Description, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Product))
-                Console::out('  Product: ' . Console::formatColor($package->Assembly->Product, ConsoleColors::LightGreen));
+                Console::out('  Product: ' . Console::formatColor($package->Assembly->Product, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Company))
-                Console::out('  Company: ' . Console::formatColor($package->Assembly->Company, ConsoleColors::LightGreen));
+                Console::out('  Company: ' . Console::formatColor($package->Assembly->Company, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Copyright))
-                Console::out('  Copyright: ' . Console::formatColor($package->Assembly->Copyright, ConsoleColors::LightGreen));
+                Console::out('  Copyright: ' . Console::formatColor($package->Assembly->Copyright, ConsoleColors::LIGHT_GREEN));
             if(!is_null($package->Assembly->Trademark))
-                Console::out('  Trademark: ' . Console::formatColor($package->Assembly->Trademark, ConsoleColors::LightGreen));
+                Console::out('  Trademark: ' . Console::formatColor($package->Assembly->Trademark, ConsoleColors::LIGHT_GREEN));
             Console::out((string)null);
 
             if(count($package->Dependencies) > 0)
@@ -435,7 +435,7 @@ namespace ncc\CLI\Management;
                 {
                     $require_dependency = false;
 
-                    if(!in_array(InstallPackageOptions::SkipDependencies, $installer_options))
+                    if(!in_array(InstallPackageOptions::SKIP_DEPENDENCIES, $installer_options))
                     {
                         try
                         {
@@ -467,8 +467,8 @@ namespace ncc\CLI\Management;
                     if($require_dependency)
                     {
                         $dependencies[] = sprintf('  %s %s',
-                            Console::formatColor($dependency->Name, ConsoleColors::Green),
-                            Console::formatColor($dependency->Version, ConsoleColors::LightMagenta)
+                            Console::formatColor($dependency->Name, ConsoleColors::GREEN),
+                            Console::formatColor($dependency->Version, ConsoleColors::LIGHT_MAGENTA)
                         );
                     }
                 }
@@ -481,17 +481,17 @@ namespace ncc\CLI\Management;
             }
 
             Console::out(sprintf('Extension: %s',
-                Console::formatColor($package->Header->CompilerExtension->Extension, ConsoleColors::Green)
+                Console::formatColor($package->Header->CompilerExtension->Extension, ConsoleColors::GREEN)
             ));
 
             if($package->Header->CompilerExtension->MaximumVersion !== null)
                 Console::out(sprintf('Maximum Version: %s',
-                    Console::formatColor($package->Header->CompilerExtension->MaximumVersion, ConsoleColors::LightMagenta)
+                    Console::formatColor($package->Header->CompilerExtension->MaximumVersion, ConsoleColors::LIGHT_MAGENTA)
                 ));
 
             if($package->Header->CompilerExtension->MinimumVersion !== null)
                 Console::out(sprintf('Minimum Version: %s',
-                    Console::formatColor($package->Header->CompilerExtension->MinimumVersion, ConsoleColors::LightMagenta)
+                    Console::formatColor($package->Header->CompilerExtension->MinimumVersion, ConsoleColors::LIGHT_MAGENTA)
                 ));
 
             if(!$user_confirmation)

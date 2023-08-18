@@ -23,11 +23,11 @@
 namespace ncc\Utilities;
 
     use Exception;
-    use ncc\Abstracts\AuthenticationType;
-    use ncc\Abstracts\DefinedRemoteSourceType;
-    use ncc\Abstracts\HttpRequestType;
-    use ncc\Abstracts\Runners;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\AuthenticationType;
+    use ncc\Enums\DefinedRemoteSourceType;
+    use ncc\Enums\HttpRequestType;
+    use ncc\Enums\Runners;
+    use ncc\Enums\Scopes;
     use ncc\Classes\BashExtension\BashRunner;
     use ncc\Classes\GithubExtension\GithubService;
     use ncc\Classes\GitlabExtension\GitlabService;
@@ -307,12 +307,12 @@ namespace ncc\Utilities;
         public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
             return match (strtolower($policy->Runner)) {
-                Runners::bash => BashRunner::processUnit($path, $policy),
-                Runners::php => PhpRunner::processUnit($path, $policy),
-                Runners::perl => PerlRunner::processUnit($path, $policy),
-                Runners::python => PythonRunner::processUnit($path, $policy),
-                Runners::python2 => Python2Runner::processUnit($path, $policy),
-                Runners::python3 => Python3Runner::processUnit($path, $policy),
+                Runners::BASH => BashRunner::processUnit($path, $policy),
+                Runners::PHP => PhpRunner::processUnit($path, $policy),
+                Runners::PERL => PerlRunner::processUnit($path, $policy),
+                Runners::PYTHON => PythonRunner::processUnit($path, $policy),
+                Runners::PYTHON_2 => Python2Runner::processUnit($path, $policy),
+                Runners::PYTHON_3 => Python3Runner::processUnit($path, $policy),
                 Runners::lua => LuaRunner::processUnit($path, $policy),
                 default => throw new RunnerExecutionException('The runner \'' . $policy->Runner . '\' is not supported'),
             };
@@ -366,37 +366,37 @@ namespace ncc\Utilities;
          */
         public static function initializeFiles(): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot initialize NCC files, insufficient permissions');
 
             Console::outVerbose('Initializing NCC files');
 
             $filesystem = new Filesystem();
-            if(!$filesystem->exists(PathFinder::getDataPath(Scopes::System)))
+            if(!$filesystem->exists(PathFinder::getDataPath(Scopes::SYSTEM)))
             {
-                Console::outDebug(sprintf('Initializing %s', PathFinder::getDataPath(Scopes::System)));
-                $filesystem->mkdir(PathFinder::getDataPath(Scopes::System), 0755);
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getDataPath(Scopes::SYSTEM)));
+                $filesystem->mkdir(PathFinder::getDataPath(Scopes::SYSTEM), 0755);
             }
 
-            if(!$filesystem->exists(PathFinder::getCachePath(Scopes::System)))
+            if(!$filesystem->exists(PathFinder::getCachePath(Scopes::SYSTEM)))
             {
-                Console::outDebug(sprintf('Initializing %s', PathFinder::getCachePath(Scopes::System)));
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getCachePath(Scopes::SYSTEM)));
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                $filesystem->mkdir(PathFinder::getCachePath(Scopes::System), 0777);
+                $filesystem->mkdir(PathFinder::getCachePath(Scopes::SYSTEM), 0777);
             }
 
-            if(!$filesystem->exists(PathFinder::getRunnerPath(Scopes::System)))
+            if(!$filesystem->exists(PathFinder::getRunnerPath(Scopes::SYSTEM)))
             {
-                Console::outDebug(sprintf('Initializing %s', PathFinder::getRunnerPath(Scopes::System)));
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getRunnerPath(Scopes::SYSTEM)));
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                $filesystem->mkdir(PathFinder::getRunnerPath(Scopes::System), 0755);
+                $filesystem->mkdir(PathFinder::getRunnerPath(Scopes::SYSTEM), 0755);
             }
 
-            if(!$filesystem->exists(PathFinder::getPackagesPath(Scopes::System)))
+            if(!$filesystem->exists(PathFinder::getPackagesPath(Scopes::SYSTEM)))
             {
-                Console::outDebug(sprintf('Initializing %s', PathFinder::getPackagesPath(Scopes::System)));
+                Console::outDebug(sprintf('Initializing %s', PathFinder::getPackagesPath(Scopes::SYSTEM)));
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                $filesystem->mkdir(PathFinder::getPackagesPath(Scopes::System), 0755);
+                $filesystem->mkdir(PathFinder::getPackagesPath(Scopes::SYSTEM), 0755);
             }
 
             // Create credential store if needed
@@ -569,11 +569,11 @@ namespace ncc\Utilities;
                     throw new GitlabServiceException('The given Vault entry is not decrypted.');
 
                 switch ($entry->getPassword()->getAuthenticationType()) {
-                    case AuthenticationType::AccessToken:
+                    case AuthenticationType::ACCESS_TOKEN:
                         $httpRequest->Headers[] = "Authorization: Bearer " . $entry->getPassword();
                         break;
 
-                    case AuthenticationType::UsernamePassword:
+                    case AuthenticationType::USERNAME_PASSWORD:
                         throw new AuthenticationException('Username/Password authentication is not supported');
                 }
             }
@@ -773,11 +773,11 @@ namespace ncc\Utilities;
 
             switch($definedRemoteSource->Type)
             {
-                case DefinedRemoteSourceType::Github:
+                case DefinedRemoteSourceType::GITHUB:
                     $source = GithubService::class;
                     break;
 
-                case DefinedRemoteSourceType::Gitlab:
+                case DefinedRemoteSourceType::GITLAB:
                     $source = GitlabService::class;
                     break;
 
@@ -967,7 +967,7 @@ namespace ncc\Utilities;
          */
         public static function finalizePermissions(): void
         {
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 return;
 
             Console::outVerbose('Finalizing permissions...');
@@ -975,8 +975,8 @@ namespace ncc\Utilities;
 
             try
             {
-                if($filesystem->exists(PathFinder::getDataPath(Scopes::System)))
-                    $filesystem->chmod(PathFinder::getDataPath(Scopes::System), 0777, 0000, true);
+                if($filesystem->exists(PathFinder::getDataPath(Scopes::SYSTEM)))
+                    $filesystem->chmod(PathFinder::getDataPath(Scopes::SYSTEM), 0777, 0000, true);
             }
             catch(Exception $e)
             {
@@ -985,8 +985,8 @@ namespace ncc\Utilities;
 
             try
             {
-                if($filesystem->exists(PathFinder::getCachePath(Scopes::System)))
-                    $filesystem->chmod(PathFinder::getCachePath(Scopes::System), 0777, 0000, true);
+                if($filesystem->exists(PathFinder::getCachePath(Scopes::SYSTEM)))
+                    $filesystem->chmod(PathFinder::getCachePath(Scopes::SYSTEM), 0777, 0000, true);
             }
             catch(Exception $e)
             {

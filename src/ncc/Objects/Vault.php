@@ -24,8 +24,8 @@
 
     namespace ncc\Objects;
 
-    use ncc\Abstracts\AuthenticationType;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\AuthenticationType;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\RuntimeException;
     use ncc\Interfaces\PasswordInterface;
     use ncc\Objects\Vault\Entry;
@@ -52,7 +52,7 @@
          */
         public function __construct()
         {
-            $this->Version = Versions::CredentialsStoreVersion;
+            $this->Version = Versions::CREDENTIALS_STORE_VERSION;
             $this->Entries = [];
         }
 
@@ -163,10 +163,10 @@
             $input = [];
             switch($entry->getPassword()->getAuthenticationType())
             {
-                case AuthenticationType::UsernamePassword:
+                case AuthenticationType::USERNAME_PASSWORD:
                     $input = ['password' => $password];
                     break;
-                case AuthenticationType::AccessToken:
+                case AuthenticationType::ACCESS_TOKEN:
                     $input = ['token' => $password];
                     break;
             }

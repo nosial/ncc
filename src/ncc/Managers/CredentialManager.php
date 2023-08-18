@@ -25,8 +25,8 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\Scopes;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\IOException;
@@ -57,7 +57,7 @@
         public function __construct()
         {
             /** @noinspection PhpUnhandledExceptionInspection */
-            $this->CredentialsPath = PathFinder::getDataPath(Scopes::System) . DIRECTORY_SEPARATOR . 'credentials.store';
+            $this->CredentialsPath = PathFinder::getDataPath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . 'credentials.store';
             $this->Vault = null;
 
             try
@@ -89,11 +89,11 @@
             if(file_exists($this->CredentialsPath))
                 return;
 
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot construct credentials store without system permissions');
 
             $VaultObject = new Vault();
-            $VaultObject->Version = Versions::CredentialsStoreVersion;
+            $VaultObject->Version = Versions::CREDENTIALS_STORE_VERSION;
 
             IO::fwrite($this->CredentialsPath, ZiProto::encode($VaultObject->toArray()), 0744);
         }
@@ -123,7 +123,7 @@
             $VaultArray = ZiProto::decode(IO::fread($this->CredentialsPath));
             $VaultObject = Vault::fromArray($VaultArray);
 
-            if($VaultObject->Version !== Versions::CredentialsStoreVersion)
+            if($VaultObject->Version !== Versions::CREDENTIALS_STORE_VERSION)
                 throw new RuntimeException('Credentials store version mismatch');
 
             $this->Vault = $VaultObject;
@@ -141,7 +141,7 @@
         {
             Console::outDebug(sprintf('saving credentials store to %s', $this->CredentialsPath));
 
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot save credentials store without system permissions');
 
             IO::fwrite($this->CredentialsPath, ZiProto::encode($this->Vault->toArray()), 0744);

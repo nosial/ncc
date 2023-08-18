@@ -23,7 +23,7 @@
 namespace ncc\CLI\Management;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\RuntimeException;
     use ncc\Managers\CredentialManager;
     use ncc\Objects\CliHelpSection;
@@ -201,7 +201,7 @@ namespace ncc\CLI\Management;
         {
             $ResolvedScope = Resolver::resolveScope();
 
-            if($ResolvedScope !== Scopes::System)
+            if($ResolvedScope !== Scopes::SYSTEM)
                 Console::outError('Insufficient permissions to add entries');
 
             // Really dumb-proofing this
@@ -319,7 +319,7 @@ namespace ncc\CLI\Management;
         {
             $ResolvedScope = Resolver::resolveScope();
 
-            if($ResolvedScope !== Scopes::System)
+            if($ResolvedScope !== Scopes::SYSTEM)
                 Console::outError('Insufficient permissions to remove entries');
 
             $name = $args['alias'] ?? $args['name'] ?? null;

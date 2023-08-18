@@ -25,8 +25,8 @@
     namespace ncc;
 
     use Exception;
-    use ncc\Abstracts\CompilerExtensions;
-    use ncc\Abstracts\Versions;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\Versions;
     use ncc\Classes\PhpExtension\PhpRuntime;
     use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\ImportException;
@@ -59,9 +59,9 @@
          * @return bool
          * @throws PackageLockException
          */
-        private static function isImported(string $package, string $version=Versions::Latest): bool
+        private static function isImported(string $package, string $version=Versions::LATEST): bool
         {
-            if($version == Versions::Latest)
+            if($version == Versions::LATEST)
                 $version = self::getPackageManager()->getPackage($package)->getLatestVersion();
 
             $entry = "$package=$version";
@@ -90,7 +90,7 @@
          * @return void
          * @throws ImportException
          */
-        public static function import(string $package, string $version=Versions::Latest, array $options=[]): void
+        public static function import(string $package, string $version=Versions::LATEST, array $options=[]): void
         {
             try
             {
@@ -105,7 +105,7 @@
                 throw new ImportException(sprintf("Package '%s' not found", $package));
             }
 
-            if($version == Versions::Latest)
+            if($version == Versions::LATEST)
                 $version = $package_entry->getLatestVersion();
 
             try

@@ -25,7 +25,7 @@
     namespace ncc\Managers;
 
     use Exception;
-    use ncc\Abstracts\Scopes;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageLockException;
@@ -55,7 +55,7 @@
         public function __construct()
         {
             /** @noinspection PhpUnhandledExceptionInspection */
-            $this->PackageLockPath = PathFinder::getPackageLock(Scopes::System);
+            $this->PackageLockPath = PathFinder::getPackageLock(Scopes::SYSTEM);
 
             try
             {
@@ -131,7 +131,7 @@
                 return;
             }
 
-            if(Resolver::resolveScope() !== Scopes::System)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
                 throw new AccessDeniedException('Cannot write to PackageLock, insufficient permissions');
 
             try

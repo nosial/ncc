@@ -23,7 +23,7 @@
 namespace ncc\Classes\PhpExtension;
 
     use Exception;
-    use ncc\Abstracts\Options\RuntimeImportOptions;
+    use ncc\Enums\Options\RuntimeImportOptions;
     use ncc\Classes\NccExtension\ConstantCompiler;
     use ncc\Exceptions\ConstantReadonlyException;
     use ncc\Exceptions\ImportException;
@@ -96,12 +96,12 @@ namespace ncc\Classes\PhpExtension;
                 }
             }
 
-            if(file_exists($autoload_path) && !in_array(RuntimeImportOptions::ImportAutoloader, $options))
+            if(file_exists($autoload_path) && !in_array(RuntimeImportOptions::IMPORT_AUTOLOADER, $options))
             {
                 require_once($autoload_path);
             }
 
-            if(file_exists($static_files) && !in_array(RuntimeImportOptions::ImportStaticFiles, $options))
+            if(file_exists($static_files) && !in_array(RuntimeImportOptions::IMPORT_STATIC_FILES, $options))
             {
                 try
                 {
