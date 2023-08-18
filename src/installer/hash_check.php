@@ -6,6 +6,7 @@
         print('Could not find \'autoload.php\', this script is intended to be executed during the redistribution process');
         exit(1);
     }
+
     require(__DIR__ . DIRECTORY_SEPARATOR . 'autoload.php');
 
     // Start script
@@ -20,7 +21,7 @@
             {
                 $results[] = str_ireplace(__DIR__ . DIRECTORY_SEPARATOR, (string)null, $path);
             }
-            else if ($value != '.' && $value != '..')
+            else if ($value !== '.' && $value !== '..')
             {
                 scanContents($path, $results);
             }
@@ -42,7 +43,7 @@
     foreach(scanContents(__DIR__) as $file)
     {
 
-        if(!in_array($file, $excluded_files))
+        if(!in_array($file, $excluded_files, true))
         {
             $hash_values[$file] = hash_file('sha256', __DIR__ . DIRECTORY_SEPARATOR . $file);
         }

@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Updated class type to "final class" in `\ncc\Enums > Runners`
  - Updated class type to "final class" in `\ncc\Enums > Scopes`
  - Updated class type to "final class" in `\ncc\Enums > Versions`
+ - Corrected code-smell and code style issues in `src/installer/hash_check.php`
 
 
 
