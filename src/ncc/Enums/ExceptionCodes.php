@@ -22,6 +22,7 @@
 
 namespace ncc\Enums;
 
+    use ncc\Exceptions\GitException;
     use ncc\Exceptions\InvalidDependencyConfiguration;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\SymlinkException;
@@ -284,16 +285,6 @@ namespace ncc\Enums;
         public const UNSUPPORTED_REMOTE_SOURCE_TYPE = -1753;
 
         /**
-         * @see GitCloneException
-         */
-        public const GIT_CLONE_EXCEPTION = -1754;
-
-        /**
-         * @see GitCheckoutException
-         */
-        public const GIT_CHECKOUT_EXCEPTION = -1755;
-
-        /**
          * @see GitlabServiceException
          */
         public const GITLAB_SERVICE_EXCEPTION = -1756;
@@ -307,11 +298,6 @@ namespace ncc\Enums;
          * @see GitTagsException
          */
         public const GIT_TAGS_EXCEPTION = -1758;
-
-        /**
-         * @see GithubServiceException
-         */
-        public const GITHUB_SERVICE_EXCEPTION = -1759;
 
         /**
          * @see AuthenticationException
@@ -362,6 +348,11 @@ namespace ncc\Enums;
          * @see PathNotFoundException
          */
         public const PATH_NOT_FOUND = -1769;
+
+        /**
+         * @see GitException
+         */
+        public const GIT_EXCEPTION = -1770;
 
         /**
          * All the exception codes from NCC
@@ -416,8 +407,6 @@ namespace ncc\Enums;
             self::MISSING_DEPENDENCY,
             self::HTTP_EXCEPTION,
             self::UNSUPPORTED_REMOTE_SOURCE_TYPE,
-            self::GIT_CLONE_EXCEPTION,
-            self::GIT_CHECKOUT_EXCEPTION,
             self::GITLAB_SERVICE_EXCEPTION,
             self::GIT_TAGS_EXCEPTION,
             self::AUTHENTICATION_EXCEPTION,
@@ -429,6 +418,7 @@ namespace ncc\Enums;
             self::INVALID_BUILD_CONFIGURATION,
             self::INVALID_DEPENDENCY_CONFIGURATION,
             self::SYMLINK_EXCEPTION,
-            self::PATH_NOT_FOUND
+            self::PATH_NOT_FOUND,
+            self::GIT_EXCEPTION
         ];
     }

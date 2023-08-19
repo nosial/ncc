@@ -15,6 +15,7 @@ features.
  - Added new exception `PathNotFoundException` and implemented it in replacement for `DirectoryNotFoundException` and
    `FileNotFoundException` in `\ncc\Exceptions`
  - Added a new interface class `BytecodeObjectInterface` which will be used to implement object types for compiled assets
+ - Added new exception `GitException` in `\ncc\Exceptions` to replace all git related exceptions
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -107,6 +108,8 @@ features.
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > ExitHandle`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > ExitHandlers`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\Build > BuildConfiguration`
+ - Updated `\ncc\Classes > GitClient > cloneRepository()` to throw `GitException` instead of `GitCloneException`
+ - Updated `\ncc\Classes > GitClient > checkout()` to throw `GitException` instead of `GitCheckoutException`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
@@ -114,6 +117,9 @@ features.
  - Removed references of Win32 from the project as Windows is not going supported
  - Removed unused exception `FileNotFoundException` in `\ncc\CLI > HelpMenu`
  - Removed unused class `\ncc\Objects > SymlinkDictionary`
+ - Removed unused exception `GitCloneException` in `\ncc\Exceptions` in favor of `GitException`
+ - Removed unused exception `GitCheckoutException` in `\ncc\Exceptions` in favor of `GitException`
+ - Removed unused exception `GithubServiceException` in `\ncc\Exceptions` in favor of `GitException`
 
 
 

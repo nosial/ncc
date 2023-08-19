@@ -1,31 +1,29 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Classes;
+    namespace ncc\Classes;
 
-    use ncc\Exceptions\GitCheckoutException;
-    use ncc\Exceptions\GitCloneException;
+    use ncc\Exceptions\GitException;
     use ncc\Exceptions\GitTagsException;
-    use ncc\Exceptions\InvalidScopeException;
     use ncc\ThirdParty\Symfony\Process\Process;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -37,8 +35,7 @@ namespace ncc\Classes;
          *
          * @param string $url
          * @return string
-         * @throws GitCloneException
-         * @throws InvalidScopeException
+         * @throws GitException
          */
         public static function cloneRepository(string $url): string
         {
@@ -59,7 +56,7 @@ namespace ncc\Classes;
 
             if (!$process->isSuccessful())
             {
-                throw new GitCloneException($process->getErrorOutput());
+                throw new GitException(sprintf('Failed to clone repository %s: %s', $url, $process->getErrorOutput()));
             }
 
             Console::outVerbose('Repository cloned to: ' . $path);
@@ -72,7 +69,7 @@ namespace ncc\Classes;
          *
          * @param string $path
          * @param string $branch
-         * @throws GitCheckoutException
+         * @throws GitException
          */
         public static function checkout(string $path, string $branch): void
         {
@@ -93,7 +90,7 @@ namespace ncc\Classes;
 
             if (!$process->isSuccessful())
             {
-                throw new GitCheckoutException($process->getErrorOutput());
+                throw new GitException(sprintf('Failed to checkout branch %s in repository %s: %s', $branch, $path, $process->getErrorOutput()));
             }
 
             Console::outVerbose('Checked out branch: ' . $branch);
@@ -115,7 +112,7 @@ namespace ncc\Classes;
 
             if (!$process->isSuccessful())
             {
-                throw new GitCheckoutException($process->getErrorOutput());
+                throw new GitException(sprintf('Failed to update submodules in repository %s: %s', $path, $process->getErrorOutput()));
             }
 
             Console::outVerbose('Submodules updated');

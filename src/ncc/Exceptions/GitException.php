@@ -1,5 +1,5 @@
 <?php
-/*
+    /*
  * Copyright (c) Nosial 2022-2023, all rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,20 +20,16 @@
  *
  */
 
-namespace ncc\Exceptions;
+    namespace ncc\Exceptions;
 
     use Exception;
     use ncc\Enums\ExceptionCodes;
     use Throwable;
 
-    class GitCheckoutException extends Exception
+    class GitException extends Exception
     {
-        /**
-         * @param string $message
-         * @param Throwable|null $previous
-         */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::GIT_CHECKOUT_EXCEPTION, $previous);
+            parent::__construct($message, ExceptionCodes::GIT_EXCEPTION, $previous);
         }
     }
