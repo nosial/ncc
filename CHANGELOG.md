@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - Unreleased
 
-## Added
+### Added
  - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
  - Added new exception `PathNotFoundException` and implemented it in replacement for `DirectoryNotFoundException` and
    `FileNotFoundException` in `\ncc\Exceptions`
@@ -92,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Extended `PasswordInterface` with `BytecodeObjectInterface`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\SymlinkDictionary > SymlinkEntry`
 
-## Removed
+### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
  - Removed the use of `InvalidScopeException` across the project
  - Removed references of Win32 from the project as Windows is not going supported
