@@ -120,6 +120,7 @@ features.
  - Removed unused exception `GitCloneException` in `\ncc\Exceptions` in favor of `GitException`
  - Removed unused exception `GitCheckoutException` in `\ncc\Exceptions` in favor of `GitException`
  - Removed unused exception `GithubServiceException` in `\ncc\Exceptions` in favor of `GitException`
+ - Removed unused exception `GitTagsException` in `\ncc\Exceptions` in favor of `GitException`
 
 
 

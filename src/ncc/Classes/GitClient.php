@@ -23,7 +23,6 @@
     namespace ncc\Classes;
 
     use ncc\Exceptions\GitException;
-    use ncc\Exceptions\GitTagsException;
     use ncc\ThirdParty\Symfony\Process\Process;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -123,7 +122,7 @@
          *
          * @param string $path
          * @return array
-         * @throws GitTagsException
+         * @throws GitException
          */
         public static function getTags(string $path): array
         {
@@ -137,11 +136,10 @@
 
             if (!$process->isSuccessful())
             {
-                throw new GitTagsException($process->getErrorOutput());
+                throw new GitException(sprintf('Failed to fetch tags in repository %s: %s', $path, $process->getErrorOutput()));
             }
 
             $process = new Process(['git', '--no-pager', 'tag', '-l'] , $path);
-
             $process->run(function ($type, $buffer)
             {
                 Console::outVerbose($buffer);
@@ -149,7 +147,7 @@
 
             if (!$process->isSuccessful())
             {
-                throw new GitTagsException($process->getErrorOutput());
+                throw new GitException(sprintf('Failed to get tags in repository %s: %s', $path, $process->getErrorOutput()));
             }
 
             $tags = explode(PHP_EOL, $process->getOutput());

@@ -295,11 +295,6 @@ namespace ncc\Enums;
         public const IMPORT_EXCEPTION = -1757;
 
         /**
-         * @see GitTagsException
-         */
-        public const GIT_TAGS_EXCEPTION = -1758;
-
-        /**
          * @see AuthenticationException
          */
         public const AUTHENTICATION_EXCEPTION = -1760;
@@ -408,7 +403,6 @@ namespace ncc\Enums;
             self::HTTP_EXCEPTION,
             self::UNSUPPORTED_REMOTE_SOURCE_TYPE,
             self::GITLAB_SERVICE_EXCEPTION,
-            self::GIT_TAGS_EXCEPTION,
             self::AUTHENTICATION_EXCEPTION,
             self::NOT_SUPPORTED_EXCEPTION,
             self::UNSUPPORTED_PROJECT_TYPE,
