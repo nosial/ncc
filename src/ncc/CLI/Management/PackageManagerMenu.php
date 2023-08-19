@@ -1,32 +1,32 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\CLI\Management;
+    namespace ncc\CLI\Management;
 
     use Exception;
+    use JsonException;
     use ncc\Enums\ConsoleColors;
     use ncc\Enums\Options\InstallPackageOptions;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -156,14 +156,15 @@ namespace ncc\CLI\Management;
          *
          * @param $args
          * @return void
-         * @throws FileNotFoundException
          */
         private static function semiDecompile($args): void
         {
             $path = ($args['package'] ?? $args['p']);
 
             if(!file_exists($path) || !is_file($path) || !is_readable($path))
-                throw new FileNotFoundException('The specified file \'' . $path .' \' does not exist or is not readable.');
+            {
+                Console::outError('The specified file does not exist or is not readable', true, 1);
+            }
 
             try
             {
@@ -175,18 +176,35 @@ namespace ncc\CLI\Management;
                 return;
             }
 
-            Console::out('magic_bytes: ' . json_encode(($package->MagicBytes?->toArray() ?? []), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            Console::out('header: ' . json_encode(($package->Header?->toArray() ?? []), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            Console::out('assembly: ' . json_encode(($package->Assembly?->toArray() ?? []), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            Console::out('main: ' . ($package->MainExecutionPolicy ?? 'N/A'));
-            Console::out('installer: ' . ($package->Installer?->toArray() ?? 'N/A'));
+            try
+            {
+                Console::out('magic_bytes: ' . json_encode(($package->magic_bytes?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                Console::out('header: ' . json_encode(($package->header?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                Console::out('assembly: ' . json_encode(($package->assembly?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                Console::out('installer: ' . json_encode(($package->installer?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            }
+            catch(JsonException $e)
+            {
+                Console::outException('Error while printing package header', $e, 1);
+                return;
+            }
 
-            if($package->Dependencies !== null && count($package->Dependencies) > 0)
+            Console::out('main: ' . ($package->main_execution_policy ?? 'N/A'));
+
+            if($package->dependencies !== null && count($package->dependencies) > 0)
             {
                 Console::out('dependencies:');
-                foreach($package->Dependencies as $dependency)
+                foreach($package->dependencies as $dependency)
                 {
-                    Console::out('  - ' . json_encode($dependency->toArray(), JSON_UNESCAPED_SLASHES));
+                    try
+                    {
+                        Console::out('  - ' . json_encode($dependency->toArray(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+                    }
+                    catch(JsonException $e)
+                    {
+                        Console::outException('Error while printing dependency', $e, 1);
+                        return;
+                    }
                 }
             }
             else
@@ -194,12 +212,20 @@ namespace ncc\CLI\Management;
                 Console::out('dependencies: N/A');
             }
 
-            if($package->ExecutionUnits !== null && count($package->ExecutionUnits) > 0)
+            if($package->execution_units !== null && count($package->execution_units) > 0)
             {
                 Console::out('execution_units:');
-                foreach($package->ExecutionUnits as $unit)
+                foreach($package->execution_units as $unit)
                 {
-                    Console::out('  - ' . json_encode($unit->toArray(), JSON_UNESCAPED_SLASHES));
+                    try
+                    {
+                        Console::out('  - ' . json_encode($unit->toArray(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+                    }
+                    catch(JsonException $e)
+                    {
+                        Console::outException('Error while printing execution unit', $e, 1);
+                        return;
+                    }
                 }
             }
             else
@@ -207,10 +233,10 @@ namespace ncc\CLI\Management;
                 Console::out('execution_units: N/A');
             }
 
-            if($package->Resources !== null && count($package->Resources) > 0)
+            if($package->resources !== null && count($package->resources) > 0)
             {
                 Console::out('resources:');
-                foreach($package->Resources as $resource)
+                foreach($package->resources as $resource)
                 {
                     Console::out('  - ' . sprintf('%s - (%s)', $resource->Name, Functions::b2u(strlen($resource->Data))));
                 }
@@ -220,12 +246,20 @@ namespace ncc\CLI\Management;
                 Console::out('resources: N/A');
             }
 
-            if($package->Components !== null && count($package->Components) > 0)
+            if($package->components !== null && count($package->components) > 0)
             {
                 Console::out('components:');
-                foreach($package->Components as $component)
+                foreach($package->components as $component)
                 {
-                    Console::out('  - ' . sprintf('#%s %s - %s', $component->data_types, $component->name, json_encode(($component->flags ?? []), JSON_UNESCAPED_SLASHES)));
+                    try
+                    {
+                        Console::out('  - ' . sprintf('#%s %s - %s', $component->data_types, $component->name, json_encode(($component->flags ?? []), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)));
+                    }
+                    catch(JsonException $e)
+                    {
+                        Console::outException('Error while printing component', $e, 1);
+                        return;
+                    }
                 }
             }
             else
@@ -264,7 +298,7 @@ namespace ncc\CLI\Management;
             {
                 foreach($installed_packages as $package => $versions)
                 {
-                    if(count($versions) == 0)
+                    if(count($versions) === 0)
                     {
                         continue;
                     }
@@ -274,8 +308,10 @@ namespace ncc\CLI\Management;
                         try
                         {
                             $package_version = $package_manager->getPackageVersion($package, $version);
-                            if($package_version == null)
+                            if($package_version === null)
+                            {
                                 continue;
+                            }
 
                             Console::out(sprintf('%s=%s (%s)',
                                 Console::formatColor($package, ConsoleColors::LIGHT_GREEN),
@@ -300,7 +336,6 @@ namespace ncc\CLI\Management;
         /**
          * @param $args
          * @return void
-         * @throws FileNotFoundException
          */
         private static function installPackage($args): void
         {
@@ -319,9 +354,9 @@ namespace ncc\CLI\Management;
 
             if($entry_arg !== null)
             {
-                $credential = $credential_manager->getVault()->getEntry($entry_arg);
+                $credential = $credential_manager->getVault()?->getEntry($entry_arg);
 
-                if($credential == null)
+                if($credential === null)
                 {
                     Console::outError(sprintf('Unknown credential entry \'%s\'', $entry_arg), true, 1);
                     return;
@@ -334,7 +369,7 @@ namespace ncc\CLI\Management;
 
             if($credential !== null && !$credential->isCurrentlyDecrypted())
             {
-                // Try 3 times
+                // Try three times
                 for($i = 0; $i < 3; $i++)
                 {
                     try
@@ -348,7 +383,9 @@ namespace ncc\CLI\Management;
                     }
 
                     if($credential->isCurrentlyDecrypted())
+                    {
                         break;
+                    }
 
                     Console::outWarning(sprintf('Invalid password, %d attempts remaining', 2 - $i));
                 }
@@ -377,7 +414,9 @@ namespace ncc\CLI\Management;
             }
 
             if(!file_exists($path) || !is_file($path) || !is_readable($path))
-                throw new FileNotFoundException('The specified file \'' . $path .' \' does not exist or is not readable.');
+            {
+                Console::outError('The specified file does not exist or is not readable', true, 1);
+            }
 
             $user_confirmation = false;
             if(isset($args['y']) || isset($args['Y']))
@@ -408,34 +447,61 @@ namespace ncc\CLI\Management;
             }
 
             Console::out('Package installation details' . PHP_EOL);
-            if(!is_null($package->Assembly->UUID))
-                Console::out('  UUID: ' . Console::formatColor($package->Assembly->UUID, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Package))
-                Console::out('  Package: ' . Console::formatColor($package->Assembly->Package, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Name))
-                Console::out('  Name: ' . Console::formatColor($package->Assembly->Name, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Version))
-                Console::out('  Version: ' . Console::formatColor($package->Assembly->Version, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Description))
-                Console::out('  Description: ' . Console::formatColor($package->Assembly->Description, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Product))
-                Console::out('  Product: ' . Console::formatColor($package->Assembly->Product, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Company))
-                Console::out('  Company: ' . Console::formatColor($package->Assembly->Company, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Copyright))
-                Console::out('  Copyright: ' . Console::formatColor($package->Assembly->Copyright, ConsoleColors::LIGHT_GREEN));
-            if(!is_null($package->Assembly->Trademark))
-                Console::out('  Trademark: ' . Console::formatColor($package->Assembly->Trademark, ConsoleColors::LIGHT_GREEN));
+
+            if(!is_null($package->assembly->UUID))
+            {
+                Console::out('  UUID: ' . Console::formatColor($package->assembly->UUID, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Package))
+            {
+                Console::out('  Package: ' . Console::formatColor($package->assembly->Package, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Name))
+            {
+                Console::out('  Name: ' . Console::formatColor($package->assembly->Name, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Version))
+            {
+                Console::out('  Version: ' . Console::formatColor($package->assembly->Version, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Description))
+            {
+                Console::out('  Description: ' . Console::formatColor($package->assembly->Description, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Product))
+            {
+                Console::out('  Product: ' . Console::formatColor($package->assembly->Product, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Company))
+            {
+                Console::out('  Company: ' . Console::formatColor($package->assembly->Company, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Copyright))
+            {
+                Console::out('  Copyright: ' . Console::formatColor($package->assembly->Copyright, ConsoleColors::LIGHT_GREEN));
+            }
+
+            if(!is_null($package->assembly->Trademark))
+            {
+                Console::out('  Trademark: ' . Console::formatColor($package->assembly->Trademark, ConsoleColors::LIGHT_GREEN));
+            }
             Console::out((string)null);
 
-            if(count($package->Dependencies) > 0)
+            if(count($package->dependencies) > 0)
             {
                 $dependencies = [];
-                foreach($package->Dependencies as $dependency)
+                foreach($package->dependencies as $dependency)
                 {
                     $require_dependency = false;
 
-                    if(!in_array(InstallPackageOptions::SKIP_DEPENDENCIES, $installer_options))
+                    if(!in_array(InstallPackageOptions::SKIP_DEPENDENCIES, $installer_options, true))
                     {
                         try
                         {
@@ -459,8 +525,10 @@ namespace ncc\CLI\Management;
                                 $dependency_version = null;
                             }
 
-                            if($dependency_version == null)
+                            if($dependency_version === null)
+                            {
                                 $require_dependency = true;
+                            }
                         }
                     }
 
@@ -481,28 +549,36 @@ namespace ncc\CLI\Management;
             }
 
             Console::out(sprintf('Extension: %s',
-                Console::formatColor($package->Header->CompilerExtension->Extension, ConsoleColors::GREEN)
+                Console::formatColor($package->header->CompilerExtension->Extension, ConsoleColors::GREEN)
             ));
 
-            if($package->Header->CompilerExtension->MaximumVersion !== null)
+            if($package->header->CompilerExtension->MaximumVersion !== null)
+            {
                 Console::out(sprintf('Maximum Version: %s',
-                    Console::formatColor($package->Header->CompilerExtension->MaximumVersion, ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->CompilerExtension->MaximumVersion, ConsoleColors::LIGHT_MAGENTA)
                 ));
+            }
 
-            if($package->Header->CompilerExtension->MinimumVersion !== null)
+
+            if($package->header->CompilerExtension->MinimumVersion !== null)
+            {
                 Console::out(sprintf('Minimum Version: %s',
-                    Console::formatColor($package->Header->CompilerExtension->MinimumVersion, ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->CompilerExtension->MinimumVersion, ConsoleColors::LIGHT_MAGENTA)
                 ));
+            }
+
 
             if(!$user_confirmation)
-                $user_confirmation = Console::getBooleanInput(sprintf('Do you want to install %s', $package->Assembly->Package));
+            {
+                $user_confirmation = Console::getBooleanInput(sprintf('Do you want to install %s', $package->assembly->Package));
+            }
 
             if($user_confirmation)
             {
                 try
                 {
                     $package_manager->install($path, $credential, $installer_options);
-                    Console::out(sprintf('Package %s installed successfully', $package->Assembly->Package));
+                    Console::out(sprintf('Package %s installed successfully', $package->assembly->Package));
                 }
                 catch(Exception $e)
                 {
@@ -525,19 +601,20 @@ namespace ncc\CLI\Management;
         private static function uninstallPackage($args): void
         {
             $selected_package = ($args['package'] ?? $args['p']);
-            $selected_version = null;
-            if(isset($args['v']))
-                $selected_version = $args['v'];
-            if(isset($args['version']))
-                $selected_version = $args['version'];
+            $selected_version = $args['version'] ?? $args['v'] ?? null;
 
             $user_confirmation = null;
+
             // For undefined array key warnings
             if(isset($args['y']) || isset($args['Y']))
+            {
                 $user_confirmation = (bool)($args['y'] ?? $args['Y']);
+            }
 
-            if($selected_package == null)
+            if($selected_package === null)
+            {
                 Console::outError('Missing argument \'package\'', true, 1);
+            }
 
             $package_manager = new PackageManager();
 
@@ -553,22 +630,24 @@ namespace ncc\CLI\Management;
 
             $version_entry = null;
             if($version_entry !== null && $package_entry !== null)
+            {
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
                 $version_entry = $package_entry->getVersion($version_entry, false);
+            }
 
-            if($package_entry == null)
+            if($package_entry === null)
             {
                 Console::outError(sprintf('Package "%s" is not installed', $selected_package), true, 1);
                 return;
             }
 
-            if($version_entry == null && $selected_version !== null)
+            if($version_entry === null && $selected_version !== null)
             {
                 Console::outError(sprintf('Package "%s=%s" is not installed', $selected_package, $selected_version), true, 1);
                 return;
             }
 
-            if($user_confirmation == null)
+            if($user_confirmation === null)
             {
                 if($selected_version !== null)
                 {
@@ -579,13 +658,11 @@ namespace ncc\CLI\Management;
                     }
                 }
                 else
-                {
                     if(!Console::getBooleanInput(sprintf('Do you want to uninstall all versions of %s', $selected_package)))
                     {
                         Console::outError('User cancelled operation', true, 1);
                         return;
                     }
-                }
             }
 
             try
@@ -618,15 +695,14 @@ namespace ncc\CLI\Management;
             $user_confirmation = null;
             // For undefined array key warnings
             if(isset($args['y']) || isset($args['Y']))
-                $user_confirmation = (bool)($args['y'] ?? $args['Y']);
-
-            if($user_confirmation == null)
             {
-                if(!Console::getBooleanInput('Do you want to uninstall all packages'))
-                {
-                    Console::outError('User cancelled operation', true, 1);
-                    return;
-                }
+                $user_confirmation = (bool)($args['y'] ?? $args['Y']);
+            }
+
+            if(($user_confirmation === null) && !Console::getBooleanInput('Do you want to uninstall all packages'))
+            {
+                Console::outError('User cancelled operation', true, 1);
+                return;
             }
 
             $package_manager = new PackageManager();

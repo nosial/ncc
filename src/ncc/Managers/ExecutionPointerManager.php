@@ -533,7 +533,7 @@
 
             if($unit === null)
             {
-                throw new NoAvailableUnitsException(sprintf('No execution unit named \'%s\' is available for package \'%s\'', $unit_name, $package->Assembly->Package));
+                throw new NoAvailableUnitsException(sprintf('No execution unit named \'%s\' is available for package \'%s\'', $unit_name, $package->assembly->Package));
             }
 
             // Get the required units
@@ -560,13 +560,13 @@
             }
 
             // Install the units temporarily
-            $this->addUnit($package->Assembly->Package, $package->Assembly->Version, $unit, true);
+            $this->addUnit($package->assembly->Package, $package->assembly->Version, $unit, true);
             foreach($required_units as $r_unit)
             {
-                $this->addUnit($package->Assembly->Package, $package->Assembly->Version, $r_unit, true);
+                $this->addUnit($package->assembly->Package, $package->assembly->Version, $r_unit, true);
             }
 
-            $this->executeUnit($package->Assembly->Package, $package->Assembly->Version, $unit_name);
+            $this->executeUnit($package->assembly->Package, $package->assembly->Version, $unit_name);
             $this->cleanTemporaryUnits();
         }
 

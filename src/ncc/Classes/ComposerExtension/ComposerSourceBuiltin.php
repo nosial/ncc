@@ -259,10 +259,10 @@ namespace ncc\Classes\ComposerExtension;
                 $built_package = $project_manager->build();
 
                 // Copy the project to the build directory
-                $out_path = $base_dir . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . sprintf('%s.ncc', $project_configuration->Assembly->Package);
+                $out_path = $base_dir . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . sprintf('%s.ncc', $project_configuration->assembly->Package);
                 $filesystem->copy($built_package, $out_path);
                 $filesystem->remove($built_package);
-                $built_packages[$project_configuration->Assembly->Package] = $out_path;
+                $built_packages[$project_configuration->assembly->Package] = $out_path;
             }
 
             return $built_packages;
@@ -340,32 +340,32 @@ namespace ncc\Classes\ComposerExtension;
 
             if (isset($composer_package->Name))
             {
-                $project_configuration->Assembly->Name = $composer_package->Name;
+                $project_configuration->assembly->Name = $composer_package->Name;
             }
 
             if (isset($composer_package->Description))
             {
-                $project_configuration->Assembly->Description = $composer_package->Description;
+                $project_configuration->assembly->Description = $composer_package->Description;
             }
 
             if(isset($version_map[$composer_package->Name]))
             {
-                $project_configuration->Assembly->Version = self::versionMap($composer_package->Name, $version_map);
+                $project_configuration->assembly->Version = self::versionMap($composer_package->Name, $version_map);
             }
 
-            if($project_configuration->Assembly->Version === null || $project_configuration->Assembly->Version === '')
+            if($project_configuration->assembly->Version === null || $project_configuration->assembly->Version === '')
             {
-                $project_configuration->Assembly->Version = '1.0.0';
+                $project_configuration->assembly->Version = '1.0.0';
             }
 
 
-            $project_configuration->Assembly->UUID = Uuid::v1()->toRfc4122();
-            $project_configuration->Assembly->Package = self::toPackageName($composer_package->Name);
+            $project_configuration->assembly->UUID = Uuid::v1()->toRfc4122();
+            $project_configuration->assembly->Package = self::toPackageName($composer_package->Name);
 
             // Add the update source
-            $project_configuration->Project->UpdateSource = new ProjectConfiguration\UpdateSource();
-            $project_configuration->Project->UpdateSource->Source = sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->Name));
-            $project_configuration->Project->UpdateSource->Repository = null;
+            $project_configuration->project->UpdateSource = new ProjectConfiguration\UpdateSource();
+            $project_configuration->project->UpdateSource->Source = sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->Name));
+            $project_configuration->project->UpdateSource->Repository = null;
 
             // Process the dependencies
             if($composer_package->Require !== null && count($composer_package->Require) > 0)
@@ -385,7 +385,7 @@ namespace ncc\Classes\ComposerExtension;
                     $dependency->SourceType = DependencySourceType::LOCAL;
                     $dependency->Version = self::versionMap($item->PackageName, $version_map);
                     $dependency->Source = $package_name . '.ncc';
-                    $project_configuration->Build->addDependency($dependency);
+                    $project_configuration->build->addDependency($dependency);
                 }
             }
 
@@ -395,14 +395,14 @@ namespace ncc\Classes\ComposerExtension;
             $build_configuration->OutputPath = 'build';
 
             // Apply the final properties
-            $project_configuration->Build->Configurations[] = $build_configuration;
-            $project_configuration->Build->DefaultConfiguration = 'default';
-            $project_configuration->Build->SourcePath = '.src';
+            $project_configuration->build->Configurations[] = $build_configuration;
+            $project_configuration->build->DefaultConfiguration = 'default';
+            $project_configuration->build->SourcePath = '.src';
 
             // Apply a compiler extension
-            $project_configuration->Project->Compiler->Extension = CompilerExtensions::PHP;
-            $project_configuration->Project->Compiler->MinimumVersion = CompilerExtensionSupportedVersions::PHP[0];
-            $project_configuration->Project->Compiler->MaximumVersion = CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)];
+            $project_configuration->project->Compiler->Extension = CompilerExtensions::PHP;
+            $project_configuration->project->Compiler->MinimumVersion = CompilerExtensionSupportedVersions::PHP[0];
+            $project_configuration->project->Compiler->MaximumVersion = CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)];
 
             return $project_configuration;
         }
@@ -793,7 +793,7 @@ namespace ncc\Classes\ComposerExtension;
 
                 if (count($static_files) > 0)
                 {
-                    $project_configuration->Project->Options['static_files'] = $static_files;
+                    $project_configuration->project->Options['static_files'] = $static_files;
 
                     foreach ($static_files as $file)
                     {

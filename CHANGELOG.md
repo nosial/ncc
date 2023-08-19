@@ -67,6 +67,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Corrected code-smell and code style issues in `\ncc\Utilities > IO`
  - Corrected code-smell and code style issues in `\ncc > ncc`
  - Corrected code-smell and code style issues in `\ncc\CLI > Main`
+ - Corrected code-smell and code style issues in `\ncc\Objects > Package`
+ - Corrected code-smell and code style issues in `\ncc\Classes\NccExtension > PackageCompiler`
+ - Corrected code-smell and code style issues in `\ncc\CLI > PackageManagerMenu`
+ - Corrected code-smell and code style issues in `\ncc\Classes\PhpExtension > PhpCompiler`
+ - Corrected code-smell and code style issues in `\ncc\Classes\PhpExtension > PhpInstaller`
+ - Corrected code-smell and code style issues in `\ncc\Classes\PhpExtension > PhpRunner`
+ - Corrected code-smell and code style issues in `\ncc\Objects > ProjectConfiguraiton`
+ - Corrected code-smell and code style issues in `\ncc\Managers > ProjectManager`
+ - Corrected code-smell and code style issues in `\ncc\Classes\Extensions\PythonExtension > Python2Runner`
+ - Corrected code-smell and code style issues in `\ncc\Classes\Extensions\PythonExtension > Python3Runner`
+ - Corrected code-smell and code style issues in `\ncc\Classes\Extensions\PythonExtension > PythonRunner`
+ - Corrected code-smell and code style issues in `\ncc\Interfaces > RunnerInterface`
 
 ## Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

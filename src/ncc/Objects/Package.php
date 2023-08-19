@@ -27,11 +27,11 @@
     use Exception;
     use ncc\Enums\EncoderType;
     use ncc\Enums\PackageStructureVersions;
-    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidPackageException;
     use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageParsingException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Header;
@@ -51,76 +51,76 @@
          *
          * @var MagicBytes
          */
-        public $MagicBytes;
+        public $magic_bytes;
 
         /**
          * The true header of the package
          *
          * @var Header
          */
-        public $Header;
+        public $header;
 
         /**
          * The assembly object of the package
          *
          * @var Assembly
          */
-        public $Assembly;
+        public $assembly;
 
         /**
          * An array of dependencies that the package depends on
          *
          * @var Dependency[]
          */
-        public $Dependencies;
+        public $dependencies;
 
         /**
          * The Main Execution Policy object for the package if the package is an executable package.
          *
          * @var string|null
          */
-        public $MainExecutionPolicy;
+        public $main_execution_policy;
 
         /**
          * The installer object that is used to install the package if the package is install-able
          *
          * @var Installer|null
          */
-        public $Installer;
+        public $installer;
 
         /**
          * An array of execution units defined in the package
          *
          * @var ExecutionUnit[]
          */
-        public $ExecutionUnits;
+        public $execution_units;
 
         /**
          * An array of resources that the package depends on
          *
          * @var Resource[]
          */
-        public $Resources;
+        public $resources;
 
         /**
          * An array of components for the package
          *
          * @var Component[]
          */
-        public $Components;
+        public $components;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->MagicBytes = new MagicBytes();
-            $this->Header = new Header();
-            $this->Assembly = new Assembly();
-            $this->ExecutionUnits = [];
-            $this->Components = [];
-            $this->Dependencies = [];
-            $this->Resources = [];
+            $this->magic_bytes = new MagicBytes();
+            $this->header = new Header();
+            $this->assembly = new Assembly();
+            $this->execution_units = [];
+            $this->components = [];
+            $this->dependencies = [];
+            $this->resources = [];
         }
 
         /**
@@ -131,16 +131,16 @@
          */
         public function addDependency(Dependency $dependency): void
         {
-            foreach($this->Dependencies as $dep)
+            foreach($this->dependencies as $dep)
             {
-                if($dep->Name == $dependency->Name)
+                if($dep->Name === $dependency->Name)
                 {
                     $this->removeDependency($dep->Name);
                     break;
                 }
             }
 
-            $this->Dependencies[] = $dependency;
+            $this->dependencies[] = $dependency;
         }
 
         /**
@@ -151,11 +151,11 @@
          */
         private function removeDependency(string $name): void
         {
-            foreach($this->Dependencies as $key => $dep)
+            foreach($this->dependencies as $key => $dep)
             {
-                if($dep->Name == $name)
+                if($dep->Name === $name)
                 {
-                    unset($this->Dependencies[$key]);
+                    unset($this->dependencies[$key]);
                     return;
                 }
             }
@@ -175,25 +175,31 @@
         public function validate(bool $throw_exception=True): bool
         {
             // Validate the MagicBytes constructor
-            if($this->MagicBytes == null)
+            if($this->magic_bytes === null)
             {
                 if($throw_exception)
+                {
                     throw new InvalidPackageException('The MagicBytes property is required and cannot be null');
+                }
 
                 return false;
             }
 
             // Validate the assembly object
-            if($this->Assembly == null)
+            if($this->assembly === null)
             {
                 if($throw_exception)
+                {
                     throw new InvalidPackageException('The Assembly property is required and cannot be null');
+                }
 
                 return false;
             }
 
-            if(!$this->Assembly->validate($throw_exception))
+            if(!$this->assembly->validate($throw_exception))
+            {
                 return false;
+            }
 
             // All checks have passed
             return true;
@@ -207,10 +213,12 @@
          */
         public function getExecutionUnit(string $name): ?ExecutionUnit
         {
-            foreach($this->ExecutionUnits as $unit)
+            foreach($this->execution_units as $unit)
             {
-                if($unit->execution_policy->Name == $name)
+                if($unit->execution_policy->Name === $name)
+                {
                     return $unit;
+                }
             }
 
             return null;
@@ -225,7 +233,7 @@
          */
         public function save(string $output_path): void
         {
-            $package_contents = $this->MagicBytes->toString() . ZiProto::encode($this->toArray(true));
+            $package_contents = $this->magic_bytes->toString() . ZiProto::encode($this->toArray(true));
             IO::fwrite($output_path, $package_contents, 0777);
         }
 
@@ -236,28 +244,32 @@
          *
          * @param string $path
          * @return Package
-         * @throws FileNotFoundException
          * @throws PackageParsingException
+         * @throws PathNotFoundException
          */
         public static function load(string $path): Package
         {
             if(!file_exists($path) || !is_file($path) || !is_readable($path))
             {
-                throw new FileNotFoundException('The file ' . $path . ' does not exist or is not readable');
+                throw new PathNotFoundException($path);
             }
 
             $handle = fopen($path, "rb");
             $header = fread($handle, 256); // Read the first 256 bytes of the file
             fclose($handle);
 
-            if(!strtoupper(substr($header, 0, 11)) == 'NCC_PACKAGE')
+            if(stripos($header, 'NCC_PACKAGE') === 0)
+            {
                 throw new PackageParsingException('The package \'' . $path . '\' does not appear to be a valid NCC Package (Missing Header)');
+            }
 
             // Extract the package structure version
             $package_structure_version = strtoupper(substr($header, 11, 3));
 
             if(!in_array($package_structure_version, PackageStructureVersions::ALL))
+            {
                 throw new PackageParsingException('The package \'' . $path . '\' has a package structure version of ' . $package_structure_version . ' which is not supported by this version NCC');
+            }
 
             // Extract the package encoding type and package type
             $encoding_header = strtoupper(substr($header, 14, 5));
@@ -320,19 +332,17 @@
                     throw new PackageParsingException('Cannot determine the package type for the package \'' . $path . '\' (Got ' . $package_type . ')');
             }
 
-            // TODO: Implement encryption and compression parsing
-
             // Assuming all is good, load the entire fire into memory and parse its contents
             try
             {
-                $package = Package::fromArray(ZiProto::decode(substr(IO::fread($path), strlen($magic_bytes->toString()))));
+                $package = self::fromArray(ZiProto::decode(substr(IO::fread($path), strlen($magic_bytes->toString()))));
             }
             catch(Exception $e)
             {
                 throw new PackageParsingException('Cannot decode the contents of the package \'' . $path . '\', invalid encoding or the package is corrupted, ' . $e->getMessage(), $e);
             }
 
-            $package->MagicBytes = $magic_bytes;
+            $package->magic_bytes = $magic_bytes;
             return $package;
         }
 
@@ -346,29 +356,37 @@
         {
             $_components = [];
             /** @var Component $component */
-            foreach($this->Components as $component)
+            foreach($this->components as $component)
+            {
                 $_components[] = $component->toArray($bytecode);
+            }
 
             $_dependencies = [];
             /** @var Dependency $dependency */
-            foreach($this->Dependencies as $dependency)
+            foreach($this->dependencies as $dependency)
+            {
                 $_dependencies[] = $dependency->toArray($bytecode);
+            }
 
             $_resources = [];
             /** @var Resource $resource */
-            foreach($this->Resources as $resource)
+            foreach($this->resources as $resource)
+            {
                 $_resources[] = $resource->toArray($bytecode);
+            }
 
             $_execution_units = [];
-            foreach($this->ExecutionUnits as $unit)
+            foreach($this->execution_units as $unit)
+            {
                 $_execution_units[] = $unit->toArray($bytecode);
+            }
 
             return [
-                ($bytecode ? Functions::cbc('header') : 'header') => $this?->Header?->toArray($bytecode),
-                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this?->Assembly?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('header') : 'header') => $this?->header?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this?->assembly?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('dependencies') : 'dependencies') => $_dependencies,
-                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this?->MainExecutionPolicy,
-                ($bytecode ? Functions::cbc('installer') : 'installer') => $this?->Installer?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this?->main_execution_policy,
+                ($bytecode ? Functions::cbc('installer') : 'installer') => $this?->installer?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('execution_units') : 'execution_units') => $_execution_units,
                 ($bytecode ? Functions::cbc('resources') : 'resources') => $_resources,
                 ($bytecode ? Functions::cbc('components') : 'components') => $_components
@@ -383,26 +401,32 @@
         {
             $object = new self();
 
-            $object->Header = Functions::array_bc($data, 'header');
-            if($object->Header !== null)
-                $object->Header = Header::fromArray($object->Header);
+            $object->header = Functions::array_bc($data, 'header');
+            if($object->header !== null)
+            {
+                $object->header = Header::fromArray($object->header);
+            }
 
-            $object->Assembly = Functions::array_bc($data, 'assembly');
-            if($object->Assembly !== null)
-                $object->Assembly = Assembly::fromArray($object->Assembly);
+            $object->assembly = Functions::array_bc($data, 'assembly');
+            if($object->assembly !== null)
+            {
+                $object->assembly = Assembly::fromArray($object->assembly);
+            }
 
-            $object->MainExecutionPolicy = Functions::array_bc($data, 'main_execution_policy');
+            $object->main_execution_policy = Functions::array_bc($data, 'main_execution_policy');
 
-            $object->Installer = Functions::array_bc($data, 'installer');
-            if($object->Installer !== null)
-                $object->Installer = Installer::fromArray($object->Installer);
+            $object->installer = Functions::array_bc($data, 'installer');
+            if($object->installer !== null)
+            {
+                $object->installer = Installer::fromArray($object->installer);
+            }
 
             $_dependencies = Functions::array_bc($data, 'dependencies');
             if($_dependencies !== null)
             {
                 foreach($_dependencies as $dependency)
                 {
-                    $object->Dependencies[] = Dependency::fromArray($dependency);
+                    $object->dependencies[] = Dependency::fromArray($dependency);
                 }
             }
 
@@ -411,7 +435,7 @@
             {
                 foreach($_resources as $resource)
                 {
-                    $object->Resources[] = Resource::fromArray($resource);
+                    $object->resources[] = Resource::fromArray($resource);
                 }
             }
 
@@ -420,7 +444,7 @@
             {
                 foreach($_components as $component)
                 {
-                    $object->Components[] = Component::fromArray($component);
+                    $object->components[] = Component::fromArray($component);
                 }
             }
 
@@ -429,7 +453,7 @@
             {
                 foreach($_execution_units as $unit)
                 {
-                    $object->ExecutionUnits[] = ExecutionUnit::fromArray($unit);
+                    $object->execution_units[] = ExecutionUnit::fromArray($unit);
                 }
             }
 

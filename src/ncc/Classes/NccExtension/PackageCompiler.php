@@ -1,26 +1,26 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Classes\NccExtension;
+    namespace ncc\Classes\NccExtension;
 
     use Exception;
     use ncc\Enums\CompilerExtensions;
@@ -34,10 +34,9 @@ namespace ncc\Classes\NccExtension;
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
-    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
-    use ncc\Exceptions\PackagePreparationFailedException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\UnsupportedCompilerExtensionException;
@@ -64,12 +63,11 @@ namespace ncc\Classes\NccExtension;
          * @throws AccessDeniedException
          * @throws BuildConfigurationNotFoundException
          * @throws BuildException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
-         * @throws PackagePreparationFailedException
          * @throws ProjectConfigurationNotFoundException
          * @throws UnsupportedCompilerExtensionException
+         * @throws PathNotFoundException
          */
         public static function compile(ProjectManager $manager, string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
@@ -77,31 +75,33 @@ namespace ncc\Classes\NccExtension;
 
             if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
-                foreach($configuration->Assembly->toArray() as $prop => $value)
+                foreach($configuration->assembly->toArray() as $prop => $value)
+                {
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
-                foreach($configuration->Project->Compiler->toArray() as $prop => $value)
+                }
+                foreach($configuration->project->Compiler->toArray() as $prop => $value)
+                {
                     Console::outDebug(sprintf('compiler.%s: %s', $prop, ($value ?? 'n/a')));
+                }
             }
 
             // Select the correct compiler for the specified extension
-            /** @noinspection PhpSwitchCanBeReplacedWithMatchExpressionInspection */
-            switch(strtolower($configuration->Project->Compiler->Extension))
+            if (strtolower($configuration->project->Compiler->Extension) === CompilerExtensions::PHP)
             {
-                case CompilerExtensions::PHP:
-                    /** @var CompilerInterface $Compiler */
-                    $Compiler = new PhpCompiler($configuration, $manager->getProjectPath());
-                    break;
-
-                default:
-                    throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $configuration->Project->Compiler->Extension . '\' is not supported');
+                /** @var CompilerInterface $Compiler */
+                $Compiler = new PhpCompiler($configuration, $manager->getProjectPath());
+            }
+            else
+            {
+                throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $configuration->project->Compiler->Extension . '\' is not supported');
             }
 
-            $build_configuration = $configuration->Build->getBuildConfiguration($build_configuration)->Name;
-            Console::out(sprintf('Building %s=%s', $configuration->Assembly->Package, $configuration->Assembly->Version));
+            $build_configuration = $configuration->build->getBuildConfiguration($build_configuration)->Name;
+            Console::out(sprintf('Building %s=%s', $configuration->assembly->Package, $configuration->assembly->Version));
             $Compiler->prepare($build_configuration);
             $Compiler->build();
 
-            return PackageCompiler::writePackage(
+            return self::writePackage(
                 $manager->getProjectPath(), $Compiler->getPackage(), $configuration, $build_configuration
             );
         }
@@ -121,14 +121,14 @@ namespace ncc\Classes\NccExtension;
 
             try
             {
-                if($project_type->ProjectType == ProjectType::COMPOSER)
+                if($project_type->ProjectType === ProjectType::COMPOSER)
                 {
                     $project_path = ComposerSourceBuiltin::fromLocal($project_type->ProjectPath);
                 }
-                elseif($project_type->ProjectType == ProjectType::NCC)
+                elseif($project_type->ProjectType === ProjectType::NCC)
                 {
                     $project_manager = new ProjectManager($project_type->ProjectPath);
-                    $project_manager->getProjectConfiguration()->Assembly->Version = $version;
+                    $project_manager->getProjectConfiguration()->assembly->Version = $version;
                     $project_path = $project_manager->build();
                 }
                 else
@@ -139,7 +139,7 @@ namespace ncc\Classes\NccExtension;
                 if($version !== null)
                 {
                     $package = Package::load($project_path);
-                    $package->Assembly->Version = Functions::convertToSemVer($version);
+                    $package->assembly->Version = Functions::convertToSemVer($version);
                     $package->save($project_path);
                 }
 
@@ -159,25 +159,28 @@ namespace ncc\Classes\NccExtension;
          * @param ProjectConfiguration $configuration
          * @return array
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
+         * @throws PathNotFoundException
          * @throws RunnerExecutionException
          */
         public static function compileExecutionPolicies(string $path, ProjectConfiguration $configuration): array
         {
-            if(count($configuration->ExecutionPolicies) == 0)
+            if(count($configuration->execution_policies) === 0)
+            {
                 return [];
+            }
 
             Console::out('Compiling Execution Policies');
-            $total_items = count($configuration->ExecutionPolicies);
+            $total_items = count($configuration->execution_policies);
             $execution_units = [];
             $processed_items = 1;
 
             /** @var ProjectConfiguration\ExecutionPolicy $policy */
-            foreach($configuration->ExecutionPolicies as $policy)
+            foreach($configuration->execution_policies as $policy)
             {
                 Console::outVerbose(sprintf('Compiling Execution Policy %s', $policy->Name));
 
+                /** @noinspection DisconnectedForeachInstructionInspection */
                 if($total_items > 5)
                 {
                     Console::inlineProgressBar($processed_items, $total_items);
@@ -187,8 +190,10 @@ namespace ncc\Classes\NccExtension;
                 $execution_units[] = Functions::compileRunner($unit_path, $policy);
             }
 
-            if(ncc::cliMode() && $total_items > 5)
+            if($total_items > 5 && ncc::cliMode())
+            {
                 print(PHP_EOL);
+            }
 
             return $execution_units;
         }
@@ -210,7 +215,7 @@ namespace ncc\Classes\NccExtension;
 
             // Write the package to disk
             $FileSystem = new Filesystem();
-            $BuildConfiguration = $configuration->Build->getBuildConfiguration($build_configuration);
+            $BuildConfiguration = $configuration->build->getBuildConfiguration($build_configuration);
             if(!$FileSystem->exists($path . $BuildConfiguration->OutputPath))
             {
                 Console::outDebug(sprintf('creating output directory %s', $path . $BuildConfiguration->OutputPath));
@@ -219,7 +224,7 @@ namespace ncc\Classes\NccExtension;
 
             // Finally write the package to the disk
             $FileSystem->mkdir($path . $BuildConfiguration->OutputPath);
-            $output_file = $path . $BuildConfiguration->OutputPath . DIRECTORY_SEPARATOR . $package->Assembly->Package . '.ncc';
+            $output_file = $path . $BuildConfiguration->OutputPath . DIRECTORY_SEPARATOR . $package->assembly->Package . '.ncc';
             if($FileSystem->exists($output_file))
             {
                 Console::outDebug(sprintf('removing existing package %s', $output_file));
@@ -245,43 +250,44 @@ namespace ncc\Classes\NccExtension;
          * @param Package $package
          * @param array $refs
          * @return void
-         * @noinspection PhpParameterByRefIsNotUsedAsReferenceInspection
          */
-        public static function compilePackageConstants(Package &$package, array $refs): void
+        public static function compilePackageConstants(Package $package, array $refs): void
         {
-            if($package->Assembly !== null)
+            if($package->assembly !== null)
             {
                 $assembly = [];
-                foreach($package->Assembly->toArray() as $key => $value)
+
+                foreach($package->assembly->toArray() as $key => $value)
                 {
-                    Console::outDebug(sprintf('compiling consts Assembly.%s (%s)', $key, implode(', ', array_keys($refs))));
+                    Console::outDebug(sprintf('compiling constant Assembly.%s (%s)', $key, implode(', ', array_keys($refs))));
                     $assembly[$key] = self::compileConstants($value, $refs);
                 }
-                $package->Assembly = Assembly::fromArray($assembly);
+                $package->assembly = Assembly::fromArray($assembly);
+
                 unset($assembly);
             }
 
-            if($package->ExecutionUnits !== null && count($package->ExecutionUnits) > 0)
+            if($package->execution_units !== null && count($package->execution_units) > 0)
             {
                 $units = [];
-                foreach($package->ExecutionUnits as $executionUnit)
+                foreach($package->execution_units as $executionUnit)
                 {
-                    Console::outDebug(sprintf('compiling execution unit consts %s (%s)', $executionUnit->execution_policy->Name, implode(', ', array_keys($refs))));
+                    Console::outDebug(sprintf('compiling execution unit constant %s (%s)', $executionUnit->execution_policy->Name, implode(', ', array_keys($refs))));
                     $units[] = self::compileExecutionUnitConstants($executionUnit, $refs);
                 }
-                $package->ExecutionUnits = $units;
+                $package->execution_units = $units;
                 unset($units);
             }
 
             $compiled_constants = [];
-            foreach($package->Header->RuntimeConstants as $name => $value)
+            foreach($package->header->RuntimeConstants as $name => $value)
             {
-                Console::outDebug(sprintf('compiling runtime const %s (%s)', $name, implode(', ', array_keys($refs))));
+                Console::outDebug(sprintf('compiling runtime constant %s (%s)', $name, implode(', ', array_keys($refs))));
                 $compiled_constants[$name] = self::compileConstants($value, $refs);
             }
 
             $options = [];
-            foreach($package->Header->Options as $name => $value)
+            foreach($package->header->Options as $name => $value)
             {
                 if(is_array($value))
                 {
@@ -289,7 +295,9 @@ namespace ncc\Classes\NccExtension;
                     foreach($value as $key => $val)
                     {
                         if(!is_string($val))
+                        {
                             continue;
+                        }
 
                         Console::outDebug(sprintf('compiling option %s.%s (%s)', $name, $key, implode(', ', array_keys($refs))));
                         $options[$name][$key] = self::compileConstants($val, $refs);
@@ -302,8 +310,8 @@ namespace ncc\Classes\NccExtension;
                 }
             }
 
-            $package->Header->Options = $options;
-            $package->Header->RuntimeConstants = $compiled_constants;
+            $package->header->Options = $options;
+            $package->header->RuntimeConstants = $compiled_constants;
         }
 
         /**
@@ -370,23 +378,35 @@ namespace ncc\Classes\NccExtension;
          */
         public static function compileConstants(?string $value, array $refs): ?string
         {
-            if($value == null)
+            if($value === null)
+            {
                 return null;
+            }
 
             if(isset($refs[ConstantReferences::ASSEMBLY]))
+            {
                 $value = ConstantCompiler::compileAssemblyConstants($value, $refs[ConstantReferences::ASSEMBLY]);
+            }
 
             if(isset($refs[ConstantReferences::BUILD]))
+            {
                 $value = ConstantCompiler::compileBuildConstants($value);
+            }
 
             if(isset($refs[ConstantReferences::DATE_TIME]))
+            {
                 $value = ConstantCompiler::compileDateTimeConstants($value, $refs[ConstantReferences::DATE_TIME]);
+            }
 
             if(isset($refs[ConstantReferences::INSTALL]))
+            {
                 $value = ConstantCompiler::compileInstallConstants($value, $refs[ConstantReferences::INSTALL]);
+            }
 
             if(isset($refs[ConstantReferences::RUNTIME]))
+            {
                 $value = ConstantCompiler::compileRuntimeConstants($value);
+            }
 
             return $value;
         }

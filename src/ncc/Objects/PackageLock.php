@@ -84,24 +84,24 @@
          */
         public function addPackage(Package $package, string $install_path): void
         {
-            Console::outVerbose("Adding package {$package->Assembly->Package} to package lock file");
+            Console::outVerbose("Adding package {$package->assembly->Package} to package lock file");
 
-            if(!isset($this->Packages[$package->Assembly->Package]))
+            if(!isset($this->Packages[$package->assembly->Package]))
             {
                 $package_entry = new PackageEntry();
                 $package_entry->addVersion($package, $install_path, true);
-                $package_entry->Name = $package->Assembly->Package;
-                $package_entry->UpdateSource = $package->Header->UpdateSource;
+                $package_entry->Name = $package->assembly->Package;
+                $package_entry->UpdateSource = $package->header->UpdateSource;
                 $package_entry->getDataPath();
-                $this->Packages[$package->Assembly->Package] = $package_entry;
+                $this->Packages[$package->assembly->Package] = $package_entry;
                 $this->update();
 
                 return;
             }
 
-            $this->Packages[$package->Assembly->Package]->UpdateSource = $package->Header->UpdateSource;
-            $this->Packages[$package->Assembly->Package]->addVersion($package, $install_path, true);
-            $this->Packages[$package->Assembly->Package]->getDataPath();
+            $this->Packages[$package->assembly->Package]->UpdateSource = $package->header->UpdateSource;
+            $this->Packages[$package->assembly->Package]->addVersion($package, $install_path, true);
+            $this->Packages[$package->assembly->Package]->getDataPath();
             $this->update();
         }
 

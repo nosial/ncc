@@ -31,7 +31,6 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
-    use ncc\Exceptions\FileNotFoundException;
     use ncc\Exceptions\InvalidPackageNameException;
     use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\IOException;
@@ -75,7 +74,6 @@
          *
          * @param string $path
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
@@ -138,41 +136,41 @@
             $this->project_configuration = new ProjectConfiguration();
 
             // Set the compiler information
-            $this->project_configuration->Project->Compiler = $compiler;
+            $this->project_configuration->project->Compiler = $compiler;
 
             // Set the assembly information
-            $this->project_configuration->Assembly->Name = $name;
-            $this->project_configuration->Assembly->Package = $package;
-            $this->project_configuration->Assembly->Version = '1.0.0';
-            $this->project_configuration->Assembly->UUID = Uuid::v1()->toRfc4122();
+            $this->project_configuration->assembly->Name = $name;
+            $this->project_configuration->assembly->Package = $package;
+            $this->project_configuration->assembly->Version = '1.0.0';
+            $this->project_configuration->assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
-            $this->project_configuration->Build->SourcePath = $src;
+            $this->project_configuration->build->SourcePath = $src;
 
-            if($this->project_configuration->Build->SourcePath === null)
+            if($this->project_configuration->build->SourcePath === null)
             {
-                $this->project_configuration->Build->SourcePath = $this->project_path;
+                $this->project_configuration->build->SourcePath = $this->project_path;
             }
 
-            $this->project_configuration->Build->DefaultConfiguration = 'debug';
+            $this->project_configuration->build->DefaultConfiguration = 'debug';
 
             // Assembly constants if the program wishes to check for this
-            $this->project_configuration->Build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
-            $this->project_configuration->Build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
-            $this->project_configuration->Build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
-            $this->project_configuration->Build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
+            $this->project_configuration->build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
+            $this->project_configuration->build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
+            $this->project_configuration->build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
+            $this->project_configuration->build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
 
             // Generate configurations
             $DebugConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $DebugConfiguration->Name = 'debug';
             $DebugConfiguration->OutputPath = 'build/debug';
             $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
-            $this->project_configuration->Build->Configurations[] = $DebugConfiguration;
+            $this->project_configuration->build->Configurations[] = $DebugConfiguration;
             $ReleaseConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $ReleaseConfiguration->Name = 'release';
             $ReleaseConfiguration->OutputPath = 'build/release';
             $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
-            $this->project_configuration->Build->Configurations[] = $ReleaseConfiguration;
+            $this->project_configuration->build->Configurations[] = $ReleaseConfiguration;
 
             // Finally, create project.json
             $this->project_configuration->toFile($this->project_path . DIRECTORY_SEPARATOR . 'project.json');
@@ -197,8 +195,8 @@
             {
                 if (
                     $option === InitializeProjectOptions::CREATE_SOURCE_DIRECTORY &&
-                    !file_exists($this->project_configuration->Build->SourcePath) &&
-                    !mkdir($concurrentDirectory = $this->project_configuration->Build->SourcePath) &&
+                    !file_exists($this->project_configuration->build->SourcePath) &&
+                    !mkdir($concurrentDirectory = $this->project_configuration->build->SourcePath) &&
                     !is_dir($concurrentDirectory)
                 )
                 {
@@ -221,11 +219,11 @@
          * Attempts to load the project configuration
          *
          * @return void
-         * @throws MalformedJsonException
-         * @throws ProjectConfigurationNotFoundException
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
+         * @throws MalformedJsonException
+         * @throws PathNotFoundException
+         * @throws ProjectConfigurationNotFoundException
          */
         public function load(): void
         {
@@ -254,24 +252,16 @@
         }
 
         /**
-         * Returns the project's file path.
+         * Returns the ProjectConfiguration object
          *
-         * @return string|null
-         */
-        public function getProjectFilePath(): ?string
-        {
-            return $this->project_file_path;
-        }
-
-        /**
-         * @return ProjectConfiguration|null
+         * @return ProjectConfiguration
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
          * @throws IOException
          * @throws MalformedJsonException
+         * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
          */
-        public function getProjectConfiguration(): ?ProjectConfiguration
+        public function getProjectConfiguration(): ProjectConfiguration
         {
             if($this->project_configuration === null)
             {
@@ -298,13 +288,12 @@
          * @param string $build_configuration
          * @return string
          * @throws AccessDeniedException
-         * @throws FileNotFoundException
-         * @throws IOException
-         * @throws MalformedJsonException
-         * @throws ProjectConfigurationNotFoundException
          * @throws BuildConfigurationNotFoundException
          * @throws BuildException
-         * @throws PackagePreparationFailedException
+         * @throws IOException
+         * @throws MalformedJsonException
+         * @throws PathNotFoundException
+         * @throws ProjectConfigurationNotFoundException
          * @throws UnsupportedCompilerExtensionException
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
