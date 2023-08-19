@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - Unreleased
 
+This update introduces major changes in the codebase, including the removal of Win32 support, and the addition of new
+features.
+
 ### Added
  - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
  - Added new exception `PathNotFoundException` and implemented it in replacement for `DirectoryNotFoundException` and
