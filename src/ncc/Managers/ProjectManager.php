@@ -139,10 +139,10 @@
             $this->project_configuration->project->compiler = $compiler;
 
             // Set the assembly information
-            $this->project_configuration->assembly->Name = $name;
-            $this->project_configuration->assembly->Package = $package;
-            $this->project_configuration->assembly->Version = '1.0.0';
-            $this->project_configuration->assembly->UUID = Uuid::v1()->toRfc4122();
+            $this->project_configuration->assembly->name = $name;
+            $this->project_configuration->assembly->package = $package;
+            $this->project_configuration->assembly->version = '1.0.0';
+            $this->project_configuration->assembly->uuid = Uuid::v1()->toRfc4122();
 
             // Set the build information
             $this->project_configuration->build->source_path = $src;
@@ -162,14 +162,14 @@
 
             // Generate configurations
             $DebugConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
-            $DebugConfiguration->Name = 'debug';
-            $DebugConfiguration->OutputPath = 'build/debug';
-            $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
+            $DebugConfiguration->name = 'debug';
+            $DebugConfiguration->output_path = 'build/debug';
+            $DebugConfiguration->define_constants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
             $this->project_configuration->build->build_configurations[] = $DebugConfiguration;
             $ReleaseConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
-            $ReleaseConfiguration->Name = 'release';
-            $ReleaseConfiguration->OutputPath = 'build/release';
-            $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
+            $ReleaseConfiguration->name = 'release';
+            $ReleaseConfiguration->output_path = 'build/release';
+            $ReleaseConfiguration->define_constants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
             $this->project_configuration->build->build_configurations[] = $ReleaseConfiguration;
 
             // Finally, create project.json

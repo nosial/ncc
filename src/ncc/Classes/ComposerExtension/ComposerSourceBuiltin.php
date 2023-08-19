@@ -259,10 +259,10 @@ namespace ncc\Classes\ComposerExtension;
                 $built_package = $project_manager->build();
 
                 // Copy the project to the build directory
-                $out_path = $base_dir . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . sprintf('%s.ncc', $project_configuration->assembly->Package);
+                $out_path = $base_dir . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . sprintf('%s.ncc', $project_configuration->assembly->package);
                 $filesystem->copy($built_package, $out_path);
                 $filesystem->remove($built_package);
-                $built_packages[$project_configuration->assembly->Package] = $out_path;
+                $built_packages[$project_configuration->assembly->package] = $out_path;
             }
 
             return $built_packages;
@@ -340,27 +340,27 @@ namespace ncc\Classes\ComposerExtension;
 
             if (isset($composer_package->Name))
             {
-                $project_configuration->assembly->Name = $composer_package->Name;
+                $project_configuration->assembly->name = $composer_package->Name;
             }
 
             if (isset($composer_package->Description))
             {
-                $project_configuration->assembly->Description = $composer_package->Description;
+                $project_configuration->assembly->description = $composer_package->Description;
             }
 
             if(isset($version_map[$composer_package->Name]))
             {
-                $project_configuration->assembly->Version = self::versionMap($composer_package->Name, $version_map);
+                $project_configuration->assembly->version = self::versionMap($composer_package->Name, $version_map);
             }
 
-            if($project_configuration->assembly->Version === null || $project_configuration->assembly->Version === '')
+            if($project_configuration->assembly->version === null || $project_configuration->assembly->version === '')
             {
-                $project_configuration->assembly->Version = '1.0.0';
+                $project_configuration->assembly->version = '1.0.0';
             }
 
 
-            $project_configuration->assembly->UUID = Uuid::v1()->toRfc4122();
-            $project_configuration->assembly->Package = self::toPackageName($composer_package->Name);
+            $project_configuration->assembly->uuid = Uuid::v1()->toRfc4122();
+            $project_configuration->assembly->package = self::toPackageName($composer_package->Name);
 
             // Add the update source
             $project_configuration->project->update_source = new ProjectConfiguration\UpdateSource();
@@ -391,8 +391,8 @@ namespace ncc\Classes\ComposerExtension;
 
             // Create a build configuration
             $build_configuration = new ProjectConfiguration\Build\BuildConfiguration();
-            $build_configuration->Name = 'default';
-            $build_configuration->OutputPath = 'build';
+            $build_configuration->name = 'default';
+            $build_configuration->output_path = 'build';
 
             // Apply the final properties
             $project_configuration->build->build_configurations[] = $build_configuration;

@@ -331,44 +331,44 @@
                 if($execution_policy?->exit_handlers !== null)
                 {
                     if(
-                        $execution_policy?->exit_handlers->Success !== null &&
-                        $execution_policy?->exit_handlers->Success->Run !== null
+                        $execution_policy?->exit_handlers->success !== null &&
+                        $execution_policy?->exit_handlers->success->run !== null
                     )
                     {
-                        if(!in_array($execution_policy?->exit_handlers->Success->Run, $defined_polices, true))
+                        if(!in_array($execution_policy?->exit_handlers->success->run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->Success->Run . '\'');
+                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->success->run . '\'');
                         }
 
-                        if(!in_array($execution_policy?->exit_handlers->Success->Run, $required_policies, true))
+                        if(!in_array($execution_policy?->exit_handlers->success->run, $required_policies, true))
                         {
-                            $required_policies[] = $execution_policy?->exit_handlers->Success->Run;
-                        }
-                    }
-
-                    if($execution_policy?->exit_handlers->Warning !== null && $execution_policy?->exit_handlers->Warning->Run !== null)
-                    {
-                        if(!in_array($execution_policy?->exit_handlers->Warning->Run, $defined_polices, true))
-                        {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->Warning->Run . '\'');
-                        }
-
-                        if(!in_array($execution_policy?->exit_handlers->Warning->Run, $required_policies, true))
-                        {
-                            $required_policies[] = $execution_policy?->exit_handlers->Warning->Run;
+                            $required_policies[] = $execution_policy?->exit_handlers->success->run;
                         }
                     }
 
-                    if($execution_policy?->exit_handlers->Error !== null && $execution_policy?->exit_handlers->Error->Run !== null)
+                    if($execution_policy?->exit_handlers->warning !== null && $execution_policy?->exit_handlers->warning->run !== null)
                     {
-                        if(!in_array($execution_policy?->exit_handlers->Error->Run, $defined_polices, true))
+                        if(!in_array($execution_policy?->exit_handlers->warning->run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->Error->Run . '\'');
+                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->warning->run . '\'');
                         }
 
-                        if(!in_array($execution_policy?->exit_handlers->Error->Run, $required_policies, true))
+                        if(!in_array($execution_policy?->exit_handlers->warning->run, $required_policies, true))
                         {
-                            $required_policies[] = $execution_policy?->exit_handlers->Error->Run;
+                            $required_policies[] = $execution_policy?->exit_handlers->warning->run;
+                        }
+                    }
+
+                    if($execution_policy?->exit_handlers->error !== null && $execution_policy?->exit_handlers->error->run !== null)
+                    {
+                        if(!in_array($execution_policy?->exit_handlers->error->run, $defined_polices, true))
+                        {
+                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->error->run . '\'');
+                        }
+
+                        if(!in_array($execution_policy?->exit_handlers->error->run, $required_policies, true))
+                        {
+                            $required_policies[] = $execution_policy?->exit_handlers->error->run;
                         }
                     }
                 }
@@ -423,26 +423,26 @@
         {
             $required_policies = [];
 
-            if ($configuration->PreBuild !== null && count($configuration->PreBuild) > 0)
+            if ($configuration->pre_build !== null && count($configuration->pre_build) > 0)
             {
-                foreach ($configuration->PreBuild as $unit)
+                foreach ($configuration->pre_build as $unit)
                 {
                     if (!in_array($unit, $defined_polices, true))
                     {
-                        throw new UndefinedExecutionPolicyException('The property \'pre_build\' in the build configuration \'' . $configuration->Name . '\' calls for an undefined execution policy \'' . $unit . '\'');
+                        throw new UndefinedExecutionPolicyException('The property \'pre_build\' in the build configuration \'' . $configuration->name . '\' calls for an undefined execution policy \'' . $unit . '\'');
                     }
 
                     $required_policies[] = $unit;
                 }
             }
 
-            if ($configuration->PostBuild !== null && count($configuration->PostBuild) > 0)
+            if ($configuration->post_build !== null && count($configuration->post_build) > 0)
             {
-                foreach ($configuration->PostBuild as $unit)
+                foreach ($configuration->post_build as $unit)
                 {
                     if (!in_array($unit, $defined_polices, true))
                     {
-                        throw new UndefinedExecutionPolicyException('The property \'pre_build\' in the build configuration \'' . $configuration->Name . '\' calls for an undefined execution policy \'' . $unit . '\'');
+                        throw new UndefinedExecutionPolicyException('The property \'pre_build\' in the build configuration \'' . $configuration->name . '\' calls for an undefined execution policy \'' . $unit . '\'');
                     }
 
                     $required_policies[] = $unit;

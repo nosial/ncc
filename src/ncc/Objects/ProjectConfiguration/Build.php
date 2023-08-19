@@ -192,11 +192,11 @@
             $build_configurations = [];
             foreach($this->build_configurations as $configuration)
             {
-                if(in_array($configuration->Name, $build_configurations, true))
+                if(in_array($configuration->name, $build_configurations, true))
                 {
                     if($throw_exception)
                     {
-                        throw new InvalidProjectBuildConfiguration('The build configuration \'' . $configuration->Name . '\' is already defined, build configuration names must be unique');
+                        throw new InvalidProjectBuildConfiguration('The build configuration \'' . $configuration->name . '\' is already defined, build configuration names must be unique');
                     }
 
                     return false;
@@ -214,7 +214,7 @@
                 }
                 catch (InvalidBuildConfigurationException $e)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('Error in build configuration \'%s\'', $configuration->Name), $e);
+                    throw new InvalidBuildConfigurationException(sprintf('Error in build configuration \'%s\'', $configuration->name), $e);
                 }
             }
 
@@ -255,7 +255,7 @@
 
             foreach($this->build_configurations as $configuration)
             {
-                $build_configurations[] = $configuration->Name;
+                $build_configurations[] = $configuration->name;
             }
 
             return $build_configurations;
@@ -278,7 +278,7 @@
 
             foreach($this->build_configurations as $configuration)
             {
-                if($configuration->Name === $name)
+                if($configuration->name === $name)
                 {
                     return $configuration;
                 }

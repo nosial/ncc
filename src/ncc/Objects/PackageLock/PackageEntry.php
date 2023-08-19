@@ -154,14 +154,14 @@
         {
             try
             {
-                if ($this->getVersion($package->assembly->Version) !== null)
+                if ($this->getVersion($package->assembly->version) !== null)
                 {
                     if(!$overwrite)
                     {
                         return false;
                     }
 
-                    $this->removeVersion($package->assembly->Version);
+                    $this->removeVersion($package->assembly->version);
                 }
             }
             catch (VersionNotFoundException $e)
@@ -170,7 +170,7 @@
             }
 
             $version = new VersionEntry();
-            $version->Version = $package->assembly->Version;
+            $version->Version = $package->assembly->version;
             $version->Compiler = $package->header->CompilerExtension;
             $version->ExecutionUnits = $package->execution_units;
             $version->MainExecutionPolicy = $package->main_execution_policy;

@@ -121,7 +121,7 @@
             // Global constants are overridden
             $this->package->header->RuntimeConstants = [];
             $this->package->header->RuntimeConstants = array_merge(
-                ($selected_build_configuration->DefineConstants ?? []),
+                ($selected_build_configuration->define_constants ?? []),
                 ($this->project->build->define_constants ?? []),
                 ($this->package->header->RuntimeConstants ?? [])
             );
@@ -153,9 +153,9 @@
             // Include file components that can be compiled
             $DirectoryScanner->setIncludes(ComponentFileExtensions::PHP);
 
-            if($selected_build_configuration->ExcludeFiles !== null && count($selected_build_configuration->ExcludeFiles) > 0)
+            if($selected_build_configuration->exclude_files !== null && count($selected_build_configuration->exclude_files) > 0)
             {
-                $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
+                $DirectoryScanner->setExcludes($selected_build_configuration->exclude_files);
             }
 
             $source_path = $this->path . $this->project->build->source_path;
@@ -196,9 +196,9 @@
                 $DirectoryScanner->setIncludes();
 
                 // Ignore component files
-                if($selected_build_configuration->ExcludeFiles !== null && count($selected_build_configuration->ExcludeFiles) > 0)
+                if($selected_build_configuration->exclude_files !== null && count($selected_build_configuration->exclude_files) > 0)
                 {
-                    $DirectoryScanner->setExcludes(array_merge($selected_build_configuration->ExcludeFiles, ComponentFileExtensions::PHP));
+                    $DirectoryScanner->setExcludes(array_merge($selected_build_configuration->exclude_files, ComponentFileExtensions::PHP));
                 }
                 else
                 {
@@ -243,9 +243,9 @@
                 $selected_dependencies = array_merge($selected_dependencies, $this->project->build->dependencies);
             }
 
-            if($selected_build_configuration->Dependencies !== null && count($selected_build_configuration->Dependencies) > 0)
+            if($selected_build_configuration->dependencies !== null && count($selected_build_configuration->dependencies) > 0)
             {
-                $selected_dependencies = array_merge($selected_dependencies, $selected_build_configuration->Dependencies);
+                $selected_dependencies = array_merge($selected_dependencies, $selected_build_configuration->dependencies);
             }
 
             // Process the dependencies
@@ -254,7 +254,7 @@
                 $package_lock_manager = new PackageLockManager();
                 $filesystem = new Filesystem();
 
-                $lib_path = $selected_build_configuration->OutputPath . DIRECTORY_SEPARATOR . 'libs';
+                $lib_path = $selected_build_configuration->output_path . DIRECTORY_SEPARATOR . 'libs';
                 if($filesystem->exists($lib_path))
                 {
                     $filesystem->remove($lib_path);

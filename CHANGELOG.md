@@ -98,6 +98,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Dependecy`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Compiler`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Build`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Assembly`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\UpdateSource > Repository`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > Execute`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > ExitHandle`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > ExitHandlers`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\Build > BuildConfiguration`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

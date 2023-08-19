@@ -83,15 +83,15 @@ namespace ncc\Classes\PhpExtension;
 
                     try
                     {
-                        Constants::register($assembly->Package, $name, $value, true);
+                        Constants::register($assembly->package, $name, $value, true);
                     }
                     catch (ConstantReadonlyException $e)
                     {
-                        trigger_error('Constant \'' . $name . '\' is readonly (' . $assembly->Package . ')', E_USER_WARNING);
+                        trigger_error('Constant \'' . $name . '\' is readonly (' . $assembly->package . ')', E_USER_WARNING);
                     }
                     catch (InvalidConstantNameException $e)
                     {
-                        throw new ImportException('Invalid constant name \'' . $name . '\' (' . $assembly->Package . ')', $e);
+                        throw new ImportException('Invalid constant name \'' . $name . '\' (' . $assembly->package . ')', $e);
                     }
                 }
             }

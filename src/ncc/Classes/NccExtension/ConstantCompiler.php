@@ -46,49 +46,49 @@ namespace ncc\Classes\NccExtension;
                 return null;
             }
 
-            if($assembly->Name !== null)
+            if($assembly->name !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_NAME, $assembly->Name, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_NAME, $assembly->name, $input);
             }
 
-            if($assembly->Package !== null)
+            if($assembly->package !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PACKAGE, $assembly->Package, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PACKAGE, $assembly->package, $input);
             }
 
-            if($assembly->Description !== null)
+            if($assembly->description !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->Description, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->description, $input);
             }
 
-            if($assembly->Company !== null)
+            if($assembly->company !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->Company, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->company, $input);
             }
 
-            if($assembly->Product !== null)
+            if($assembly->product !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->Product, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->product, $input);
             }
 
-            if($assembly->Copyright !== null)
+            if($assembly->copyright !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->Copyright, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->copyright, $input);
             }
 
-            if($assembly->Trademark !== null)
+            if($assembly->trademark !== null)
             {
-                $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->Trademark, $input);
+                $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->trademark, $input);
             }
 
-            if($assembly->Version !== null)
+            if($assembly->version !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_VERSION, $assembly->Version, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_VERSION, $assembly->version, $input);
             }
 
-            if($assembly->UUID !== null)
+            if($assembly->uuid !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_UID, $assembly->UUID, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_UID, $assembly->uuid, $input);
             }
 
             return $input;
