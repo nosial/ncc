@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -28,35 +28,36 @@
     use ncc\Defuse\Crypto\Crypto;
     use ncc\Defuse\Crypto\Exception\EnvironmentIsBrokenException;
     use ncc\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
-    use ncc\Exceptions\RuntimeException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Interfaces\PasswordInterface;
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Functions;
     use ncc\ZiProto\ZiProto;
+    use RuntimeException;
 
-    class Entry
+    class Entry implements BytecodeObjectInterface
     {
         /**
          * The entry's unique identifier
          *
          * @var string
          */
-        private $Name;
+        private $name;
 
         /**
          * Whether the entry's password is encrypted
          *
          * @var bool
          */
-        private $Encrypted;
+        private $encrypted;
 
         /**
          * The entry's password
          *
          * @var PasswordInterface|string|null
          */
-        private $Password;
+        private $password;
 
         /**
          * Whether the entry's password is currently decrypted in memory
@@ -64,7 +65,7 @@
          *
          * @var bool
          */
-        private $IsCurrentlyDecrypted;
+        private $currently_decrypted;
 
         /**
          * Returns an array representation of the object
@@ -72,8 +73,8 @@
          */
         public function __construct()
         {
-            $this->Encrypted = true;
-            $this->IsCurrentlyDecrypted = true;
+            $this->encrypted = true;
+            $this->currently_decrypted = true;
         }
 
         /**
@@ -88,42 +89,58 @@
          */
         public function authenticate(array $input): bool
         {
-            if(!$this->IsCurrentlyDecrypted)
+            if(!$this->currently_decrypted)
+            {
                 return false;
+            }
 
-            if($this->Password == null)
+            if($this->password === null)
+            {
                 return false;
+            }
 
-            switch($this->Password->getAuthenticationType())
+            switch($this->password->getAuthenticationType())
             {
                 case AuthenticationType::USERNAME_PASSWORD:
-                    if(!($this->Password instanceof UsernamePassword))
+                    if(!($this->password instanceof UsernamePassword))
+                    {
                         return false;
+                    }
 
                     $username = $input['username'] ?? null;
                     $password = $input['password'] ?? null;
 
                     if($username === null && $password === null)
+                    {
                         return false;
+                    }
 
-                    if($username == null)
-                        return $password == $this->Password->getPassword();
+                    if($username === null)
+                    {
+                        return $password === $this->password->getPassword();
+                    }
 
-                    if($password == null)
-                        return $username == $this->Password->getUsername();
+                    if($password === null)
+                    {
+                        return $username === $this->password->getUsername();
+                    }
 
-                    return $username == $this->Password->getUsername() && $password == $this->Password->getPassword();
+                    return $username === $this->password->getUsername() && $password === $this->password->getPassword();
 
                 case AuthenticationType::ACCESS_TOKEN:
-                    if(!($this->Password instanceof AccessToken))
+                    if(!($this->password instanceof AccessToken))
+                    {
                         return false;
+                    }
 
                     $token = $input['token'] ?? null;
 
                     if($token === null)
+                    {
                         return false;
+                    }
 
-                    return $token == $this->Password->AccessToken;
+                    return $token === $this->password->access_token;
 
                 default:
                     return false;
@@ -137,7 +154,7 @@
          */
         public function setAuthentication(PasswordInterface $password): void
         {
-            $this->Password = $password;
+            $this->password = $password;
         }
 
         /**
@@ -146,7 +163,7 @@
          */
         public function isCurrentlyDecrypted(): bool
         {
-            return $this->IsCurrentlyDecrypted;
+            return $this->currently_decrypted;
         }
 
         /**
@@ -156,19 +173,27 @@
          */
         public function lock(): bool
         {
-            if($this->Password == null)
+            if($this->password === null)
+            {
                 return false;
+            }
 
-            if($this->Encrypted)
+            if($this->encrypted)
+            {
                 return false;
+            }
 
-            if(!$this->IsCurrentlyDecrypted)
+            if(!$this->currently_decrypted)
+            {
                 return false;
+            }
 
-            if(!($this->Password instanceof PasswordInterface))
+            if(!($this->password instanceof PasswordInterface))
+            {
                 return false;
+            }
 
-            $this->Password = $this->encrypt();
+            $this->password = $this->encrypt();
             return true;
         }
 
@@ -177,30 +202,37 @@
          *
          * @param string $password
          * @return bool
-         * @throws RuntimeException
          * @noinspection PhpUnused
          */
         public function unlock(string $password): bool
         {
-            if($this->Password == null)
+            if($this->password === null)
+            {
                 return false;
+            }
 
-            if(!$this->Encrypted)
+            if(!$this->encrypted)
+            {
                 return false;
+            }
 
-            if($this->IsCurrentlyDecrypted)
+            if($this->currently_decrypted)
+            {
                 return false;
+            }
 
-            if(!is_string($this->Password))
+            if(!is_string($this->password))
+            {
                 return false;
+            }
 
             try
             {
-                $password = Crypto::decryptWithPassword($this->Password, $password, true);
+                $password = Crypto::decryptWithPassword($this->password, $password, true);
             }
             catch (EnvironmentIsBrokenException $e)
             {
-                throw new RuntimeException('Cannot decrypt password', $e);
+                throw new RuntimeException(sprintf('Cannot decrypt password: %s', $e->getMessage()), $e->getCode(), $e);
             }
             catch (WrongKeyOrModifiedCiphertextException $e)
             {
@@ -208,8 +240,8 @@
                 return false;
             }
 
-            $this->Password = ZiProto::decode($password);
-            $this->IsCurrentlyDecrypted = true;
+            $this->password = ZiProto::decode($password);
+            $this->currently_decrypted = true;
 
             return true;
         }
@@ -221,17 +253,85 @@
          */
         private function encrypt(): ?string
         {
-            if(!$this->IsCurrentlyDecrypted)
+            if(!$this->currently_decrypted)
+            {
                 return false;
+            }
 
-            if($this->Password == null)
+            if($this->password === null)
+            {
                 return false;
+            }
 
-            if(!($this->Password instanceof PasswordInterface))
+            if(!($this->password instanceof PasswordInterface))
+            {
                 return null;
+            }
 
-            $data = ZiProto::encode($this->Password->toArray(true));
-            return Crypto::encryptWithPassword($data, (string)$this->Password, true);
+            $data = ZiProto::encode($this->password->toArray(true));
+
+            try
+            {
+                return Crypto::encryptWithPassword($data, (string)$this->password, true);
+            }
+            catch(EnvironmentIsBrokenException $e)
+            {
+                throw new RuntimeException(sprintf('Cannot encrypt password: %s', $e->getMessage()), $e->getCode(), $e);
+            }
+        }
+
+        /**
+         * @return bool
+         */
+        public function isEncrypted(): bool
+        {
+            return $this->encrypted;
+        }
+
+        /**
+         * Returns false if the entry needs to be decrypted first
+         *
+         * @param bool $encrypted
+         * @return bool
+         */
+        public function setEncrypted(bool $encrypted): bool
+        {
+            if(!$this->currently_decrypted)
+            {
+                return false;
+            }
+
+            $this->encrypted = $encrypted;
+            return true;
+        }
+
+        /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return PasswordInterface|null
+         */
+        public function getPassword(): ?PasswordInterface
+        {
+            if(!$this->currently_decrypted)
+            {
+                return null;
+            }
+
+            return $this->password;
         }
 
         /**
@@ -242,29 +342,29 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            if($this->Password !== null)
+            if($this->password !== null)
             {
-                if($this->Encrypted && $this->IsCurrentlyDecrypted)
+                if($this->encrypted && $this->currently_decrypted)
                 {
                     $password = $this->encrypt();
                 }
-                elseif($this->Encrypted)
+                elseif($this->encrypted)
                 {
-                    $password = $this->Password;
+                    $password = $this->password;
                 }
                 else
                 {
-                    $password = $this->Password->toArray(true);
+                    $password = $this->password->toArray(true);
                 }
             }
             else
             {
-                $password = $this->Password;
+                $password = $this->password;
             }
 
             return [
-                ($bytecode ? Functions::cbc('name') : 'name') => $this->Name,
-                ($bytecode ? Functions::cbc('encrypted') : 'encrypted') => $this->Encrypted,
+                ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
+                ($bytecode ? Functions::cbc('encrypted') : 'encrypted') => $this->encrypted,
                 ($bytecode ? Functions::cbc('password') : 'password') => $password,
             ];
         }
@@ -279,20 +379,20 @@
         {
             $self = new self();
 
-            $self->Name = Functions::array_bc($data, 'name');
-            $self->Encrypted = Functions::array_bc($data, 'encrypted');
+            $self->name = Functions::array_bc($data, 'name');
+            $self->encrypted = Functions::array_bc($data, 'encrypted');
             $password = Functions::array_bc($data, 'password');
 
             if($password !== null)
             {
-                if($self->Encrypted)
+                if($self->encrypted)
                 {
-                    $self->Password = $password;
-                    $self->IsCurrentlyDecrypted = false;
+                    $self->password = $password;
+                    $self->currently_decrypted = false;
                 }
-                elseif(gettype($password) == 'array')
+                elseif(is_array($password))
                 {
-                    $self->Password = match (Functions::array_bc($password, 'authentication_type'))
+                    $self->password = match (Functions::array_bc($password, 'authentication_type'))
                     {
                         AuthenticationType::USERNAME_PASSWORD => UsernamePassword::fromArray($password),
                         AuthenticationType::ACCESS_TOKEN => AccessToken::fromArray($password)
@@ -301,55 +401,5 @@
             }
 
             return $self;
-        }
-
-        /**
-         * @return bool
-         */
-        public function isEncrypted(): bool
-        {
-            return $this->Encrypted;
-        }
-
-        /**
-         * Returns false if the entry needs to be decrypted first
-         *
-         * @param bool $Encrypted
-         * @return bool
-         */
-        public function setEncrypted(bool $Encrypted): bool
-        {
-            if(!$this->IsCurrentlyDecrypted)
-                return false;
-
-            $this->Encrypted = $Encrypted;
-            return true;
-        }
-
-        /**
-         * @return string
-         */
-        public function getName(): string
-        {
-            return $this->Name;
-        }
-
-        /**
-         * @param string $Name
-         */
-        public function setName(string $Name): void
-        {
-            $this->Name = $Name;
-        }
-
-        /**
-         * @return PasswordInterface|null
-         */
-        public function getPassword(): ?PasswordInterface
-        {
-            if(!$this->IsCurrentlyDecrypted)
-                return null;
-
-            return $this->Password;
         }
     }

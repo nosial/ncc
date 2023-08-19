@@ -112,7 +112,7 @@
         {
             foreach($this->Sources as $existingSource)
             {
-                if($existingSource->Name === $source->Name)
+                if($existingSource->name === $source->name)
                     return false;
             }
 
@@ -130,7 +130,7 @@
         {
             foreach($this->Sources as $source)
             {
-                if($source->Name === $name)
+                if($source->name === $name)
                 {
                     return $source;
                 }
@@ -149,7 +149,7 @@
         {
             foreach($this->Sources as $index => $source)
             {
-                if($source->Name === $name)
+                if($source->name === $name)
                 {
                     unset($this->Sources[$index]);
                     return true;

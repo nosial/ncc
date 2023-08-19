@@ -802,7 +802,7 @@
         {
             $results = new RepositoryQueryResults();
 
-            switch($definedRemoteSource->Type)
+            switch($definedRemoteSource->type)
             {
                 case DefinedRemoteSourceType::GITHUB:
                     $source = GithubService::class;
@@ -819,7 +819,7 @@
             // Check if the specified version is a release
             try
             {
-                Console::outVerbose(sprintf('Attempting to fetch source code from %s', $definedRemoteSource->Host));
+                Console::outVerbose(sprintf('Attempting to fetch source code from %s', $definedRemoteSource->host));
                 $release_results = $source::getRelease($packageInput, $definedRemoteSource, $entry);
             }
             catch(Exception $e)

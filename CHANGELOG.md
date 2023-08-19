@@ -84,6 +84,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > Vault`
  - Corrected code-smell and code style issues in `\ncc\Objects > Vault`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > ProjectConfiguration`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > ExecutionPointers`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > DefinedRemoteSource`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\Vault > Entry`
+ - Corrected code-smell and code style issues in `\ncc\Objects\Vault\Password > AccessToken`
+ - Corrected code-smell and code style issues in `\ncc\Objects\Vault\Password > UsernamePassword`
+ - Extended `PasswordInterface` with `BytecodeObjectInterface`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\SymlinkDictionary > SymlinkEntry`
 
 ## Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

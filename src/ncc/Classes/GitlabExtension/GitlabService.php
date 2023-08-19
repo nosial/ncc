@@ -57,12 +57,12 @@
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry=null): RepositoryQueryResults
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->SSL ? "https" : "http");
+            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $project_f = str_ireplace("/", "%2F", $packageInput->package);
             $project_f = str_ireplace(".", "%2F", $project_f);
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/api/v4/projects/$owner_f%2F$project_f";
+            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/api/v4/projects/$owner_f%2F$project_f";
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry);
 
             $response = HttpClient::request($httpRequest, true);
@@ -175,7 +175,7 @@
          */
         public static function getNccPackage(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
-            throw new NotSupportedException(sprintf('The given repository source "%s" does not support ncc packages.', $definedRemoteSource->Host));
+            throw new NotSupportedException(sprintf('The given repository source "%s" does not support ncc packages.', $definedRemoteSource->host));
         }
 
         /**
@@ -194,13 +194,13 @@
         private static function getReleases(string $owner, string $repository, DefinedRemoteSource $definedRemoteSource, ?Entry $entry): array
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->SSL ? "https" : "http");
+            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $owner);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $repository_f = str_ireplace("/", "%2F", $repository);
             $repository_f = str_ireplace(".", "%2F", $repository_f);
 
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/api/v4/projects/$owner_f%2F$repository_f/releases";
+            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/api/v4/projects/$owner_f%2F$repository_f/releases";
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry);
 
             $response = HttpClient::request($httpRequest, true);

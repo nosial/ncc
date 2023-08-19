@@ -441,10 +441,10 @@
                 {
                     Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->Repository->Name);
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->Name = $package->header->UpdateSource->Repository->Name;
-                    $defined_remote_source->Host = $package->header->UpdateSource->Repository->Host;
-                    $defined_remote_source->Type = $package->header->UpdateSource->Repository->Type;
-                    $defined_remote_source->SSL = $package->header->UpdateSource->Repository->SSL;
+                    $defined_remote_source->name = $package->header->UpdateSource->Repository->Name;
+                    $defined_remote_source->host = $package->header->UpdateSource->Repository->Host;
+                    $defined_remote_source->type = $package->header->UpdateSource->Repository->Type;
+                    $defined_remote_source->ssl = $package->header->UpdateSource->Repository->SSL;
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }

@@ -25,12 +25,13 @@
     namespace ncc\Objects;
 
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ExecutionPointers\ExecutionPointer;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
 
-    class ExecutionPointers
+    class ExecutionPointers implements BytecodeObjectInterface
     {
         /**
          * @var string
@@ -171,10 +172,7 @@
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @param bool $bytecode
-         * @return array
+         * @inheritDoc
          */
         public function toArray(bool  $bytecode=false): array
         {
@@ -191,10 +189,7 @@
         }
 
         /**
-         * Constructs object from an array representation
-         *
-         * @param array $data
-         * @return ExecutionPointers
+         * @inheritDoc
          */
         public static function fromArray(array $data): self
         {

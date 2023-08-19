@@ -58,11 +58,11 @@ namespace ncc\Classes\GithubExtension;
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->SSL ? "https" : "http");
+            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $repository = urlencode($packageInput->package);
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/repos/$owner_f/$repository";
+            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/repos/$owner_f/$repository";
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
             $query = new RepositoryQueryResults();
@@ -127,11 +127,11 @@ namespace ncc\Classes\GithubExtension;
         private static function getReleases(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): array
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->SSL ? "https" : "http");
+            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $repository = urlencode($packageInput->package);
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->Host . "/repos/$owner_f/$repository/releases";
+            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/repos/$owner_f/$repository/releases";
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
             if(count($response_decoded) === 0)

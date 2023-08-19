@@ -25,9 +25,10 @@
     namespace ncc\Objects;
 
     use ncc\Enums\DefinedRemoteSourceType;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
-    class DefinedRemoteSource
+    class DefinedRemoteSource implements BytecodeObjectInterface
     {
         /**
          * The unique name of the remote source. (e.g. 'github')
@@ -36,28 +37,28 @@
          *
          * @var string
          */
-        public $Name;
+        public $name;
 
         /**
          * The type of service NCC should use with this source (gitlab, github, etc...).
          *
          * @var string|DefinedRemoteSourceType
          */
-        public $Type;
+        public $type;
 
         /**
          * The host of the service NCC should use with this source (gitlab.com, github.com, git.example.com:8080 etc...).
          *
          * @var string
          */
-        public $Host;
+        public $host;
 
         /**
          * If SSL should be used when connecting to the service
          *
          * @var bool
          */
-        public $SSL;
+        public $ssl;
 
         /**
          * Returns an array representation of the object
@@ -68,10 +69,10 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('name') : 'name') => $this->Name,
-                ($bytecode ? Functions::cbc('type') : 'type') => $this->Type,
-                ($bytecode ? Functions::cbc('host') : 'host') => $this->Host,
-                ($bytecode ? Functions::cbc('ssl') : 'ssl') => $this->SSL
+                ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
+                ($bytecode ? Functions::cbc('type') : 'type') => $this->type,
+                ($bytecode ? Functions::cbc('host') : 'host') => $this->host,
+                ($bytecode ? Functions::cbc('ssl') : 'ssl') => $this->ssl
             ];
         }
 
@@ -85,10 +86,10 @@
         {
             $definedRemoteSource = new self();
 
-            $definedRemoteSource->Name = Functions::array_bc($data, 'name');
-            $definedRemoteSource->Type = Functions::array_bc($data, 'type');
-            $definedRemoteSource->Host = Functions::array_bc($data, 'host');
-            $definedRemoteSource->SSL = Functions::array_bc($data, 'ssl');
+            $definedRemoteSource->name = Functions::array_bc($data, 'name');
+            $definedRemoteSource->type = Functions::array_bc($data, 'type');
+            $definedRemoteSource->host = Functions::array_bc($data, 'host');
+            $definedRemoteSource->ssl = Functions::array_bc($data, 'ssl');
 
             return $definedRemoteSource;
         }

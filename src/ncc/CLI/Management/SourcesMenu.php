@@ -105,7 +105,7 @@ namespace ncc\CLI\Management;
             Console::out('Remote sources:', 1);
             foreach($sources as $source)
             {
-                Console::out(' - ' . $source->Name . ' (' . $source->Host . ')', 1);
+                Console::out(' - ' . $source->name . ' (' . $source->host . ')', 1);
             }
 
             Console::out('Total: ' . count($sources), 1);
@@ -153,10 +153,10 @@ namespace ncc\CLI\Management;
 
             $source_manager = new RemoteSourcesManager();
             $source = new DefinedRemoteSource();
-            $source->Name = $name;
-            $source->Type = $type;
-            $source->Host = $host;
-            $source->SSL = $ssl;
+            $source->name = $name;
+            $source->type = $type;
+            $source->host = $host;
+            $source->ssl = $ssl;
 
             if(!$source_manager->addRemoteSource($source))
             {
