@@ -61,8 +61,10 @@
          */
         private static function isImported(string $package, string $version=Versions::LATEST): bool
         {
-            if($version == Versions::LATEST)
+            if($version === Versions::LATEST)
+            {
                 $version = self::getPackageManager()->getPackage($package)->getLatestVersion();
+            }
 
             $entry = "$package=$version";
 
@@ -100,21 +102,25 @@
             {
                 throw new ImportException(sprintf('Failed to import package "%s" due to a package lock exception: %s', $package, $e->getMessage()), $e);
             }
-            if($package_entry == null)
+            if($package_entry === null)
             {
                 throw new ImportException(sprintf("Package '%s' not found", $package));
             }
 
-            if($version == Versions::LATEST)
+            if($version === Versions::LATEST)
+            {
                 $version = $package_entry->getLatestVersion();
+            }
 
             try
             {
                 /** @var VersionEntry $version_entry */
                 $version_entry = $package_entry->getVersion($version);
 
-                if($version_entry == null)
+                if($version_entry === null)
+                {
                     throw new VersionNotFoundException();
+                }
             }
             catch (VersionNotFoundException $e)
             {
@@ -124,7 +130,9 @@
             try
             {
                 if (self::isImported($package, $version))
+                {
                     return;
+                }
             }
             catch (PackageLockException $e)
             {
@@ -136,7 +144,9 @@
                 // Import all dependencies first
                 /** @var Dependency $dependency */
                 foreach($version_entry->Dependencies as $dependency)
+                {
                     self::import($dependency->PackageName, $dependency->version, $options);
+                }
             }
 
             try
@@ -173,8 +183,10 @@
         {
             $package = self::getPackageManager()->getPackage($package);
 
-            if($package == null)
+            if($package === null)
+            {
                 throw new PackageNotFoundException('Package not found (null entry error, possible bug)');
+            }
 
             return $package->getDataPath();
         }
@@ -184,8 +196,11 @@
          */
         private static function getPackageManager(): PackageManager
         {
-            if(self::$package_manager == null)
+            if(self::$package_manager === null)
+            {
                 self::$package_manager = new PackageManager();
+            }
+
             return self::$package_manager;
         }
 
