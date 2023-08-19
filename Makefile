@@ -37,7 +37,7 @@ $(SRC_PATH)/%/autoload_spl.php:
 
 $(SRC_PATH)/ncc/autoload_spl.php:
 	$(PHPCC) $(PHPAB) --output $@ \
-		$(SRC_PATH)/ncc/Abstracts \
+		$(SRC_PATH)/ncc/Enums \
 		$(SRC_PATH)/ncc/Classes \
 		$(SRC_PATH)/ncc/CLI \
 		$(SRC_PATH)/ncc/Exceptions \
