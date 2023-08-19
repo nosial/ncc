@@ -32,6 +32,7 @@
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageParsingException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Header;
@@ -44,7 +45,7 @@
     use ncc\Utilities\IO;
     use ncc\ZiProto\ZiProto;
 
-    class Package
+    class Package implements BytecodeObjectInterface
     {
         /**
          * The parsed magic bytes of the package into an object representation
@@ -347,10 +348,7 @@
         }
 
         /**
-         * Constructs an array representation of the object
-         *
-         * @param bool $bytecode
-         * @return array
+         * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
         {
@@ -394,10 +392,9 @@
         }
 
         /**
-         * @param array $data
-         * @return Package
+         * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): Package
         {
             $object = new self();
 

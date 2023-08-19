@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
  - Added new exception `PathNotFoundException` and implemented it in replacement for `DirectoryNotFoundException` and
    `FileNotFoundException` in `\ncc\Exceptions`
+ - Added a new interface class `BytecodeObjectInterface` which will be used to implement object types for compiled assets
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -79,12 +80,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Corrected code-smell and code style issues in `\ncc\Classes\Extensions\PythonExtension > Python3Runner`
  - Corrected code-smell and code style issues in `\ncc\Classes\Extensions\PythonExtension > PythonRunner`
  - Corrected code-smell and code style issues in `\ncc\Interfaces > RunnerInterface`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > Package`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > Vault`
+ - Corrected code-smell and code style issues in `\ncc\Objects > Vault`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects > ProjectConfiguration`
 
 ## Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
  - Removed the use of `InvalidScopeException` across the project
  - Removed references of Win32 from the project as Windows is not going supported
  - Removed unused exception `FileNotFoundException` in `\ncc\CLI > HelpMenu`
+ - Removed unused class `\ncc\Objects > SymlinkDictionary`
 
 
 

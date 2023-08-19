@@ -27,33 +27,34 @@
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\Versions;
     use ncc\Exceptions\RuntimeException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Interfaces\PasswordInterface;
     use ncc\Objects\Vault\Entry;
     use ncc\Utilities\Functions;
 
-    class Vault
+    class Vault implements BytecodeObjectInterface
     {
         /**
          * The vault's current version for backwards compatibility
          *
          * @var string
          */
-        public $Version;
+        public $version;
 
         /**
          * The vault's stored credential entries
          *
          * @var Entry[]
          */
-        public $Entries;
+        public $entries;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->Version = Versions::CREDENTIALS_STORE_VERSION;
-            $this->Entries = [];
+            $this->version = Versions::CREDENTIALS_STORE_VERSION;
+            $this->entries = [];
         }
 
         /**
@@ -68,10 +69,12 @@
         public function addEntry(string $name, PasswordInterface $password, bool $encrypt=true): bool
         {
             // Check if the entry already exists
-            foreach($this->Entries as $entry)
+            foreach($this->entries as $entry)
             {
                 if($entry->getName() === $name)
+                {
                     return false;
+                }
             }
 
             // Create the new entry
@@ -81,7 +84,7 @@
             $entry->setAuthentication($password);
 
             // Add the entry to the vault
-            $this->Entries[] = $entry;
+            $this->entries[] = $entry;
             return true;
         }
 
@@ -95,17 +98,17 @@
         public function deleteEntry(string $name): bool
         {
             // Find the entry
-            foreach($this->Entries as $index => $entry)
+            foreach($this->entries as $index => $entry)
             {
                 if($entry->getName() === $name)
                 {
                     // Remove the entry
-                    unset($this->Entries[$index]);
+                    unset($this->entries[$index]);
                     return true;
                 }
             }
 
-            // Entry not found
+            // Entry isn't found
             return false;
         }
 
@@ -117,7 +120,7 @@
          */
         public function getEntries(): array
         {
-            return $this->Entries;
+            return $this->entries;
         }
 
         /**
@@ -128,10 +131,12 @@
          */
         public function getEntry(string $name): ?Entry
         {
-            foreach($this->Entries as $entry)
+            foreach($this->entries as $entry)
             {
                 if($entry->getName() === $name)
+                {
                     return $entry;
+                }
             }
 
             return null;
@@ -150,14 +155,13 @@
         {
             $entry = $this->getEntry($name);
             if($entry === null)
-                return false;
-
-            if($entry->getPassword() === null)
             {
-                if($entry->isEncrypted() && !$entry->isCurrentlyDecrypted())
-                {
-                    return $entry->unlock($password);
-                }
+                return false;
+            }
+
+            if(($entry->getPassword() === null) && $entry->isEncrypted() && !$entry->isCurrentlyDecrypted())
+            {
+                return $entry->unlock($password);
             }
 
             $input = [];
@@ -175,40 +179,37 @@
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @param bool $bytecode
-         * @return array
+         * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
         {
             $entries = [];
-            foreach($this->Entries as $entry)
+
+            foreach($this->entries as $entry)
             {
                 $entries[] = $entry->toArray($bytecode);
             }
 
             return [
-                ($bytecode ? Functions::cbc('version') : 'version') => $this->Version,
+                ($bytecode ? Functions::cbc('version') : 'version') => $this->version,
                 ($bytecode ? Functions::cbc('entries') : 'entries') => $entries,
             ];
         }
 
         /**
-         * Constructs a new object from an array
-         *
-         * @param array $array
-         * @return Vault
+         * @inheritDoc
          */
-        public static function fromArray(array $array): Vault
+        public static function fromArray(array $data): Vault
         {
             $vault = new Vault();
-            $vault->Version = Functions::array_bc($array, 'version');
-            $entries = Functions::array_bc($array, 'entries');
-            $vault->Entries = [];
+            $vault->version = Functions::array_bc($data, 'version');
+            $entries = Functions::array_bc($data, 'entries');
+            $vault->entries = [];
 
             foreach($entries as $entry)
-                $vault->Entries[] = Entry::fromArray($entry);
+            {
+                $vault->entries[] = Entry::fromArray($entry);
+            }
 
             return $vault;
         }

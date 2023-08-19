@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -40,6 +40,7 @@
     use ncc\Exceptions\UndefinedExecutionPolicyException;
     use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Exceptions\UnsupportedExtensionVersionException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
@@ -52,7 +53,7 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
      */
-    class ProjectConfiguration
+    class ProjectConfiguration implements BytecodeObjectInterface
     {
         /**
          * The project configuration
@@ -378,53 +379,6 @@
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @param bool $bytecode
-         * @return array
-         */
-        public function toArray(bool $bytecode=false): array
-        {
-            $execution_policies = null;
-            if($this->execution_policies !== null)
-            {
-                $execution_policies = [];
-                foreach($this->execution_policies as $executionPolicy)
-                {
-                    $execution_policies[$executionPolicy->Name] = $executionPolicy->toArray($bytecode);
-                }
-            }
-
-            $results = [];
-            if($this->project !== null)
-            {
-                $results[($bytecode ? Functions::cbc('project') : 'project')] = $this->project->toArray($bytecode);
-            }
-
-            if($this->assembly !== null)
-            {
-                $results['assembly'] = $this->assembly->toArray($bytecode);
-            }
-
-            if($this->build !== null)
-            {
-                $results[($bytecode ? Functions::cbc('build') : 'build')] = $this->build->toArray($bytecode);
-            }
-
-            if($this->installer !== null)
-            {
-                $results[($bytecode ? Functions::cbc('installer') : 'installer')] = $this->installer->toArray($bytecode);
-            }
-
-            if($execution_policies !== null && count($execution_policies) > 0)
-            {
-                $results[($bytecode ? Functions::cbc('execution_policies') : 'execution_policies')] = $execution_policies;
-            }
-
-            return $results;
-        }
-
-        /**
          * Writes a json representation of the object to a file
          *
          * @param string $path
@@ -442,48 +396,6 @@
             }
 
             Functions::encodeJsonFile($this->toArray($bytecode), $path, Functions::FORCE_ARRAY);
-        }
-
-        /**
-         * Constructs the object from an array representation
-         *
-         * @param array $data
-         * @return ProjectConfiguration
-         */
-        public static function fromArray(array $data): ProjectConfiguration
-        {
-            $object = new self();
-
-            if(isset($data['project']))
-            {
-                $object->project = Project::fromArray($data['project']);
-            }
-
-            if(isset($data['assembly']))
-            {
-                $object->assembly = Assembly::fromArray($data['assembly']);
-            }
-
-            if(isset($data['build']))
-            {
-                $object->build = Build::fromArray($data['build']);
-            }
-
-            if(isset($data['installer']))
-            {
-                $object->installer = Installer::fromArray($data['installer']);
-            }
-
-            if(isset($data['execution_policies']))
-            {
-                $object->execution_policies = [];
-                foreach($data['execution_policies'] as $execution_policy)
-                {
-                    $object->execution_policies[] = ExecutionPolicy::fromArray($execution_policy);
-                }
-            }
-
-            return $object;
         }
 
         /**
@@ -538,5 +450,88 @@
             }
 
             return $required_policies;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function toArray(bool $bytecode=false): array
+        {
+            $execution_policies = null;
+            if($this->execution_policies !== null)
+            {
+                $execution_policies = [];
+                foreach($this->execution_policies as $executionPolicy)
+                {
+                    $execution_policies[$executionPolicy->Name] = $executionPolicy->toArray($bytecode);
+                }
+            }
+
+            $results = [];
+            if($this->project !== null)
+            {
+                $results[($bytecode ? Functions::cbc('project') : 'project')] = $this->project->toArray($bytecode);
+            }
+
+            if($this->assembly !== null)
+            {
+                $results['assembly'] = $this->assembly->toArray($bytecode);
+            }
+
+            if($this->build !== null)
+            {
+                $results[($bytecode ? Functions::cbc('build') : 'build')] = $this->build->toArray($bytecode);
+            }
+
+            if($this->installer !== null)
+            {
+                $results[($bytecode ? Functions::cbc('installer') : 'installer')] = $this->installer->toArray($bytecode);
+            }
+
+            if($execution_policies !== null && count($execution_policies) > 0)
+            {
+                $results[($bytecode ? Functions::cbc('execution_policies') : 'execution_policies')] = $execution_policies;
+            }
+
+            return $results;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public static function fromArray(array $data): ProjectConfiguration
+        {
+            $object = new self();
+
+            if(isset($data['project']))
+            {
+                $object->project = Project::fromArray($data['project']);
+            }
+
+            if(isset($data['assembly']))
+            {
+                $object->assembly = Assembly::fromArray($data['assembly']);
+            }
+
+            if(isset($data['build']))
+            {
+                $object->build = Build::fromArray($data['build']);
+            }
+
+            if(isset($data['installer']))
+            {
+                $object->installer = Installer::fromArray($data['installer']);
+            }
+
+            if(isset($data['execution_policies']))
+            {
+                $object->execution_policies = [];
+                foreach($data['execution_policies'] as $execution_policy)
+                {
+                    $object->execution_policies[] = ExecutionPolicy::fromArray($execution_policy);
+                }
+            }
+
+            return $object;
         }
     }
