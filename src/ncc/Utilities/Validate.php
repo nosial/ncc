@@ -77,13 +77,19 @@ namespace ncc\Utilities;
         public static function version(string $input): bool
         {
             if(preg_match(RegexPatterns::SEMANTIC_VERSIONING_2, $input))
+            {
                 return true;
+            }
 
             if(preg_match(RegexPatterns::COMPOSER_VERSION_FORMAT, $input))
+            {
                 return true;
+            }
 
             if(preg_match(RegexPatterns::PYTHON_VERSION_FORMAT, $input))
+            {
                 return true;
+            }
 
             return false;
         }
@@ -115,22 +121,6 @@ namespace ncc\Utilities;
         }
 
         /**
-         * Determines if the user has access to the given scope permission
-         *
-         * @param string|null $input
-         * @return bool
-         */
-        public static function scopePermission(?string $input=null): bool
-        {
-            $input = Resolver::resolveScope($input);
-
-            if($input == Scopes::SYSTEM && posix_getuid() !== 0)
-                return false;
-
-            return true;
-        }
-
-        /**
          * Validates if the package name is valid
          *
          * @param $input
@@ -138,7 +128,7 @@ namespace ncc\Utilities;
          */
         public static function packageName($input): bool
         {
-            if($input == null)
+            if($input === null)
             {
                 return false;
             }
@@ -159,12 +149,12 @@ namespace ncc\Utilities;
          */
         public static function projectName($input): bool
         {
-            if($input == null)
+            if($input === null)
             {
                 return false;
             }
 
-            if(strlen($input) == 0)
+            if($input === '')
             {
                 return false;
             }
@@ -194,22 +184,6 @@ namespace ncc\Utilities;
         }
 
         /**
-         * Determines if a Windows filepath is valid
-         *
-         * @param $input
-         * @return bool
-         */
-        public static function windowsFilepath($input): bool
-        {
-            if(preg_match(RegexPatterns::WINDOWS_PATH, $input))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        /**
          * Validates if the constant name is valid
          *
          * @param $input
@@ -217,12 +191,12 @@ namespace ncc\Utilities;
          */
         public static function constantName($input): bool
         {
-            if($input == null)
+            if($input === null)
             {
                 return false;
             }
 
-            if(!preg_match(RegexPatterns::ConstantName, $input))
+            if(!preg_match(RegexPatterns::CONSTANT_NAME, $input))
             {
                 return false;
             }
@@ -238,11 +212,6 @@ namespace ncc\Utilities;
          */
         public static function executionPolicyName(string $input): bool
         {
-            if($input == null)
-            {
-                return false;
-            }
-
             if(!preg_match(RegexPatterns::EXECUTION_POLICY_NAME, $input))
             {
                 return false;
@@ -260,7 +229,9 @@ namespace ncc\Utilities;
         public static function checkLogLevel(string $input): bool
         {
             if(!in_array(strtolower($input), LogLevel::ALL))
+            {
                 return false;
+            }
 
             return true;
         }
@@ -273,10 +244,7 @@ namespace ncc\Utilities;
          */
         public static function exceedsPathLength(string $input): bool
         {
-            if(strlen($input) > 4096)
-                return true;
-
-            return false;
+            return strlen($input) > 4096;
         }
 
         /**
@@ -288,12 +256,20 @@ namespace ncc\Utilities;
          */
         public static function nameFriendly(string $input): bool
         {
-            if(strlen($input) == 0)
+            if($input === '')
+            {
                 return false;
+            }
+
             if (!preg_match('/^[a-zA-Z0-9_]+$/', $input))
+            {
                 return false;
+            }
+
             if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $input))
+            {
                 return false;
+            }
 
             return true;
         }
@@ -306,12 +282,20 @@ namespace ncc\Utilities;
          */
         public static function pathName(string $input): bool
         {
-            if(strlen($input) == 0)
+            if(strlen($input) === 0)
+            {
                 return false;
+            }
+
             if (!preg_match('/^[a-zA-Z0-9_\-\/]+$/', $input))
+            {
                 return false;
+            }
+
             if (!preg_match('/^[a-zA-Z_\-\/][a-zA-Z0-9_\-\/]*$/', $input))
+            {
                 return false;
+            }
 
             return true;
         }
