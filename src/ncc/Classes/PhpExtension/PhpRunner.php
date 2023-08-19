@@ -48,7 +48,7 @@
                 throw new PathNotFoundException($path);
             }
 
-            $policy->Execute->Target = null;
+            $policy->execute->Target = null;
 
             $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);

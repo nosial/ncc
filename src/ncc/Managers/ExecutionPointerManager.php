@@ -174,15 +174,15 @@
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot add new ExecutionUnit \'' . $unit->execution_policy->Name .'\' for ' . $package . ', insufficient permissions');
+                throw new AccessDeniedException('Cannot add new ExecutionUnit \'' . $unit->execution_policy->name .'\' for ' . $package . ', insufficient permissions');
             }
 
-            Console::outVerbose(sprintf('Adding new ExecutionUnit \'%s\' for %s', $unit->execution_policy->Name, $package));
+            Console::outVerbose(sprintf('Adding new ExecutionUnit \'%s\' for %s', $unit->execution_policy->name, $package));
 
             $package_id = $this->getPackageId($package, $version);
             $package_config_path = $this->runner_path . DIRECTORY_SEPARATOR . $package_id . '.inx';
             $package_bin_path = $this->runner_path . DIRECTORY_SEPARATOR . $package_id;
-            $entry_point_path = $package_bin_path . DIRECTORY_SEPARATOR . hash('haval128,4', $unit->execution_policy->Name) . '.entrypoint';
+            $entry_point_path = $package_bin_path . DIRECTORY_SEPARATOR . hash('haval128,4', $unit->execution_policy->name) . '.entrypoint';
 
             Console::outDebug(sprintf('package_id=%s', $package_id));
             Console::outDebug(sprintf('package_config_path=%s', $package_config_path));
@@ -201,8 +201,8 @@
                 $execution_pointers = ExecutionPointers::fromArray(ZiProto::decode(IO::fread($package_config_path)));
             }
 
-            $bin_file = $package_bin_path . DIRECTORY_SEPARATOR . hash('haval128,4', $unit->execution_policy->Name);
-            $bin_file .= match ($unit->execution_policy->Runner)
+            $bin_file = $package_bin_path . DIRECTORY_SEPARATOR . hash('haval128,4', $unit->execution_policy->name);
+            $bin_file .= match ($unit->execution_policy->runner)
             {
                 Runners::BASH => BashRunner::getFileExtension(),
                 Runners::PHP => PhpRunner::getFileExtension(),
@@ -211,7 +211,7 @@
                 Runners::PYTHON_2 => Python2Runner::getFileExtension(),
                 Runners::PYTHON_3 => Python3Runner::getFileExtension(),
                 Runners::LUA => LuaRunner::getFileExtension(),
-                default => throw new RunnerExecutionException('The runner \'' . $unit->execution_policy->Runner . '\' is not supported'),
+                default => throw new RunnerExecutionException('The runner \'' . $unit->execution_policy->runner . '\' is not supported'),
             };
 
             Console::outDebug(sprintf('bin_file=%s', $bin_file));
@@ -237,7 +237,7 @@
 
             $entry_point = sprintf("#!%s\nncc exec --package=\"%s\" --exec-version=\"%s\" --exec-unit=\"%s\" --exec-args \"$@\"",
                 '/bin/bash',
-                $package, $version, $unit->execution_policy->Name
+                $package, $version, $unit->execution_policy->name
             );
 
             if(file_exists($entry_point_path))
@@ -250,11 +250,11 @@
 
             if($temporary)
             {
-                Console::outVerbose(sprintf('Adding temporary ExecutionUnit \'%s\' for %s', $unit->execution_policy->Name, $package));
+                Console::outVerbose(sprintf('Adding temporary ExecutionUnit \'%s\' for %s', $unit->execution_policy->name, $package));
                 $this->temporary_units[] = [
                     'package' => $package,
                     'version' => $version,
-                    'unit' => $unit->execution_policy->Name
+                    'unit' => $unit->execution_policy->name
                 ];
             }
         }
@@ -350,8 +350,8 @@
             $results = [];
             foreach($execution_pointers->getPointers() as $pointer)
             {
-                Console::outDebug(sprintf('unit %s', $pointer->execution_policy->Name));
-                $results[] = $pointer->execution_policy->Name;
+                Console::outDebug(sprintf('unit %s', $pointer->execution_policy->name));
+                $results[] = $pointer->execution_policy->name;
             }
 
             return $results;
@@ -390,34 +390,34 @@
                 throw new RunnerExecutionException('The execution unit \'' . $name . '\' was not found for \'' . $package . '=' .$version .'\'');
             }
 
-            Console::outDebug(sprintf('unit=%s', $unit->execution_policy->Name));
-            Console::outDebug(sprintf('runner=%s', $unit->execution_policy->Runner));
+            Console::outDebug(sprintf('unit=%s', $unit->execution_policy->name));
+            Console::outDebug(sprintf('runner=%s', $unit->execution_policy->runner));
             Console::outDebug(sprintf('file=%s', $unit->file_pointer));
             Console::outDebug(sprintf('pass_thru_args=%s', implode(' ', $args)));
 
             // Handle the arguments
-            if($unit->execution_policy->Execute->Options !== null && count($unit->execution_policy->Execute->Options) > 0)
+            if($unit->execution_policy->execute->Options !== null && count($unit->execution_policy->execute->Options) > 0)
             {
-                $args = array_merge($args, $unit->execution_policy->Execute->Options);
+                $args = array_merge($args, $unit->execution_policy->execute->Options);
 
-                foreach($unit->execution_policy->Execute->Options as $option)
+                foreach($unit->execution_policy->execute->Options as $option)
                 {
                     $args[] = ConstantCompiler::compileRuntimeConstants($option);
                 }
             }
 
             $process = new Process(array_merge(
-                [PathFinder::findRunner(strtolower($unit->execution_policy->Runner)), $unit->file_pointer], $args)
+                [PathFinder::findRunner(strtolower($unit->execution_policy->runner)), $unit->file_pointer], $args)
             );
 
-            if($unit->execution_policy->Execute->WorkingDirectory !== null)
+            if($unit->execution_policy->execute->WorkingDirectory !== null)
             {
-                $process->setWorkingDirectory(ConstantCompiler::compileRuntimeConstants($unit->execution_policy->Execute->WorkingDirectory));
+                $process->setWorkingDirectory(ConstantCompiler::compileRuntimeConstants($unit->execution_policy->execute->WorkingDirectory));
             }
 
-            if($unit->execution_policy->Execute->Timeout !== null)
+            if($unit->execution_policy->execute->Timeout !== null)
             {
-                $process->setTimeout((float)$unit->execution_policy->Execute->Timeout);
+                $process->setTimeout((float)$unit->execution_policy->execute->Timeout);
             }
             else
             {
@@ -427,12 +427,12 @@
 
             try
             {
-                if($unit->execution_policy->Execute->Silent)
+                if($unit->execution_policy->execute->Silent)
                 {
                     $process->disableOutput();
                     $process->setTty(false);
                 }
-                elseif($unit->execution_policy->Execute->Tty)
+                elseif($unit->execution_policy->execute->Tty)
                 {
                     $process->enableOutput();
                     $process->setTty(true);
@@ -460,16 +460,16 @@
 
             Console::outDebug(sprintf('working_directory=%s', $process->getWorkingDirectory()));
             Console::outDebug(sprintf('timeout=%s', (int)$process->getTimeout()));
-            Console::outDebug(sprintf('silent=%s', ($unit->execution_policy->Execute->Silent ? 'true' : 'false')));
-            Console::outDebug(sprintf('tty=%s', ($unit->execution_policy->Execute->Tty ? 'true' : 'false')));
+            Console::outDebug(sprintf('silent=%s', ($unit->execution_policy->execute->Silent ? 'true' : 'false')));
+            Console::outDebug(sprintf('tty=%s', ($unit->execution_policy->execute->Tty ? 'true' : 'false')));
             Console::outDebug(sprintf('options=%s', implode(' ', $args)));
             Console::outDebug(sprintf('cmd=%s', $process->getCommandLine()));
 
             try
             {
-                if($unit->execution_policy->Message !== null)
+                if($unit->execution_policy->message !== null)
                 {
-                    Console::out($unit->execution_policy->Message);
+                    Console::out($unit->execution_policy->message);
                 }
 
                 $process->run(function ($type, $buffer)
@@ -481,33 +481,33 @@
             }
             catch(Exception $e)
             {
-                if($unit->execution_policy->ExitHandlers !== null && $unit->execution_policy->ExitHandlers->Error !== null)
+                if($unit->execution_policy->exit_handlers !== null && $unit->execution_policy->exit_handlers->Error !== null)
                 {
-                    $this->handleExit($package, $version, $unit->execution_policy->ExitHandlers->Error);
+                    $this->handleExit($package, $version, $unit->execution_policy->exit_handlers->Error);
                 }
 
-                Console::outException(sprintf('An error occurred while executing the unit \'%s\' for \'%s\' (exit code %s)', $unit->execution_policy->Name, $package, $process->getExitCode()), $e);
+                Console::outException(sprintf('An error occurred while executing the unit \'%s\' for \'%s\' (exit code %s)', $unit->execution_policy->name, $package, $process->getExitCode()), $e);
             }
             finally
             {
                 Console::outDebug(sprintf('exit_code=%s', $process->getExitCode()));
             }
 
-            if($unit->execution_policy->ExitHandlers !== null)
+            if($unit->execution_policy->exit_handlers !== null)
             {
-                if($unit->execution_policy->ExitHandlers->Success !== null && $process->isSuccessful())
+                if($unit->execution_policy->exit_handlers->Success !== null && $process->isSuccessful())
                 {
-                    $this->handleExit($package, $version, $unit->execution_policy->ExitHandlers->Success);
+                    $this->handleExit($package, $version, $unit->execution_policy->exit_handlers->Success);
                 }
-                elseif($unit->execution_policy->ExitHandlers->Error !== null && $process->isSuccessful())
+                elseif($unit->execution_policy->exit_handlers->Error !== null && $process->isSuccessful())
                 {
-                    $this->handleExit($package, $version, $unit->execution_policy->ExitHandlers->Error);
+                    $this->handleExit($package, $version, $unit->execution_policy->exit_handlers->Error);
                 }
                 else
                 {
-                    $this->handleExit($package, $version, $unit->execution_policy->ExitHandlers->Success, $process);
-                    $this->handleExit($package, $version, $unit->execution_policy->ExitHandlers->Warning, $process);
-                    $this->handleExit($package, $version, $unit->execution_policy->ExitHandlers->Error, $process);
+                    $this->handleExit($package, $version, $unit->execution_policy->exit_handlers->Success, $process);
+                    $this->handleExit($package, $version, $unit->execution_policy->exit_handlers->Warning, $process);
+                    $this->handleExit($package, $version, $unit->execution_policy->exit_handlers->Error, $process);
                 }
             }
 
@@ -538,21 +538,21 @@
 
             // Get the required units
             $required_units = [];
-            if($unit->execution_policy->ExitHandlers !== null)
+            if($unit->execution_policy->exit_handlers !== null)
             {
-                $required_unit = $unit->execution_policy?->ExitHandlers?->Success?->Run;
+                $required_unit = $unit->execution_policy?->exit_handlers?->Success?->Run;
                 if($required_unit !== null)
                 {
                     $required_units[] = $required_unit;
                 }
 
-                $required_unit = $unit->execution_policy?->ExitHandlers?->Warning?->Run;
+                $required_unit = $unit->execution_policy?->exit_handlers?->Warning?->Run;
                 if($required_unit !== null)
                 {
                     $required_units[] = $required_unit;
                 }
 
-                $required_unit = $unit->execution_policy?->ExitHandlers?->Error?->Run;
+                $required_unit = $unit->execution_policy?->exit_handlers?->Error?->Run;
                 if($required_unit !== null)
                 {
                     $required_units = $required_unit;

@@ -301,7 +301,7 @@
          */
         public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
-            return match (strtolower($policy->Runner))
+            return match (strtolower($policy->runner))
             {
                 Runners::BASH => BashRunner::processUnit($path, $policy),
                 Runners::PHP => PhpRunner::processUnit($path, $policy),
@@ -310,7 +310,7 @@
                 Runners::PYTHON_2 => Python2Runner::processUnit($path, $policy),
                 Runners::PYTHON_3 => Python3Runner::processUnit($path, $policy),
                 Runners::LUA => LuaRunner::processUnit($path, $policy),
-                default => throw new RunnerExecutionException('The runner \'' . $policy->Runner . '\' is not supported'),
+                default => throw new RunnerExecutionException('The runner \'' . $policy->runner . '\' is not supported'),
             };
         }
 

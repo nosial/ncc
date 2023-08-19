@@ -108,11 +108,11 @@
             // Create the package object
             $this->package = new Package();
             $this->package->assembly = $this->project->assembly;
-            $this->package->dependencies = $this->project->build->Dependencies;
-            $this->package->main_execution_policy = $this->project->build->Main;
+            $this->package->dependencies = $this->project->build->dependencies;
+            $this->package->main_execution_policy = $this->project->build->main;
 
             // Add the option to create a symbolic link to the package
-            if(isset($this->project->project->Options['create_symlink']) && $this->project->project->Options['create_symlink'] === True)
+            if(isset($this->project->project->options['create_symlink']) && $this->project->project->options['create_symlink'] === True)
             {
                 $this->package->header->Options['create_symlink'] = true;
             }
@@ -122,17 +122,17 @@
             $this->package->header->RuntimeConstants = [];
             $this->package->header->RuntimeConstants = array_merge(
                 ($selected_build_configuration->DefineConstants ?? []),
-                ($this->project->build->DefineConstants ?? []),
+                ($this->project->build->define_constants ?? []),
                 ($this->package->header->RuntimeConstants ?? [])
             );
 
-            $this->package->header->CompilerExtension = $this->project->project->Compiler;
+            $this->package->header->CompilerExtension = $this->project->project->compiler;
             $this->package->header->CompilerVersion = NCC_VERSION_NUMBER;
-            $this->package->header->Options = $this->project->project->Options;
+            $this->package->header->Options = $this->project->project->options;
 
-            if($this->project->project->UpdateSource !== null)
+            if($this->project->project->update_source !== null)
             {
-                $this->package->header->UpdateSource = $this->project->project->UpdateSource;
+                $this->package->header->UpdateSource = $this->project->project->update_source;
             }
 
             Console::outDebug('scanning project files');
@@ -158,7 +158,7 @@
                 $DirectoryScanner->setExcludes($selected_build_configuration->ExcludeFiles);
             }
 
-            $source_path = $this->path . $this->project->build->SourcePath;
+            $source_path = $this->path . $this->project->build->source_path;
 
             // TODO: Re-implement the scanning process outside the compiler, as this is will be redundant
             // Scan for components first.
@@ -238,9 +238,9 @@
 
             $selected_dependencies = [];
 
-            if($this->project->build->Dependencies !== null && count($this->project->build->Dependencies) > 0)
+            if($this->project->build->dependencies !== null && count($this->project->build->dependencies) > 0)
             {
-                $selected_dependencies = array_merge($selected_dependencies, $this->project->build->Dependencies);
+                $selected_dependencies = array_merge($selected_dependencies, $this->project->build->dependencies);
             }
 
             if($selected_build_configuration->Dependencies !== null && count($selected_build_configuration->Dependencies) > 0)
@@ -393,7 +393,7 @@
                 // Get the data and
                 $resource->Data = IO::fread(Functions::correctDirectorySeparator($this->path . $resource->Name));
                 $resource->Data = Base64::encode($resource->Data);
-                $resource->Name = str_replace($this->project->build->SourcePath, (string)null, $resource->Name);
+                $resource->Name = str_replace($this->project->build->source_path, (string)null, $resource->Name);
                 $resource->updateChecksum();
                 $resources[] = $resource;
 
@@ -462,7 +462,7 @@
 
                 unset($parser);
 
-                $component->name = str_replace($this->project->build->SourcePath, (string)null, $component->name);
+                $component->name = str_replace($this->project->build->source_path, (string)null, $component->name);
                 $component->updateChecksum();
                 $components[] = $component;
                 ++$processed_items;

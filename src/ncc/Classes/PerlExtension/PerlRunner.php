@@ -45,7 +45,7 @@
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
             $execution_unit = new ExecutionUnit();
-            $policy->Execute->Target = null;
+            $policy->execute->Target = null;
 
             if(!file_exists($path) && !is_file($path))
             {

@@ -1,69 +1,70 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy\Execute;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy\ExitHandlers;
     use ncc\Utilities\Functions;
 
-    class ExecutionPolicy
+    class ExecutionPolicy implements BytecodeObjectInterface
     {
         /**
          * The unique name of the execution policy
          *
          * @var string
          */
-        public $Name;
+        public $name;
 
         /**
          * The name of a supported runner instance
          *
          * @var string
          */
-        public $Runner;
+        public $runner;
 
         /**
          * The message to display when the policy is invoked
          *
          * @var string|null
          */
-        public $Message;
+        public $message;
 
         /**
          * The execution process of the policy
          *
          * @var Execute
          */
-        public $Execute;
+        public $execute;
 
         /**
          * The configuration for exit handling
          *
          * @var ExitHandlers
          */
-        public $ExitHandlers;
+        public $exit_handlers;
 
         /**
          * @return bool
@@ -75,52 +76,62 @@
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @param bool $bytecode
-         * @return array
+         * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
         {
             $results = [];
 
-            if ($this->Name !== null && strlen($this->Name) > 0)
-                $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->Name;
+            if ($this->name !== null && $this->name !== '')
+            {
+                $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
+            }
 
-            if ($this->Runner !== null && strlen($this->Runner) > 0)
-                $results[($bytecode ? Functions::cbc('runner') : 'runner')] = $this->Runner;
+            if ($this->runner !== null && $this->runner !== '')
+            {
+                $results[($bytecode ? Functions::cbc('runner') : 'runner')] = $this->runner;
+            }
 
-            if ($this->Message !== null && strlen($this->Message) > 0)
-                $results[($bytecode ? Functions::cbc('message') : 'message')] = $this->Message;
+            if ($this->message !== null && $this->message !== '')
+            {
+                $results[($bytecode ? Functions::cbc('message') : 'message')] = $this->message;
+            }
 
-            if ($this->Execute !== null)
-                $results[($bytecode ? Functions::cbc('execute') : 'execute')] = $this->Execute->toArray($bytecode);
+            if ($this->execute !== null)
+            {
+                $results[($bytecode ? Functions::cbc('execute') : 'execute')] = $this->execute->toArray($bytecode);
+            }
 
-            if ($this->ExitHandlers !== null)
-                $results[($bytecode ? Functions::cbc('exit_handlers') : 'exit_handlers')] = $this->ExitHandlers->toArray($bytecode);
+            if ($this->exit_handlers !== null)
+            {
+                $results[($bytecode ? Functions::cbc('exit_handlers') : 'exit_handlers')] = $this->exit_handlers->toArray($bytecode);
 
+            }
             return $results;
         }
 
         /**
-         * @param array $data
-         * @return ExecutionPolicy
+         * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): ExecutionPolicy
         {
             $object = new self();
 
-            $object->Name = Functions::array_bc($data, 'name');
-            $object->Runner = Functions::array_bc($data, 'runner');
-            $object->Message = Functions::array_bc($data, 'message');
-            $object->Execute = Functions::array_bc($data, 'execute');
-            $object->ExitHandlers = Functions::array_bc($data, 'exit_handlers');
+            $object->name = Functions::array_bc($data, 'name');
+            $object->runner = Functions::array_bc($data, 'runner');
+            $object->message = Functions::array_bc($data, 'message');
+            $object->execute = Functions::array_bc($data, 'execute');
+            $object->exit_handlers = Functions::array_bc($data, 'exit_handlers');
 
-            if($object->Execute !== null)
-                $object->Execute = Execute::fromArray($object->Execute);
+            if($object->execute !== null)
+            {
+                $object->execute = Execute::fromArray($object->execute);
+            }
 
-            if($object->ExitHandlers !== null)
-                $object->ExitHandlers = ExitHandlers::fromArray($object->ExitHandlers);
+            if($object->exit_handlers !== null)
+            {
+                $object->exit_handlers = ExitHandlers::fromArray($object->exit_handlers);
+            }
 
             return $object;
         }

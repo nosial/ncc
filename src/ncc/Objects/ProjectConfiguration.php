@@ -149,13 +149,13 @@
                 return false;
             }
 
-            if($this->build->Main !== null)
+            if($this->build->main !== null)
             {
                 if($this->execution_policies === null || count($this->execution_policies) === 0)
                 {
                     if($throw_exception)
                     {
-                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->Main));
+                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->main));
                     }
 
                     return false;
@@ -165,7 +165,7 @@
                 $found = false;
                 foreach($this->execution_policies as $policy)
                 {
-                    if($policy->Name === $this->build->Main)
+                    if($policy->name === $this->build->main)
                     {
                         $found = true;
                         break;
@@ -176,12 +176,12 @@
                 {
                     if($throw_exception)
                     {
-                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->Main));
+                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->main));
                     }
                     return false;
                 }
 
-                if($this->build->Main === BuildConfigurationValues::ALL)
+                if($this->build->main === BuildConfigurationValues::ALL)
                 {
                     if($throw_exception)
                     {
@@ -203,7 +203,7 @@
         {
             foreach($this->execution_policies as $executionPolicy)
             {
-                if($executionPolicy->Name === $name)
+                if($executionPolicy->name === $name)
                 {
                     return $executionPolicy;
                 }
@@ -233,7 +233,7 @@
             /** @var ExecutionPolicy $execution_policy */
             foreach($this->execution_policies as $execution_policy)
             {
-                $defined_polices[] = $execution_policy->Name;
+                $defined_polices[] = $execution_policy->name;
                 //$execution_policy->validate();
             }
 
@@ -264,9 +264,9 @@
                 }
             }
 
-            if($this->build->PreBuild !== null && count($this->build->PostBuild) > 0)
+            if($this->build->pre_build !== null && count($this->build->post_build) > 0)
             {
-                foreach($this->build->PostBuild as $unit)
+                foreach($this->build->post_build as $unit)
                 {
                     if(!in_array($unit, $defined_polices, true))
                     {
@@ -280,9 +280,9 @@
                 }
             }
 
-            if($this->build->PostBuild !== null && count($this->build->PostBuild) > 0)
+            if($this->build->post_build !== null && count($this->build->post_build) > 0)
             {
-                foreach($this->build->PostBuild as $unit)
+                foreach($this->build->post_build as $unit)
                 {
                     if(!in_array($unit, $defined_polices, true))
                     {
@@ -301,7 +301,7 @@
             {
                 case BuildConfigurationValues::ALL:
                     /** @var BuildConfiguration $configuration */
-                    foreach($this->build->Configurations as $configuration)
+                    foreach($this->build->build_configurations as $configuration)
                     {
                         foreach($this->processBuildPolicies($configuration, $defined_polices) as $policy)
                         {
@@ -328,47 +328,47 @@
             foreach($required_policies as $policy)
             {
                 $execution_policy = $this->getExecutionPolicy($policy);
-                if($execution_policy?->ExitHandlers !== null)
+                if($execution_policy?->exit_handlers !== null)
                 {
                     if(
-                        $execution_policy?->ExitHandlers->Success !== null &&
-                        $execution_policy?->ExitHandlers->Success->Run !== null
+                        $execution_policy?->exit_handlers->Success !== null &&
+                        $execution_policy?->exit_handlers->Success->Run !== null
                     )
                     {
-                        if(!in_array($execution_policy?->ExitHandlers->Success->Run, $defined_polices, true))
+                        if(!in_array($execution_policy?->exit_handlers->Success->Run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->Name . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->ExitHandlers->Success->Run . '\'');
+                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->Success->Run . '\'');
                         }
 
-                        if(!in_array($execution_policy?->ExitHandlers->Success->Run, $required_policies, true))
+                        if(!in_array($execution_policy?->exit_handlers->Success->Run, $required_policies, true))
                         {
-                            $required_policies[] = $execution_policy?->ExitHandlers->Success->Run;
-                        }
-                    }
-
-                    if($execution_policy?->ExitHandlers->Warning !== null && $execution_policy?->ExitHandlers->Warning->Run !== null)
-                    {
-                        if(!in_array($execution_policy?->ExitHandlers->Warning->Run, $defined_polices, true))
-                        {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->Name . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->ExitHandlers->Warning->Run . '\'');
-                        }
-
-                        if(!in_array($execution_policy?->ExitHandlers->Warning->Run, $required_policies, true))
-                        {
-                            $required_policies[] = $execution_policy?->ExitHandlers->Warning->Run;
+                            $required_policies[] = $execution_policy?->exit_handlers->Success->Run;
                         }
                     }
 
-                    if($execution_policy?->ExitHandlers->Error !== null && $execution_policy?->ExitHandlers->Error->Run !== null)
+                    if($execution_policy?->exit_handlers->Warning !== null && $execution_policy?->exit_handlers->Warning->Run !== null)
                     {
-                        if(!in_array($execution_policy?->ExitHandlers->Error->Run, $defined_polices, true))
+                        if(!in_array($execution_policy?->exit_handlers->Warning->Run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->Name . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->ExitHandlers->Error->Run . '\'');
+                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->Warning->Run . '\'');
                         }
 
-                        if(!in_array($execution_policy?->ExitHandlers->Error->Run, $required_policies, true))
+                        if(!in_array($execution_policy?->exit_handlers->Warning->Run, $required_policies, true))
                         {
-                            $required_policies[] = $execution_policy?->ExitHandlers->Error->Run;
+                            $required_policies[] = $execution_policy?->exit_handlers->Warning->Run;
+                        }
+                    }
+
+                    if($execution_policy?->exit_handlers->Error !== null && $execution_policy?->exit_handlers->Error->Run !== null)
+                    {
+                        if(!in_array($execution_policy?->exit_handlers->Error->Run, $defined_polices, true))
+                        {
+                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->Error->Run . '\'');
+                        }
+
+                        if(!in_array($execution_policy?->exit_handlers->Error->Run, $required_policies, true))
+                        {
+                            $required_policies[] = $execution_policy?->exit_handlers->Error->Run;
                         }
                     }
                 }
@@ -463,7 +463,7 @@
                 $execution_policies = [];
                 foreach($this->execution_policies as $executionPolicy)
                 {
-                    $execution_policies[$executionPolicy->Name] = $executionPolicy->toArray($bytecode);
+                    $execution_policies[$executionPolicy->name] = $executionPolicy->toArray($bytecode);
                 }
             }
 
@@ -475,7 +475,7 @@
 
             if($this->assembly !== null)
             {
-                $results['assembly'] = $this->assembly->toArray($bytecode);
+                $results[($bytecode ? Functions::cbc('assembly') : 'assembly')] = $this->assembly->toArray($bytecode);
             }
 
             if($this->build !== null)
@@ -503,30 +503,16 @@
         {
             $object = new self();
 
-            if(isset($data['project']))
-            {
-                $object->project = Project::fromArray($data['project']);
-            }
+            $object->project = Project::fromArray(Functions::array_bc($data, 'project'));
+            $object->assembly = Assembly::fromArray(Functions::array_bc($data, 'assembly'));
+            $object->build = Build::fromArray(Functions::array_bc($data, 'build'));
+            $object->installer = Installer::fromArray(Functions::array_bc($data, 'installer'));
 
-            if(isset($data['assembly']))
-            {
-                $object->assembly = Assembly::fromArray($data['assembly']);
-            }
-
-            if(isset($data['build']))
-            {
-                $object->build = Build::fromArray($data['build']);
-            }
-
-            if(isset($data['installer']))
-            {
-                $object->installer = Installer::fromArray($data['installer']);
-            }
-
-            if(isset($data['execution_policies']))
+            $execution_policies = Functions::array_bc($data, 'execution_policies');
+            if(!is_null($execution_policies))
             {
                 $object->execution_policies = [];
-                foreach($data['execution_policies'] as $execution_policy)
+                foreach(Functions::array_bc($data, 'execution_policies') as $execution_policy)
                 {
                     $object->execution_policies[] = ExecutionPolicy::fromArray($execution_policy);
                 }

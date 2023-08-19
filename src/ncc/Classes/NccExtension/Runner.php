@@ -56,7 +56,7 @@
 
             $ExecutionPointerManager = new ExecutionPointerManager();
             $ExecutionPointerManager->addUnit($package, $version, $unit, true);
-            $ExecutionPointerManager->executeUnit($package, $version, $unit->execution_policy->Name);
+            $ExecutionPointerManager->executeUnit($package, $version, $unit->execution_policy->name);
             $ExecutionPointerManager->cleanTemporaryUnits();
         }
     }

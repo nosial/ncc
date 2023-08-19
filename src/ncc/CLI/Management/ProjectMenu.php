@@ -122,7 +122,7 @@
 
                 if(in_array($compiler_extension, CompilerExtensions::ALL))
                 {
-                    $Compiler->Extension = $compiler_extension;
+                    $Compiler->extension = $compiler_extension;
                 }
                 else
                 {
@@ -133,7 +133,7 @@
             else
             {
                 // Default PHP Extension
-                $Compiler->Extension = CompilerExtensions::PHP;
+                $Compiler->extension = CompilerExtensions::PHP;
             }
 
             // If a minimum and maximum version is specified
@@ -145,28 +145,28 @@
                 $max_version = strtolower($args['max-version'] ?? $args['max-ver']);
                 $min_version = strtolower($args['min-version'] ?? $args['min-ver']);
 
-                switch($Compiler->Extension)
+                switch($Compiler->extension)
                 {
                     case CompilerExtensions::PHP:
 
                         if(!in_array($max_version, CompilerExtensionSupportedVersions::PHP))
                         {
-                            Console::outError('The extension \'' . $Compiler->Extension . '\' does not support version ' . $max_version, true, 1);
+                            Console::outError('The extension \'' . $Compiler->extension . '\' does not support version ' . $max_version, true, 1);
                             return;
                         }
                         if(!in_array($min_version, CompilerExtensionSupportedVersions::PHP))
                         {
-                            Console::outError('The extension \'' . $Compiler->Extension . '\' does not support version ' . $min_version, true, 1);
+                            Console::outError('The extension \'' . $Compiler->extension . '\' does not support version ' . $min_version, true, 1);
                             return;
                         }
 
-                        $Compiler->MaximumVersion = $max_version;
-                        $Compiler->MinimumVersion = $min_version;
+                        $Compiler->maximum_version = $max_version;
+                        $Compiler->minimum_version = $min_version;
 
                         break;
 
                     default:
-                        Console::outError('Unsupported extension: ' . $Compiler->Extension, true, 1);
+                        Console::outError('Unsupported extension: ' . $Compiler->extension, true, 1);
                         return;
                 }
             }
@@ -174,37 +174,37 @@
             elseif(isset($args['version']) || isset($args['ver']))
             {
                 $version = strtolower($args['version'] ?? $args['ver']);
-                switch($Compiler->Extension)
+                switch($Compiler->extension)
                 {
                     case CompilerExtensions::PHP:
                         if(!in_array($version, CompilerExtensionSupportedVersions::PHP))
                         {
-                            Console::outError('The extension \'' . $Compiler->Extension . '\' does not support version ' . $version, true, 1);
+                            Console::outError('The extension \'' . $Compiler->extension . '\' does not support version ' . $version, true, 1);
                             return;
                         }
 
-                        $Compiler->MaximumVersion = $version;
-                        $Compiler->MinimumVersion = $version;
+                        $Compiler->maximum_version = $version;
+                        $Compiler->minimum_version = $version;
 
                         break;
 
                     default:
-                        Console::outError('Unsupported extension: ' . $Compiler->Extension, true, 1);
+                        Console::outError('Unsupported extension: ' . $Compiler->extension, true, 1);
                         return;
                 }
             }
             // If no version is specified, use the default version
             else
             {
-                switch($Compiler->Extension)
+                switch($Compiler->extension)
                 {
                     case CompilerExtensions::PHP:
-                        $Compiler->MinimumVersion = CompilerExtensionDefaultVersions::PHP[0];
-                        $Compiler->MaximumVersion = CompilerExtensionDefaultVersions::PHP[1];
+                        $Compiler->minimum_version = CompilerExtensionDefaultVersions::PHP[0];
+                        $Compiler->maximum_version = CompilerExtensionDefaultVersions::PHP[1];
                         break;
 
                     default:
-                        Console::outError('Unsupported extension: ' . $Compiler->Extension, true, 1);
+                        Console::outError('Unsupported extension: ' . $Compiler->extension, true, 1);
                         return;
                 }
             }

@@ -316,7 +316,7 @@
                             Console::out(sprintf('%s=%s (%s)',
                                 Console::formatColor($package, ConsoleColors::LIGHT_GREEN),
                                 Console::formatColor($version, ConsoleColors::LIGHT_MAGENTA),
-                                $package_manager->getPackageVersion($package, $version)->Compiler->Extension
+                                $package_manager->getPackageVersion($package, $version)->Compiler->extension
                             ));
                         }
                         catch(Exception $e)
@@ -505,7 +505,7 @@
                     {
                         try
                         {
-                            $dependency_package = $package_manager->getPackage($dependency->Name);
+                            $dependency_package = $package_manager->getPackage($dependency->name);
                         }
                         catch (PackageLockException $e)
                         {
@@ -517,7 +517,7 @@
                         {
                             try
                             {
-                                $dependency_version = $dependency_package->getVersion($dependency->Version);
+                                $dependency_version = $dependency_package->getVersion($dependency->version);
                             }
                             catch (VersionNotFoundException $e)
                             {
@@ -535,8 +535,8 @@
                     if($require_dependency)
                     {
                         $dependencies[] = sprintf('  %s %s',
-                            Console::formatColor($dependency->Name, ConsoleColors::GREEN),
-                            Console::formatColor($dependency->Version, ConsoleColors::LIGHT_MAGENTA)
+                            Console::formatColor($dependency->name, ConsoleColors::GREEN),
+                            Console::formatColor($dependency->version, ConsoleColors::LIGHT_MAGENTA)
                         );
                     }
                 }
@@ -549,21 +549,21 @@
             }
 
             Console::out(sprintf('Extension: %s',
-                Console::formatColor($package->header->CompilerExtension->Extension, ConsoleColors::GREEN)
+                Console::formatColor($package->header->CompilerExtension->extension, ConsoleColors::GREEN)
             ));
 
-            if($package->header->CompilerExtension->MaximumVersion !== null)
+            if($package->header->CompilerExtension->maximum_version !== null)
             {
                 Console::out(sprintf('Maximum Version: %s',
-                    Console::formatColor($package->header->CompilerExtension->MaximumVersion, ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->CompilerExtension->maximum_version, ConsoleColors::LIGHT_MAGENTA)
                 ));
             }
 
 
-            if($package->header->CompilerExtension->MinimumVersion !== null)
+            if($package->header->CompilerExtension->minimum_version !== null)
             {
                 Console::out(sprintf('Minimum Version: %s',
-                    Console::formatColor($package->header->CompilerExtension->MinimumVersion, ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->CompilerExtension->minimum_version, ConsoleColors::LIGHT_MAGENTA)
                 ));
             }
 

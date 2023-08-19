@@ -46,7 +46,7 @@ namespace ncc\Classes\BashExtension;
             $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);
 
-            $policy->Execute->Target = null;
+            $policy->execute->Target = null;
 
             return $execution_unit;
         }

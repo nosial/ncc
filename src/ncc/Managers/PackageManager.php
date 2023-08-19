@@ -143,7 +143,7 @@
                 return $package->assembly->Package;
             }
 
-            $extension = $package->header->CompilerExtension->Extension;
+            $extension = $package->header->CompilerExtension->extension;
             $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->assembly->Package . '=' . $package->assembly->Version);
 
             $installer = match ($extension)
@@ -180,15 +180,15 @@
                 foreach($package->dependencies as $dependency)
                 {
                     // Uninstall the dependency if the option Reinstall is passed on
-                    if(in_array(InstallPackageOptions::REINSTALL, $options, true) && $this->getPackageLockManager()?->getPackageLock()?->packageExists($dependency->Name, $dependency->Version))
+                    if(in_array(InstallPackageOptions::REINSTALL, $options, true) && $this->getPackageLockManager()?->getPackageLock()?->packageExists($dependency->name, $dependency->version))
                     {
-                        if($dependency->Version === null)
+                        if($dependency->version === null)
                         {
-                            $this->uninstallPackage($dependency->Name);
+                            $this->uninstallPackage($dependency->name);
                         }
                         else
                         {
-                            $this->uninstallPackageVersion($dependency->Name, $dependency->Version);
+                            $this->uninstallPackageVersion($dependency->name, $dependency->version);
                         }
                     }
 
@@ -366,7 +366,7 @@
                 /** @var Package\ExecutionUnit $executionUnit */
                 foreach($package->execution_units as $executionUnit)
                 {
-                    Console::outDebug(sprintf('processing execution unit %s', $executionUnit->execution_policy->Name));
+                    Console::outDebug(sprintf('processing execution unit %s', $executionUnit->execution_policy->name));
                     $execution_pointer_manager->addUnit($package->assembly->Package, $package->assembly->Version, $executionUnit);
                     ++$current_steps;
                     Console::inlineProgressBar($current_steps, $steps);
@@ -434,17 +434,17 @@
                 Console::outDebug('no post-installation units to execute');
             }
 
-            if($package->header->UpdateSource !== null && $package->header->UpdateSource->Repository !== null)
+            if($package->header->UpdateSource !== null && $package->header->UpdateSource->repository !== null)
             {
                 $sources_manager = new RemoteSourcesManager();
-                if($sources_manager->getRemoteSource($package->header->UpdateSource->Repository->Name) === null)
+                if($sources_manager->getRemoteSource($package->header->UpdateSource->repository->Name) === null)
                 {
-                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->Repository->Name);
+                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->repository->Name);
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->name = $package->header->UpdateSource->Repository->Name;
-                    $defined_remote_source->host = $package->header->UpdateSource->Repository->Host;
-                    $defined_remote_source->type = $package->header->UpdateSource->Repository->Type;
-                    $defined_remote_source->ssl = $package->header->UpdateSource->Repository->SSL;
+                    $defined_remote_source->name = $package->header->UpdateSource->repository->Name;
+                    $defined_remote_source->host = $package->header->UpdateSource->repository->Host;
+                    $defined_remote_source->type = $package->header->UpdateSource->repository->Type;
+                    $defined_remote_source->ssl = $package->header->UpdateSource->repository->SSL;
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }
@@ -673,67 +673,67 @@
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
-            if(RuntimeCache::get(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version ?? 'null')))
+            if(RuntimeCache::get(sprintf('dependency_installed.%s=%s', $dependency->name, $dependency->version ?? 'null')))
             {
-                Console::outDebug(sprintf('dependency %s=%s already processed, skipping', $dependency->Name, $dependency->Version ?? 'null'));
+                Console::outDebug(sprintf('dependency %s=%s already processed, skipping', $dependency->name, $dependency->version ?? 'null'));
                 return;
             }
 
-            Console::outVerbose('processing dependency ' . $dependency->Name . ' (' . $dependency->Version . ')');
-            $dependent_package = $this->getPackage($dependency->Name);
+            Console::outVerbose('processing dependency ' . $dependency->name . ' (' . $dependency->version . ')');
+            $dependent_package = $this->getPackage($dependency->name);
             $dependency_met = false;
 
-            if ($dependent_package !== null && $dependency->Version !== null && Validate::version($dependency->Version))
+            if ($dependent_package !== null && $dependency->version !== null && Validate::version($dependency->version))
             {
                 Console::outDebug('dependency has version constraint, checking if package is installed');
-                $dependent_version = $this->getPackageVersion($dependency->Name, $dependency->Version);
+                $dependent_version = $this->getPackageVersion($dependency->name, $dependency->version);
                 if ($dependent_version !== null)
                 {
                     $dependency_met = true;
                 }
             }
-            elseif ($dependent_package !== null && $dependency->Version === null)
+            elseif ($dependent_package !== null && $dependency->version === null)
             {
-                Console::outDebug(sprintf('dependency %s has no version specified, assuming dependency is met', $dependency->Name));
+                Console::outDebug(sprintf('dependency %s has no version specified, assuming dependency is met', $dependency->name));
                 $dependency_met = true;
             }
 
             Console::outDebug('dependency met: ' . ($dependency_met ? 'true' : 'false'));
 
-            if ($dependency->SourceType !== null && !$dependency_met)
+            if ($dependency->source_type !== null && !$dependency_met)
             {
-                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->Name, $dependency->Version, $package->assembly->Package, $package->assembly->Version));
-                switch ($dependency->SourceType)
+                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->name, $dependency->version, $package->assembly->Package, $package->assembly->Version));
+                switch ($dependency->source_type)
                 {
                     case DependencySourceType::LOCAL:
-                        Console::outDebug('installing from local source ' . $dependency->Source);
+                        Console::outDebug('installing from local source ' . $dependency->source);
                         $basedir = dirname($package_path);
 
-                        if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->Source))
+                        if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->source))
                         {
-                            throw new PathNotFoundException($basedir . DIRECTORY_SEPARATOR . $dependency->Source);
+                            throw new PathNotFoundException($basedir . DIRECTORY_SEPARATOR . $dependency->source);
                         }
 
-                        $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->Source, null, $options);
-                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version), true);
+                        $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->source, null, $options);
+                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->name, $dependency->version), true);
                         break;
 
                     case DependencySourceType::STATIC:
-                        throw new PackageNotFoundException('Static linking not possible, package ' . $dependency->Name . ' is not installed');
+                        throw new PackageNotFoundException('Static linking not possible, package ' . $dependency->name . ' is not installed');
 
                     case DependencySourceType::REMOTE:
-                        Console::outDebug('installing from remote source ' . $dependency->Source);
-                        $this->installFromSource($dependency->Source, $entry, $options);
-                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->Name, $dependency->Version), true);
+                        Console::outDebug('installing from remote source ' . $dependency->source);
+                        $this->installFromSource($dependency->source, $entry, $options);
+                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->name, $dependency->version), true);
                         break;
 
                     default:
-                        throw new NotImplementedException('Dependency source type ' . $dependency->SourceType . ' is not implemented');
+                        throw new NotImplementedException('Dependency source type ' . $dependency->source_type . ' is not implemented');
                 }
             }
             elseif(!$dependency_met)
             {
-                throw new MissingDependencyException(sprintf('The dependency %s=%s for %s=%s is not met', $dependency->Name, $dependency->Version, $package->assembly->Package, $package->assembly->Version));
+                throw new MissingDependencyException(sprintf('The dependency %s=%s for %s=%s is not met', $dependency->name, $dependency->version, $package->assembly->Package, $package->assembly->Version));
             }
         }
 
@@ -962,9 +962,9 @@
                 $execution_pointer_manager = new ExecutionPointerManager();
                 foreach($version_entry->ExecutionUnits as $executionUnit)
                 {
-                    if(!$execution_pointer_manager->removeUnit($package, $version, $executionUnit->execution_policy->Name))
+                    if(!$execution_pointer_manager->removeUnit($package, $version, $executionUnit->execution_policy->name))
                     {
-                        Console::outDebug(sprintf('warning: removing execution unit %s failed', $executionUnit->execution_policy->Name));
+                        Console::outDebug(sprintf('warning: removing execution unit %s failed', $executionUnit->execution_policy->name));
                     }
                 }
             }

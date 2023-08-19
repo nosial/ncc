@@ -91,6 +91,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Corrected code-smell and code style issues in `\ncc\Objects\Vault\Password > UsernamePassword`
  - Extended `PasswordInterface` with `BytecodeObjectInterface`
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\SymlinkDictionary > SymlinkEntry`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > UpdateSource`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Project`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Installer`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > ExecutionPolicy`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Dependecy`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Compiler`
+ - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration > Build`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

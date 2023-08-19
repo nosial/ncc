@@ -136,19 +136,19 @@
                 // Import all dependencies first
                 /** @var Dependency $dependency */
                 foreach($version_entry->Dependencies as $dependency)
-                    self::import($dependency->PackageName, $dependency->Version, $options);
+                    self::import($dependency->PackageName, $dependency->version, $options);
             }
 
             try
             {
-                switch($version_entry->Compiler->Extension)
+                switch($version_entry->Compiler->extension)
                 {
                     case CompilerExtensions::PHP:
                         PhpRuntime::import($version_entry, $options);
                         break;
 
                     default:
-                        throw new ImportException(sprintf('Compiler extension %s is not supported in this runtime', $version_entry->Compiler->Extension));
+                        throw new ImportException(sprintf('Compiler extension %s is not supported in this runtime', $version_entry->Compiler->extension));
                 }
             }
             catch(Exception $e)

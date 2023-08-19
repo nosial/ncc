@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -29,6 +29,7 @@
     use ncc\Exceptions\InvalidBuildConfigurationException;
     use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
@@ -37,115 +38,115 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
      */
-    class Build
+    class Build implements BytecodeObjectInterface
     {
         /**
          * The source directory that the compiler will target to generate a build
          *
          * @var string
          */
-        public $SourcePath;
+        public $source_path;
 
         /**
          * The default configuration to use when building
          *
          * @var string
          */
-        public $DefaultConfiguration;
+        public $default_configuration;
 
         /**
          * An array of files to exclude from processing/bundling into the build output
          *
          * @var string[]
          */
-        public $ExcludeFiles;
+        public $exclude_files;
 
         /**
          * Build options to pass on to the compiler
          *
          * @var array
          */
-        public $Options;
+        public $options;
 
         /**
          * The installation scope for the package (System/User/Shared)
          *
          * @var [type]
          */
-        public $Scope;
+        public $scope;
 
         /**
          * The execution policy to use as the main execution point
          *
          * @var string|null
          */
-        public $Main;
+        public $main;
 
         /**
          * An array of constants to define by default
          *
          * @var string[]
          */
-        public $DefineConstants;
+        public $define_constants;
 
         /**
          * An array of execution policies to execute pre build
          *
          * @var string[]
          */
-        public $PreBuild;
+        public $pre_build;
 
         /**
          * An array of execution policies to execute post build
          *
          * @var string[]
          */
-        public $PostBuild;
+        public $post_build;
 
         /**
          * An array of dependencies that are required by default
          *
          * @var Dependency[]
          */
-        public $Dependencies;
+        public $dependencies;
 
         /**
          * An array of build configurations
          *
          * @var BuildConfiguration[]
          */
-        public $Configurations;
+        public $build_configurations;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->ExcludeFiles = [];
-            $this->Options = [];
-            $this->DefineConstants = [];
-            $this->Dependencies = [];
-            $this->Configurations = [];
+            $this->exclude_files = [];
+            $this->options = [];
+            $this->define_constants = [];
+            $this->dependencies = [];
+            $this->build_configurations = [];
         }
 
         /**
-         * Adds a new dependency to the build, if it doesn't already exist
+         * Adds a new dependency to the build if it doesn't already exist
          *
          * @param Dependency $dependency
          * @return void
          */
         public function addDependency(Dependency $dependency): void
         {
-            foreach($this->Dependencies as $dep)
+            foreach($this->dependencies as $dep)
             {
-                if($dep->Name == $dependency->Name)
+                if($dep->name === $dependency->name)
                 {
-                    $this->removeDependency($dep->Name);
+                    $this->removeDependency($dep->name);
                     break;
                 }
             }
 
-            $this->Dependencies[] = $dependency;
+            $this->dependencies[] = $dependency;
         }
 
         /**
@@ -156,11 +157,11 @@
          */
         private function removeDependency(string $name): void
         {
-            foreach($this->Dependencies as $key => $dep)
+            foreach($this->dependencies as $key => $dep)
             {
-                if($dep->Name == $name)
+                if($dep->name === $name)
                 {
-                    unset($this->Dependencies[$key]);
+                    unset($this->dependencies[$key]);
                     return;
                 }
             }
@@ -179,7 +180,7 @@
         public function validate(bool $throw_exception=True): bool
         {
             // Check the defined constants
-            foreach($this->DefineConstants as $name => $value)
+            foreach($this->define_constants as $name => $value)
             {
                 if(!Validate::constantName($name))
                 {
@@ -189,23 +190,27 @@
 
             // Check for duplicate configuration names
             $build_configurations = [];
-            foreach($this->Configurations as $configuration)
+            foreach($this->build_configurations as $configuration)
             {
-                if(in_array($configuration->Name, $build_configurations))
+                if(in_array($configuration->Name, $build_configurations, true))
                 {
                     if($throw_exception)
+                    {
                         throw new InvalidProjectBuildConfiguration('The build configuration \'' . $configuration->Name . '\' is already defined, build configuration names must be unique');
+                    }
 
                     return false;
                 }
             }
 
-            foreach($this->Configurations as $configuration)
+            foreach($this->build_configurations as $configuration)
             {
                 try
                 {
                     if (!$configuration->validate($throw_exception))
+                    {
                         return false;
+                    }
                 }
                 catch (InvalidBuildConfigurationException $e)
                 {
@@ -213,23 +218,27 @@
                 }
             }
 
-            if($this->DefaultConfiguration == null)
+            if($this->default_configuration === null)
             {
                 if($throw_exception)
+                {
                     throw new InvalidProjectBuildConfiguration('The default build configuration is not set');
+                }
 
                 return false;
             }
 
-            if(!Validate::nameFriendly($this->DefaultConfiguration))
+            if(!Validate::nameFriendly($this->default_configuration))
             {
                 if($throw_exception)
-                    throw new InvalidProjectBuildConfiguration('The default build configuration name \'' . $this->DefaultConfiguration . '\' is not valid');
+                {
+                    throw new InvalidProjectBuildConfiguration('The default build configuration name \'' . $this->default_configuration . '\' is not valid');
+                }
 
                 return false;
             }
 
-            $this->getBuildConfiguration($this->DefaultConfiguration);
+            $this->getBuildConfiguration($this->default_configuration);
 
             return true;
         }
@@ -244,7 +253,7 @@
         {
             $build_configurations = [];
 
-            foreach($this->Configurations as $configuration)
+            foreach($this->build_configurations as $configuration)
             {
                 $build_configurations[] = $configuration->Name;
             }
@@ -262,12 +271,14 @@
          */
         public function getBuildConfiguration(string $name): BuildConfiguration
         {
-            if($name == BuildConfigurationValues::DEFAULT)
-                $name = $this->DefaultConfiguration;
-
-            foreach($this->Configurations as $configuration)
+            if($name === BuildConfigurationValues::DEFAULT)
             {
-                if($configuration->Name == $name)
+                $name = $this->default_configuration;
+            }
+
+            foreach($this->build_configurations as $configuration)
+            {
+                if($configuration->Name === $name)
                 {
                     return $configuration;
                 }
@@ -284,46 +295,71 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            $ReturnResults = [];
+            $results = [];
 
-            if($this->SourcePath !== null)
-                $ReturnResults[($bytecode ? Functions::cbc('source_path') : 'source_path')] = $this->SourcePath;
-            if($this->DefaultConfiguration !== null)
-                $ReturnResults[($bytecode ? Functions::cbc('default_configuration') : 'default_configuration')] = $this->DefaultConfiguration;
-            if($this->ExcludeFiles !== null && count($this->ExcludeFiles) > 0)
-                $ReturnResults[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->ExcludeFiles;
-           if($this->Options !== null && count($this->Options) > 0)
-                $ReturnResults[($bytecode ? Functions::cbc('options') : 'options')] = $this->Options;
-           if($this->Scope !== null)
-                $ReturnResults[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->Scope;
-           if($this->Main !== null)
-               $ReturnResults[($bytecode ? Functions::cbc('main') : 'main')] = $this->Main;
-           if($this->DefineConstants !== null && count($this->DefineConstants) > 0)
-                $ReturnResults[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->DefineConstants;
-           if($this->PreBuild !== null && count($this->PreBuild) > 0)
-                $ReturnResults[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->PreBuild;
-           if($this->PostBuild !== null && count($this->PostBuild) > 0)
-                $ReturnResults[($bytecode ? Functions::cbc('post_build') : 'post_build')] = $this->PostBuild;
-           if($this->Dependencies !== null && count($this->Dependencies) > 0)
+            if($this->source_path !== null)
+            {
+                $results[($bytecode ? Functions::cbc('source_path') : 'source_path')] = $this->source_path;
+            }
+            if($this->default_configuration !== null)
+            {
+                $results[($bytecode ? Functions::cbc('default_configuration') : 'default_configuration')] = $this->default_configuration;
+            }
+            if($this->exclude_files !== null && count($this->exclude_files) > 0)
+            {
+                $results[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->exclude_files;
+            }
+           if($this->options !== null && count($this->options) > 0)
+           {
+               $results[($bytecode ? Functions::cbc('options') : 'options')] = $this->options;
+           }
+
+           if($this->scope !== null)
+           {
+               $results[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->scope;
+           }
+
+           if($this->main !== null)
+           {
+               $results[($bytecode ? Functions::cbc('main') : 'main')] = $this->main;
+           }
+
+           if($this->define_constants !== null && count($this->define_constants) > 0)
+           {
+               $results[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->define_constants;
+           }
+
+           if($this->pre_build !== null && count($this->pre_build) > 0)
+           {
+               $results[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->pre_build;
+           }
+
+           if($this->post_build !== null && count($this->post_build) > 0)
+           {
+               $results[($bytecode ? Functions::cbc('post_build') : 'post_build')] = $this->post_build;
+           }
+
+           if($this->dependencies !== null && count($this->dependencies) > 0)
            {
                 $dependencies = [];
-                foreach($this->Dependencies as $dependency)
+                foreach($this->dependencies as $dependency)
                 {
                      $dependencies[] = $dependency->toArray($bytecode);
                 }
-                $ReturnResults[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = $dependencies;
+                $results[($bytecode ? Functions::cbc('dependencies') : 'dependencies')] = $dependencies;
            }
-           if($this->Configurations !== null && count($this->Configurations) > 0)
+
+           if($this->build_configurations !== null && count($this->build_configurations) > 0)
            {
                 $configurations = [];
-                foreach($this->Configurations as $configuration)
+                foreach($this->build_configurations as $configuration)
                 {
                      $configurations[] = $configuration->toArray($bytecode);
                 }
-                $ReturnResults[($bytecode ? Functions::cbc('configurations') : 'configurations')] = $configurations;
+                $results[($bytecode ? Functions::cbc('configurations') : 'configurations')] = $configurations;
            }
 
-            return $ReturnResults;
+            return $results;
         }
 
         /**
@@ -334,23 +370,23 @@
          */
         public static function fromArray(array $data): Build
         {
-            $BuildObject = new Build();
+            $object = new self();
 
-            $BuildObject->SourcePath = Functions::array_bc($data, 'source_path');
-            $BuildObject->DefaultConfiguration = Functions::array_bc($data, 'default_configuration');
-            $BuildObject->ExcludeFiles = (Functions::array_bc($data, 'exclude_files') ?? []);
-            $BuildObject->Options = (Functions::array_bc($data, 'options') ?? []);
-            $BuildObject->Scope = Functions::array_bc($data, 'scope');
-            $BuildObject->Main = Functions::array_bc($data, 'main');
-            $BuildObject->DefineConstants = (Functions::array_bc($data, 'define_constants') ?? []);
-            $BuildObject->PreBuild = (Functions::array_bc($data, 'pre_build') ?? []);
-            $BuildObject->PostBuild = (Functions::array_bc($data, 'post_build') ?? []);
+            $object->source_path = Functions::array_bc($data, 'source_path');
+            $object->default_configuration = Functions::array_bc($data, 'default_configuration');
+            $object->exclude_files = (Functions::array_bc($data, 'exclude_files') ?? []);
+            $object->options = (Functions::array_bc($data, 'options') ?? []);
+            $object->scope = Functions::array_bc($data, 'scope');
+            $object->main = Functions::array_bc($data, 'main');
+            $object->define_constants = (Functions::array_bc($data, 'define_constants') ?? []);
+            $object->pre_build = (Functions::array_bc($data, 'pre_build') ?? []);
+            $object->post_build = (Functions::array_bc($data, 'post_build') ?? []);
 
             if(Functions::array_bc($data, 'dependencies') !== null)
             {
                 foreach(Functions::array_bc($data, 'dependencies') as $dependency)
                 {
-                    $BuildObject->Dependencies[] = Dependency::fromArray($dependency);
+                    $object->dependencies[] = Dependency::fromArray($dependency);
                 }
             }
 
@@ -358,10 +394,10 @@
             {
                 foreach(Functions::array_bc($data, 'configurations') as $configuration)
                 {
-                    $BuildObject->Configurations[] = BuildConfiguration::fromArray($configuration);
+                    $object->build_configurations[] = BuildConfiguration::fromArray($configuration);
                 }
             }
 
-            return $BuildObject;
+            return $object;
         }
     }

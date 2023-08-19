@@ -136,7 +136,7 @@
             $this->project_configuration = new ProjectConfiguration();
 
             // Set the compiler information
-            $this->project_configuration->project->Compiler = $compiler;
+            $this->project_configuration->project->compiler = $compiler;
 
             // Set the assembly information
             $this->project_configuration->assembly->Name = $name;
@@ -145,32 +145,32 @@
             $this->project_configuration->assembly->UUID = Uuid::v1()->toRfc4122();
 
             // Set the build information
-            $this->project_configuration->build->SourcePath = $src;
+            $this->project_configuration->build->source_path = $src;
 
-            if($this->project_configuration->build->SourcePath === null)
+            if($this->project_configuration->build->source_path === null)
             {
-                $this->project_configuration->build->SourcePath = $this->project_path;
+                $this->project_configuration->build->source_path = $this->project_path;
             }
 
-            $this->project_configuration->build->DefaultConfiguration = 'debug';
+            $this->project_configuration->build->default_configuration = 'debug';
 
             // Assembly constants if the program wishes to check for this
-            $this->project_configuration->build->DefineConstants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
-            $this->project_configuration->build->DefineConstants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
-            $this->project_configuration->build->DefineConstants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
-            $this->project_configuration->build->DefineConstants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
+            $this->project_configuration->build->define_constants['ASSEMBLY_NAME'] = '%ASSEMBLY.NAME%';
+            $this->project_configuration->build->define_constants['ASSEMBLY_PACKAGE'] = '%ASSEMBLY.PACKAGE%';
+            $this->project_configuration->build->define_constants['ASSEMBLY_VERSION'] = '%ASSEMBLY.VERSION%';
+            $this->project_configuration->build->define_constants['ASSEMBLY_UID'] = '%ASSEMBLY.UID%';
 
             // Generate configurations
             $DebugConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $DebugConfiguration->Name = 'debug';
             $DebugConfiguration->OutputPath = 'build/debug';
             $DebugConfiguration->DefineConstants["DEBUG"] = '1'; // Debugging constant if the program wishes to check for this
-            $this->project_configuration->build->Configurations[] = $DebugConfiguration;
+            $this->project_configuration->build->build_configurations[] = $DebugConfiguration;
             $ReleaseConfiguration = new ProjectConfiguration\Build\BuildConfiguration();
             $ReleaseConfiguration->Name = 'release';
             $ReleaseConfiguration->OutputPath = 'build/release';
             $ReleaseConfiguration->DefineConstants["DEBUG"] = '0'; // Debugging constant if the program wishes to check for this
-            $this->project_configuration->build->Configurations[] = $ReleaseConfiguration;
+            $this->project_configuration->build->build_configurations[] = $ReleaseConfiguration;
 
             // Finally, create project.json
             $this->project_configuration->toFile($this->project_path . DIRECTORY_SEPARATOR . 'project.json');
@@ -195,8 +195,8 @@
             {
                 if (
                     $option === InitializeProjectOptions::CREATE_SOURCE_DIRECTORY &&
-                    !file_exists($this->project_configuration->build->SourcePath) &&
-                    !mkdir($concurrentDirectory = $this->project_configuration->build->SourcePath) &&
+                    !file_exists($this->project_configuration->build->source_path) &&
+                    !mkdir($concurrentDirectory = $this->project_configuration->build->source_path) &&
                     !is_dir($concurrentDirectory)
                 )
                 {
