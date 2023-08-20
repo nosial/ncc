@@ -40,14 +40,12 @@ namespace ncc\Classes\ComposerExtension;
     use ncc\Exceptions\ComposerNotAvailableException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\InternalComposerNotAvailableException;
-    use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PackageNotFoundException;
     use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\RuntimeException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Exceptions\UserAbortedOperationException;
     use ncc\Interfaces\ServiceSourceInterface;
     use ncc\Managers\ProjectManager;
@@ -89,14 +87,12 @@ namespace ncc\Classes\ComposerExtension;
          * @throws ComposerNotAvailableException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
-         * @throws InvalidScopeException
          * @throws MalformedJsonException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
          * @throws RuntimeException
-         * @throws UnsupportedCompilerExtensionException
          * @throws UserAbortedOperationException
          */
         public static function fetch(RemotePackageInput $packageInput): string
@@ -136,7 +132,6 @@ namespace ncc\Classes\ComposerExtension;
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
-         * @throws UnsupportedCompilerExtensionException
          * @throws UserAbortedOperationException
          */
         public static function fromLocal(string $path): string
@@ -208,7 +203,6 @@ namespace ncc\Classes\ComposerExtension;
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
-         * @throws UnsupportedCompilerExtensionException
          */
         private static function compilePackages(string $composer_lock_path): array
         {
@@ -529,21 +523,19 @@ namespace ncc\Classes\ComposerExtension;
          * @param string $package
          * @param string|null $version
          * @return string
-         * @throws AccessDeniedException
          * @throws ComposerDisabledException
          * @throws ComposerException
          * @throws ComposerNotAvailableException
-         * @throws PathNotFoundException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
-         * @throws InvalidScopeException
+         * @throws PathNotFoundException
          * @throws UserAbortedOperationException
          */
         private static function require(string $vendor, string $package, ?string $version = null): string
         {
             if (Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Insufficient permissions to require');
+                throw new \RuntimeException('Cannot require a package with insufficient permissions');
             }
 
             if ($version === null)
@@ -693,10 +685,10 @@ namespace ncc\Classes\ComposerExtension;
          * @param array $version_map
          * @param mixed $composer_package
          * @return ProjectConfiguration
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PackagePreparationFailedException
+         * @throws PathNotFoundException
          */
         private static function convertProject(string $package_path, array $version_map, ?ComposerJson $composer_package=null): ProjectConfiguration
         {

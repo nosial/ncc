@@ -22,18 +22,10 @@
 
     namespace ncc\Exceptions;
 
-    use Exception;
-    use ncc\Enums\ExceptionCodes;
-    use Throwable;
-
-    class ImportException extends Exception
+    class ResourceNotFoundException extends \Exception
     {
-        /**
-         * @param string $message
-         * @param Throwable|null $previous
-         */
-        public function __construct(string $message = "", ?Throwable $previous = null)
+        public function __construct(string $message = "", int $code = 0, ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::IMPORT_EXCEPTION, $previous);
+            parent::__construct($message, $code, $previous);
         }
     }

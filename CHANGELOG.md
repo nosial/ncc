@@ -121,6 +121,11 @@ features.
  - Removed unused exception `GitCheckoutException` in `\ncc\Exceptions` in favor of `GitException`
  - Removed unused exception `GithubServiceException` in `\ncc\Exceptions` in favor of `GitException`
  - Removed unused exception `GitTagsException` in `\ncc\Exceptions` in favor of `GitException`
+ - Removed unused exception `GitlabServiceException` in `\ncc\Exceptions` in favor of `GitException`
+ - Removed unused exception `UnsupportedArchiveException` in `\ncc\Exceptions` in favor of `ArchiveException`
+ - Removed unused exception `NotImplementedException` in `\ncc\Exceptions` in favor of `NotSupportedException`
+ - Removed unused exception `UnsupportedCompilerExtensionException` in `\ncc\Exceptions` in favor of `NotSupportedException`
+ - Removed unused exception `UnsupportedExtensionVersionException` in `\ncc\Exceptions` (not used)
 
 
 

@@ -26,7 +26,6 @@
 
     use Exception;
     use ncc\Enums\Options\BuildConfigurationValues;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\InvalidBuildConfigurationException;
     use ncc\Exceptions\InvalidConstantNameException;
@@ -38,8 +37,6 @@
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Exceptions\UndefinedExecutionPolicyException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
-    use ncc\Exceptions\UnsupportedExtensionVersionException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
@@ -113,8 +110,6 @@
          * @throws InvalidPropertyValueException
          * @throws RuntimeException
          * @throws UndefinedExecutionPolicyException
-         * @throws UnsupportedCompilerExtensionException
-         * @throws UnsupportedExtensionVersionException
          * @throws InvalidBuildConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
@@ -403,7 +398,6 @@
          *
          * @param string $path
          * @return ProjectConfiguration
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException

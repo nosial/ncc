@@ -1,35 +1,35 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     namespace ncc\Classes\GitlabExtension;
 
     use ncc\Enums\Versions;
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\GitlabServiceException;
+    use ncc\Exceptions\GitException;
     use ncc\Exceptions\HttpException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NotSupportedException;
-    use ncc\Exceptions\VersionNotFoundException;
+    use ncc\Exceptions\ResourceNotFoundException;
     use ncc\Interfaces\RepositorySourceInterface;
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Objects\HttpRequest;
@@ -50,7 +50,7 @@
          * @param Entry|null $entry
          * @return RepositoryQueryResults
          * @throws AuthenticationException
-         * @throws GitlabServiceException
+         * @throws GitException
          * @throws HttpException
          * @throws MalformedJsonException
          */
@@ -69,8 +69,7 @@
 
             if($response->StatusCode !== 200)
             {
-                throw new GitlabServiceException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
-
+                throw new GitException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
             }
 
             $response_decoded = Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
@@ -88,27 +87,27 @@
         /**
          * Returns the download URL of the requested version of the package.
          *
-         * @param RemotePackageInput $packageInput
-         * @param DefinedRemoteSource $definedRemoteSource
+         * @param RemotePackageInput $package_input
+         * @param DefinedRemoteSource $defined_remote_source
          * @param Entry|null $entry
          * @return RepositoryQueryResults
          * @throws AuthenticationException
-         * @throws GitlabServiceException
+         * @throws GitException
          * @throws HttpException
          * @throws MalformedJsonException
-         * @throws VersionNotFoundException
+         * @throws ResourceNotFoundException
          */
-        public static function getRelease(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
+        public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
-            $releases = self::getReleases($packageInput->vendor, $packageInput->package, $definedRemoteSource, $entry);
+            $releases = self::getReleases($package_input->vendor, $package_input->package, $defined_remote_source, $entry);
 
             if(count($releases) === 0)
             {
-                throw new VersionNotFoundException('No releases found for the given repository.');
+                throw new ResourceNotFoundException(sprintf('No releases found for the repository %s/%s (selected version: %s)', $package_input->vendor, $package_input->package, $package_input->version));
             }
 
             // Query the latest package only
-            if($packageInput->version === Versions::LATEST)
+            if($package_input->version === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach($releases as $release)
@@ -129,7 +128,7 @@
             }
 
             // Query a specific version
-            if(!isset($releases[$packageInput->version]))
+            if(!isset($releases[$package_input->version]))
             {
                 // Find the closest thing to the requested version
                 $selected_version = null;
@@ -141,7 +140,7 @@
                         continue;
                     }
 
-                    if(VersionComparator::compareVersion($version, $packageInput->version) === 1)
+                    if(VersionComparator::compareVersion($version, $package_input->version) === 1)
                     {
                         $selected_version = $version;
                     }
@@ -149,18 +148,17 @@
 
                 if($selected_version === null)
                 {
-                    throw new VersionNotFoundException('No releases found for the given repository.');
+                    throw new ResourceNotFoundException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
                 }
             }
             else
             {
-                $selected_version = $packageInput->version;
+                $selected_version = $package_input->version;
             }
 
             if(!isset($releases[$selected_version]))
             {
-                throw new VersionNotFoundException(sprintf('No releases found for the given repository. (Selected version: %s)', $selected_version));
-
+                throw new ResourceNotFoundException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
             }
 
             return $releases[$selected_version];
@@ -187,7 +185,7 @@
          * @param Entry|null $entry
          * @return array
          * @throws AuthenticationException
-         * @throws GitlabServiceException
+         * @throws GitException
          * @throws HttpException
          * @throws MalformedJsonException
          */
@@ -207,7 +205,7 @@
 
             if($response->StatusCode !== 200)
             {
-                throw new GitlabServiceException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
+                throw new GitException(sprintf('Failed to fetch releases for repository %s/%s. Status code: %s', $owner, $repository, $response->StatusCode));
             }
 
             $response_decoded = Functions::loadJson($response->Body, Functions::FORCE_ARRAY);

@@ -26,8 +26,6 @@
 
     use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\RuntimeException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
-    use ncc\Exceptions\UnsupportedExtensionVersionException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -68,8 +66,6 @@
          * @return bool
          * @throws InvalidPropertyValueException
          * @throws RuntimeException
-         * @throws UnsupportedCompilerExtensionException
-         * @throws UnsupportedExtensionVersionException
          */
         public function validate(bool $throw_exception=True): bool
         {

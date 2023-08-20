@@ -44,7 +44,7 @@
     use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MissingDependencyException;
-    use ncc\Exceptions\NotImplementedException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PackageAlreadyInstalledException;
     use ncc\Exceptions\PackageFetchException;
     use ncc\Exceptions\PackageLockException;
@@ -53,7 +53,6 @@
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\SymlinkException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Exceptions\VersionNotFoundException;
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Objects\InstallationPaths;
@@ -112,7 +111,7 @@
          * @throws InvalidPackageNameException
          * @throws InvalidScopeException
          * @throws MissingDependencyException
-         * @throws NotImplementedException
+         * @throws NotSupportedException
          * @throws PackageAlreadyInstalledException
          * @throws PackageLockException
          * @throws PackageNotFoundException
@@ -120,7 +119,6 @@
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
          * @throws SymlinkException
-         * @throws UnsupportedCompilerExtensionException
          * @throws VersionNotFoundException
          */
         public function install(string $package_path, ?Entry $entry=null, array $options=[]): string
@@ -149,7 +147,7 @@
             $installer = match ($extension)
             {
                 CompilerExtensions::PHP => new PhpInstaller($package),
-                default => throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $extension . '\' is not supported'),
+                default => throw new NotSupportedException(sprintf('Compiler extension %s is not supported with ncc', $extension))
             };
 
             if($this->getPackageVersion($package->assembly->package, $package->assembly->version) !== null)
@@ -440,6 +438,7 @@
                 if($sources_manager->getRemoteSource($package->header->UpdateSource->repository->name) === null)
                 {
                     Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->repository->name);
+
                     $defined_remote_source = new DefinedRemoteSource();
                     $defined_remote_source->name = $package->header->UpdateSource->repository->name;
                     $defined_remote_source->host = $package->header->UpdateSource->repository->host;
@@ -463,7 +462,7 @@
          * @param Entry|null $entry
          * @return string
          * @throws InstallationException
-         * @throws NotImplementedException
+         * @throws NotSupportedException
          * @throws PackageFetchException
          */
         public function fetchFromSource(string $source, ?Entry $entry=null): string
@@ -504,7 +503,7 @@
                     }
                 }
 
-                throw new NotImplementedException('Builtin source type ' . $input->source . ' is not implemented');
+                throw new NotSupportedException(sprintf('Builtin source %s is not supported', $input->source));
             }
 
             if($remote_source_type === RemoteSourceType::DEFINED)
@@ -659,7 +658,7 @@
          * @throws InvalidPackageNameException
          * @throws InvalidScopeException
          * @throws MissingDependencyException
-         * @throws NotImplementedException
+         * @throws NotSupportedException
          * @throws PackageAlreadyInstalledException
          * @throws PackageLockException
          * @throws PackageNotFoundException
@@ -667,9 +666,7 @@
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
          * @throws SymlinkException
-         * @throws UnsupportedCompilerExtensionException
          * @throws VersionNotFoundException
-         * @throws PathNotFoundException
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
@@ -728,12 +725,12 @@
                         break;
 
                     default:
-                        throw new NotImplementedException('Dependency source type ' . $dependency->source_type . ' is not implemented');
+                        throw new NotSupportedException(sprintf('Dependency source type %s is not supported', $dependency->source_type));
                 }
             }
             elseif(!$dependency_met)
             {
-                throw new MissingDependencyException(sprintf('The dependency %s=%s for %s=%s is not met', $dependency->name, $dependency->version, $package->assembly->package, $package->assembly->version));
+                throw new PackageNotFoundException(sprintf('Required dependency %s=%s is not installed', $dependency->name, $dependency->version));
             }
         }
 

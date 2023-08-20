@@ -22,7 +22,6 @@
 
     namespace ncc\Utilities;
 
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use SplFileInfo;
@@ -81,7 +80,6 @@
          * @param string $mode
          * @param int|null $length
          * @return string
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws PathNotFoundException
          */
@@ -101,7 +99,7 @@
 
             if(!is_readable($uri))
             {
-                throw new AccessDeniedException(sprintf('Unable to read file: (%s)', $uri));
+                throw new IOException(sprintf('Unable to read file (permission issue?): (%s)', $uri));
             }
 
             $file = new SplFileObject($uri, $mode);

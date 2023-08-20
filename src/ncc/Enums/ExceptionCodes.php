@@ -1,32 +1,26 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Enums;
-
-    use ncc\Exceptions\GitException;
-    use ncc\Exceptions\InvalidDependencyConfiguration;
-    use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\SymlinkException;
-    use ncc\Exceptions\UnsupportedArchiveException;
+    namespace ncc\Enums;
 
     /**
      * @author Zi Xing Narrakas
@@ -105,16 +99,6 @@ namespace ncc\Enums;
         public const NO_UNITS_FOUND = -1715;
 
         /**
-         * @see UnsupportedPackageException
-         */
-        public const UNSUPPORTED_PACKAGE = -1716;
-
-        /**
-         * @see NotImplementedException
-         */
-        public const NOT_IMPLEMENTED = -1717;
-
-        /**
          * @see InvalidPackageException
          */
         public const INVALID_PACKAGE = -1718;
@@ -140,11 +124,6 @@ namespace ncc\Enums;
         public const INVALID_PROJECT_BUILD_CONFIGURATION = -1722;
 
         /**
-         * @see UnsupportedCompilerExtensionException
-         */
-        public const UNSUPPORTED_COMPILER_EXTENSION = -1723;
-
-        /**
          * @see InvalidPropertyValueException
          */
         public const INVALID_PROPERTY_VALUE = -1724;
@@ -153,11 +132,6 @@ namespace ncc\Enums;
          * @see InvalidVersionConfigurationException
          */
         public const INVALID_VERSION_CONFIGURATION = -1725;
-
-        /**
-         * @see UnsupportedExtensionVersionException
-         */
-        public const UNSUPPORTED_EXTENSION_VERSION = -1726;
 
         /**
          * @see BuildException
@@ -285,11 +259,6 @@ namespace ncc\Enums;
         public const UNSUPPORTED_REMOTE_SOURCE_TYPE = -1753;
 
         /**
-         * @see GitlabServiceException
-         */
-        public const GITLAB_SERVICE_EXCEPTION = -1756;
-
-        /**
          * @see ImportException
          */
         public const IMPORT_EXCEPTION = -1757;
@@ -308,11 +277,6 @@ namespace ncc\Enums;
          * @see UnsupportedProjectTypeException
          */
         public const UNSUPPORTED_PROJECT_TYPE = -1762;
-
-        /**
-         * @see UnsupportedArchiveException
-         */
-        public const UNSUPPORTED_ARCHIVE = -1763;
 
         /**
          * @see ArchiveException
@@ -350,6 +314,11 @@ namespace ncc\Enums;
         public const GIT_EXCEPTION = -1770;
 
         /**
+         * @see ResourceNotFoundException
+         */
+        public const RESOURCE_NOT_FOUND = -1771;
+
+        /**
          * All the exception codes from NCC
          */
         public const All = [
@@ -367,17 +336,13 @@ namespace ncc\Enums;
             self::PROJECT_ALREADY_EXISTS,
             self::AUTOLOAD_GENERATOR,
             self::NO_UNITS_FOUND,
-            self::UNSUPPORTED_PACKAGE,
-            self::NOT_IMPLEMENTED,
             self::INVALID_PACKAGE,
             self::INVALID_CONSTANT_NAME,
             self::PACKAGE_PREPARATION_FAILED,
             self::BUILD_CONFIGURATION_NOT_FOUND,
             self::INVALID_PROJECT_BUILD_CONFIGURATION,
-            self::UNSUPPORTED_COMPILER_EXTENSION,
             self::INVALID_PROPERTY_VALUE,
             self::INVALID_VERSION_CONFIGURATION,
-            self::UNSUPPORTED_EXTENSION_VERSION,
             self::BUILD_EXCEPTION,
             self::PACKAGE_PARSING_EXCEPTION,
             self::PACKAGE_LOCK_EXCEPTION,
@@ -402,17 +367,16 @@ namespace ncc\Enums;
             self::MISSING_DEPENDENCY,
             self::HTTP_EXCEPTION,
             self::UNSUPPORTED_REMOTE_SOURCE_TYPE,
-            self::GITLAB_SERVICE_EXCEPTION,
             self::AUTHENTICATION_EXCEPTION,
             self::NOT_SUPPORTED_EXCEPTION,
             self::UNSUPPORTED_PROJECT_TYPE,
-            self::UNSUPPORTED_ARCHIVE,
             self::ARCHIVE_EXCEPTION,
             self::PACKAGE_FETCH_EXCEPTION,
             self::INVALID_BUILD_CONFIGURATION,
             self::INVALID_DEPENDENCY_CONFIGURATION,
             self::SYMLINK_EXCEPTION,
             self::PATH_NOT_FOUND,
-            self::GIT_EXCEPTION
+            self::GIT_EXCEPTION,
+            self::RESOURCE_NOT_FOUND,
         ];
     }

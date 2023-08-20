@@ -36,10 +36,10 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Exceptions\UnsupportedProjectTypeException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
@@ -65,9 +65,9 @@
          * @throws BuildException
          * @throws IOException
          * @throws MalformedJsonException
-         * @throws ProjectConfigurationNotFoundException
-         * @throws UnsupportedCompilerExtensionException
+         * @throws NotSupportedException
          * @throws PathNotFoundException
+         * @throws ProjectConfigurationNotFoundException
          */
         public static function compile(ProjectManager $manager, string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
@@ -93,7 +93,7 @@
             }
             else
             {
-                throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $configuration->project->compiler->extension . '\' is not supported');
+                throw new NotSupportedException('The compiler extension \'' . $configuration->project->compiler->extension . '\' is not supported');
             }
 
             $build_configuration = $configuration->build->getBuildConfiguration($build_configuration)->name;

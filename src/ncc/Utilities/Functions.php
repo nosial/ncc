@@ -42,13 +42,11 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ArchiveException;
     use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\GitlabServiceException;
     use ncc\Exceptions\HttpException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
-    use ncc\Exceptions\UnsupportedArchiveException;
     use ncc\Managers\ConfigurationManager;
     use ncc\Managers\CredentialManager;
     use ncc\Managers\PackageLockManager;
@@ -123,7 +121,6 @@
          * @param string $path
          * @param int $flags
          * @return mixed
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
@@ -231,8 +228,8 @@
          * @param string $copyright
          * @param bool $basic_ascii
          * @return string
-         * @throws AccessDeniedException
          * @throws IOException
+         * @throws PathNotFoundException
          */
         public static function getBanner(string $version, string $copyright, bool $basic_ascii=false): string
         {
@@ -424,9 +421,9 @@
          *
          * @param string $path
          * @return ComposerJson
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
+         * @throws PathNotFoundException
          */
         public static function loadComposerJson(string $path): ComposerJson
         {
@@ -568,7 +565,6 @@
          * @param bool $expect_json
          * @return HttpRequest
          * @throws AuthenticationException
-         * @throws GitlabServiceException
          */
         public static function prepareGitServiceRequest(HttpRequest $http_request, ?Entry $entry=null, bool $expect_json=true): HttpRequest
         {
@@ -576,7 +572,7 @@
             {
                 if(!$entry->isCurrentlyDecrypted())
                 {
-                    throw new GitlabServiceException('The given Vault entry is not decrypted.');
+                    throw new RuntimeException('The given Vault entry is not decrypted.');
                 }
 
                 switch ($entry->getPassword()?->getAuthenticationType())
@@ -586,7 +582,7 @@
                         break;
 
                     case AuthenticationType::USERNAME_PASSWORD:
-                        throw new AuthenticationException('Username/Password authentication is not supported');
+                        throw new AuthenticationException(sprintf('The given Vault entry is using the %s authentication type, which is not supported for Gitlab', AuthenticationType::USERNAME_PASSWORD));
                 }
             }
 
@@ -606,7 +602,6 @@
          * @param Entry|null $entry
          * @return string
          * @throws AuthenticationException
-         * @throws GitlabServiceException
          * @throws HttpException
          */
         public static function downloadGitServiceFile(string $url, ?Entry $entry=null): string
@@ -633,7 +628,6 @@
          * @param string $path
          * @return string|null
          * @throws ArchiveException
-         * @throws UnsupportedArchiveException
          */
         public static function extractArchive(string $path): ?string
         {
@@ -650,12 +644,12 @@
 
             RuntimeCache::setFileAsTemporary($out_path);
 
-            $mimeType = mime_content_type($path);
-            $supportedTypes = [];
+            $mime_type = mime_content_type($path);
+            $supported_types = [];
 
             if($unzip_executable !== null)
             {
-                $supportedTypes = array_merge($supportedTypes, [
+                $supported_types = array_merge($supported_types, [
                     'application/zip',
                     'application/x-zip',
                     'application/x-zip-compressed',
@@ -673,7 +667,7 @@
 
             if($tar_executable !== null)
             {
-                $supportedTypes = array_merge($supportedTypes, [
+                $supported_types = array_merge($supported_types, [
                     'application/x-tar',
                     'application/x-gzip',
                     'application/x-bzip2',
@@ -686,17 +680,17 @@
                 RuntimeCache::set('warning_tar_shown', true);
             }
 
-            if(!in_array($mimeType, $supportedTypes, true))
+            if(!in_array($mime_type, $supported_types, true))
             {
-                throw new UnsupportedArchiveException("Unsupported archive type: $mimeType");
+                throw new ArchiveException(sprintf('Cannot extract archive %s, unsupported archive type %s', $path, $mime_type));
             }
 
-            $command = match ($mimeType) {
+            $command = match ($mime_type) {
                 'application/zip' => [$unzip_executable, $path, '-d', $out_path],
                 'application/x-tar' => [$tar_executable, '--verbose', '-xf', $path, '-C', $out_path],
                 'application/x-gzip' => [$tar_executable, '--verbose', '-xzf', $path, '-C', $out_path],
                 'application/x-bzip2' => [$tar_executable, '--verbose', '-xjf', $path, '-C', $out_path],
-                default => throw new UnsupportedArchiveException("Unsupported archive type: $mimeType"),
+                default => throw new ArchiveException(sprintf('Cannot extract archive %s, unsupported archive type %s', $path, $mime_type)),
             };
 
             Console::out("Extracting archive $path");

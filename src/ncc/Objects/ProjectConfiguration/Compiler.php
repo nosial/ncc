@@ -29,9 +29,8 @@
     use ncc\Enums\CompilerExtensionSupportedVersions;
     use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\InvalidVersionConfigurationException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\RuntimeException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
-    use ncc\Exceptions\UnsupportedExtensionVersionException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\Utilities\Functions;
@@ -69,9 +68,8 @@
          * @param bool $throw_exception
          * @return bool
          * @throws InvalidPropertyValueException
+         * @throws NotSupportedException
          * @throws RuntimeException
-         * @throws UnsupportedCompilerExtensionException
-         * @throws UnsupportedExtensionVersionException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -126,7 +124,7 @@
              {
                 if($throw_exception)
                 {
-                    throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $this->extension . '\' is not supported');
+                    throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
                 }
 
                 return False;
@@ -139,7 +137,7 @@
                     {
                         if($throw_exception)
                         {
-                            throw new UnsupportedExtensionVersionException('The MaximumVersion does not support version ' . $this->maximum_version . ' for the extension ' . $this->extension);
+                            throw new NotSupportedException('The MaximumVersion does not support version ' . $this->maximum_version . ' for the extension ' . $this->extension);
                         }
                         return False;
                     }
@@ -148,14 +146,14 @@
                     {
                         if($throw_exception)
                         {
-                            throw new UnsupportedExtensionVersionException('The MinimumVersion does not support version ' . $this->minimum_version . ' for the extension ' . $this->extension);
+                            throw new NotSupportedException('The MinimumVersion does not support version ' . $this->minimum_version . ' for the extension ' . $this->extension);
                         }
                         return False;
                     }
                     break;
 
                 default:
-                    throw new UnsupportedCompilerExtensionException('The compiler extension \'' . $this->extension . '\' is not supported');
+                    throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
             }
 
              return True;

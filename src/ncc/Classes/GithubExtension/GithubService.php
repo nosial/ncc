@@ -27,7 +27,6 @@
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GitException;
-    use ncc\Exceptions\GitlabServiceException;
     use ncc\Exceptions\HttpException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -51,7 +50,6 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws GitlabServiceException
          * @throws HttpException
          * @throws MalformedJsonException
          */
@@ -78,20 +76,19 @@
         /**
          * Returns the download URL of the requested version of the package.
          *
-         * @param RemotePackageInput $packageInput
-         * @param DefinedRemoteSource $definedRemoteSource
+         * @param RemotePackageInput $package_input
+         * @param DefinedRemoteSource $defined_remote_source
          * @param Entry|null $entry
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws GitlabServiceException
          * @throws HttpException
          * @throws MalformedJsonException
          * @throws VersionNotFoundException
          */
-        public static function getRelease(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
+        public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
-            return self::processReleases($packageInput, $definedRemoteSource, $entry);
+            return self::processReleases($package_input, $defined_remote_source, $entry);
         }
 
         /**
@@ -101,7 +98,6 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws GitlabServiceException
          * @throws HttpException
          * @throws MalformedJsonException
          * @throws VersionNotFoundException
@@ -120,7 +116,6 @@
          * @return array
          * @throws AuthenticationException
          * @throws GitException
-         * @throws GitlabServiceException
          * @throws HttpException
          * @throws MalformedJsonException
          */
@@ -195,7 +190,6 @@
          * @throws GitException
          * @throws HttpException
          * @throws MalformedJsonException
-         * @throws GitlabServiceException
          */
         private static function getJsonResponse(HttpRequest $httpRequest, ?Entry $entry): array
         {
@@ -221,7 +215,6 @@
          * @return mixed
          * @throws AuthenticationException
          * @throws GitException
-         * @throws GitlabServiceException
          * @throws HttpException
          * @throws MalformedJsonException
          * @throws VersionNotFoundException

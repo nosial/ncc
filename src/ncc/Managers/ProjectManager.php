@@ -35,11 +35,9 @@
     use ncc\Exceptions\InvalidProjectNameException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
-    use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
-    use ncc\Exceptions\UnsupportedCompilerExtensionException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
@@ -294,7 +292,6 @@
          * @throws MalformedJsonException
          * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
-         * @throws UnsupportedCompilerExtensionException
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {

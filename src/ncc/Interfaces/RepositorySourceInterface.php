@@ -42,12 +42,12 @@ namespace ncc\Interfaces;
         /**
          * Returns the release url of the repository, versions can be specified.
          *
-         * @param RemotePackageInput $packageInput
-         * @param DefinedRemoteSource $definedRemoteSource
+         * @param RemotePackageInput $package_input
+         * @param DefinedRemoteSource $defined_remote_source
          * @param Entry|null $entry
          * @return RepositoryQueryResults
          */
-        public static function getRelease(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults;
+        public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults;
 
         /**
          * Returns the download URL of the pre-compiled .ncc package if available
