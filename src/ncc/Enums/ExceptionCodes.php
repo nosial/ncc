@@ -154,11 +154,6 @@
         public const INSTALLATION_EXCEPTION = -1730;
 
         /**
-         * @see UnsupportedComponentTypeException
-         */
-        public const UNSUPPORTED_COMPONENT_TYPE = -1731;
-
-        /**
          * @see ComponentDecodeException
          */
         public const COMPONENT_DECODE_EXCEPTION = -1732;
@@ -254,11 +249,6 @@
         public const HTTP_EXCEPTION = -1752;
 
         /**
-         * @see UnsupportedRemoteSourceTypeException
-         */
-        public const UNSUPPORTED_REMOTE_SOURCE_TYPE = -1753;
-
-        /**
          * @see ImportException
          */
         public const IMPORT_EXCEPTION = -1757;
@@ -272,11 +262,6 @@
          * @see NotSupportedException
          */
         public const NOT_SUPPORTED_EXCEPTION = -1761;
-
-        /**
-         * @see UnsupportedProjectTypeException
-         */
-        public const UNSUPPORTED_PROJECT_TYPE = -1762;
 
         /**
          * @see ArchiveException
@@ -347,7 +332,6 @@
             self::PACKAGE_PARSING_EXCEPTION,
             self::PACKAGE_LOCK_EXCEPTION,
             self::INSTALLATION_EXCEPTION,
-            self::UNSUPPORTED_COMPONENT_TYPE,
             self::COMPONENT_DECODE_EXCEPTION,
             self::RESOURCE_CHECKSUM_EXCEPTION,
             self::IO_EXCEPTION,
@@ -366,10 +350,8 @@
             self::USER_ABORTED_OPERATION,
             self::MISSING_DEPENDENCY,
             self::HTTP_EXCEPTION,
-            self::UNSUPPORTED_REMOTE_SOURCE_TYPE,
             self::AUTHENTICATION_EXCEPTION,
             self::NOT_SUPPORTED_EXCEPTION,
-            self::UNSUPPORTED_PROJECT_TYPE,
             self::ARCHIVE_EXCEPTION,
             self::PACKAGE_FETCH_EXCEPTION,
             self::INVALID_BUILD_CONFIGURATION,

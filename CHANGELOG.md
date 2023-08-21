@@ -126,6 +126,10 @@ features.
  - Removed unused exception `NotImplementedException` in `\ncc\Exceptions` in favor of `NotSupportedException`
  - Removed unused exception `UnsupportedCompilerExtensionException` in `\ncc\Exceptions` in favor of `NotSupportedException`
  - Removed unused exception `UnsupportedExtensionVersionException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `UnsupportedComponentTypeException` in `\ncc\Exceptions` in favor of `NotSupportedException`
+ - Removed unused exception `UnsupportedPackageException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `UnsupportedRemoteTypeSource` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `UnsupportedProjectTypeException` in `\ncc\Exceptions` (not used)
 
 
 

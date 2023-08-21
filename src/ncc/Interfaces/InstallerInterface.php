@@ -25,7 +25,6 @@ namespace ncc\Interfaces;
     use Exception;
     use ncc\Exceptions\ComponentChecksumException;
     use ncc\Exceptions\ComponentDecodeException;
-    use ncc\Exceptions\UnsupportedComponentTypeException;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\Package;
     use ncc\Objects\Package\Component;
@@ -46,7 +45,6 @@ namespace ncc\Interfaces;
          * @return string|null
          * @throws ComponentChecksumException
          * @throws ComponentDecodeException
-         * @throws UnsupportedComponentTypeException
          */
         public function processComponent(Package\Component $component): ?string;
 

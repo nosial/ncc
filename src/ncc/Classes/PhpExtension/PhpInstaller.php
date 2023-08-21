@@ -33,9 +33,9 @@
     use ncc\Exceptions\ComponentChecksumException;
     use ncc\Exceptions\ComponentDecodeException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ResourceChecksumException;
-    use ncc\Exceptions\UnsupportedComponentTypeException;
     use ncc\Interfaces\InstallerInterface;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\Package;
@@ -78,7 +78,7 @@
          * @return string|null
          * @throws ComponentChecksumException
          * @throws ComponentDecodeException
-         * @throws UnsupportedComponentTypeException
+         * @throws NotSupportedException
          */
         public function processComponent(Package\Component $component): ?string
         {
@@ -113,7 +113,7 @@
                     return $component->data;
 
                 default:
-                    throw new UnsupportedComponentTypeException('Unsupported component type \'' . $component->data_types . '\'');
+                    throw new NotSupportedException(sprintf('Component data type %s is not supported.', $component->data_types));
             }
         }
 
@@ -294,7 +294,6 @@
          * @param string $src
          * @param string $output
          * @return string
-         * @throws AccessDeniedException
          * @throws CollectorException
          * @throws IOException
          * @throws PathNotFoundException

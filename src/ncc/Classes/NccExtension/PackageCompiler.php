@@ -40,7 +40,6 @@
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
-    use ncc\Exceptions\UnsupportedProjectTypeException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
     use ncc\ncc;
@@ -133,7 +132,7 @@
                 }
                 else
                 {
-                    throw new UnsupportedProjectTypeException('The project type \'' . $project_type->ProjectType . '\' is not supported');
+                    throw new NotSupportedException(sprintf('Failed to compile %s, project type %s is not supported', $project_type->ProjectPath, $project_type->ProjectType));
                 }
 
                 if($version !== null)
