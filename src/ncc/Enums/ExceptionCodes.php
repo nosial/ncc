@@ -119,16 +119,6 @@
         public const COMPONENT_DECODE_EXCEPTION = -1732;
 
         /**
-         * @see ComponentChecksumException
-         */
-        public const COMPONENT_CHECKSUM_EXCEPTION = -1733;
-
-        /**
-         * @see ResourceChecksumException
-         */
-        public const RESOURCE_CHECKSUM_EXCEPTION = -1734;
-
-        /**
          * @see IOException
          */
         public const IO_EXCEPTION = -1735;
@@ -254,11 +244,6 @@
         public const GIT_EXCEPTION = -1770;
 
         /**
-         * @see ResourceNotFoundException
-         */
-        public const RESOURCE_NOT_FOUND = -1771;
-
-        /**
          * @see ConfigurationException
          */
         public const CONFIGURATION_EXCEPTION = -1772;
@@ -285,7 +270,6 @@
             self::PACKAGE_LOCK_EXCEPTION,
             self::INSTALLATION_EXCEPTION,
             self::COMPONENT_DECODE_EXCEPTION,
-            self::RESOURCE_CHECKSUM_EXCEPTION,
             self::IO_EXCEPTION,
             self::VERSION_NOT_FOUND,
             self::UNDEFINED_EXECUTION_POLICY,
@@ -310,7 +294,6 @@
             self::SYMLINK_EXCEPTION,
             self::PATH_NOT_FOUND,
             self::GIT_EXCEPTION,
-            self::RESOURCE_NOT_FOUND,
             self::CONFIGURATION_EXCEPTION
         ];
     }
