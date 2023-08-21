@@ -26,9 +26,7 @@
 
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
-    use ncc\Exceptions\InvalidBuildConfigurationException;
-    use ncc\Exceptions\InvalidConstantNameException;
-    use ncc\Exceptions\InvalidProjectBuildConfiguration;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Utilities\Functions;
@@ -173,9 +171,7 @@
          * @param bool $throw_exception
          * @return bool
          * @throws BuildConfigurationNotFoundException
-         * @throws InvalidBuildConfigurationException
-         * @throws InvalidConstantNameException
-         * @throws InvalidProjectBuildConfiguration
+         * @throws ConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -184,7 +180,7 @@
             {
                 if(!Validate::constantName($name))
                 {
-                    throw new InvalidConstantNameException('The name \'' . $name . '\' is not valid for a constant declaration, ');
+                    throw new ConfigurationException(sprintf('The name "%s" is not valid for a constant declaration', $name));
                 }
             }
 
@@ -196,7 +192,7 @@
                 {
                     if($throw_exception)
                     {
-                        throw new InvalidProjectBuildConfiguration('The build configuration \'' . $configuration->name . '\' is already defined, build configuration names must be unique');
+                        throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $configuration->name));
                     }
 
                     return false;
@@ -205,16 +201,9 @@
 
             foreach($this->build_configurations as $configuration)
             {
-                try
+                if (!$configuration->validate($throw_exception))
                 {
-                    if (!$configuration->validate($throw_exception))
-                    {
-                        return false;
-                    }
-                }
-                catch (InvalidBuildConfigurationException $e)
-                {
-                    throw new InvalidBuildConfigurationException(sprintf('Error in build configuration \'%s\'', $configuration->name), $e);
+                    return false;
                 }
             }
 
@@ -222,7 +211,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectBuildConfiguration('The default build configuration is not set');
+                    throw new ConfigurationException('The default build configuration is not set');
                 }
 
                 return false;
@@ -232,7 +221,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectBuildConfiguration('The default build configuration name \'' . $this->default_configuration . '\' is not valid');
+                    throw new ConfigurationException(sprintf('The default build configuration name "%s" is not valid', $this->default_configuration));
                 }
 
                 return false;

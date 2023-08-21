@@ -24,10 +24,10 @@
 
     namespace ncc\Objects\NccVersionInformation;
 
-    use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\ComponentVersionNotFoundException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Utilities\IO;
+    use RuntimeException;
 
     class Component
     {
@@ -49,9 +49,8 @@
          * Attempts to resolve the component's build version
          *
          * @return string
-         * @throws ComponentVersionNotFoundException
-         * @throws AccessDeniedException
          * @throws IOException
+         * @throws PathNotFoundException
          */
         public function getVersion(): string
         {
@@ -60,7 +59,7 @@
 
             if(!file_exists($component_path . 'VERSION'))
             {
-                throw new ComponentVersionNotFoundException('The file \'' . $component_path . 'VERSION' . '\' does not exist');
+                throw new RuntimeException(sprintf('Component %s/%s does not have a VERSION stub file', $this->vendor, $this->package_name));
             }
 
             return IO::fread($component_path . 'VERSION');

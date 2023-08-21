@@ -29,16 +29,6 @@
     final class ExceptionCodes
     {
         /**
-         * @see InvalidProjectConfigurationException
-         */
-        public const INVALID_PROJECT_CONFIGURATION = -1700;
-
-        /**
-         * @see InvalidScopeException
-         */
-        public const INVALID_SCOPE = -1703;
-
-        /**
          * @see AccessDeniedException
          */
         public const ACCESS_DENIED = -1704;
@@ -54,34 +44,14 @@
         public const RUNTIME = -1706;
 
         /**
-         * @see InvalidCredentialsEntryException
-         */
-        public const INVALID_CREDENTIALS_ENTRY = -1707;
-
-        /**
-         * @see ComponentVersionNotFoundException
-         */
-        public const COMPONENT_VERSION_NOT_FOUND = -1708;
-
-        /**
          * @see ConstantReadonlyException
          */
         public const CONSTANT_READ_ONLY = -1709;
 
         /**
-         * @see InvalidPackageNameException
-         */
-        public const INVALID_PACKAGE_NAME = -1710;
-
-        /**
          * @see InvalidVersionNumberException
          */
         public const INVALID_VERSION_NUMBER = -1711;
-
-        /**
-         * @see InvalidProjectNameException
-         */
-        public const INVALID_PROJECT_NAME = -1712;
 
         /**
          * @see ProjectAlreadyExistsException
@@ -97,11 +67,6 @@
          * @see NoUnitsFoundException
          */
         public const NO_UNITS_FOUND = -1715;
-
-        /**
-         * @see InvalidPackageException
-         */
-        public const INVALID_PACKAGE = -1718;
 
         /**
          * @see InvalidConstantNameException
@@ -127,11 +92,6 @@
          * @see InvalidPropertyValueException
          */
         public const INVALID_PROPERTY_VALUE = -1724;
-
-        /**
-         * @see InvalidVersionConfigurationException
-         */
-        public const INVALID_VERSION_CONFIGURATION = -1725;
 
         /**
          * @see BuildException
@@ -274,11 +234,6 @@
         public const PACKAGE_FETCH_EXCEPTION = -1765;
 
         /**
-         * @see InvalidBuildConfigurationException
-         */
-        public const INVALID_BUILD_CONFIGURATION = -1766;
-
-        /**
          * @see InvalidDependencyConfiguration
          */
         public const INVALID_DEPENDENCY_CONFIGURATION = -1767;
@@ -304,30 +259,27 @@
         public const RESOURCE_NOT_FOUND = -1771;
 
         /**
+         * @see ConfigurationException
+         */
+        public const CONFIGURATION_EXCEPTION = -1772;
+
+        /**
          * All the exception codes from NCC
          */
         public const All = [
-            self::INVALID_PROJECT_CONFIGURATION,
-            self::INVALID_SCOPE,
             self::ACCESS_DENIED,
             self::MALFORMED_JSON,
             self::RUNTIME,
-            self::INVALID_CREDENTIALS_ENTRY,
-            self::COMPONENT_VERSION_NOT_FOUND,
             self::CONSTANT_READ_ONLY,
-            self::INVALID_PACKAGE_NAME,
             self::INVALID_VERSION_NUMBER,
-            self::INVALID_PROJECT_NAME,
             self::PROJECT_ALREADY_EXISTS,
             self::AUTOLOAD_GENERATOR,
             self::NO_UNITS_FOUND,
-            self::INVALID_PACKAGE,
             self::INVALID_CONSTANT_NAME,
             self::PACKAGE_PREPARATION_FAILED,
             self::BUILD_CONFIGURATION_NOT_FOUND,
             self::INVALID_PROJECT_BUILD_CONFIGURATION,
             self::INVALID_PROPERTY_VALUE,
-            self::INVALID_VERSION_CONFIGURATION,
             self::BUILD_EXCEPTION,
             self::PACKAGE_PARSING_EXCEPTION,
             self::PACKAGE_LOCK_EXCEPTION,
@@ -354,11 +306,11 @@
             self::NOT_SUPPORTED_EXCEPTION,
             self::ARCHIVE_EXCEPTION,
             self::PACKAGE_FETCH_EXCEPTION,
-            self::INVALID_BUILD_CONFIGURATION,
             self::INVALID_DEPENDENCY_CONFIGURATION,
             self::SYMLINK_EXCEPTION,
             self::PATH_NOT_FOUND,
             self::GIT_EXCEPTION,
             self::RESOURCE_NOT_FOUND,
+            self::CONFIGURATION_EXCEPTION
         ];
     }

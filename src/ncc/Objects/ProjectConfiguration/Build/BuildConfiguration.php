@@ -24,8 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\Build;
 
-    use ncc\Exceptions\InvalidBuildConfigurationException;
-    use ncc\Exceptions\InvalidDependencyConfiguration;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
@@ -113,7 +112,7 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws InvalidBuildConfigurationException
+         * @throws ConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -121,7 +120,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -131,7 +130,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('\'output_path\' contains an invalid path name in %s', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -141,7 +140,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('\'define_constants\' must be an array in %s', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -151,7 +150,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('\'exclude_files\' must be an array in %s', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -161,7 +160,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('\'pre_build\' must be an array in %s', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -171,7 +170,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('\'post_build\' must be an array in %s', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -181,7 +180,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidBuildConfigurationException(sprintf('\'dependencies\' must be an array in %s', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
                 }
 
                 return False;
@@ -197,11 +196,11 @@
                         return False;
                     }
                 }
-                catch (InvalidDependencyConfiguration $e)
+                catch (ConfigurationException $e)
                 {
                     if($throw_exception)
                     {
-                        throw new InvalidBuildConfigurationException(sprintf('Invalid dependency configuration in %s: %s', $this->name, $e->getMessage()));
+                        throw $e;
                     }
 
                     return False;

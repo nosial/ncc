@@ -174,8 +174,6 @@
          *
          * @param string $package
          * @return string
-         * @throws Exceptions\InvalidPackageNameException
-         * @throws Exceptions\InvalidScopeException
          * @throws PackageLockException
          * @throws PackageNotFoundException
          */

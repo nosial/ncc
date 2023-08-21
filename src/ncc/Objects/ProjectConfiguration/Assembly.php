@@ -25,7 +25,7 @@
     namespace ncc\Objects\ProjectConfiguration;
 
     use ncc\Enums\RegexPatterns;
-    use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
@@ -102,7 +102,7 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws InvalidProjectConfigurationException
+         * @throws ConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -110,7 +110,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The UUID is not a valid v4 UUID', 'Assembly.UUID');
+                    throw new ConfigurationException(sprintf('The UUID is not a valid v4 UUID: %s, in property Assembly.UUID', $this->uuid));
                 }
 
                 return false;
@@ -120,7 +120,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The version number is invalid', 'Assembly.Version');
+                    throw new ConfigurationException(sprintf('The version number is invalid: %s, in property Assembly.Version', $this->version));
                 }
 
                 return false;
@@ -130,7 +130,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The package name is invalid', 'Assembly.Package');
+                    throw new ConfigurationException(sprintf('The package name is invalid: %s, in property Assembly.Package', $this->package));
                 }
 
                 return false;
@@ -140,7 +140,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The name cannot be larger than 126 characters', 'Assembly.Name');
+                    throw new ConfigurationException(sprintf('The name cannot be larger than 126 characters: %s, in property Assembly.Name', $this->name));
                 }
 
                 return false;
@@ -150,7 +150,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The description cannot be larger than 512 characters', 'Assembly.Description');
+                    throw new ConfigurationException(sprintf('The description cannot be larger than 512 characters: %s, in property Assembly.Description', $this->description));
                 }
 
                 return false;
@@ -160,7 +160,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The company cannot be larger than 126 characters', 'Assembly.Company');
+                    throw new ConfigurationException(sprintf('The company cannot be larger than 126 characters: %s, in property Assembly.Company', $this->company));
                 }
 
                 return false;
@@ -170,7 +170,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The company cannot be larger than 256 characters', 'Assembly.Product');
+                    throw new ConfigurationException(sprintf('The product cannot be larger than 256 characters: %s, in property Assembly.Product', $this->product));
                 }
 
                 return false;
@@ -180,7 +180,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The copyright cannot be larger than 256 characters', 'Assembly.Copyright');
+                    throw new ConfigurationException(sprintf('The copyright cannot be larger than 256 characters: %s, in property Assembly.Copyright', $this->company));
                 }
 
                 return false;
@@ -190,7 +190,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidProjectConfigurationException('The trademark cannot be larger than 256 characters', 'Assembly.Trademark');
+                    throw new ConfigurationException(sprintf('The trademark cannot be larger than 256 characters: %s, in property Assembly.Trademark', $this->trademark));
                 }
 
                 return false;

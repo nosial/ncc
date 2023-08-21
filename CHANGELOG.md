@@ -110,6 +110,7 @@ features.
  - Implemented interface `BytecodeObjectInterface` into `\ncc\Objects\ProjectConfiguration\Build > BuildConfiguration`
  - Updated `\ncc\Classes > GitClient > cloneRepository()` to throw `GitException` instead of `GitCloneException`
  - Updated `\ncc\Classes > GitClient > checkout()` to throw `GitException` instead of `GitCheckoutException`
+ - Corrected code-smell and code style issues in `\ncc\Objects > PackageLock`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
@@ -130,6 +131,15 @@ features.
  - Removed unused exception `UnsupportedPackageException` in `\ncc\Exceptions` (not used)
  - Removed unused exception `UnsupportedRemoteTypeSource` in `\ncc\Exceptions` (not used)
  - Removed unused exception `UnsupportedProjectTypeException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `InvalidProjectConfigurationException` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `InvalidScopeException` in `\ncc\Exceptions` in favor of `InvalidArgumentException` (standard php)
+ - Removed unused exception `InvalidCredentialsEntryException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `ComponentNotFoundException` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `InvalidPackageNameException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `InvalidVersionNumberException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `InvalidProjectException` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `InvalidProjectNameException` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `BuildConfigurationNotFoundException` in `\ncc\Exceptions` in favor of `ConfigurationException`
 
 
 

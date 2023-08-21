@@ -26,8 +26,7 @@
 
     use ncc\Enums\Scopes;
     use ncc\Enums\Versions;
-    use ncc\Exceptions\InvalidPackageNameException;
-    use ncc\Exceptions\InvalidScopeException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\VersionNotFoundException;
     use ncc\Objects\Package;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
@@ -246,8 +245,7 @@
 
         /**
          * @return string
-         * @throws InvalidPackageNameException
-         * @throws InvalidScopeException
+         * @throws ConfigurationException
          */
         public function getDataPath(): string
         {

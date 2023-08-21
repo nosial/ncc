@@ -24,7 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
-    use ncc\Exceptions\InvalidDependencyConfiguration;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
@@ -68,7 +68,7 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws InvalidDependencyConfiguration
+         * @throws ConfigurationException
          */
         public function validate(bool $throw_exception): bool
         {
@@ -76,7 +76,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidDependencyConfiguration(sprintf('Invalid dependency name "%s"', $this->name));
+                    throw new ConfigurationException(sprintf('Invalid dependency name "%s"', $this->name));
                 }
 
                 return false;
@@ -86,7 +86,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidDependencyConfiguration(sprintf('Invalid dependency version "%s"', $this->version));
+                    throw new ConfigurationException(sprintf('Invalid dependency version "%s"', $this->version));
                 }
 
                 return false;

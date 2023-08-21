@@ -26,9 +26,7 @@
     use ncc\Enums\CompilerExtensionDefaultVersions;
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\CompilerExtensionSupportedVersions;
-    use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\InvalidPackageNameException;
-    use ncc\Exceptions\InvalidProjectNameException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
@@ -47,7 +45,6 @@
          *
          * @param $args
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
@@ -64,19 +61,19 @@
         }
 
         /**
+         * Creates a new project
+         *
          * @param $args
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
-         * @throws ProjectConfigurationNotFoundException
          * @throws PathNotFoundException
+         * @throws ProjectConfigurationNotFoundException
          */
         public static function createProject($args): void
         {
             // First determine the source directory of the project
             $current_directory = getcwd();
-            $real_src = $current_directory;
             if(isset($args['src']))
             {
                 // Make sure directory separators are corrected
@@ -84,7 +81,7 @@
                 $args['src'] = str_ireplace('\\', DIRECTORY_SEPARATOR, $args['src']);
 
                 // Remove the trailing slash
-                if(substr($args['src'], -1) == DIRECTORY_SEPARATOR)
+                if(substr($args['src'], -1) === DIRECTORY_SEPARATOR)
                 {
                     $args['src'] = substr($args['src'], 0, -1);
                 }
@@ -216,14 +213,9 @@
             {
                 $ProjectManager->initializeProject($Compiler, $project_name, $package_name, $real_src);
             }
-            catch (InvalidPackageNameException $e)
+            catch (ConfigurationException $e)
             {
-                Console::outException('The given package name is invalid, the value must follow the standard package naming convention', $e, 1);
-                return;
-            }
-            catch (InvalidProjectNameException $e)
-            {
-                Console::outException('The given project name is invalid, cannot be empty or larger than 126 characters', $e, 1);
+                Console::outException(sprintf('The project configuration is invalid: %s', $e->getMessage()), $e, 1);
                 return;
             }
             catch (ProjectAlreadyExistsException $e)

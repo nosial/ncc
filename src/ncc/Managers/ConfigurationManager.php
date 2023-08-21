@@ -27,8 +27,8 @@
     use Exception;
     use ncc\Enums\Scopes;
     use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\InvalidScopeException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\ThirdParty\Symfony\Yaml\Yaml;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -47,9 +47,8 @@
         private $configuration;
 
         /**
-         * @throws AccessDeniedException
          * @throws IOException
-         * @throws InvalidScopeException
+         * @throws PathNotFoundException
          */
         public function __construct()
         {
@@ -60,9 +59,8 @@
          * Loads the configuration file if it exists
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
-         * @throws InvalidScopeException
+         * @throws PathNotFoundException
          */
         public function load(): void
         {
@@ -86,7 +84,6 @@
          * @return void
          * @throws AccessDeniedException
          * @throws IOException
-         * @throws InvalidScopeException
          */
         public function save(): void
         {
@@ -147,7 +144,6 @@
          * @return bool
          * @throws AccessDeniedException
          * @throws IOException
-         * @throws InvalidScopeException
          */
         public function updateProperty(string $property, $value): bool
         {

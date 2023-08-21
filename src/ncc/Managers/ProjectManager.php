@@ -31,10 +31,10 @@
     use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
-    use ncc\Exceptions\InvalidPackageNameException;
-    use ncc\Exceptions\InvalidProjectNameException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Exceptions\ProjectConfigurationNotFoundException;
@@ -71,7 +71,6 @@
          * Public Constructor
          *
          * @param string $path
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
@@ -108,8 +107,7 @@
          * @param string $package
          * @param string|null $src
          * @param array $options
-         * @throws InvalidPackageNameException
-         * @throws InvalidProjectNameException
+         * @throws ConfigurationException
          * @throws MalformedJsonException
          * @throws ProjectAlreadyExistsException
          */
@@ -118,12 +116,12 @@
             // Validate the project information first
             if(!Validate::packageName($package))
             {
-                throw new InvalidPackageNameException('The given package name \'' . $package . '\' is not a valid package name');
+                throw new ConfigurationException('The given package name \'' . $package . '\' is not a valid package name');
             }
 
             if(!Validate::projectName($name))
             {
-                throw new InvalidProjectNameException('The given project name \'' . $name . '\' is not valid');
+                throw new ConfigurationException('The given project name \'' . $name . '\' is not valid');
             }
 
             if(file_exists($this->project_path . DIRECTORY_SEPARATOR . 'project.json'))
@@ -217,7 +215,6 @@
          * Attempts to load the project configuration
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
@@ -253,7 +250,6 @@
          * Returns the ProjectConfiguration object
          *
          * @return ProjectConfiguration
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
@@ -292,6 +288,7 @@
          * @throws MalformedJsonException
          * @throws PathNotFoundException
          * @throws ProjectConfigurationNotFoundException
+         * @throws NotSupportedException
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {

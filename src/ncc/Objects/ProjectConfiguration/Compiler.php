@@ -27,10 +27,9 @@
     use Exception;
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\CompilerExtensionSupportedVersions;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\InvalidPropertyValueException;
-    use ncc\Exceptions\InvalidVersionConfigurationException;
     use ncc\Exceptions\NotSupportedException;
-    use ncc\Exceptions\RuntimeException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\Utilities\Functions;
@@ -67,9 +66,9 @@
          *
          * @param bool $throw_exception
          * @return bool
+         * @throws ConfigurationException
          * @throws InvalidPropertyValueException
          * @throws NotSupportedException
-         * @throws RuntimeException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -109,7 +108,7 @@
                 {
                     if($throw_exception)
                     {
-                        throw new InvalidVersionConfigurationException('The minimum version cannot be greater version number than the maximum version');
+                        throw new ConfigurationException('The minimum version cannot be greater version number than the maximum version');
                     }
 
                     return False;
@@ -117,7 +116,7 @@
             }
             catch (Exception $e)
             {
-                throw new RuntimeException('Version comparison failed: ' . $e->getMessage());
+                throw new ConfigurationException('Version comparison failed: ' . $e->getMessage());
             }
 
             if(!in_array($this->extension, CompilerExtensions::ALL))

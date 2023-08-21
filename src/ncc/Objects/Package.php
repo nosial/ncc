@@ -27,8 +27,7 @@
     use Exception;
     use ncc\Enums\EncoderType;
     use ncc\Enums\PackageStructureVersions;
-    use ncc\Exceptions\InvalidPackageException;
-    use ncc\Exceptions\InvalidProjectConfigurationException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageParsingException;
     use ncc\Exceptions\PathNotFoundException;
@@ -170,8 +169,7 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws InvalidPackageException
-         * @throws InvalidProjectConfigurationException
+         * @throws ConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -180,7 +178,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidPackageException('The MagicBytes property is required and cannot be null');
+                    throw new ConfigurationException('The MagicBytes property is required and cannot be null');
                 }
 
                 return false;
@@ -191,7 +189,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidPackageException('The Assembly property is required and cannot be null');
+                    throw new ConfigurationException('The Assembly property is required and cannot be null');
                 }
 
                 return false;

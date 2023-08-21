@@ -27,10 +27,9 @@
     use Exception;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildConfigurationNotFoundException;
-    use ncc\Exceptions\InvalidBuildConfigurationException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\InvalidConstantNameException;
     use ncc\Exceptions\InvalidProjectBuildConfiguration;
-    use ncc\Exceptions\InvalidProjectConfigurationException;
     use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
@@ -104,13 +103,10 @@
          * @param bool $throw_exception
          * @return bool
          * @throws BuildConfigurationNotFoundException
-         * @throws InvalidConstantNameException
-         * @throws InvalidProjectBuildConfiguration
-         * @throws InvalidProjectConfigurationException
+         * @throws ConfigurationException
          * @throws InvalidPropertyValueException
          * @throws RuntimeException
          * @throws UndefinedExecutionPolicyException
-         * @throws InvalidBuildConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -180,7 +176,7 @@
                 {
                     if($throw_exception)
                     {
-                        throw new InvalidBuildConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
+                        throw new ConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
                     }
 
                     return false;
