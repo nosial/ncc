@@ -20,18 +20,15 @@
      *
      */
 
-    namespace ncc\Interfaces;
+    namespace ncc\Exceptions;
 
-    use ncc\Exceptions\IOException;
-    use ncc\Objects\PackageLock\VersionEntry;
+    use ncc\Enums\ExceptionCodes;
+    use Throwable;
 
-    interface RuntimeInterface
+    class IntegrityException extends \Exception
     {
-        /**
-         * @param VersionEntry $versionEntry
-         * @param array $options
-         * @return mixed
-         * @throws IOException
-         */
-        public static function import(VersionEntry $versionEntry, array $options=[]): bool;
+        public function __construct(string $message = "", ?Throwable $previous = null)
+        {
+            parent::__construct($message, ExceptionCodes::INTEGRITY_EXCEPTION, $previous);
+        }
     }

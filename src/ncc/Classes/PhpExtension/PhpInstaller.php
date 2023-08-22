@@ -29,16 +29,15 @@
     use Exception;
     use ncc\Enums\ComponentDataType;
     use ncc\Enums\ComponentFileExtensions;
-    use ncc\Exceptions\ComponentChecksumException;
-    use ncc\Exceptions\ComponentDecodeException;
+    use ncc\Exceptions\IntegrityException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\ResourceChecksumException;
     use ncc\Interfaces\InstallerInterface;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\Package;
     use ncc\Objects\Package\Component;
+    use ncc\Objects\Package\Resource;
     use ncc\ThirdParty\nikic\PhpParser\Comment;
     use ncc\ThirdParty\nikic\PhpParser\Node;
     use ncc\ThirdParty\nikic\PhpParser\PrettyPrinter\Standard;
@@ -75,8 +74,7 @@
          *
          * @param Component $component
          * @return string|null
-         * @throws ComponentChecksumException
-         * @throws ComponentDecodeException
+         * @throws IntegrityException
          * @throws NotSupportedException
          */
         public function processComponent(Package\Component $component): ?string
@@ -88,7 +86,7 @@
 
             if(!$component->validate_checksum())
             {
-                throw new ComponentChecksumException('Checksum validation failed for component ' . $component->name . ', the package may be corrupted.');
+                throw new IntegrityException(sprintf('Checksum validation failed for component: %s', $component->name));
             }
 
             switch($component->data_types)
@@ -100,7 +98,7 @@
                     }
                     catch (Exception $e)
                     {
-                        throw new ComponentDecodeException('Cannot decode component: ' . $component->name . ', ' . $e->getMessage(), $e);
+                        throw new IntegrityException(sprintf('Cannot decode component: %s, %s', $component->name, $e->getMessage()));
                     }
 
                     return (new Standard())->prettyPrintFile($stmts);
@@ -137,15 +135,15 @@
         /**
          * Processes the given resource and returns the string representation of the resource
          *
-         * @param Package\Resource $resource
+         * @param Resource $resource
          * @return string|null
-         * @throws ResourceChecksumException
+         * @throws IntegrityException
          */
         public function processResource(Package\Resource $resource): ?string
         {
             if(!$resource->validateChecksum())
             {
-                throw new ResourceChecksumException('Checksum validation failed for resource ' . $resource->Name . ', the package may be corrupted.');
+                throw new IntegrityException('Checksum validation failed for resource ' . $resource->Name . ', the package may be corrupted.');
             }
 
             return Base64::decode($resource->Data);

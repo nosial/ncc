@@ -112,6 +112,7 @@ features.
  - Updated `\ncc\Classes > GitClient > cloneRepository()` to throw `GitException` instead of `GitCloneException`
  - Updated `\ncc\Classes > GitClient > checkout()` to throw `GitException` instead of `GitCheckoutException`
  - Corrected code-smell and code style issues in `\ncc\Objects > PackageLock`
+ - Corrected code-smell and code style issues in `\ncc\Classes\PhpExtension > PhpRuntime`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
@@ -158,6 +159,14 @@ features.
  - Removed unused exception `MissingDependencyException` in `\ncc\Exceptions` (not used)
  - Removed unused exception `PackageAlreadyInstalledException` in `\ncc\Exceptions` in favor of `PackageException`
  - Removed unused exception `PackageFetchException` in `\ncc\Exceptions` in favor of `PackageException`
+ - Removed unused exception `PackageNotFoundException` in `\ncc\Exceptions` in favor of `PackageException`
+ - Removed unused exception `ConstantReadonlyException` in `\ncc\Exceptions` in favor of `IntegrityException` & `\InvalidArgumentException`
+ - Removed unused exception `InvalidConstantName` in `\ncc\Exceptions` in favor for `IntegrityException`
+ - Removed unused exception `ComponentDecodeException` in `\ncc\Exceptions` in favor for `IntegrityException`
+ - Removed unused exception `ResourceChecksumException` in `\ncc\Exceptions` in favor for `IntegrityException`
+ - Removed unused exception `AutoloadGeneratorException` in `\ncc\Exceptions` in favor for `IOException`
+ - Removed unused exception `SymlinkException` in `\ncc\Exceptions` in favor for `IOException`
+ - Removed unused exception `PackageLockException` in `\ncc\Exceptions` in favor for `IOException`
 
 
 

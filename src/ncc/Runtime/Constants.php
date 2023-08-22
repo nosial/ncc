@@ -24,8 +24,8 @@
 
     namespace ncc\Runtime;
 
-    use ncc\Exceptions\ConstantReadonlyException;
-    use ncc\Exceptions\InvalidConstantNameException;
+    use InvalidArgumentException;
+    use ncc\Exceptions\IntegrityException;
     use ncc\Objects\Constant;
     use ncc\Utilities\Resolver;
     use ncc\Utilities\Validate;
@@ -47,13 +47,14 @@
          * @param string $value The value of the constant
          * @param bool $readonly Indicates if the constant cannot be changed with the registerConstant function once it's registered
          * @return void
-         * @throws ConstantReadonlyException
-         * @throws InvalidConstantNameException
+         * @throws IntegrityException
          */
         public static function register(string $scope, string $name, string $value, bool $readonly=false): void
         {
             if(!Validate::constantName($name))
-                throw new InvalidConstantNameException('The name specified is not valid for a constant name');
+            {
+                throw new InvalidArgumentException(sprintf('The name \'%s\' is not a valid constant name', $name));
+            }
 
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
@@ -72,18 +73,20 @@
          * @param string $scope
          * @param string $name
          * @return void
-         * @throws ConstantReadonlyException
+         * @throws IntegrityException
          */
         public static function delete(string $scope, string $name): void
         {
             if(!Validate::constantName($name))
+            {
                 return;
+            }
 
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
             if(isset(self::$Constants[$constant_hash]) && self::$Constants[$constant_hash]->isReadonly())
             {
-                throw new ConstantReadonlyException('Cannot delete the constant \'' .  self::$Constants[$constant_hash]->getFullName() .  '\', constant is readonly');
+                throw new IntegrityException('Cannot delete the constant \'' .  self::$Constants[$constant_hash]->getFullName() .  '\', constant is readonly');
             }
 
             unset(self::$Constants[$constant_hash]);
@@ -99,12 +102,16 @@
         public static function get(string $scope, string $name): ?string
         {
             if(!Validate::constantName($name))
+            {
                 return null;
+            }
 
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
             if(isset(self::$Constants[$constant_hash]))
+            {
                 return self::$Constants[$constant_hash]->getValue();
+            }
 
             return null;
         }

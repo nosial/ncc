@@ -40,7 +40,6 @@
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
-    use ncc\Exceptions\PackageNotFoundException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Exceptions\UserAbortedOperationException;
     use ncc\Interfaces\ServiceSourceInterface;
@@ -82,7 +81,6 @@
          * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PackageException
-         * @throws PackageNotFoundException
          * @throws PathNotFoundException
          * @throws RuntimeException
          * @throws UserAbortedOperationException
@@ -118,7 +116,6 @@
          * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PackageException
-         * @throws PackageNotFoundException
          * @throws PathNotFoundException
          * @throws UserAbortedOperationException
          */
@@ -188,7 +185,6 @@
          * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PackageException
-         * @throws PackageNotFoundException
          * @throws PathNotFoundException
          */
         private static function compilePackages(string $composer_lock_path): array
@@ -228,7 +224,7 @@
                 $composer_package = $composer_lock->getPackage($package->Name);
                 if ($composer_package === null)
                 {
-                    throw new PackageNotFoundException(sprintf('Package "%s" not found in composer lock file', $package->Name));
+                    throw new PackageException(sprintf('Package "%s" not found in composer lock file', $package->Name));
                 }
 
                 // Convert it to an NCC project configuration

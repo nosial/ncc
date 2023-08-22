@@ -44,24 +44,9 @@
         public const CONSTANT_READ_ONLY = -1709;
 
         /**
-         * @see ProjectAlreadyExistsException
-         */
-        public const PROJECT_ALREADY_EXISTS = -1713;
-
-        /**
-         * @see AutoloadGeneratorException
-         */
-        public const AUTOLOAD_GENERATOR = -1714;
-
-        /**
          * @see NoUnitsFoundException
          */
         public const NO_UNITS_FOUND = -1715;
-
-        /**
-         * @see InvalidConstantNameException
-         */
-        public const INVALID_CONSTANT_NAME = -1719;
 
         /**
          * @see BuildException
@@ -69,19 +54,9 @@
         public const BUILD_EXCEPTION = -1727;
 
         /**
-         * @see PackageLockException
-         */
-        public const PACKAGE_LOCK_EXCEPTION = -1729;
-
-        /**
          * @see InstallationException
          */
         public const INSTALLATION_EXCEPTION = -1730;
-
-        /**
-         * @see ComponentDecodeException
-         */
-        public const COMPONENT_DECODE_EXCEPTION = -1732;
 
         /**
          * @see IOException
@@ -102,11 +77,6 @@
          * @see NoAvailableUnitsException
          */
         public const NO_AVAILABLE_UNITS = -1742;
-
-        /**
-         * @see PackageNotFoundException
-         */
-        public const PACKAGE_NOT_FOUND = -1745;
 
         /**
          * @see ComposerException
@@ -139,11 +109,6 @@
         public const ARCHIVE_EXCEPTION = -1764;
 
         /**
-         * @see SymlinkException
-         */
-        public const SYMLINK_EXCEPTION = -1768;
-
-        /**
          * @see PathNotFoundException
          */
         public const PATH_NOT_FOUND = -1769;
@@ -169,35 +134,34 @@
         public const NETWORK_EXCEPTION = -1774;
 
         /**
+         * @see IntegrityException
+         */
+        public const INTEGRITY_EXCEPTION = -1775;
+
+        /**
          * All the exception codes from NCC
          */
         public const All = [
             self::MALFORMED_JSON,
             self::RUNTIME,
             self::CONSTANT_READ_ONLY,
-            self::PROJECT_ALREADY_EXISTS,
-            self::AUTOLOAD_GENERATOR,
             self::NO_UNITS_FOUND,
-            self::INVALID_CONSTANT_NAME,
             self::BUILD_EXCEPTION,
-            self::PACKAGE_LOCK_EXCEPTION,
             self::INSTALLATION_EXCEPTION,
-            self::COMPONENT_DECODE_EXCEPTION,
             self::IO_EXCEPTION,
             self::VERSION_NOT_FOUND,
             self::RUNNER_EXECUTION_EXCEPTION,
             self::NO_AVAILABLE_UNITS,
-            self::PACKAGE_NOT_FOUND,
             self::COMPOSER_EXCEPTION,
             self::USER_ABORTED_OPERATION,
             self::AUTHENTICATION_EXCEPTION,
             self::NOT_SUPPORTED_EXCEPTION,
             self::ARCHIVE_EXCEPTION,
-            self::SYMLINK_EXCEPTION,
             self::PATH_NOT_FOUND,
             self::GIT_EXCEPTION,
             self::CONFIGURATION_EXCEPTION,
             self::PACKAGE_EXCEPTION,
-            self::NETWORK_EXCEPTION
+            self::NETWORK_EXCEPTION,
+            self::INTEGRITY_EXCEPTION
         ];
     }

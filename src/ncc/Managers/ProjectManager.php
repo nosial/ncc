@@ -34,7 +34,6 @@
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
@@ -105,8 +104,8 @@
          * @param string|null $src
          * @param array $options
          * @throws ConfigurationException
+         * @throws IOException
          * @throws MalformedJsonException
-         * @throws ProjectAlreadyExistsException
          */
         public function initializeProject(Compiler $compiler, string $name, string $package, ?string $src=null, array $options=[]): void
         {
@@ -123,7 +122,7 @@
 
             if(file_exists($this->project_path . DIRECTORY_SEPARATOR . 'project.json'))
             {
-                throw new ProjectAlreadyExistsException('A project has already been initialized in \'' . $this->project_path . DIRECTORY_SEPARATOR . 'project.json' . '\'');
+                throw new IOException('A project has already been initialized in \'' . $this->project_path . DIRECTORY_SEPARATOR . 'project.json' . '\'');
             }
 
             $this->project_configuration = new ProjectConfiguration();

@@ -28,12 +28,11 @@
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\Versions;
     use ncc\Classes\PhpExtension\PhpRuntime;
-    use ncc\Exceptions\ConstantReadonlyException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\ImportException;
-    use ncc\Exceptions\InvalidConstantNameException;
-    use ncc\Exceptions\PackageLockException;
-    use ncc\Exceptions\PackageNotFoundException;
-    use ncc\Exceptions\VersionNotFoundException;
+    use ncc\Exceptions\IntegrityException;
+    use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PackageException;
     use ncc\Managers\PackageManager;
     use ncc\Objects\PackageLock\VersionEntry;
     use ncc\Objects\ProjectConfiguration\Dependency;
@@ -57,7 +56,7 @@
          * @param string $package
          * @param string $version
          * @return bool
-         * @throws PackageLockException
+         * @throws IOException
          */
         private static function isImported(string $package, string $version=Versions::LATEST): bool
         {
@@ -90,6 +89,7 @@
          * @param string $version
          * @param array $options
          * @return void
+         * @throws IOException
          * @throws ImportException
          */
         public static function import(string $package, string $version=Versions::LATEST, array $options=[]): void
@@ -98,10 +98,11 @@
             {
                 $package_entry = self::getPackageManager()->getPackage($package);
             }
-            catch (PackageLockException $e)
+            catch (IOException $e)
             {
                 throw new ImportException(sprintf('Failed to import package "%s" due to a package lock exception: %s', $package, $e->getMessage()), $e);
             }
+
             if($package_entry === null)
             {
                 throw new ImportException(sprintf("Package '%s' not found", $package));
@@ -122,7 +123,7 @@
                     throw new ImportException(sprintf('Version %s of %s is not installed', $version, $package));
                 }
             }
-            catch (VersionNotFoundException $e)
+            catch (IOException $e)
             {
                 throw new ImportException(sprintf('Version %s of %s is not installed', $version, $package), $e);
             }
@@ -134,7 +135,7 @@
                     return;
                 }
             }
-            catch (PackageLockException $e)
+            catch (IOException $e)
             {
                 throw new ImportException(sprintf('Failed to check if package %s is imported', $package), $e);
             }
@@ -174,8 +175,9 @@
          *
          * @param string $package
          * @return string
-         * @throws PackageLockException
-         * @throws PackageNotFoundException
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws PackageException
          */
         public static function getDataPath(string $package): string
         {
@@ -183,7 +185,7 @@
 
             if($package === null)
             {
-                throw new PackageNotFoundException('Package not found (null entry error, possible bug)');
+                throw new PackageException('Package not found (null entry error, possible bug)');
             }
 
             return $package->getDataPath();
@@ -231,8 +233,7 @@
          * @param string $name
          * @param string $value
          * @return void
-         * @throws ConstantReadonlyException
-         * @throws InvalidConstantNameException
+         * @throws IntegrityException
          */
         public static function setConstant(string $package, string $name, string $value): void
         {

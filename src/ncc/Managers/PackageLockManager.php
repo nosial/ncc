@@ -1,26 +1,26 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-/** @noinspection PhpMissingFieldTypeInspection */
+    /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Managers;
 
@@ -28,7 +28,6 @@
     use ncc\Enums\Scopes;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PackageLockException;
     use ncc\Objects\PackageLock;
     use ncc\Utilities\Console;
     use ncc\Utilities\IO;
@@ -61,7 +60,7 @@
             {
                 $this->load();
             }
-            catch (PackageLockException $e)
+            catch (IOException $e)
             {
                 unset($e);
             }
@@ -71,7 +70,7 @@
          * Loads the PackageLock from the disk
          *
          * @return void
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function load(): void
         {
@@ -89,7 +88,7 @@
                 {
                     Console::outDebug('package lock exists, loading from disk');
                     $data = IO::fread($this->PackageLockPath);
-                    if(strlen($data) > 0)
+                    if($data !== '')
                     {
                         $this->PackageLock = PackageLock::fromArray(ZiProto::decode($data));
                     }
@@ -100,7 +99,7 @@
                 }
                 catch(Exception $e)
                 {
-                    throw new PackageLockException('The PackageLock file cannot be parsed', $e);
+                    throw new IOException('The PackageLock file cannot be parsed', $e);
                 }
             }
             else
@@ -118,14 +117,14 @@
          *
          * @return void
          * @throws AuthenticationException
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function save(): void
         {
             Console::outDebug(sprintf('saving package lock to \'%s\'', $this->PackageLockPath));
 
             // Don't save something that isn't loaded lol
-            if($this->PackageLock == null)
+            if($this->PackageLock === null)
             {
                 Console::outDebug('warning: PackageLock is null, not saving to disk');
                 return;
@@ -144,7 +143,7 @@
             }
             catch(IOException $e)
             {
-                throw new PackageLockException('Cannot save the package lock file to disk', $e);
+                throw new IOException('Cannot save the package lock file to disk', $e);
             }
 
             try
@@ -155,7 +154,7 @@
             }
             catch(Exception $e)
             {
-                throw new PackageLockException('Failed to synchronize symlinks', $e);
+                throw new IOException('Failed to synchronize symlinks', $e);
             }
         }
 
@@ -163,7 +162,8 @@
          * Constructs the package lock file if it doesn't exist
          *
          * @return void
-         * @throws PackageLockException
+         * @throws AuthenticationException
+         * @throws IOException
          */
         public function constructLockFile(): void
         {
@@ -171,7 +171,7 @@
             {
                 $this->load();
             }
-            catch (PackageLockException $e)
+            catch (IOException $e)
             {
                 unset($e);
                 $this->PackageLock = new PackageLock();
@@ -182,12 +182,15 @@
 
         /**
          * @return PackageLock|null
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function getPackageLock(): ?PackageLock
         {
-            if($this->PackageLock == null)
+            if($this->PackageLock === null)
+            {
                 $this->load();
+            }
+
             return $this->PackageLock;
         }
     }

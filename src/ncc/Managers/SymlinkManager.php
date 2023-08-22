@@ -27,7 +27,7 @@
     use Exception;
     use ncc\Enums\Scopes;
     use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\SymlinkException;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\SymlinkDictionary\SymlinkEntry;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\Utilities\Console;
@@ -85,7 +85,6 @@
          *
          * @return void
          * @throws AuthenticationException
-         * @throws SymlinkException
          */
         public function load(): void
         {
@@ -130,7 +129,7 @@
          * @param bool $throw_exception
          * @return void
          * @throws AuthenticationException
-         * @throws SymlinkException
+         * @throws IOException
          */
         private function save(bool $throw_exception=true): void
         {
@@ -154,7 +153,9 @@
             catch(Exception $e)
             {
                 if($throw_exception)
-                    throw new SymlinkException(sprintf('failed to save symlink dictionary to %s', $this->SymlinkDictionaryPath), $e);
+                {
+                    throw new IOException(sprintf('failed to save symlink dictionary to %s', $this->SymlinkDictionaryPath), $e);
+                }
 
                 Console::outWarning(sprintf('failed to save symlink dictionary to %s', $this->SymlinkDictionaryPath));
             }
@@ -204,7 +205,7 @@
          * @param string $unit
          * @return void
          * @throws AuthenticationException
-         * @throws SymlinkException
+         * @throws IOException
          */
         public function add(string $package, string $unit='main'): void
         {
@@ -232,7 +233,7 @@
          * @param string $package
          * @return void
          * @throws AuthenticationException
-         * @throws SymlinkException
+         * @throws IOException
          */
         public function remove(string $package): void
         {
@@ -258,7 +259,9 @@
                         $symlink = self::$BinPath . DIRECTORY_SEPARATOR . $symlink_name;
 
                         if($filesystem->exists($symlink))
+                        {
                             $filesystem->remove($symlink);
+                        }
                     }
 
                     unset($this->SymlinkDictionary[$key]);
@@ -267,7 +270,7 @@
                 }
             }
 
-            throw new SymlinkException(sprintf('failed to remove package %s from the symlink dictionary', $package));
+            throw new IOException(sprintf('failed to remove package %s from the symlink dictionary', $package));
         }
 
         /**
@@ -276,7 +279,6 @@
          * @param string $package
          * @return void
          * @throws AuthenticationException
-         * @throws SymlinkException
          */
         private function setAsRegistered(string $package): void
         {
@@ -297,7 +299,6 @@
          *
          * @return void
          * @throws AuthenticationException
-         * @throws SymlinkException
          */
         public function sync(): void
         {
@@ -328,7 +329,7 @@
                 {
                     $package_entry = $package_lock_manager->getPackageLock()->getPackage($entry->Package);
 
-                    if($package_entry == null)
+                    if($package_entry === null)
                     {
                         Console::outWarning(sprintf('Package %s is not installed, skipping', $entry->Package));
                         continue;

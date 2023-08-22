@@ -27,9 +27,7 @@
     use ncc\Enums\ConsoleColors;
     use ncc\Enums\Options\InstallPackageOptions;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\PackageLockException;
-    use ncc\Exceptions\RuntimeException;
-    use ncc\Exceptions\VersionNotFoundException;
+    use ncc\Exceptions\IOException;
     use ncc\Managers\CredentialManager;
     use ncc\Managers\PackageManager;
     use ncc\Objects\CliHelpSection;
@@ -376,7 +374,7 @@
                     {
                         $credential->unlock(Console::passwordInput(sprintf('Enter Password for %s: ', $credential->getName())));
                     }
-                    catch (RuntimeException $e)
+                    catch (Exception $e)
                     {
                         Console::outException(sprintf('Failed to unlock credential %s', $credential->getName()), $e, 1);
                         return;
@@ -507,7 +505,7 @@
                         {
                             $dependency_package = $package_manager->getPackage($dependency->name);
                         }
-                        catch (PackageLockException $e)
+                        catch (IOException $e)
                         {
                             unset($e);
                             $dependency_package = null;
@@ -519,7 +517,7 @@
                             {
                                 $dependency_version = $dependency_package->getVersion($dependency->version);
                             }
-                            catch (VersionNotFoundException $e)
+                            catch (IOException $e)
                             {
                                 unset($e);
                                 $dependency_version = null;
@@ -596,7 +594,7 @@
          *
          * @param $args
          * @return void
-         * @throws VersionNotFoundException
+         * @throws IOException
          */
         private static function uninstallPackage($args): void
         {
@@ -622,7 +620,7 @@
             {
                 $package_entry = $package_manager->getPackage($selected_package);
             }
-            catch (PackageLockException $e)
+            catch (IOException $e)
             {
                 Console::outException('PackageLock error', $e, 1);
                 return;
@@ -688,7 +686,7 @@
          *
          * @param $args
          * @return void
-         * @throws PackageLockException
+         * @throws IOException
          */
         private static function uninstallAllPackages($args): void
         {

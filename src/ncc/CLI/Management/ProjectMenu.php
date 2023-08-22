@@ -30,7 +30,6 @@
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\ProjectAlreadyExistsException;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
     use ncc\Objects\ProjectConfiguration\Compiler;
@@ -215,11 +214,6 @@
             catch (ConfigurationException $e)
             {
                 Console::outException(sprintf('The project configuration is invalid: %s', $e->getMessage()), $e, 1);
-                return;
-            }
-            catch (ProjectAlreadyExistsException $e)
-            {
-                Console::outException('A project has already been initialized in \'' . $current_directory . '\'', $e, 1);
                 return;
             }
             catch(Exception $e)

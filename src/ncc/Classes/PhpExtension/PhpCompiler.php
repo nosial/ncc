@@ -36,7 +36,6 @@
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageException;
-    use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -274,7 +273,7 @@
                                 $package = $package_lock_manager->getPackageLock()?->getPackage($dependency->Name);
                                 if($package === null)
                                 {
-                                    throw new PackageLockException('Cannot find package lock for dependency ' . $dependency->Name);
+                                    throw new IOException('Cannot find package lock for dependency ' . $dependency->Name);
                                 }
 
                                 $version = $package->getVersion($dependency->Version);
@@ -294,11 +293,7 @@
                                 $dependency->Source = 'libs' . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->Name, $dependency->Version);
 
                             }
-                            catch (VersionNotFoundException $e)
-                            {
-                                throw new PackageException('Static linking not possible, cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name, $e);
-                            }
-                            catch (PackageLockException $e)
+                            catch (IOException $e)
                             {
                                 throw new PackageException('Static linking not possible, cannot find package lock for dependency ' . $dependency->Name, $e);
                             }

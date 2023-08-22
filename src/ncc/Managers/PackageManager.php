@@ -43,11 +43,8 @@
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PackageException;
-    use ncc\Exceptions\PackageLockException;
-    use ncc\Exceptions\PackageNotFoundException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
-    use ncc\Exceptions\SymlinkException;
     use ncc\Exceptions\VersionNotFoundException;
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Objects\InstallationPaths;
@@ -84,7 +81,7 @@
         private $package_lock_manager;
 
         /**
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function __construct()
         {
@@ -104,13 +101,10 @@
          * @throws IOException
          * @throws InstallationException
          * @throws NotSupportedException
-         * @throws PackageLockException
-         * @throws PackageNotFoundException
+         * @throws PackageException
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
-         * @throws SymlinkException
          * @throws VersionNotFoundException
-         * @throws PackageException
          */
         public function install(string $package_path, ?Entry $entry=null, array $options=[]): string
         {
@@ -648,11 +642,8 @@
          * @throws InstallationException
          * @throws NotSupportedException
          * @throws PackageException
-         * @throws PackageLockException
-         * @throws PackageNotFoundException
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
-         * @throws SymlinkException
          * @throws VersionNotFoundException
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
@@ -703,7 +694,7 @@
                         break;
 
                     case DependencySourceType::STATIC:
-                        throw new PackageNotFoundException('Static linking not possible, package ' . $dependency->name . ' is not installed');
+                        throw new PackageException('Static linking not possible, package ' . $dependency->name . ' is not installed');
 
                     case DependencySourceType::REMOTE:
                         Console::outDebug('installing from remote source ' . $dependency->source);
@@ -717,7 +708,7 @@
             }
             elseif(!$dependency_met)
             {
-                throw new PackageNotFoundException(sprintf('Required dependency %s=%s is not installed', $dependency->name, $dependency->version));
+                throw new PackageException(sprintf('Required dependency %s=%s is not installed', $dependency->name, $dependency->version));
             }
         }
 
@@ -726,7 +717,7 @@
          *
          * @param string $package
          * @return PackageEntry|null
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function getPackage(string $package): ?PackageEntry
         {
@@ -740,8 +731,7 @@
          * @param string $package
          * @param string $version
          * @return VersionEntry|null
-         * @throws VersionNotFoundException
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function getPackageVersion(string $package, string $version): ?VersionEntry
         {
@@ -754,9 +744,7 @@
          *
          * @param string $package
          * @return VersionEntry|null
-         * @throws VersionNotFoundException
-         * @throws PackageLockException
-         * @noinspection PhpUnused
+         * @throws IOException
          */
         public function getLatestVersion(string $package): ?VersionEntry
         {
@@ -768,8 +756,7 @@
          * Returns an array of all packages and their installed versions
          *
          * @return array
-         * @throws PackageLockException
-         * @throws PackageLockException
+         * @throws IOException
          */
         public function getInstalledPackages(): array
         {
@@ -797,7 +784,7 @@
                     $package = $this->getPackage($exploded[0]);
                     if($package === null)
                     {
-                        throw new PackageNotFoundException('Package ' . $exploded[0] . ' not found');
+                        throw new PackageException('Package ' . $exploded[0] . ' not found');
                     }
 
                     $version = $package->getVersion($exploded[1]);
@@ -836,7 +823,7 @@
                         }
                     }
                 }
-                catch (PackageLockException $e)
+                catch (IOException $e)
                 {
                     unset($e);
                 }
@@ -884,10 +871,7 @@
          * @return void
          * @throws AuthenticationException
          * @throws IOException
-         * @throws PackageLockException
-         * @throws PackageNotFoundException
-         * @throws SymlinkException
-         * @throws VersionNotFoundException
+         * @throws PackageException
          */
         public function uninstallPackageVersion(string $package, string $version): void
         {
@@ -899,7 +883,7 @@
             $version_entry = $this->getPackageVersion($package, $version);
             if($version_entry === null)
             {
-                throw new PackageNotFoundException(sprintf('The package %s=%s was not found', $package, $version));
+                throw new PackageException(sprintf('The package %s=%s was not found', $package, $version));
             }
 
             Console::out(sprintf('Uninstalling %s=%s', $package, $version));
@@ -963,9 +947,8 @@
          * @param string $package
          * @return void
          * @throws AuthenticationException
-         * @throws PackageLockException
-         * @throws PackageNotFoundException
-         * @throws VersionNotFoundException
+         * @throws IOException
+         * @throws PackageException
          */
         public function uninstallPackage(string $package): void
         {
@@ -977,7 +960,7 @@
             $package_entry = $this->getPackage($package);
             if($package_entry === null)
             {
-                throw new PackageNotFoundException(sprintf('The package %s was not found', $package));
+                throw new PackageException(sprintf('The package %s was not found', $package));
             }
 
             foreach($package_entry->getVersions() as $version)
