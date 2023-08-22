@@ -26,16 +26,11 @@
 
     use Exception;
     use ncc\Enums\Options\BuildConfigurationValues;
-    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\InvalidConstantNameException;
-    use ncc\Exceptions\InvalidProjectBuildConfiguration;
-    use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RuntimeException;
-    use ncc\Exceptions\UndefinedExecutionPolicyException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
@@ -102,11 +97,8 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws BuildConfigurationNotFoundException
          * @throws ConfigurationException
-         * @throws InvalidPropertyValueException
-         * @throws RuntimeException
-         * @throws UndefinedExecutionPolicyException
+         * @throws NotSupportedException
          */
         public function validate(bool $throw_exception=True): bool
         {
@@ -146,7 +138,7 @@
                 {
                     if($throw_exception)
                     {
-                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->main));
+                        throw new ConfigurationException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->main));
                     }
 
                     return false;
@@ -167,7 +159,7 @@
                 {
                     if($throw_exception)
                     {
-                        throw new UndefinedExecutionPolicyException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->main));
+                        throw new ConfigurationException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->main));
                     }
                     return false;
                 }
@@ -208,8 +200,7 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws BuildConfigurationNotFoundException
-         * @throws UndefinedExecutionPolicyException
+         * @throws ConfigurationException
          */
         public function getRequiredExecutionPolicies(string $build_configuration=BuildConfigurationValues::DEFAULT): array
         {
@@ -244,7 +235,7 @@
                     {
                         if(!in_array($unit, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The property \'' . $key . '\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
+                            throw new ConfigurationException('The property \'' . $key . '\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
                         }
 
                         if(!in_array($unit, $required_policies, true))
@@ -261,7 +252,7 @@
                 {
                     if(!in_array($unit, $defined_polices, true))
                     {
-                        throw new UndefinedExecutionPolicyException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
+                        throw new ConfigurationException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
                     }
 
                     if(!in_array($unit, $required_policies, true))
@@ -277,7 +268,7 @@
                 {
                     if(!in_array($unit, $defined_polices, true))
                     {
-                        throw new UndefinedExecutionPolicyException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
+                        throw new ConfigurationException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
                     }
 
                     if(!in_array($unit, $required_policies, true))
@@ -328,7 +319,7 @@
                     {
                         if(!in_array($execution_policy?->exit_handlers->success->run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->success->run . '\'');
+                            throw new ConfigurationException('The execution policy \'' . $execution_policy?->name . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->success->run . '\'');
                         }
 
                         if(!in_array($execution_policy?->exit_handlers->success->run, $required_policies, true))
@@ -341,7 +332,7 @@
                     {
                         if(!in_array($execution_policy?->exit_handlers->warning->run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->warning->run . '\'');
+                            throw new ConfigurationException('The execution policy \'' . $execution_policy?->name . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->warning->run . '\'');
                         }
 
                         if(!in_array($execution_policy?->exit_handlers->warning->run, $required_policies, true))
@@ -354,7 +345,7 @@
                     {
                         if(!in_array($execution_policy?->exit_handlers->error->run, $defined_polices, true))
                         {
-                            throw new UndefinedExecutionPolicyException('The execution policy \'' . $execution_policy?->name . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->error->run . '\'');
+                            throw new ConfigurationException('The execution policy \'' . $execution_policy?->name . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->exit_handlers->error->run . '\'');
                         }
 
                         if(!in_array($execution_policy?->exit_handlers->error->run, $required_policies, true))
@@ -407,7 +398,7 @@
          * @param BuildConfiguration $configuration
          * @param array $defined_polices
          * @return array
-         * @throws UndefinedExecutionPolicyException
+         * @throws ConfigurationException
          */
         private function processBuildPolicies(BuildConfiguration $configuration, array $defined_polices): array
         {
@@ -419,7 +410,7 @@
                 {
                     if (!in_array($unit, $defined_polices, true))
                     {
-                        throw new UndefinedExecutionPolicyException('The property \'pre_build\' in the build configuration \'' . $configuration->name . '\' calls for an undefined execution policy \'' . $unit . '\'');
+                        throw new ConfigurationException(sprintf("The property 'pre_build' in the build configuration '%s' calls for an undefined execution policy '%s'", $configuration->name, $unit));
                     }
 
                     $required_policies[] = $unit;
@@ -432,7 +423,7 @@
                 {
                     if (!in_array($unit, $defined_polices, true))
                     {
-                        throw new UndefinedExecutionPolicyException('The property \'pre_build\' in the build configuration \'' . $configuration->name . '\' calls for an undefined execution policy \'' . $unit . '\'');
+                        throw new ConfigurationException(sprintf("The property 'post_build' in the build configuration '%s' calls for an undefined execution policy '%s'", $configuration->name, $unit));
                     }
 
                     $required_policies[] = $unit;

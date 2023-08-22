@@ -24,8 +24,8 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
-    use ncc\Exceptions\InvalidPropertyValueException;
-    use ncc\Exceptions\RuntimeException;
+    use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -64,8 +64,8 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws InvalidPropertyValueException
-         * @throws RuntimeException
+         * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         public function validate(bool $throw_exception=True): bool
         {

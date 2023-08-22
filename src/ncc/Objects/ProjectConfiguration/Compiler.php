@@ -28,7 +28,6 @@
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\CompilerExtensionSupportedVersions;
     use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\InvalidPropertyValueException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
@@ -67,7 +66,6 @@
          * @param bool $throw_exception
          * @return bool
          * @throws ConfigurationException
-         * @throws InvalidPropertyValueException
          * @throws NotSupportedException
          */
         public function validate(bool $throw_exception=True): bool
@@ -76,7 +74,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidPropertyValueException('The property \'extension\' must not be null.');
+                    throw new ConfigurationException('The property \'extension\' must not be null.');
                 }
 
                 return False;
@@ -86,7 +84,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidPropertyValueException('The property \'minimum_version\' must not be null.');
+                    throw new ConfigurationException('The property \'minimum_version\' must not be null.');
                 }
 
                 return False;
@@ -96,7 +94,7 @@
             {
                 if($throw_exception)
                 {
-                    throw new InvalidPropertyValueException('The property \'maximum_version\' must not be null.');
+                    throw new ConfigurationException('The property \'maximum_version\' must not be null.');
                 }
 
                 return False;

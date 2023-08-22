@@ -140,6 +140,13 @@ features.
  - Removed unused exception `InvalidProjectException` in `\ncc\Exceptions` in favor of `ConfigurationException`
  - Removed unused exception `InvalidProjectNameException` in `\ncc\Exceptions` in favor of `ConfigurationException`
  - Removed unused exception `BuildConfigurationNotFoundException` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `InvalidBuildConfigurationException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `InvalidPropertyValue` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `InvalidVersionConfiguration` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `InvalidDependencyConfiguraiton` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `ProjectConfigurationNotFoundException` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `UndefinedExecutionPolicyExpection` in `\ncc\Exceptions` in favor of `ConfigurationException`
+ - Removed unused exception `InvalidExecutionPolicyName` in `\ncc\Exceptions` (not used)
 
 
 

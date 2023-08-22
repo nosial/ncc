@@ -25,7 +25,6 @@
     namespace ncc\Objects\ProjectConfiguration;
 
     use ncc\Enums\Options\BuildConfigurationValues;
-    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
@@ -170,7 +169,6 @@
          *
          * @param bool $throw_exception
          * @return bool
-         * @throws BuildConfigurationNotFoundException
          * @throws ConfigurationException
          */
         public function validate(bool $throw_exception=True): bool
@@ -256,7 +254,7 @@
          *
          * @param string $name
          * @return BuildConfiguration
-         * @throws BuildConfigurationNotFoundException
+         * @throws ConfigurationException
          */
         public function getBuildConfiguration(string $name): BuildConfiguration
         {
@@ -273,7 +271,7 @@
                 }
             }
 
-            throw new BuildConfigurationNotFoundException('The build configuration ' . $name . ' does not exist');
+            throw new ConfigurationException(sprintf('The build configuration "%s" does not exist', $name));
         }
 
         /**

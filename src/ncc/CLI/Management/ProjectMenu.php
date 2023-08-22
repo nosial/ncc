@@ -31,7 +31,6 @@
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
-    use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
     use ncc\Objects\ProjectConfiguration\Compiler;
@@ -45,10 +44,10 @@
          *
          * @param $args
          * @return void
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          */
         public static function start($args): void
         {
@@ -65,10 +64,10 @@
          *
          * @param $args
          * @return void
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          */
         public static function createProject($args): void
         {

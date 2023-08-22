@@ -1,26 +1,26 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Classes\ComposerExtension;
+    namespace ncc\Classes\ComposerExtension;
 
     use Exception;
     use FilesystemIterator;
@@ -33,18 +33,18 @@ namespace ncc\Classes\ComposerExtension;
     use ncc\Enums\Scopes;
     use ncc\CLI\Main;
     use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ComposerDisabledException;
     use ncc\Exceptions\ComposerException;
     use ncc\Exceptions\ComposerNotAvailableException;
+    use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\InternalComposerNotAvailableException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PackageNotFoundException;
     use ncc\Exceptions\PackagePreparationFailedException;
-    use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Exceptions\UserAbortedOperationException;
     use ncc\Interfaces\ServiceSourceInterface;
@@ -80,18 +80,18 @@ namespace ncc\Classes\ComposerExtension;
          * @param RemotePackageInput $packageInput
          * @return string
          * @throws AccessDeniedException
-         * @throws BuildConfigurationNotFoundException
          * @throws BuildException
          * @throws ComposerDisabledException
          * @throws ComposerException
          * @throws ComposerNotAvailableException
+         * @throws ConfigurationException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
          * @throws MalformedJsonException
+         * @throws NotSupportedException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          * @throws RuntimeException
          * @throws UserAbortedOperationException
          */
@@ -120,18 +120,18 @@ namespace ncc\Classes\ComposerExtension;
          * @param string $path
          * @return string
          * @throws AccessDeniedException
-         * @throws BuildConfigurationNotFoundException
          * @throws BuildException
          * @throws ComposerDisabledException
          * @throws ComposerException
          * @throws ComposerNotAvailableException
+         * @throws ConfigurationException
          * @throws IOException
          * @throws InternalComposerNotAvailableException
          * @throws MalformedJsonException
+         * @throws NotSupportedException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          * @throws UserAbortedOperationException
          */
         public static function fromLocal(string $path): string
@@ -195,14 +195,14 @@ namespace ncc\Classes\ComposerExtension;
          * @param string $composer_lock_path
          * @return array
          * @throws AccessDeniedException
-         * @throws BuildConfigurationNotFoundException
          * @throws BuildException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
+         * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         private static function compilePackages(string $composer_lock_path): array
         {
@@ -822,7 +822,7 @@ namespace ncc\Classes\ComposerExtension;
                     }
                 }
 
-                if(Functions::cbool(Functions::getConfigurationProperty('composer.extension.display_authors')) && !is_null($composer_package->Authors) && count($composer_package->Authors) > 0)
+                if(Functions::cbool(!is_null($composer_package->Authors) && count($composer_package->Authors) > 0 && Functions::getConfigurationProperty('composer.extension.display_authors')))
                 {
                     Console::out(sprintf('Authors for package %s:', $composer_package->Name));
                     foreach($composer_package->Authors as $author)

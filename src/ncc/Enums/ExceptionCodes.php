@@ -49,11 +49,6 @@
         public const CONSTANT_READ_ONLY = -1709;
 
         /**
-         * @see InvalidVersionNumberException
-         */
-        public const INVALID_VERSION_NUMBER = -1711;
-
-        /**
          * @see ProjectAlreadyExistsException
          */
         public const PROJECT_ALREADY_EXISTS = -1713;
@@ -77,21 +72,6 @@
          * @see PackagePreparationFailedException
          */
         public const PACKAGE_PREPARATION_FAILED = -1720;
-
-        /**
-         * @see BuildConfigurationNotFoundException
-         */
-        public const BUILD_CONFIGURATION_NOT_FOUND = -1721;
-
-        /**
-         * @see InvalidProjectBuildConfiguration
-         */
-        public const INVALID_PROJECT_BUILD_CONFIGURATION = -1722;
-
-        /**
-         * @see InvalidPropertyValueException
-         */
-        public const INVALID_PROPERTY_VALUE = -1724;
 
         /**
          * @see BuildException
@@ -127,21 +107,6 @@
          * @see VersionNotFoundException
          */
         public const VERSION_NOT_FOUND = -1737;
-
-        /**
-         * @see UndefinedExecutionPolicyException
-         */
-        public const UNDEFINED_EXECUTION_POLICY = -1738;
-
-        /**
-         * @see InvalidExecutionPolicyName
-         */
-        public const INVALID_EXECUTION_POLICY_NAME = -1739;
-
-        /**
-         * @see ProjectConfigurationNotFoundException
-         */
-        public const PROJECT_CONFIGURATION_NOT_FOUND = -1740;
 
         /**
          * @see RunnerExecutionException
@@ -224,11 +189,6 @@
         public const PACKAGE_FETCH_EXCEPTION = -1765;
 
         /**
-         * @see InvalidDependencyConfiguration
-         */
-        public const INVALID_DEPENDENCY_CONFIGURATION = -1767;
-
-        /**
          * @see SymlinkException
          */
         public const SYMLINK_EXCEPTION = -1768;
@@ -256,15 +216,11 @@
             self::MALFORMED_JSON,
             self::RUNTIME,
             self::CONSTANT_READ_ONLY,
-            self::INVALID_VERSION_NUMBER,
             self::PROJECT_ALREADY_EXISTS,
             self::AUTOLOAD_GENERATOR,
             self::NO_UNITS_FOUND,
             self::INVALID_CONSTANT_NAME,
             self::PACKAGE_PREPARATION_FAILED,
-            self::BUILD_CONFIGURATION_NOT_FOUND,
-            self::INVALID_PROJECT_BUILD_CONFIGURATION,
-            self::INVALID_PROPERTY_VALUE,
             self::BUILD_EXCEPTION,
             self::PACKAGE_PARSING_EXCEPTION,
             self::PACKAGE_LOCK_EXCEPTION,
@@ -272,9 +228,6 @@
             self::COMPONENT_DECODE_EXCEPTION,
             self::IO_EXCEPTION,
             self::VERSION_NOT_FOUND,
-            self::UNDEFINED_EXECUTION_POLICY,
-            self::INVALID_EXECUTION_POLICY_NAME,
-            self::PROJECT_CONFIGURATION_NOT_FOUND,
             self::RUNNER_EXECUTION_EXCEPTION,
             self::NO_AVAILABLE_UNITS,
             self::PACKAGE_ALREADY_INSTALLED,
@@ -290,7 +243,6 @@
             self::NOT_SUPPORTED_EXCEPTION,
             self::ARCHIVE_EXCEPTION,
             self::PACKAGE_FETCH_EXCEPTION,
-            self::INVALID_DEPENDENCY_CONFIGURATION,
             self::SYMLINK_EXCEPTION,
             self::PATH_NOT_FOUND,
             self::GIT_EXCEPTION,

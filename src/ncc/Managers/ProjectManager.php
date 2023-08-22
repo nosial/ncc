@@ -29,7 +29,6 @@
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Classes\NccExtension\PackageCompiler;
     use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
@@ -37,7 +36,6 @@
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\ProjectAlreadyExistsException;
-    use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
@@ -71,10 +69,10 @@
          * Public Constructor
          *
          * @param string $path
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          */
         public function __construct(string $path)
         {
@@ -215,16 +213,16 @@
          * Attempts to load the project configuration
          *
          * @return void
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          */
         public function load(): void
         {
             if(!file_exists($this->project_file_path) && !is_file($this->project_file_path))
             {
-                throw new ProjectConfigurationNotFoundException('The project configuration file \'' . $this->project_file_path . '\' was not found');
+                throw new ConfigurationException('The project configuration file \'' . $this->project_file_path . '\' was not found');
             }
 
             $this->project_configuration = ProjectConfiguration::fromFile($this->project_file_path);
@@ -250,10 +248,10 @@
          * Returns the ProjectConfiguration object
          *
          * @return ProjectConfiguration
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          */
         public function getProjectConfiguration(): ProjectConfiguration
         {
@@ -282,13 +280,12 @@
          * @param string $build_configuration
          * @return string
          * @throws AccessDeniedException
-         * @throws BuildConfigurationNotFoundException
          * @throws BuildException
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
-         * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          * @throws NotSupportedException
+         * @throws PathNotFoundException
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {

@@ -32,13 +32,12 @@
     use ncc\Classes\PhpExtension\PhpCompiler;
     use ncc\CLI\Main;
     use ncc\Exceptions\AccessDeniedException;
-    use ncc\Exceptions\BuildConfigurationNotFoundException;
     use ncc\Exceptions\BuildException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\ProjectConfigurationNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
@@ -60,13 +59,12 @@
          * @param string $build_configuration
          * @return string
          * @throws AccessDeniedException
-         * @throws BuildConfigurationNotFoundException
          * @throws BuildException
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PathNotFoundException
-         * @throws ProjectConfigurationNotFoundException
          */
         public static function compile(ProjectManager $manager, string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
@@ -205,8 +203,8 @@
          * @param ProjectConfiguration $configuration
          * @param string $build_configuration
          * @return string
-         * @throws BuildConfigurationNotFoundException
          * @throws IOException
+         * @throws ConfigurationException
          */
         public static function writePackage(string $path, Package $package, ProjectConfiguration $configuration, string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
