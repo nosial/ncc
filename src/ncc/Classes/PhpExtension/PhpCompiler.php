@@ -32,7 +32,6 @@
     use ncc\Enums\DependencySourceType;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Classes\NccExtension\PackageCompiler;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
@@ -330,7 +329,6 @@
          * Executes the compile process in the correct order and returns the finalized Package object
          *
          * @return Package|null
-         * @throws AccessDeniedException
          * @throws BuildException
          * @throws IOException
          * @throws PathNotFoundException
@@ -474,10 +472,9 @@
 
         /**
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
-         * @throws RunnerExecutionException
          * @throws PathNotFoundException
+         * @throws RunnerExecutionException
          */
         public function compileExecutionPolicies(): void
         {

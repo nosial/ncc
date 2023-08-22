@@ -23,7 +23,7 @@
     namespace ncc\Classes\NccExtension;
 
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NoAvailableUnitsException;
     use ncc\Exceptions\PathNotFoundException;
@@ -41,17 +41,17 @@
          * @param string $version
          * @param ExecutionUnit $unit
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws IOException
          * @throws NoAvailableUnitsException
-         * @throws RunnerExecutionException
          * @throws PathNotFoundException
+         * @throws RunnerExecutionException
          */
         public static function temporaryExecute(string $package, string $version, ExecutionUnit $unit): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot temporarily execute a unit with insufficient permissions');
+                throw new AuthenticationException('Cannot temporarily execute a unit with insufficient permissions');
             }
 
             $ExecutionPointerManager = new ExecutionPointerManager();

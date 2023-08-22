@@ -22,7 +22,6 @@
 
     namespace ncc\CLI;
 
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\CliHelpSection;
     use ncc\Utilities\Console;
@@ -35,7 +34,6 @@
          *
          * @param $args
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public static function start($args): void

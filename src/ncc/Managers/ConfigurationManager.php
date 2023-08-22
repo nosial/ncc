@@ -26,7 +26,7 @@
 
     use Exception;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\ThirdParty\Symfony\Yaml\Yaml;
@@ -82,7 +82,6 @@
          * Saves the configuration file to disk
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public function save(): void
@@ -91,7 +90,7 @@
 
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot save configuration file, insufficient permissions');
+                throw new AuthenticationException('Cannot save configuration file, insufficient permissions');
             }
 
             if($this->configuration === null)
@@ -142,7 +141,6 @@
          * @param string $property
          * @param $value
          * @return bool
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public function updateProperty(string $property, $value): bool

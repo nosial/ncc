@@ -32,7 +32,6 @@
     use ncc\Enums\LogLevel;
     use ncc\Enums\Scopes;
     use ncc\CLI\Main;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ComposerDisabledException;
     use ncc\Exceptions\ComposerException;
@@ -79,7 +78,6 @@
          *
          * @param RemotePackageInput $packageInput
          * @return string
-         * @throws AccessDeniedException
          * @throws BuildException
          * @throws ComposerDisabledException
          * @throws ComposerException
@@ -119,7 +117,6 @@
          *
          * @param string $path
          * @return string
-         * @throws AccessDeniedException
          * @throws BuildException
          * @throws ComposerDisabledException
          * @throws ComposerException
@@ -194,15 +191,14 @@
         /**
          * @param string $composer_lock_path
          * @return array
-         * @throws AccessDeniedException
          * @throws BuildException
+         * @throws ConfigurationException
          * @throws IOException
          * @throws MalformedJsonException
+         * @throws NotSupportedException
          * @throws PackageNotFoundException
          * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
-         * @throws ConfigurationException
-         * @throws NotSupportedException
          */
         private static function compilePackages(string $composer_lock_path): array
         {

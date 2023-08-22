@@ -24,7 +24,6 @@
 
     use JsonException;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Managers\ConfigurationManager;
     use ncc\Objects\CliHelpSection;
@@ -40,7 +39,6 @@
          *
          * @param $args
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public static function start($args): void

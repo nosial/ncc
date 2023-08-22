@@ -27,7 +27,7 @@
     use Exception;
     use ncc\Enums\Scopes;
     use ncc\Enums\Versions;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Objects\Vault;
@@ -76,7 +76,6 @@
          * Constructs the store file if it doesn't exist on the system (First initialization)
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public function constructStore(): void
@@ -92,7 +91,7 @@
 
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot construct credentials store without system permissions');
+                throw new AuthenticationException('Cannot construct credentials store without system permissions');
             }
 
             $VaultObject = new Vault();
@@ -105,7 +104,6 @@
          * Loads the vault from the disk
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws RuntimeException
          */
@@ -139,7 +137,6 @@
          * Saves the vault to the disk
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public function saveVault(): void
@@ -148,7 +145,7 @@
 
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot save credentials store without system permissions');
+                throw new AuthenticationException('Cannot save credentials store without system permissions');
             }
 
             IO::fwrite($this->store_path, ZiProto::encode($this->vault->toArray()), 0744);

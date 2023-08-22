@@ -147,6 +147,7 @@ features.
  - Removed unused exception `ProjectConfigurationNotFoundException` in `\ncc\Exceptions` in favor of `ConfigurationException`
  - Removed unused exception `UndefinedExecutionPolicyExpection` in `\ncc\Exceptions` in favor of `ConfigurationException`
  - Removed unused exception `InvalidExecutionPolicyName` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `AccessDeniedException` in `\ncc\Exceptions` in favor of `AuthenticationException`
 
 
 

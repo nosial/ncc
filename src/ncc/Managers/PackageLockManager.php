@@ -26,7 +26,7 @@
 
     use Exception;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageLockException;
     use ncc\Objects\PackageLock;
@@ -117,7 +117,7 @@
          * Saves the PackageLock to disk
          *
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws PackageLockException
          */
         public function save(): void
@@ -132,7 +132,9 @@
             }
 
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
-                throw new AccessDeniedException('Cannot write to PackageLock, insufficient permissions');
+            {
+                throw new AuthenticationException('Cannot write to PackageLock, insufficient permissions');
+            }
 
             try
             {
@@ -161,7 +163,6 @@
          * Constructs the package lock file if it doesn't exist
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws PackageLockException
          */
         public function constructLockFile(): void

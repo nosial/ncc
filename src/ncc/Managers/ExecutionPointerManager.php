@@ -35,7 +35,7 @@
     use ncc\Classes\PythonExtension\Python2Runner;
     use ncc\Classes\PythonExtension\Python3Runner;
     use ncc\Classes\PythonExtension\PythonRunner;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NoAvailableUnitsException;
     use ncc\Exceptions\PathNotFoundException;
@@ -165,7 +165,6 @@
          * @param ExecutionUnit $unit
          * @param bool $temporary
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws RunnerExecutionException
          * @throws PathNotFoundException
@@ -174,7 +173,7 @@
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot add new ExecutionUnit \'' . $unit->execution_policy->name .'\' for ' . $package . ', insufficient permissions');
+                throw new AuthenticationException('Cannot add new ExecutionUnit \'' . $unit->execution_policy->name .'\' for ' . $package . ', insufficient permissions');
             }
 
             Console::outVerbose(sprintf('Adding new ExecutionUnit \'%s\' for %s', $unit->execution_policy->name, $package));
@@ -266,14 +265,13 @@
          * @param string $version
          * @param string $name
          * @return bool
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public function removeUnit(string $package, string $version, string $name): bool
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot remove ExecutionUnit \'' . $name .'\' for ' . $package . ', insufficient permissions');
+                throw new AuthenticationException('Cannot remove ExecutionUnit \'' . $name .'\' for ' . $package . ', insufficient permissions');
             }
 
             Console::outVerbose(sprintf('Removing ExecutionUnit \'%s\' for %s', $name, $package));
@@ -327,7 +325,6 @@
          * @param string $package
          * @param string $version
          * @return array
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public function getUnits(string $package, string $version): array
@@ -365,7 +362,6 @@
          * @param string $name
          * @param array $args
          * @return int
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws NoAvailableUnitsException
          * @throws RunnerExecutionException
@@ -520,7 +516,6 @@
          * @param Package $package
          * @param string $unit_name
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws NoAvailableUnitsException
          * @throws PathNotFoundException
@@ -581,7 +576,6 @@
          * @param ExitHandle $exit_handler
          * @param Process|null $process
          * @return bool
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws NoAvailableUnitsException
          * @throws RunnerExecutionException

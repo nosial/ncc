@@ -22,7 +22,6 @@
 
     namespace ncc\Classes\PerlExtension;
 
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\RunnerInterface;
@@ -38,9 +37,8 @@
          * @param string $path
          * @param ExecutionPolicy $policy
          * @return ExecutionUnit
-         * @throws PathNotFoundException
-         * @throws AccessDeniedException
          * @throws IOException
+         * @throws PathNotFoundException
          */
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
         {

@@ -26,7 +26,7 @@
 
     use Exception;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\SymlinkException;
     use ncc\Objects\SymlinkDictionary\SymlinkEntry;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
@@ -84,7 +84,7 @@
          * Loads the symlink dictionary from the file
          *
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws SymlinkException
          */
         public function load(): void
@@ -129,13 +129,15 @@
          *
          * @param bool $throw_exception
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws SymlinkException
          */
         private function save(bool $throw_exception=true): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
-                throw new AccessDeniedException('Insufficient Permissions to write to the system symlink dictionary');
+            {
+                throw new AuthenticationException('Insufficient Permissions to write to the system symlink dictionary');
+            }
 
             Console::outDebug(sprintf('saving symlink dictionary to %s', $this->SymlinkDictionaryPath));
 
@@ -201,16 +203,20 @@
          * @param string $package
          * @param string $unit
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws SymlinkException
          */
         public function add(string $package, string $unit='main'): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
-                throw new AccessDeniedException('Insufficient Permissions to add to the system symlink dictionary');
+            {
+                throw new AuthenticationException('Insufficient Permissions to add to the system symlink dictionary');
+            }
 
             if($this->exists($package))
+            {
                 $this->remove($package);
+            }
 
             $entry = new SymlinkEntry();
             $entry->Package = $package;
@@ -225,16 +231,20 @@
          *
          * @param string $package
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws SymlinkException
          */
         public function remove(string $package): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
-                throw new AccessDeniedException('Insufficient Permissions to remove from the system symlink dictionary');
+            {
+                throw new AuthenticationException('Insufficient Permissions to remove from the system symlink dictionary');
+            }
 
             if(!$this->exists($package))
+            {
                 return;
+            }
 
             foreach($this->SymlinkDictionary as $key => $entry)
             {
@@ -265,7 +275,7 @@
          *
          * @param string $package
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws SymlinkException
          */
         private function setAsRegistered(string $package): void
@@ -286,13 +296,15 @@
          * Syncs the symlink dictionary with the filesystem
          *
          * @return void
-         * @throws AccessDeniedException
+         * @throws AuthenticationException
          * @throws SymlinkException
          */
         public function sync(): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
-                throw new AccessDeniedException('Insufficient Permissions to sync the system symlink dictionary');
+            {
+                throw new AuthenticationException('Insufficient Permissions to sync the system symlink dictionary');
+            }
 
             $filesystem = new Filesystem();
             $execution_pointer_manager = new ExecutionPointerManager();

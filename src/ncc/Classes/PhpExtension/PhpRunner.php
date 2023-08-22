@@ -22,7 +22,6 @@
 
     namespace ncc\Classes\PhpExtension;
 
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\RunnerInterface;
@@ -36,7 +35,6 @@
          * @param string $path
          * @param ExecutionPolicy $policy
          * @return ExecutionUnit
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws PathNotFoundException
          */

@@ -38,7 +38,7 @@
     use ncc\Classes\NccExtension\PackageCompiler;
     use ncc\Classes\PhpExtension\PhpInstaller;
     use ncc\CLI\Main;
-    use ncc\Exceptions\AccessDeniedException;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MissingDependencyException;
@@ -103,7 +103,6 @@
          * @param Entry|null $entry
          * @param array $options
          * @return string
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws InstallationException
          * @throws MissingDependencyException
@@ -121,7 +120,7 @@
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Insufficient permission to install packages');
+                throw new AuthenticationException('Insufficient permission to install packages');
             }
 
             if(!file_exists($package_path) || !is_file($package_path) || !is_readable($package_path))
@@ -648,7 +647,6 @@
          * @param Entry|null $entry
          * @param array $options
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws InstallationException
          * @throws MissingDependencyException
@@ -889,7 +887,6 @@
          * @param string $package
          * @param string $version
          * @return void
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws PackageLockException
          * @throws PackageNotFoundException
@@ -900,7 +897,7 @@
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Insufficient permission to uninstall packages');
+                throw new AuthenticationException('Insufficient permission to uninstall packages');
             }
 
             $version_entry = $this->getPackageVersion($package, $version);
@@ -969,7 +966,6 @@
          *
          * @param string $package
          * @return void
-         * @throws AccessDeniedException
          * @throws PackageLockException
          * @throws PackageNotFoundException
          * @throws VersionNotFoundException
@@ -978,7 +974,7 @@
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Insufficient permission to uninstall packages');
+                throw new AuthenticationException('Insufficient permission to uninstall packages');
             }
 
             $package_entry = $this->getPackage($package);

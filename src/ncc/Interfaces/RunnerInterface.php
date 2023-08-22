@@ -22,7 +22,6 @@
 
     namespace ncc\Interfaces;
 
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
@@ -35,7 +34,6 @@
          * @param string $path
          * @param ExecutionPolicy $policy
          * @return ExecutionUnit
-         * @throws AccessDeniedException
          * @throws IOException
          */
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit;

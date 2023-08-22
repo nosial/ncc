@@ -29,7 +29,6 @@
     use Exception;
     use ncc\Enums\ComponentDataType;
     use ncc\Enums\ComponentFileExtensions;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ComponentChecksumException;
     use ncc\Exceptions\ComponentDecodeException;
     use ncc\Exceptions\IOException;

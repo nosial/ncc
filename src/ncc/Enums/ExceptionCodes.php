@@ -29,11 +29,6 @@
     final class ExceptionCodes
     {
         /**
-         * @see AccessDeniedException
-         */
-        public const ACCESS_DENIED = -1704;
-
-        /**
          * @see MalformedJsonException
          */
         public const MALFORMED_JSON = -1705;
@@ -212,7 +207,6 @@
          * All the exception codes from NCC
          */
         public const All = [
-            self::ACCESS_DENIED,
             self::MALFORMED_JSON,
             self::RUNTIME,
             self::CONSTANT_READ_ONLY,

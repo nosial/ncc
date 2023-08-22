@@ -39,7 +39,6 @@
     use ncc\Classes\PythonExtension\Python2Runner;
     use ncc\Classes\PythonExtension\Python3Runner;
     use ncc\Classes\PythonExtension\PythonRunner;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\ArchiveException;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\HttpException;
@@ -291,7 +290,6 @@
          * @param string $path
          * @param ExecutionPolicy $policy
          * @return ExecutionUnit
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
@@ -354,14 +352,13 @@
          * Initializes NCC files
          *
          * @return void
-         * @throws AccessDeniedException
          * @noinspection PhpRedundantOptionalArgumentInspection
          */
         public static function initializeFiles(): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AccessDeniedException('Cannot initialize NCC files, insufficient permissions');
+                throw new AuthenticationException('Cannot initialize NCC files, insufficient permissions');
             }
 
             Console::outVerbose('Initializing NCC files');

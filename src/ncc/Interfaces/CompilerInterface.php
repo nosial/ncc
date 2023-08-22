@@ -23,7 +23,6 @@
     namespace ncc\Interfaces;
 
     use ncc\Enums\Options\BuildConfigurationValues;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
@@ -52,7 +51,6 @@
          * Executes the compiler process in the correct order and returns the finalized Package object
          *
          * @return Package|null
-         * @throws AccessDeniedException
          * @throws BuildException
          * @throws PathNotFoundException
          * @throws IOException
@@ -63,7 +61,6 @@
          * Compiles the components of the package
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws PathNotFoundException
          * @throws IOException
          */
@@ -73,7 +70,6 @@
          * Compiles the resources of the package
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws PathNotFoundException
          * @throws IOException
          */
@@ -83,7 +79,6 @@
          * Compiles the execution policies of the package
          *
          * @return void
-         * @throws AccessDeniedException
          * @throws PathNotFoundException
          * @throws IOException
          */

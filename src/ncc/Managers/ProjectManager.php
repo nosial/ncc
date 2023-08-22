@@ -28,7 +28,6 @@
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Classes\NccExtension\PackageCompiler;
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
@@ -279,7 +278,6 @@
          *
          * @param string $build_configuration
          * @return string
-         * @throws AccessDeniedException
          * @throws BuildException
          * @throws ConfigurationException
          * @throws IOException

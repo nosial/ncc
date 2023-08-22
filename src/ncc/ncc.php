@@ -25,11 +25,9 @@
 
     namespace ncc;
     
-    use ncc\Exceptions\AccessDeniedException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RuntimeException;
     use ncc\Objects\NccVersionInformation;
     use ncc\Utilities\Functions;
 
@@ -52,7 +50,6 @@
          *
          * @param boolean $reload Indicates if the cached version is to be ignored and the version file to be reloaded and validated
          * @return NccVersionInformation
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws PathNotFoundException
          */
@@ -94,7 +91,6 @@
          * Initializes the NCC environment
          *
          * @return bool
-         * @throws AccessDeniedException
          * @throws IOException
          * @throws PathNotFoundException
          */
