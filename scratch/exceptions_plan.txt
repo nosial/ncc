@@ -17,8 +17,8 @@ ConfigurationException
     * INVALID_EXECUTION_POLICY_NAME
 
 AuthenticationException
-    ACCESS_DENIED
-    AUTHENTICATION_EXCEPTION
+    * ACCESS_DENIED
+    * AUTHENTICATION_EXCEPTION
 
 ResourceNotFoundException
     PROJECT_ALREADY_EXISTS
