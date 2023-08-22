@@ -16,6 +16,7 @@ features.
    `FileNotFoundException` in `\ncc\Exceptions`
  - Added a new interface class `BytecodeObjectInterface` which will be used to implement object types for compiled assets
  - Added new exception `GitException` in `\ncc\Exceptions` to replace all git related exceptions
+ - Added new exception `PackageException` in `\ncc\Exceptions` to replace all package related exceptions
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -148,6 +149,15 @@ features.
  - Removed unused exception `UndefinedExecutionPolicyExpection` in `\ncc\Exceptions` in favor of `ConfigurationException`
  - Removed unused exception `InvalidExecutionPolicyName` in `\ncc\Exceptions` (not used)
  - Removed unused exception `AccessDeniedException` in `\ncc\Exceptions` in favor of `AuthenticationException`
+ - Removed unused exception `HttpException` in `\ncc\Exceptions` in favor of `NetworkException`
+ - Removed unused exception `ComposerDisabledException` in `\ncc\Exceptions` in favor of `ComposerException`
+ - Removed unused exception `ComposerNotAvailable` in `\ncc\Exceptions` in favor of `ComposerException`
+ - Removed unused exception `InternalComposerNotAvailable` in `\ncc\Exceptions` in favor of `ComposerException`
+ - Removed unused exception `PackagePreperationFailedException` in `\ncc\Exceptions` in favor of `PackageException`
+ - Removed unused exception `PackageParsingException` in `\ncc\Exceptions` in favor of `PackageException`
+ - Removed unused exception `MissingDependencyException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `PackageAlreadyInstalledException` in `\ncc\Exceptions` in favor of `PackageException`
+ - Removed unused exception `PackageFetchException` in `\ncc\Exceptions` in favor of `PackageException`
 
 
 

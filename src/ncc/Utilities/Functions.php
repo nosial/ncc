@@ -41,9 +41,9 @@
     use ncc\Classes\PythonExtension\PythonRunner;
     use ncc\Exceptions\ArchiveException;
     use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\HttpException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
+    use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Managers\ConfigurationManager;
@@ -352,7 +352,7 @@
          * Initializes NCC files
          *
          * @return void
-         * @noinspection PhpRedundantOptionalArgumentInspection
+         * @throws AuthenticationException
          */
         public static function initializeFiles(): void
         {
@@ -599,7 +599,7 @@
          * @param Entry|null $entry
          * @return string
          * @throws AuthenticationException
-         * @throws HttpException
+         * @throws NetworkException
          */
         public static function downloadGitServiceFile(string $url, ?Entry $entry=null): string
         {

@@ -22,7 +22,6 @@
 
 namespace ncc\Interfaces;
 
-    use ncc\Exceptions\MissingDependencyException;
     use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\PackageNotFoundException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -37,7 +36,6 @@ namespace ncc\Interfaces;
          * @throws PackageNotFoundException
          * @throws VersionNotFoundException
          * @throws PackageLockException
-         * @throws MissingDependencyException
          */
         public static function import(VersionEntry $versionEntry, array $options=[]): bool;
     }

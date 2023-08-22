@@ -41,13 +41,10 @@
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MissingDependencyException;
     use ncc\Exceptions\NotSupportedException;
-    use ncc\Exceptions\PackageAlreadyInstalledException;
-    use ncc\Exceptions\PackageFetchException;
+    use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PackageLockException;
     use ncc\Exceptions\PackageNotFoundException;
-    use ncc\Exceptions\PackageParsingException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\SymlinkException;
@@ -103,18 +100,17 @@
          * @param Entry|null $entry
          * @param array $options
          * @return string
+         * @throws AuthenticationException
          * @throws IOException
          * @throws InstallationException
-         * @throws MissingDependencyException
          * @throws NotSupportedException
-         * @throws PackageAlreadyInstalledException
          * @throws PackageLockException
          * @throws PackageNotFoundException
-         * @throws PackageParsingException
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
          * @throws SymlinkException
          * @throws VersionNotFoundException
+         * @throws PackageException
          */
         public function install(string $package_path, ?Entry $entry=null, array $options=[]): string
         {
@@ -158,7 +154,7 @@
                 }
                 else
                 {
-                    throw new PackageAlreadyInstalledException('The package ' . $package->assembly->package . '=' . $package->assembly->version . ' is already installed');
+                    throw new PackageException('The package ' . $package->assembly->package . '=' . $package->assembly->version . ' is already installed');
                 }
             }
 
@@ -458,7 +454,7 @@
          * @return string
          * @throws InstallationException
          * @throws NotSupportedException
-         * @throws PackageFetchException
+         * @throws PackageException
          */
         public function fetchFromSource(string $source, ?Entry $entry=null): string
         {
@@ -466,12 +462,12 @@
 
             if($input->source === null)
             {
-                throw new PackageFetchException('No source specified');
+                throw new PackageException('No source specified');
             }
 
             if($input->package === null)
             {
-                throw new PackageFetchException('No package specified');
+                throw new PackageException('No package specified');
             }
 
             if($input->version === null)
@@ -494,7 +490,7 @@
                     }
                     catch (Exception $e)
                     {
-                        throw new PackageFetchException('Cannot fetch package from composer source, ' . $e->getMessage(), $e);
+                        throw new PackageException('Cannot fetch package from composer source, ' . $e->getMessage(), $e);
                     }
                 }
 
@@ -592,7 +588,7 @@
                     {
                         if($exception === null)
                         {
-                            $exception = new PackageFetchException($e->getMessage(), $e);
+                            $exception = new PackageException($e->getMessage(), $e);
                         }
                         else
                         {
@@ -601,19 +597,19 @@
                                 continue;
                             }
 
-                            $exception = new PackageFetchException($e->getMessage(), $exception);
+                            $exception = new PackageException($e->getMessage(), $exception);
                         }
                     }
                 }
                 else
                 {
-                    $exception = new PackageFetchException('Cannot fetch package from remote source, no assets found');
+                    $exception = new PackageException('Cannot fetch package from remote source, no assets found');
                 }
 
                 throw $exception;
             }
 
-            throw new PackageFetchException(sprintf('Unknown remote source type %s', $remote_source_type));
+            throw new PackageException(sprintf('Unknown remote source type %s', $remote_source_type));
         }
 
         /**
@@ -647,14 +643,13 @@
          * @param Entry|null $entry
          * @param array $options
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
          * @throws InstallationException
-         * @throws MissingDependencyException
          * @throws NotSupportedException
-         * @throws PackageAlreadyInstalledException
+         * @throws PackageException
          * @throws PackageLockException
          * @throws PackageNotFoundException
-         * @throws PackageParsingException
          * @throws PathNotFoundException
          * @throws RunnerExecutionException
          * @throws SymlinkException
@@ -887,6 +882,7 @@
          * @param string $package
          * @param string $version
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
          * @throws PackageLockException
          * @throws PackageNotFoundException
@@ -966,6 +962,7 @@
          *
          * @param string $package
          * @return void
+         * @throws AuthenticationException
          * @throws PackageLockException
          * @throws PackageNotFoundException
          * @throws VersionNotFoundException

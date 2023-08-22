@@ -35,8 +35,8 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PackageLockException;
-    use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RunnerExecutionException;
     use ncc\Exceptions\VersionNotFoundException;
@@ -86,8 +86,8 @@
          *
          * @param string $build_configuration
          * @return void
-         * @throws PackagePreparationFailedException
          * @throws ConfigurationException
+         * @throws PackageException
          */
         public function prepare(string $build_configuration=BuildConfigurationValues::DEFAULT): void
         {
@@ -98,7 +98,7 @@
             }
             catch (Exception $e)
             {
-                throw new PackagePreparationFailedException($e->getMessage(), $e);
+                throw new PackageException($e->getMessage(), $e);
             }
 
             // Select the build configuration
@@ -146,7 +146,7 @@
             }
             catch (Exception $e)
             {
-                throw new PackagePreparationFailedException('Cannot unset flag \'FOLLOW_SYMLINKS\' in DirectoryScanner, ' . $e->getMessage(), $e);
+                throw new PackageException('Cannot unset flag \'FOLLOW_SYMLINKS\' in DirectoryScanner, ' . $e->getMessage(), $e);
             }
 
             // Include file components that can be compiled
@@ -190,7 +190,7 @@
                     Console::outVerbose('No components found');
                 }
 
-                // Clear previous excludes and includes
+                // Clear previously excludes and includes
                 $DirectoryScanner->setExcludes();
                 $DirectoryScanner->setIncludes();
 
@@ -296,11 +296,11 @@
                             }
                             catch (VersionNotFoundException $e)
                             {
-                                throw new PackagePreparationFailedException('Static linking not possible, cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name, $e);
+                                throw new PackageException('Static linking not possible, cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name, $e);
                             }
                             catch (PackageLockException $e)
                             {
-                                throw new PackagePreparationFailedException('Static linking not possible, cannot find package lock for dependency ' . $dependency->Name, $e);
+                                throw new PackageException('Static linking not possible, cannot find package lock for dependency ' . $dependency->Name, $e);
                             }
 
                             break;

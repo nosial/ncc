@@ -26,7 +26,7 @@ namespace ncc\Classes;
     use ncc\Enums\HttpRequestType;
     use ncc\Enums\LogLevel;
     use ncc\CLI\Main;
-    use ncc\Exceptions\HttpException;
+    use ncc\Exceptions\NetworkException;
     use ncc\Objects\HttpRequest;
     use ncc\Objects\HttpResponse;
     use ncc\Objects\HttpResponseCache;
@@ -123,7 +123,7 @@ namespace ncc\Classes;
          * @param HttpRequest $httpRequest
          * @param bool $cache
          * @return HttpResponse
-         * @throws HttpException
+         * @throws NetworkException
          */
         public static function request(HttpRequest $httpRequest, bool $cache=false): HttpResponse
         {
@@ -158,7 +158,7 @@ namespace ncc\Classes;
             {
                 $error = curl_error($curl);
                 curl_close($curl);
-                throw new HttpException($error);
+                throw new NetworkException($error);
             }
 
             $headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
@@ -193,7 +193,7 @@ namespace ncc\Classes;
          * @param HttpRequest $httpRequest
          * @param string $path
          * @return void
-         * @throws HttpException
+         * @throws NetworkException
          */
         public static function download(HttpRequest $httpRequest, string $path): void
         {
@@ -208,7 +208,7 @@ namespace ncc\Classes;
             {
                 $error = curl_error($curl);
                 curl_close($curl);
-                throw new HttpException($error);
+                throw new NetworkException($error);
             }
 
             curl_close($curl);

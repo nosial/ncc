@@ -64,19 +64,9 @@
         public const INVALID_CONSTANT_NAME = -1719;
 
         /**
-         * @see PackagePreparationFailedException
-         */
-        public const PACKAGE_PREPARATION_FAILED = -1720;
-
-        /**
          * @see BuildException
          */
         public const BUILD_EXCEPTION = -1727;
-
-        /**
-         * @see PackageParsingException
-         */
-        public const PACKAGE_PARSING_EXCEPTION = -1728;
 
         /**
          * @see PackageLockException
@@ -114,29 +104,9 @@
         public const NO_AVAILABLE_UNITS = -1742;
 
         /**
-         * @see PackageAlreadyInstalledException
-         */
-        public const PACKAGE_ALREADY_INSTALLED = -1744;
-
-        /**
          * @see PackageNotFoundException
          */
         public const PACKAGE_NOT_FOUND = -1745;
-
-        /**
-         * @see ComposerDisabledException
-         */
-        public const COMPOSER_DISABLED_EXCEPTION = -1746;
-
-        /**
-         * @see InternalComposerNotAvailableException
-         */
-        public const INTERNAL_COMPOSER_NOT_AVAILABLE = -1747;
-
-        /**
-         * @see ComposerNotAvailableException
-         */
-        public const COMPOSER_NOT_AVAILABLE = -1748;
 
         /**
          * @see ComposerException
@@ -147,16 +117,6 @@
          * @see UserAbortedOperationException
          */
         public const USER_ABORTED_OPERATION = -1750;
-
-        /**
-         * @see MissingDependencyException
-         */
-        public const MISSING_DEPENDENCY = -1751;
-
-        /**
-         * @see HttpException
-         */
-        public const HTTP_EXCEPTION = -1752;
 
         /**
          * @see ImportException
@@ -179,11 +139,6 @@
         public const ARCHIVE_EXCEPTION = -1764;
 
         /**
-         * @see PackageFetchException
-         */
-        public const PACKAGE_FETCH_EXCEPTION = -1765;
-
-        /**
          * @see SymlinkException
          */
         public const SYMLINK_EXCEPTION = -1768;
@@ -204,6 +159,16 @@
         public const CONFIGURATION_EXCEPTION = -1772;
 
         /**
+         * @see PackageException
+         */
+        public const PACKAGE_EXCEPTION = -1773;
+
+        /**
+         * @see NetworkException
+         */
+        public const NETWORK_EXCEPTION = -1774;
+
+        /**
          * All the exception codes from NCC
          */
         public const All = [
@@ -214,9 +179,7 @@
             self::AUTOLOAD_GENERATOR,
             self::NO_UNITS_FOUND,
             self::INVALID_CONSTANT_NAME,
-            self::PACKAGE_PREPARATION_FAILED,
             self::BUILD_EXCEPTION,
-            self::PACKAGE_PARSING_EXCEPTION,
             self::PACKAGE_LOCK_EXCEPTION,
             self::INSTALLATION_EXCEPTION,
             self::COMPONENT_DECODE_EXCEPTION,
@@ -224,22 +187,17 @@
             self::VERSION_NOT_FOUND,
             self::RUNNER_EXECUTION_EXCEPTION,
             self::NO_AVAILABLE_UNITS,
-            self::PACKAGE_ALREADY_INSTALLED,
             self::PACKAGE_NOT_FOUND,
-            self::COMPOSER_DISABLED_EXCEPTION,
-            self::INTERNAL_COMPOSER_NOT_AVAILABLE,
-            self::COMPOSER_NOT_AVAILABLE,
             self::COMPOSER_EXCEPTION,
             self::USER_ABORTED_OPERATION,
-            self::MISSING_DEPENDENCY,
-            self::HTTP_EXCEPTION,
             self::AUTHENTICATION_EXCEPTION,
             self::NOT_SUPPORTED_EXCEPTION,
             self::ARCHIVE_EXCEPTION,
-            self::PACKAGE_FETCH_EXCEPTION,
             self::SYMLINK_EXCEPTION,
             self::PATH_NOT_FOUND,
             self::GIT_EXCEPTION,
-            self::CONFIGURATION_EXCEPTION
+            self::CONFIGURATION_EXCEPTION,
+            self::PACKAGE_EXCEPTION,
+            self::NETWORK_EXCEPTION
         ];
     }

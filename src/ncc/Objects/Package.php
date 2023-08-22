@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -29,7 +29,7 @@
     use ncc\Enums\PackageStructureVersions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PackageParsingException;
+    use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\Package\Component;
@@ -243,7 +243,7 @@
          *
          * @param string $path
          * @return Package
-         * @throws PackageParsingException
+         * @throws PackageException
          * @throws PathNotFoundException
          */
         public static function load(string $path): Package
@@ -259,7 +259,7 @@
 
             if(stripos($header, 'NCC_PACKAGE') === 0)
             {
-                throw new PackageParsingException('The package \'' . $path . '\' does not appear to be a valid NCC Package (Missing Header)');
+                throw new PackageException(sprintf("The package '%s' does not appear to be a valid NCC Package (Missing Header)", $path));
             }
 
             // Extract the package structure version
@@ -267,7 +267,7 @@
 
             if(!in_array($package_structure_version, PackageStructureVersions::ALL))
             {
-                throw new PackageParsingException('The package \'' . $path . '\' has a package structure version of ' . $package_structure_version . ' which is not supported by this version NCC');
+                throw new PackageException(sprintf("The package '%s' does not appear to be a valid NCC Package (Unsupported Package Structure Version)", $path));
             }
 
             // Extract the package encoding type and package type
@@ -306,7 +306,7 @@
                     break;
 
                 default:
-                    throw new PackageParsingException('Cannot determine the encoding type for the package \'' . $path . '\' (Got ' . $encoding_type . ')');
+                    throw new PackageException(sprintf("The package '%s' does not appear to be a valid NCC Package (Unsupported Encoding Type)", $path));
             }
 
             // Determine the package type
@@ -328,7 +328,7 @@
                     break;
 
                 default:
-                    throw new PackageParsingException('Cannot determine the package type for the package \'' . $path . '\' (Got ' . $package_type . ')');
+                    throw new PackageException(sprintf("The package '%s' does not appear to be a valid NCC Package (Unsupported Package Type)", $path));
             }
 
             // Assuming all is good, load the entire fire into memory and parse its contents
@@ -338,7 +338,7 @@
             }
             catch(Exception $e)
             {
-                throw new PackageParsingException('Cannot decode the contents of the package \'' . $path . '\', invalid encoding or the package is corrupted, ' . $e->getMessage(), $e);
+                throw new PackageException(sprintf("The package '%s' does not appear to be a valid NCC Package (Invalid Package Contents)", $path), $e);
             }
 
             $package->magic_bytes = $magic_bytes;

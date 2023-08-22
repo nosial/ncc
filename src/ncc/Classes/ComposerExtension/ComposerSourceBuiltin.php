@@ -33,17 +33,14 @@
     use ncc\Enums\Scopes;
     use ncc\CLI\Main;
     use ncc\Exceptions\BuildException;
-    use ncc\Exceptions\ComposerDisabledException;
     use ncc\Exceptions\ComposerException;
-    use ncc\Exceptions\ComposerNotAvailableException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\InternalComposerNotAvailableException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PackageNotFoundException;
-    use ncc\Exceptions\PackagePreparationFailedException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Exceptions\UserAbortedOperationException;
     use ncc\Interfaces\ServiceSourceInterface;
@@ -79,16 +76,13 @@
          * @param RemotePackageInput $packageInput
          * @return string
          * @throws BuildException
-         * @throws ComposerDisabledException
          * @throws ComposerException
-         * @throws ComposerNotAvailableException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws InternalComposerNotAvailableException
          * @throws MalformedJsonException
          * @throws NotSupportedException
+         * @throws PackageException
          * @throws PackageNotFoundException
-         * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
          * @throws RuntimeException
          * @throws UserAbortedOperationException
@@ -118,16 +112,13 @@
          * @param string $path
          * @return string
          * @throws BuildException
-         * @throws ComposerDisabledException
          * @throws ComposerException
-         * @throws ComposerNotAvailableException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws InternalComposerNotAvailableException
          * @throws MalformedJsonException
          * @throws NotSupportedException
+         * @throws PackageException
          * @throws PackageNotFoundException
-         * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
          * @throws UserAbortedOperationException
          */
@@ -196,8 +187,8 @@
          * @throws IOException
          * @throws MalformedJsonException
          * @throws NotSupportedException
+         * @throws PackageException
          * @throws PackageNotFoundException
-         * @throws PackagePreparationFailedException
          * @throws PathNotFoundException
          */
         private static function compilePackages(string $composer_lock_path): array
@@ -519,11 +510,8 @@
          * @param string $package
          * @param string|null $version
          * @return string
-         * @throws ComposerDisabledException
          * @throws ComposerException
-         * @throws ComposerNotAvailableException
          * @throws IOException
-         * @throws InternalComposerNotAvailableException
          * @throws PathNotFoundException
          * @throws UserAbortedOperationException
          */
@@ -592,9 +580,7 @@
          * Attempts to find the composer path to use that is currently configured
          *
          * @return string
-         * @throws ComposerDisabledException
-         * @throws ComposerNotAvailableException
-         * @throws InternalComposerNotAvailableException
+         * @throws ComposerException
          */
         private static function getComposerPath(): string
         {
@@ -604,7 +590,7 @@
             $internal_composer_enabled = Functions::getConfigurationProperty('composer.enable_internal_composer');
             if ($composer_enabled !== null && $composer_enabled === false)
             {
-                throw new ComposerDisabledException('Composer is disabled by the configuration `composer.enabled`');
+                throw new ComposerException('Composer is disabled by the configuration `composer.enabled`');
             }
 
             $config_property = Functions::getConfigurationProperty('composer.executable_path');
@@ -617,7 +603,7 @@
             {
                 if (!file_exists(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'))
                 {
-                    throw new InternalComposerNotAvailableException(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar');
+                    throw new ComposerException(NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar');
                 }
 
                 Console::outDebug(sprintf('using composer path from NCC_EXEC_LOCATION: %s', NCC_EXEC_LOCATION . DIRECTORY_SEPARATOR . 'composer.phar'));
@@ -637,7 +623,7 @@
                 }
             }
 
-            throw new ComposerNotAvailableException('No composer executable path is configured');
+            throw new ComposerException('No composer executable path is configured');
         }
 
         /**
@@ -683,7 +669,7 @@
          * @return ProjectConfiguration
          * @throws IOException
          * @throws MalformedJsonException
-         * @throws PackagePreparationFailedException
+         * @throws PackageException
          * @throws PathNotFoundException
          */
         private static function convertProject(string $package_path, array $version_map, ?ComposerJson $composer_package=null): ProjectConfiguration
@@ -756,7 +742,7 @@
                 }
                 catch (Exception $e)
                 {
-                    throw new PackagePreparationFailedException('Cannot unset flag \'FOLLOW_SYMLINKS\' in DirectoryScanner, ' . $e->getMessage(), $e);
+                    throw new PackageException('Cannot unset flag \'FOLLOW_SYMLINKS\' in DirectoryScanner, ' . $e->getMessage(), $e);
                 }
 
                 // Include file components that can be compiled
