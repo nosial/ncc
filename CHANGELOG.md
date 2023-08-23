@@ -115,6 +115,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Updated `\ncc\Classes > GitClient > checkout()` to throw `GitException` instead of `GitCheckoutException`
  - Corrected code-smell and code style issues in `\ncc\Objects > PackageLock`
  - Corrected code-smell and code style issues in `\ncc\Classes\PhpExtension > PhpRuntime`
+ - Updated class `\ncc\Objects\ProjectConfiguration > Dependency` to use method calls rather than direct property access
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

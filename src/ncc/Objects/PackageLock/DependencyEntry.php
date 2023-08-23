@@ -47,8 +47,8 @@
         {
             if($dependency !== null)
             {
-                $this->PackageName = $dependency->name;
-                $this->Version = $dependency->version;
+                $this->PackageName = $dependency->getName();
+                $this->Version = $dependency->getVersion();
             }
         }
 

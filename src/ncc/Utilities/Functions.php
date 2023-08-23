@@ -118,11 +118,11 @@
          *
          * @param string $path
          * @param int $flags
-         * @return mixed
+         * @return array
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public static function loadJsonFile(string $path, int $flags=0): mixed
+        public static function loadJsonFile(string $path, int $flags=0): array
         {
             if(!file_exists($path))
             {
@@ -137,10 +137,10 @@
          *
          * @param string $json
          * @param int $flags
-         * @return mixed
+         * @return array
          * @throws IOException
          */
-        public static function loadJson(string $json, int $flags=0): mixed
+        public static function loadJson(string $json, int $flags=0): array
         {
             try
             {
@@ -184,6 +184,7 @@
          * @param string $path
          * @param int $flags
          * @return void
+         * @throws IOException
          */
         public static function encodeJsonFile(mixed $value, string $path, int $flags=0): void
         {

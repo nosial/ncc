@@ -282,7 +282,7 @@ namespace ncc\Utilities;
          */
         public static function pathName(string $input): bool
         {
-            if(strlen($input) === 0)
+            if($input === '')
             {
                 return false;
             }
@@ -298,5 +298,21 @@ namespace ncc\Utilities;
             }
 
             return true;
+        }
+
+        /***
+         * Returns True if the given remote package input is valid
+         *
+         * @param string $input
+         * @return bool
+         */
+        public static function remotePackageInput(string $input): bool
+        {
+            if(preg_match(RegexPatterns::REMOTE_PACKAGE, $input))
+            {
+                return true;
+            }
+
+            return false;
         }
     }

@@ -259,30 +259,31 @@
                 }
 
                 Console::outVerbose('Scanning for dependencies... ');
+                /** @var \ncc\Objects\ProjectConfiguration\Dependency $dependency */
                 foreach($selected_dependencies as $dependency)
                 {
-                    Console::outVerbose(sprintf('processing dependency %s', $dependency->Name));
-                    switch($dependency->SourceType)
+                    Console::outVerbose(sprintf('processing dependency %s', $dependency->getName()));
+                    switch($dependency->getSourceType())
                     {
                         case DependencySourceType::STATIC:
 
                             try
                             {
-                                $out_path = $lib_path . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->Name, $dependency->Version);
+                                $out_path = $lib_path . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->getName(), $dependency->getVersion());
 
-                                $package = $package_lock_manager->getPackageLock()?->getPackage($dependency->Name);
+                                $package = $package_lock_manager->getPackageLock()?->getPackage($dependency->getName());
                                 if($package === null)
                                 {
-                                    throw new IOException('Cannot find package lock for dependency ' . $dependency->Name);
+                                    throw new IOException('Cannot find package lock for dependency ' . $dependency->getName());
                                 }
 
-                                $version = $package->getVersion($dependency->Version);
+                                $version = $package->getVersion($dependency->getVersion());
                                 if($version === null)
                                 {
-                                    throw new OperationException('Cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name);
+                                    throw new OperationException('Cannot find version ' . $dependency->getVersion() . ' for dependency ' . $dependency->getName());
                                 }
 
-                                Console::outDebug(sprintf('copying shadow package %s=%s to %s', $dependency->Name, $dependency->Version, $out_path));
+                                Console::outDebug(sprintf('copying shadow package %s=%s to %s', $dependency->getName(), $dependency->getVersion(), $out_path));
 
                                 if(!$filesystem->exists($lib_path))
                                 {
@@ -290,12 +291,12 @@
                                 }
 
                                 $filesystem->copy($version->Location, $out_path);
-                                $dependency->Source = 'libs' . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->Name, $dependency->Version);
+                                $dependency->Source = 'libs' . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->getName(), $dependency->getVersion());
 
                             }
                             catch (IOException $e)
                             {
-                                throw new PackageException('Static linking not possible, cannot find package lock for dependency ' . $dependency->Name, $e);
+                                throw new PackageException('Static linking not possible, cannot find package lock for dependency ' . $dependency->getName(), $e);
                             }
 
                             break;
@@ -324,9 +325,10 @@
          * Executes the compile process in the correct order and returns the finalized Package object
          *
          * @return Package|null
-         * @throws BuildException
-         * @throws IOException
-         * @throws PathNotFoundException
+         * @throws \ncc\Exceptions\BuildException
+         * @throws \ncc\Exceptions\IOException
+         * @throws \ncc\Exceptions\NotSupportedException
+         * @throws \ncc\Exceptions\PathNotFoundException
          */
         public function build(): ?Package
         {
@@ -466,8 +468,9 @@
 
         /**
          * @return void
-         * @throws IOException
-         * @throws PathNotFoundException
+         * @throws \ncc\Exceptions\IOException
+         * @throws \ncc\Exceptions\NotSupportedException
+         * @throws \ncc\Exceptions\PathNotFoundException
          */
         public function compileExecutionPolicies(): void
         {

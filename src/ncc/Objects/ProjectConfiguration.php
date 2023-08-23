@@ -365,7 +365,7 @@
          * @param string $path
          * @param bool $bytecode
          * @return void
-         * @noinspection PhpUnused
+         * @throws IOException
          */
         public function toFile(string $path, bool $bytecode=false): void
         {
@@ -481,10 +481,30 @@
         {
             $object = new self();
 
-            $object->project = Project::fromArray(Functions::array_bc($data, 'project'));
-            $object->assembly = Assembly::fromArray(Functions::array_bc($data, 'assembly'));
-            $object->build = Build::fromArray(Functions::array_bc($data, 'build'));
-            $object->installer = Installer::fromArray(Functions::array_bc($data, 'installer'));
+            $object->project = Functions::array_bc($data, 'project');
+            if($object->project !== null)
+            {
+                $object->project = Project::fromArray($object->project);
+            }
+
+            $object->assembly = Functions::array_bc($data, 'assembly');
+            if($object->assembly !== null)
+            {
+                $object->assembly = Assembly::fromArray($object->assembly);
+            }
+
+
+            $object->build = Functions::array_bc($data, 'build');
+            if($object->build !== null)
+            {
+                $object->build = Build::fromArray($object->build);
+            }
+
+            $object->installer = Functions::array_bc($data, 'installer');
+            if($object->installer !== null)
+            {
+                $object->installer = Installer::fromArray($object->installer);
+            }
 
             $execution_policies = Functions::array_bc($data, 'execution_policies');
             if(!is_null($execution_policies))

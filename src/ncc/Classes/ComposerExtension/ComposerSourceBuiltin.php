@@ -354,10 +354,10 @@
                     }
 
                     $dependency = new ProjectConfiguration\Dependency();
-                    $dependency->name = $package_name;
-                    $dependency->source_type = DependencySourceType::LOCAL;
-                    $dependency->version = self::versionMap($item->PackageName, $version_map);
-                    $dependency->source = $package_name . '.ncc';
+                    $dependency->setName($package_name);
+                    $dependency->setSourceType(DependencySourceType::LOCAL);
+                    $dependency->setVersion(self::versionMap($item->PackageName, $version_map));
+                    $dependency->setSource($package_name . '.ncc');
                     $project_configuration->build->addDependency($dependency);
                 }
             }

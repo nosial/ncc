@@ -36,32 +36,108 @@
     class Dependency implements BytecodeObjectInterface
     {
         /**
-         * The name of the dependency
-         *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
-         * Optional. The type of source from where ncc can fetch the dependency from
-         *
          * @var string|null
          */
-        public $source_type;
+        private $source_type;
 
         /**
-         * Optional. The actual source where NCC can fetch the dependency from
-         *
          * @var string|null
          */
-        public $source;
+        private $source;
+
+        /**
+         * @var string|null
+         */
+        private $version;
+
+        /**
+         * Returns the name of the dependency
+         *
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * Sets the name of the dependency
+         *
+         * @param string $name
+         * @return void
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * Optional. Returns the type of source from where ncc can fetch the dependency from
+         *
+         * @return string|null
+         */
+        public function getSourceType(): ?string
+        {
+            return $this->source_type;
+        }
+
+        /**
+         * Sets the type of source from where ncc can fetch the dependency from
+         *
+         * @param string|null $source_type
+         * @return void
+         */
+        public function setSourceType(?string $source_type): void
+        {
+            $this->source_type = $source_type;
+        }
+
+        /**
+         * Optional. Returns The actual source where NCC can fetch the dependency from
+         *
+         * @return string|null
+         */
+        public function getSource(): ?string
+        {
+            return $this->source;
+        }
+
+        /**
+         * Sets the actual source where NCC can fetch the dependency from
+         *
+         * @param string|null $source
+         * @return void
+         */
+        public function setSource(?string $source): void
+        {
+            $this->source = $source;
+        }
 
         /**
          * Optional. The required version of the dependency or "latest"
          *
-         * @var string|null
+         * @return string
          */
-        public $version;
+        public function getVersion(): string
+        {
+            return $this->version ?? 'latest';
+        }
+
+        /**
+         * Returns the required version of the dependency or null if no version is required
+         *
+         * @param string|null $version
+         * @return void
+         */
+        public function setVersion(?string $version): void
+        {
+            $this->version = $version;
+        }
 
         /**
          * Validates the dependency configuration

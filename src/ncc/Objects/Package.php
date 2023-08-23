@@ -133,9 +133,9 @@
         {
             foreach($this->dependencies as $dep)
             {
-                if($dep->name === $dependency->name)
+                if($dep->getName() === $dependency->getName())
                 {
-                    $this->removeDependency($dep->name);
+                    $this->removeDependency($dep->getName());
                     break;
                 }
             }
@@ -153,7 +153,7 @@
         {
             foreach($this->dependencies as $key => $dep)
             {
-                if($dep->name === $name)
+                if($dep->getName() === $name)
                 {
                     unset($this->dependencies[$key]);
                     return;

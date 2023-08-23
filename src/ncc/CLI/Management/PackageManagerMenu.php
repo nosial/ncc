@@ -36,6 +36,7 @@
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Resolver;
+    use ncc\Utilities\Validate;
 
     class PackageManagerMenu
     {
@@ -395,14 +396,21 @@
                 }
             }
 
-            $path = $package;
-            $parsed_source = new RemotePackageInput($path);
 
-            if($parsed_source->vendor !== null && $parsed_source->package !== null && $parsed_source->source !== null)
+            if(Validate::remotePackageInput($package))
             {
                 try
                 {
-                    $path = $package_manager->fetchFromSource($parsed_source->toString(), $credential);
+                    $parsed_source = new RemotePackageInput($package);
+                    if($parsed_source->vendor !== null && $parsed_source->package !== null && $parsed_source->source !== null)
+                    {
+                        $package_path = realpath($package_manager->fetchFromSource($parsed_source->toString(), $credential));
+                    }
+                    else
+                    {
+                        Console::outError(sprintf('Invalid remote package input: %s', $package), true, 1);
+                        return;
+                    }
                 }
                 catch (Exception $e)
                 {
@@ -410,10 +418,14 @@
                     return;
                 }
             }
-
-            if(!file_exists($path) || !is_file($path) || !is_readable($path))
+            else
             {
-                Console::outError('The specified file does not exist or is not readable', true, 1);
+                $package_path = realpath($package);
+            }
+
+            if($package_path === false)
+            {
+                Console::outError(sprintf('The specified file \'%s\' does not exist or is not readable', $package), true, 1);
             }
 
             $user_confirmation = false;
@@ -436,7 +448,7 @@
 
             try
             {
-                $package = Package::load($path);
+                $package = Package::load($package_path);
             }
             catch(Exception $e)
             {
@@ -503,7 +515,7 @@
                     {
                         try
                         {
-                            $dependency_package = $package_manager->getPackage($dependency->name);
+                            $dependency_package = $package_manager->getPackage($dependency->getName());
                         }
                         catch (IOException $e)
                         {
@@ -515,7 +527,7 @@
                         {
                             try
                             {
-                                $dependency_version = $dependency_package->getVersion($dependency->version);
+                                $dependency_version = $dependency_package->getVersion($dependency->getVersion());
                             }
                             catch (IOException $e)
                             {
@@ -533,8 +545,8 @@
                     if($require_dependency)
                     {
                         $dependencies[] = sprintf('  %s %s',
-                            Console::formatColor($dependency->name, ConsoleColors::GREEN),
-                            Console::formatColor($dependency->version, ConsoleColors::LIGHT_MAGENTA)
+                            Console::formatColor($dependency->getName(), ConsoleColors::GREEN),
+                            Console::formatColor($dependency->getVersion(), ConsoleColors::LIGHT_MAGENTA)
                         );
                     }
                 }
@@ -575,7 +587,7 @@
             {
                 try
                 {
-                    $package_manager->install($path, $credential, $installer_options);
+                    $package_manager->install($package_path, $credential, $installer_options);
                     Console::out(sprintf('Package %s installed successfully', $package->assembly->package));
                 }
                 catch(Exception $e)

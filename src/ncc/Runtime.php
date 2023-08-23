@@ -146,7 +146,7 @@
                 /** @var Dependency $dependency */
                 foreach($version_entry->Dependencies as $dependency)
                 {
-                    self::import($dependency->PackageName, $dependency->version, $options);
+                    self::import($dependency->PackageName, $dependency->getVersion(), $options);
                 }
             }
 

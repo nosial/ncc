@@ -159,15 +159,15 @@
                 foreach($package->dependencies as $dependency)
                 {
                     // Uninstall the dependency if the option Reinstall is passed on
-                    if(in_array(InstallPackageOptions::REINSTALL, $options, true) && $this->getPackageLockManager()?->getPackageLock()?->packageExists($dependency->name, $dependency->version))
+                    if(in_array(InstallPackageOptions::REINSTALL, $options, true) && $this->getPackageLockManager()?->getPackageLock()?->packageExists($dependency->getName(), $dependency->getVersion()))
                     {
-                        if($dependency->version === null)
+                        if($dependency->getVersion() === 'latest')
                         {
-                            $this->uninstallPackage($dependency->name);
+                            $this->uninstallPackage($dependency->getName());
                         }
                         else
                         {
-                            $this->uninstallPackageVersion($dependency->name, $dependency->version);
+                            $this->uninstallPackageVersion($dependency->getName(), $dependency->getVersion());
                         }
                     }
 
@@ -642,67 +642,67 @@
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
-            if(RuntimeCache::get(sprintf('dependency_installed.%s=%s', $dependency->name, $dependency->version ?? 'null')))
+            if(RuntimeCache::get(sprintf('dependency_installed.%s=%s', $dependency->getName(), $dependency->getVersion())))
             {
-                Console::outDebug(sprintf('dependency %s=%s already processed, skipping', $dependency->name, $dependency->version ?? 'null'));
+                Console::outDebug(sprintf('dependency %s=%s already processed, skipping', $dependency->getName(), $dependency->getVersion()));
                 return;
             }
 
-            Console::outVerbose('processing dependency ' . $dependency->name . ' (' . $dependency->version . ')');
-            $dependent_package = $this->getPackage($dependency->name);
+            Console::outVerbose('processing dependency ' . $dependency->getVersion() . ' (' . $dependency->getVersion() . ')');
+            $dependent_package = $this->getPackage($dependency->getName());
             $dependency_met = false;
 
-            if ($dependent_package !== null && $dependency->version !== null && Validate::version($dependency->version))
+            if ($dependent_package !== null && $dependency->getVersion() !== null && Validate::version($dependency->getVersion()))
             {
                 Console::outDebug('dependency has version constraint, checking if package is installed');
-                $dependent_version = $this->getPackageVersion($dependency->name, $dependency->version);
+                $dependent_version = $this->getPackageVersion($dependency->getName(), $dependency->getVersion());
                 if ($dependent_version !== null)
                 {
                     $dependency_met = true;
                 }
             }
-            elseif ($dependent_package !== null && $dependency->version === null)
+            elseif ($dependent_package !== null && $dependency->getVersion() === null)
             {
-                Console::outDebug(sprintf('dependency %s has no version specified, assuming dependency is met', $dependency->name));
+                Console::outDebug(sprintf('dependency %s has no version specified, assuming dependency is met', $dependency->getName()));
                 $dependency_met = true;
             }
 
             Console::outDebug('dependency met: ' . ($dependency_met ? 'true' : 'false'));
 
-            if ($dependency->source_type !== null && !$dependency_met)
+            if ($dependency->getSourceType() !== null && !$dependency_met)
             {
-                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->name, $dependency->version, $package->assembly->package, $package->assembly->version));
-                switch ($dependency->source_type)
+                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->getName(), $dependency->getVersion(), $package->assembly->package, $package->assembly->version));
+                switch ($dependency->getSourceType())
                 {
                     case DependencySourceType::LOCAL:
-                        Console::outDebug('installing from local source ' . $dependency->source);
+                        Console::outDebug('installing from local source ' . $dependency->getSource());
                         $basedir = dirname($package_path);
 
-                        if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->source))
+                        if (!file_exists($basedir . DIRECTORY_SEPARATOR . $dependency->getSourceType()))
                         {
-                            throw new PathNotFoundException($basedir . DIRECTORY_SEPARATOR . $dependency->source);
+                            throw new PathNotFoundException($basedir . DIRECTORY_SEPARATOR . $dependency->getSource());
                         }
 
-                        $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->source, null, $options);
-                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->name, $dependency->version), true);
+                        $this->install($basedir . DIRECTORY_SEPARATOR . $dependency->getSource(), null, $options);
+                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->getName(), $dependency->getVersion()), true);
                         break;
 
                     case DependencySourceType::STATIC:
-                        throw new PackageException('Static linking not possible, package ' . $dependency->name . ' is not installed');
+                        throw new PackageException('Static linking not possible, package ' . $dependency->getName() . ' is not installed');
 
                     case DependencySourceType::REMOTE:
-                        Console::outDebug('installing from remote source ' . $dependency->source);
-                        $this->installFromSource($dependency->source, $entry, $options);
-                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->name, $dependency->version), true);
+                        Console::outDebug('installing from remote source ' . $dependency->getSource());
+                        $this->installFromSource($dependency->getSource(), $entry, $options);
+                        RuntimeCache::set(sprintf('dependency_installed.%s=%s', $dependency->getName(), $dependency->getVersion()), true);
                         break;
 
                     default:
-                        throw new NotSupportedException(sprintf('Dependency source type %s is not supported', $dependency->source_type));
+                        throw new NotSupportedException(sprintf('Dependency source type %s is not supported', $dependency->getSourceType()));
                 }
             }
             elseif(!$dependency_met)
             {
-                throw new PackageException(sprintf('Required dependency %s=%s is not installed', $dependency->name, $dependency->version));
+                throw new PackageException(sprintf('Required dependency %s=%s is not installed', $dependency->getName(), $dependency->getVersion()));
             }
         }
 
