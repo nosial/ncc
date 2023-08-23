@@ -76,7 +76,7 @@
             }
             else
             {
-                throw new InvalidArgumentException('Input does not match the expected pattern.');
+                throw new InvalidArgumentException(sprintf('Invalid remote package input: %s', $input));
             }
         }
 
