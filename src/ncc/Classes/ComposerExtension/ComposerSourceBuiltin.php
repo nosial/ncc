@@ -36,12 +36,11 @@
     use ncc\Exceptions\ComposerException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\RuntimeException;
-    use ncc\Exceptions\UserAbortedOperationException;
     use ncc\Interfaces\ServiceSourceInterface;
     use ncc\Managers\ProjectManager;
     use ncc\ncc;
@@ -78,12 +77,11 @@
          * @throws ComposerException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws NotSupportedException
+         * @throws OperationException
          * @throws PackageException
          * @throws PathNotFoundException
          * @throws RuntimeException
-         * @throws UserAbortedOperationException
          */
         public static function fetch(RemotePackageInput $packageInput): string
         {
@@ -113,11 +111,10 @@
          * @throws ComposerException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws NotSupportedException
+         * @throws OperationException
          * @throws PackageException
          * @throws PathNotFoundException
-         * @throws UserAbortedOperationException
          */
         public static function fromLocal(string $path): string
         {
@@ -182,7 +179,6 @@
          * @throws BuildException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PackageException
          * @throws PathNotFoundException
@@ -202,7 +198,7 @@
             }
             catch(JsonException $e)
             {
-                throw new MalformedJsonException($composer_lock_path, $e);
+                throw new IOException($composer_lock_path, $e);
             }
 
             $filesystem = new Filesystem();
@@ -508,8 +504,8 @@
          * @return string
          * @throws ComposerException
          * @throws IOException
+         * @throws OperationException
          * @throws PathNotFoundException
-         * @throws UserAbortedOperationException
          */
         private static function require(string $vendor, string $package, ?string $version = null): string
         {
@@ -627,7 +623,7 @@
          * @param string $path
          * @param array $options
          * @return void
-         * @throws UserAbortedOperationException
+         * @throws OperationException
          */
         private static function prepareProcess(Process $process, string $path, array $options): void
         {
@@ -642,7 +638,7 @@
                 {
                     if(!Console::getBooleanInput('Do you want to continue?'))
                     {
-                        throw new UserAbortedOperationException('The operation was aborted by the user');
+                        throw new OperationException('The operation was aborted by the user');
                     }
 
                     // The user understands the risks and wants to continue
@@ -664,7 +660,6 @@
          * @param mixed $composer_package
          * @return ProjectConfiguration
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PackageException
          * @throws PathNotFoundException
          */

@@ -23,7 +23,6 @@
 namespace ncc\Interfaces;
 
     use Exception;
-    use ncc\Exceptions\ComponentChecksumException;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\Package;
     use ncc\Objects\Package\Component;
@@ -42,7 +41,6 @@ namespace ncc\Interfaces;
          *
          * @param Component $component
          * @return string|null
-         * @throws ComponentChecksumException
          */
         public function processComponent(Package\Component $component): ?string;
 

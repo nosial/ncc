@@ -26,10 +26,8 @@
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GitException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\NotSupportedException;
-    use ncc\Exceptions\ResourceNotFoundException;
     use ncc\Interfaces\RepositorySourceInterface;
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Objects\HttpRequest;
@@ -51,7 +49,6 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
          */
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry=null): RepositoryQueryResults
@@ -93,9 +90,7 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
-         * @throws ResourceNotFoundException
          */
         public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -103,7 +98,7 @@
 
             if(count($releases) === 0)
             {
-                throw new ResourceNotFoundException(sprintf('No releases found for the repository %s/%s (selected version: %s)', $package_input->vendor, $package_input->package, $package_input->version));
+                throw new GitException(sprintf('No releases found for the repository %s/%s (selected version: %s)', $package_input->vendor, $package_input->package, $package_input->version));
             }
 
             // Query the latest package only
@@ -148,7 +143,7 @@
 
                 if($selected_version === null)
                 {
-                    throw new ResourceNotFoundException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
+                    throw new GitException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
                 }
             }
             else
@@ -158,7 +153,7 @@
 
             if(!isset($releases[$selected_version]))
             {
-                throw new ResourceNotFoundException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
+                throw new GitException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
             }
 
             return $releases[$selected_version];
@@ -186,7 +181,6 @@
          * @return array
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
          */
         private static function getReleases(string $owner, string $repository, DefinedRemoteSource $definedRemoteSource, ?Entry $entry): array

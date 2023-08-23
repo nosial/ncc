@@ -28,7 +28,6 @@
     use ncc\Enums\CompilerExtensionSupportedVersions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
@@ -45,7 +44,6 @@
          * @return void
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public static function start($args): void
@@ -65,7 +63,6 @@
          * @return void
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public static function createProject($args): void

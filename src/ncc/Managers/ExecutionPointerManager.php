@@ -37,9 +37,9 @@
     use ncc\Classes\PythonExtension\PythonRunner;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NoAvailableUnitsException;
+    use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RunnerExecutionException;
     use ncc\Objects\ExecutionPointers;
     use ncc\Objects\Package;
     use ncc\Objects\Package\ExecutionUnit;
@@ -165,8 +165,9 @@
          * @param ExecutionUnit $unit
          * @param bool $temporary
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
-         * @throws RunnerExecutionException
+         * @throws NotSupportedException
          * @throws PathNotFoundException
          */
         public function addUnit(string $package, string $version, ExecutionUnit $unit, bool $temporary=false): void
@@ -210,7 +211,7 @@
                 Runners::PYTHON_2 => Python2Runner::getFileExtension(),
                 Runners::PYTHON_3 => Python3Runner::getFileExtension(),
                 Runners::LUA => LuaRunner::getFileExtension(),
-                default => throw new RunnerExecutionException('The runner \'' . $unit->execution_policy->runner . '\' is not supported'),
+                default => throw new NotSupportedException('The runner \'' . $unit->execution_policy->runner . '\' is not supported'),
             };
 
             Console::outDebug(sprintf('bin_file=%s', $bin_file));
@@ -265,7 +266,9 @@
          * @param string $version
          * @param string $name
          * @return bool
+         * @throws AuthenticationException
          * @throws IOException
+         * @throws PathNotFoundException
          */
         public function removeUnit(string $package, string $version, string $name): bool
         {
@@ -326,6 +329,7 @@
          * @param string $version
          * @return array
          * @throws IOException
+         * @throws PathNotFoundException
          */
         public function getUnits(string $package, string $version): array
         {
@@ -363,8 +367,8 @@
          * @param array $args
          * @return int
          * @throws IOException
-         * @throws NoAvailableUnitsException
-         * @throws RunnerExecutionException
+         * @throws OperationException
+         * @throws PathNotFoundException
          */
         public function executeUnit(string $package, string $version, string $name, array $args=[]): int
         {
@@ -375,7 +379,7 @@
 
             if(!file_exists($package_config_path))
             {
-                throw new NoAvailableUnitsException('There is no available units for \'' . $package . '=' .$version .'\'');
+                throw new OperationException('There is no available units for \'' . $package . '=' .$version .'\'');
             }
 
             $execution_pointers = ExecutionPointers::fromArray(ZiProto::decode(IO::fread($package_config_path)));
@@ -383,7 +387,7 @@
 
             if($unit === null)
             {
-                throw new RunnerExecutionException('The execution unit \'' . $name . '\' was not found for \'' . $package . '=' .$version .'\'');
+                throw new OperationException('The execution unit \'' . $name . '\' was not found for \'' . $package . '=' .$version .'\'');
             }
 
             Console::outDebug(sprintf('unit=%s', $unit->execution_policy->name));
@@ -453,7 +457,6 @@
                 }
             }
 
-
             Console::outDebug(sprintf('working_directory=%s', $process->getWorkingDirectory()));
             Console::outDebug(sprintf('timeout=%s', (int)$process->getTimeout()));
             Console::outDebug(sprintf('silent=%s', ($unit->execution_policy->execute->silent ? 'true' : 'false')));
@@ -516,10 +519,11 @@
          * @param Package $package
          * @param string $unit_name
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
-         * @throws NoAvailableUnitsException
+         * @throws NotSupportedException
+         * @throws OperationException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
          */
         public function temporaryExecute(Package $package, string $unit_name): void
         {
@@ -528,7 +532,7 @@
 
             if($unit === null)
             {
-                throw new NoAvailableUnitsException(sprintf('No execution unit named \'%s\' is available for package \'%s\'', $unit_name, $package->assembly->package));
+                throw new OperationException(sprintf('No execution unit named \'%s\' is available for package \'%s\'', $unit_name, $package->assembly->package));
             }
 
             // Get the required units
@@ -577,8 +581,8 @@
          * @param Process|null $process
          * @return bool
          * @throws IOException
-         * @throws NoAvailableUnitsException
-         * @throws RunnerExecutionException
+         * @throws OperationException
+         * @throws PathNotFoundException
          */
         public function handleExit(string $package, string $version, ExitHandle $exit_handler, ?Process $process=null): bool
         {

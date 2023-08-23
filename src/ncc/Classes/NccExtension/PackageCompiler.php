@@ -34,10 +34,8 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RunnerExecutionException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
     use ncc\ncc;
@@ -60,7 +58,6 @@
          * @throws BuildException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
@@ -154,8 +151,8 @@
          * @param ProjectConfiguration $configuration
          * @return array
          * @throws IOException
+         * @throws NotSupportedException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
          */
         public static function compileExecutionPolicies(string $path, ProjectConfiguration $configuration): array
         {

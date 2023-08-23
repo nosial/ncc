@@ -26,10 +26,10 @@
     namespace ncc;
     
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\NccVersionInformation;
     use ncc\Utilities\Functions;
+    use RuntimeException;
 
     /**
      * @author Zi Xing Narrakas
@@ -50,7 +50,6 @@
          *
          * @param boolean $reload Indicates if the cached version is to be ignored and the version file to be reloaded and validated
          * @return NccVersionInformation
-         * @throws IOException
          * @throws PathNotFoundException
          */
         public static function getVersionInformation(bool $reload=False): NccVersionInformation
@@ -62,26 +61,26 @@
 
             if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'version.json'))
             {
-                throw new \RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
+                throw new RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
             }
 
             try
             {
                 self::$version_information = NccVersionInformation::fromArray(Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', Functions::FORCE_ARRAY));
             }
-            catch(MalformedJsonException $e)
+            catch(IOException $e)
             {
-                throw new \RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
+                throw new RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
             }
 
             if(self::$version_information->Version === null)
             {
-                throw new \RuntimeException('The version number is not specified in the version information file');
+                throw new RuntimeException('The version number is not specified in the version information file');
             }
 
             if(self::$version_information->Branch === null)
             {
-                throw new \RuntimeException('The version branch is not specified in the version information file');
+                throw new RuntimeException('The version branch is not specified in the version information file');
             }
 
             return self::$version_information;
@@ -136,7 +135,7 @@
             if(!defined('NCC_INIT'))
             {
                 /** @noinspection ClassConstantCanBeUsedInspection */
-                throw new \RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getConstants()');
+                throw new RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getConstants()');
             }
 
             return [

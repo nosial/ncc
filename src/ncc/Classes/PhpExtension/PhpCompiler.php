@@ -35,10 +35,9 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RunnerExecutionException;
-    use ncc\Exceptions\VersionNotFoundException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\PackageLockManager;
     use ncc\Objects\Package;
@@ -86,6 +85,7 @@
          * @param string $build_configuration
          * @return void
          * @throws ConfigurationException
+         * @throws OperationException
          * @throws PackageException
          */
         public function prepare(string $build_configuration=BuildConfigurationValues::DEFAULT): void
@@ -279,7 +279,7 @@
                                 $version = $package->getVersion($dependency->Version);
                                 if($version === null)
                                 {
-                                    throw new VersionNotFoundException('Cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name);
+                                    throw new OperationException('Cannot find version ' . $dependency->Version . ' for dependency ' . $dependency->Name);
                                 }
 
                                 Console::outDebug(sprintf('copying shadow package %s=%s to %s', $dependency->Name, $dependency->Version, $out_path));
@@ -327,7 +327,6 @@
          * @throws BuildException
          * @throws IOException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
          */
         public function build(): ?Package
         {
@@ -469,7 +468,6 @@
          * @return void
          * @throws IOException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
          */
         public function compileExecutionPolicies(): void
         {

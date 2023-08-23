@@ -22,10 +22,14 @@
 
     namespace ncc\Exceptions;
 
-    class ResourceNotFoundException extends \Exception
+    use Exception;
+    use ncc\Enums\ExceptionCodes;
+    use Throwable;
+
+    class OperationException extends Exception
     {
-        public function __construct(string $message = "", int $code = 0, ?Throwable $previous = null)
+        public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, $code, $previous);
+            parent::__construct($message, ExceptionCodes::OPERATION_EXCEPTION, $previous);
         }
     }

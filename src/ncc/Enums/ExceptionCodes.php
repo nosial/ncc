@@ -29,24 +29,9 @@
     final class ExceptionCodes
     {
         /**
-         * @see MalformedJsonException
-         */
-        public const MALFORMED_JSON = -1705;
-
-        /**
          * @see RuntimeException
          */
         public const RUNTIME = -1706;
-
-        /**
-         * @see ConstantReadonlyException
-         */
-        public const CONSTANT_READ_ONLY = -1709;
-
-        /**
-         * @see NoUnitsFoundException
-         */
-        public const NO_UNITS_FOUND = -1715;
 
         /**
          * @see BuildException
@@ -54,44 +39,14 @@
         public const BUILD_EXCEPTION = -1727;
 
         /**
-         * @see InstallationException
-         */
-        public const INSTALLATION_EXCEPTION = -1730;
-
-        /**
          * @see IOException
          */
         public const IO_EXCEPTION = -1735;
 
         /**
-         * @see VersionNotFoundException
-         */
-        public const VERSION_NOT_FOUND = -1737;
-
-        /**
-         * @see RunnerExecutionException
-         */
-        public const RUNNER_EXECUTION_EXCEPTION = -1741;
-
-        /**
-         * @see NoAvailableUnitsException
-         */
-        public const NO_AVAILABLE_UNITS = -1742;
-
-        /**
          * @see ComposerException
          */
         public const COMPOSER_EXCEPTION = -1749;
-
-        /**
-         * @see UserAbortedOperationException
-         */
-        public const USER_ABORTED_OPERATION = -1750;
-
-        /**
-         * @see ImportException
-         */
-        public const IMPORT_EXCEPTION = -1757;
 
         /**
          * @see AuthenticationException
@@ -139,21 +94,18 @@
         public const INTEGRITY_EXCEPTION = -1775;
 
         /**
+         * @see OperationException
+         */
+        public const OPERATION_EXCEPTION = -1776;
+
+        /**
          * All the exception codes from NCC
          */
         public const All = [
-            self::MALFORMED_JSON,
             self::RUNTIME,
-            self::CONSTANT_READ_ONLY,
-            self::NO_UNITS_FOUND,
             self::BUILD_EXCEPTION,
-            self::INSTALLATION_EXCEPTION,
             self::IO_EXCEPTION,
-            self::VERSION_NOT_FOUND,
-            self::RUNNER_EXECUTION_EXCEPTION,
-            self::NO_AVAILABLE_UNITS,
             self::COMPOSER_EXCEPTION,
-            self::USER_ABORTED_OPERATION,
             self::AUTHENTICATION_EXCEPTION,
             self::NOT_SUPPORTED_EXCEPTION,
             self::ARCHIVE_EXCEPTION,
@@ -162,6 +114,7 @@
             self::CONFIGURATION_EXCEPTION,
             self::PACKAGE_EXCEPTION,
             self::NETWORK_EXCEPTION,
-            self::INTEGRITY_EXCEPTION
+            self::INTEGRITY_EXCEPTION,
+            self::OPERATION_EXCEPTION
         ];
     }

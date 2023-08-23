@@ -25,7 +25,7 @@
     use InvalidArgumentException;
     use ncc\Enums\Scopes;
     use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\RunnerExecutionException;
+    use ncc\Exceptions\OperationException;
     use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
 
     class PathFinder
@@ -219,7 +219,7 @@
          *
          * @param string $runner
          * @return string
-         * @throws RunnerExecutionException
+         * @throws OperationException
          */
         public static function findRunner(string $runner): string
         {
@@ -242,6 +242,6 @@
                 return $exec_path;
             }
 
-            throw new RunnerExecutionException(sprintf('Unable to find \'%s\' executable', $runner));
+            throw new OperationException(sprintf('Unable to find \'%s\' executable', $runner));
         }
     }

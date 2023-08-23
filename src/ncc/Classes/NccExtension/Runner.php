@@ -25,9 +25,9 @@
     use ncc\Enums\Scopes;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NoAvailableUnitsException;
+    use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RunnerExecutionException;
     use ncc\Managers\ExecutionPointerManager;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Utilities\Resolver;
@@ -43,9 +43,9 @@
          * @return void
          * @throws AuthenticationException
          * @throws IOException
-         * @throws NoAvailableUnitsException
+         * @throws OperationException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
+         * @throws NotSupportedException
          */
         public static function temporaryExecute(string $package, string $version, ExecutionUnit $unit): void
         {

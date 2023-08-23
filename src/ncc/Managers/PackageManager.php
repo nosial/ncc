@@ -39,13 +39,11 @@
     use ncc\Classes\PhpExtension\PhpInstaller;
     use ncc\CLI\Main;
     use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\InstallationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RunnerExecutionException;
-    use ncc\Exceptions\VersionNotFoundException;
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\Package;
@@ -99,12 +97,10 @@
          * @return string
          * @throws AuthenticationException
          * @throws IOException
-         * @throws InstallationException
          * @throws NotSupportedException
+         * @throws OperationException
          * @throws PackageException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
-         * @throws VersionNotFoundException
          */
         public function install(string $package_path, ?Entry $entry=null, array $options=[]): string
         {
@@ -230,7 +226,7 @@
             }
             catch(Exception $e)
             {
-                throw new InstallationException('Error while creating directory, ' . $e->getMessage(), $e);
+                throw new IOException('Error while creating directory, ' . $e->getMessage(), $e);
             }
 
             try
@@ -245,7 +241,7 @@
             }
             catch(Exception $e)
             {
-                throw new InstallationException('Cannot initialize package install, ' . $e->getMessage(), $e);
+                throw new OperationException('Cannot initialize package install, ' . $e->getMessage(), $e);
             }
 
             // Execute the pre-installation stage before the installation stage
@@ -257,7 +253,7 @@
             }
             catch (Exception $e)
             {
-                throw new InstallationException('Pre installation stage failed, ' . $e->getMessage(), $e);
+                throw new OperationException('Pre installation stage failed, ' . $e->getMessage(), $e);
             }
 
             if($package->installer?->PreInstall !== null && count($package->installer->PreInstall) > 0)
@@ -301,7 +297,7 @@
                 }
                 catch(Exception $e)
                 {
-                    throw new InstallationException('Cannot process one or more components, ' . $e->getMessage(), $e);
+                    throw new OperationException('Cannot process one or more components, ' . $e->getMessage(), $e);
                 }
 
                 ++$current_steps;
@@ -331,7 +327,7 @@
                 }
                 catch(Exception $e)
                 {
-                    throw new InstallationException('Cannot process one or more resources, ' . $e->getMessage(), $e);
+                    throw new OperationException('Cannot process one or more resources, ' . $e->getMessage(), $e);
                 }
 
                 ++$current_steps;
@@ -367,7 +363,7 @@
             {
                 if($package->main_execution_policy === null)
                 {
-                    throw new InstallationException('Cannot create symlink, no main execution policy is defined');
+                    throw new OperationException('Cannot create symlink, no main execution policy is defined');
                 }
 
                 Console::outDebug(sprintf('creating symlink to %s', $package->assembly->package));
@@ -388,7 +384,7 @@
             }
             catch (Exception $e)
             {
-                throw new InstallationException('Post installation stage failed, ' . $e->getMessage(), $e);
+                throw new OperationException('Post installation stage failed, ' . $e->getMessage(), $e);
             }
 
             if($package->installer?->PostInstall !== null && count($package->installer->PostInstall) > 0)
@@ -446,8 +442,8 @@
          * @param string $source
          * @param Entry|null $entry
          * @return string
-         * @throws InstallationException
          * @throws NotSupportedException
+         * @throws OperationException
          * @throws PackageException
          */
         public function fetchFromSource(string $source, ?Entry $entry=null): string
@@ -498,7 +494,7 @@
                 $source = (new RemoteSourcesManager())->getRemoteSource($input->source);
                 if($source === null)
                 {
-                    throw new InstallationException('Remote source ' . $input->source . ' is not defined');
+                    throw new OperationException('Remote source ' . $input->source . ' is not defined');
                 }
 
                 $repositoryQueryResults = Functions::getRepositoryQueryResults($input, $source, $entry);
@@ -613,7 +609,7 @@
          * @param Entry|null $entry
          * @param array $options
          * @return string
-         * @throws InstallationException
+         * @throws OperationException
          */
         public function installFromSource(string $source, ?Entry $entry, array $options=[]): string
         {
@@ -626,7 +622,7 @@
             }
             catch(Exception $e)
             {
-                throw new InstallationException('Cannot install package from source, ' . $e->getMessage(), $e);
+                throw new OperationException('Cannot install package from source, ' . $e->getMessage(), $e);
             }
         }
 
@@ -639,12 +635,10 @@
          * @return void
          * @throws AuthenticationException
          * @throws IOException
-         * @throws InstallationException
          * @throws NotSupportedException
+         * @throws OperationException
          * @throws PackageException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
-         * @throws VersionNotFoundException
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
@@ -790,7 +784,7 @@
                     $version = $package->getVersion($exploded[1]);
                     if($version === null)
                     {
-                        throw new VersionNotFoundException('Version ' . $exploded[1] . ' not found for package ' . $exploded[0]);
+                        throw new OperationException('Version ' . $exploded[1] . ' not found for package ' . $exploded[0]);
                     }
 
                     foreach ($version->Dependencies as $dependency)
@@ -872,6 +866,7 @@
          * @throws AuthenticationException
          * @throws IOException
          * @throws PackageException
+         * @throws PathNotFoundException
          */
         public function uninstallPackageVersion(string $package, string $version): void
         {
@@ -987,7 +982,7 @@
         /**
          * @param Package $package
          * @param InstallationPaths $paths
-         * @throws InstallationException
+         * @throws OperationException
          */
         private static function initData(Package $package, InstallationPaths $paths): void
         {
@@ -1020,7 +1015,7 @@
                 }
                 catch (IOException $e)
                 {
-                    throw new InstallationException('Cannot write to file \'' . $file . '\', ' . $e->getMessage(), $e);
+                    throw new OperationException('Cannot write to file \'' . $file . '\', ' . $e->getMessage(), $e);
                 }
             }
         }

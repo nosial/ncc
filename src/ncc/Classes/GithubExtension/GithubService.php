@@ -27,9 +27,7 @@
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GitException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NetworkException;
-    use ncc\Exceptions\VersionNotFoundException;
     use ncc\Interfaces\RepositorySourceInterface;
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Objects\HttpRequest;
@@ -50,7 +48,6 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
          */
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
@@ -82,9 +79,7 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
-         * @throws VersionNotFoundException
          */
         public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -98,9 +93,7 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
-         * @throws VersionNotFoundException
          */
         public static function getNccPackage(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -116,7 +109,6 @@
          * @return array
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
          */
         private static function getReleases(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): array
@@ -188,7 +180,6 @@
          * @return array
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
          */
         private static function getJsonResponse(HttpRequest $httpRequest, ?Entry $entry): array
@@ -215,9 +206,7 @@
          * @return mixed
          * @throws AuthenticationException
          * @throws GitException
-         * @throws MalformedJsonException
          * @throws NetworkException
-         * @throws VersionNotFoundException
          */
         private static function processReleases(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry): mixed
         {
@@ -225,7 +214,7 @@
 
             if (count($releases) === 0)
             {
-                throw new VersionNotFoundException('No releases found for the given repository.');
+                throw new GitException(sprintf('No releases found for %s/%s on %s.', $packageInput->vendor, $packageInput->package, $definedRemoteSource->host));
             }
 
             if ($packageInput->version === Versions::LATEST)
@@ -269,7 +258,7 @@
 
                 if ($selected_version === null)
                 {
-                    throw new VersionNotFoundException('No releases found for the given repository.');
+                    throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->host));
                 }
             }
             else
@@ -279,7 +268,7 @@
 
             if (!isset($releases[$selected_version]))
             {
-                throw new VersionNotFoundException(sprintf('No releases found for the given repository. (Selected version: %s)', $selected_version));
+                throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->host));
             }
 
             return $releases[$selected_version];

@@ -31,7 +31,6 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\ProjectConfiguration;
@@ -69,7 +68,6 @@
          * @param string $path
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public function __construct(string $path)
@@ -105,7 +103,6 @@
          * @param array $options
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          */
         public function initializeProject(Compiler $compiler, string $name, string $package, ?string $src=null, array $options=[]): void
         {
@@ -213,7 +210,6 @@
          * @return void
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public function load(): void
@@ -230,7 +226,6 @@
          * Saves the project configuration
          *
          * @return void
-         * @throws MalformedJsonException
          */
         public function save(): void
         {
@@ -248,7 +243,6 @@
          * @return ProjectConfiguration
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public function getProjectConfiguration(): ProjectConfiguration
@@ -280,7 +274,6 @@
          * @throws BuildException
          * @throws ConfigurationException
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */

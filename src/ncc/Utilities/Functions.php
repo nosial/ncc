@@ -42,10 +42,9 @@
     use ncc\Exceptions\ArchiveException;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NetworkException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RunnerExecutionException;
     use ncc\Managers\ConfigurationManager;
     use ncc\Managers\CredentialManager;
     use ncc\Managers\PackageLockManager;
@@ -121,7 +120,6 @@
          * @param int $flags
          * @return mixed
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public static function loadJsonFile(string $path, int $flags=0): mixed
@@ -140,7 +138,7 @@
          * @param string $json
          * @param int $flags
          * @return mixed
-         * @throws MalformedJsonException
+         * @throws IOException
          */
         public static function loadJson(string $json, int $flags=0): mixed
         {
@@ -150,7 +148,7 @@
             }
             catch(Throwable $e)
             {
-                throw new MalformedJsonException($e->getMessage(), $e);
+                throw new IOException($e->getMessage(), $e);
             }
         }
 
@@ -160,7 +158,7 @@
          * @param mixed $value
          * @param int $flags
          * @return string
-         * @throws MalformedJsonException
+         * @throws IOException
          */
         public static function encodeJson(mixed $value, int $flags=0): string
         {
@@ -175,7 +173,7 @@
             }
             catch (JsonException $e)
             {
-                throw new MalformedJsonException($e->getMessage(), $e);
+                throw new IOException($e->getMessage(), $e);
             }
         }
 
@@ -186,7 +184,6 @@
          * @param string $path
          * @param int $flags
          * @return void
-         * @throws MalformedJsonException
          */
         public static function encodeJsonFile(mixed $value, string $path, int $flags=0): void
         {
@@ -291,8 +288,8 @@
          * @param ExecutionPolicy $policy
          * @return ExecutionUnit
          * @throws IOException
+         * @throws NotSupportedException
          * @throws PathNotFoundException
-         * @throws RunnerExecutionException
          */
         public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
@@ -305,7 +302,7 @@
                 Runners::PYTHON_2 => Python2Runner::processUnit($path, $policy),
                 Runners::PYTHON_3 => Python3Runner::processUnit($path, $policy),
                 Runners::LUA => LuaRunner::processUnit($path, $policy),
-                default => throw new RunnerExecutionException('The runner \'' . $policy->runner . '\' is not supported'),
+                default => throw new NotSupportedException('The runner \'' . $policy->runner . '\' is not supported'),
             };
         }
 
@@ -419,7 +416,6 @@
          * @param string $path
          * @return ComposerJson
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public static function loadComposerJson(string $path): ComposerJson
@@ -432,7 +428,7 @@
             }
             catch(JsonException $e)
             {
-                throw new MalformedJsonException('Cannot parse composer.json, ' . $e->getMessage(), $e);
+                throw new IOException('Cannot parse composer.json, ' . $e->getMessage(), $e);
             }
         }
 

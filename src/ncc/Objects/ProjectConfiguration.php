@@ -28,7 +28,6 @@
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\MalformedJsonException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\BytecodeObjectInterface;
@@ -366,7 +365,6 @@
          * @param string $path
          * @param bool $bytecode
          * @return void
-         * @throws MalformedJsonException
          * @noinspection PhpUnused
          */
         public function toFile(string $path, bool $bytecode=false): void
@@ -386,7 +384,6 @@
          * @param string $path
          * @return ProjectConfiguration
          * @throws IOException
-         * @throws MalformedJsonException
          * @throws PathNotFoundException
          */
         public static function fromFile(string $path): ProjectConfiguration

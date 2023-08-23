@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.4] - Unreleased
 
 This update introduces major changes in the codebase, including the removal of Win32 support, and the addition of new
-features.
+features and reduced the number of exceptions down to 15 exceptions.
+
 
 ### Added
  - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
@@ -17,6 +18,7 @@ features.
  - Added a new interface class `BytecodeObjectInterface` which will be used to implement object types for compiled assets
  - Added new exception `GitException` in `\ncc\Exceptions` to replace all git related exceptions
  - Added new exception `PackageException` in `\ncc\Exceptions` to replace all package related exceptions
+ - Added new exception `OperationException` in `\ncc\Exceptions` to replace all generic related exceptions
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -167,6 +169,10 @@ features.
  - Removed unused exception `AutoloadGeneratorException` in `\ncc\Exceptions` in favor for `IOException`
  - Removed unused exception `SymlinkException` in `\ncc\Exceptions` in favor for `IOException`
  - Removed unused exception `PackageLockException` in `\ncc\Exceptions` in favor for `IOException`
+ - Removed unused exception `UnitsNotFoundException` in `\ncc\Exceptions` (not used)
+ - Removed unused exception `NoAvailableUnitsException` in `\ncc\Exceptions` in favor for `OperationException`
+ - Removed unused exception `InstallationException` in `\ncc\Exceptions` in favor for `OperationException`
+ - Removed all unused exceptions from the project, reduced the number of exceptions in total.
 
 
 

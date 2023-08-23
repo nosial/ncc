@@ -25,7 +25,7 @@
     namespace ncc\Objects;
 
     use ncc\Enums\Versions;
-    use ncc\Exceptions\VersionNotFoundException;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\PackageLock\PackageEntry;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -183,7 +183,7 @@
                 {
                     $version_entry = $package_entry->getVersion($version);
                 }
-                catch (VersionNotFoundException $e)
+                catch (IOException $e)
                 {
                     unset($e);
                     return false;
