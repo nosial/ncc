@@ -71,21 +71,21 @@
                 {
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
                 }
-                foreach($configuration->project->compiler->toArray() as $prop => $value)
+                foreach($configuration->project->getCompiler()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('compiler.%s: %s', $prop, ($value ?? 'n/a')));
                 }
             }
 
             // Select the correct compiler for the specified extension
-            if (strtolower($configuration->project->compiler->getExtension()) === CompilerExtensions::PHP)
+            if (strtolower($configuration->project->getCompiler()->getExtension()) === CompilerExtensions::PHP)
             {
                 /** @var CompilerInterface $Compiler */
                 $Compiler = new PhpCompiler($configuration, $manager->getProjectPath());
             }
             else
             {
-                throw new NotSupportedException('The compiler extension \'' . $configuration->project->compiler->getExtension() . '\' is not supported');
+                throw new NotSupportedException('The compiler extension \'' . $configuration->project->getCompiler()->getExtension() . '\' is not supported');
             }
 
             $build_configuration = $configuration->build->getBuildConfiguration($build_configuration)->getName();

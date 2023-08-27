@@ -415,18 +415,18 @@
                 Console::outDebug('no post-installation units to execute');
             }
 
-            if($package->header->UpdateSource !== null && $package->header->UpdateSource->repository !== null)
+            if($package->header->UpdateSource !== null && $package->header->UpdateSource->getRepository() !== null)
             {
                 $sources_manager = new RemoteSourcesManager();
-                if($sources_manager->getRemoteSource($package->header->UpdateSource->repository->getName()) === null)
+                if($sources_manager->getRemoteSource($package->header->UpdateSource->getRepository()->getName()) === null)
                 {
-                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->repository->getName());
+                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->getRepository()->getName());
 
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->name = $package->header->UpdateSource->repository->getName();
-                    $defined_remote_source->host = $package->header->UpdateSource->repository->getHost();
-                    $defined_remote_source->type = $package->header->UpdateSource->repository->getType();
-                    $defined_remote_source->ssl = $package->header->UpdateSource->repository->isSsl();
+                    $defined_remote_source->name = $package->header->UpdateSource->getRepository()->getName();
+                    $defined_remote_source->host = $package->header->UpdateSource->getRepository()->getHost();
+                    $defined_remote_source->type = $package->header->UpdateSource->getRepository()->getType();
+                    $defined_remote_source->ssl = $package->header->UpdateSource->getRepository()->isSsl();
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }

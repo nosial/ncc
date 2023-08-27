@@ -125,7 +125,7 @@
             $this->project_configuration = new ProjectConfiguration();
 
             // Set the compiler information
-            $this->project_configuration->project->compiler = $compiler;
+            $this->project_configuration->project->setCompiler($compiler);
 
             // Set the assembly information
             $this->project_configuration->assembly->setName($name);

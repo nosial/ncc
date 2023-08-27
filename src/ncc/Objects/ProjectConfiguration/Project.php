@@ -38,17 +38,17 @@
         /**
          * @var Compiler
          */
-        public $compiler;
+        private $compiler;
 
         /**
          * @var array
          */
-        public $options;
+        private $options;
 
         /**
          * @var UpdateSource|null
          */
-        public $update_source;
+        private $update_source;
 
         /**
          * Public Constructor
@@ -57,6 +57,73 @@
         {
             $this->compiler = new Compiler();
             $this->options = [];
+        }
+
+        /**
+         * @return Compiler
+         */
+        public function getCompiler(): Compiler
+        {
+            return $this->compiler;
+        }
+
+        /**
+         * @param Compiler $compiler
+         */
+        public function setCompiler(Compiler $compiler): void
+        {
+            $this->compiler = $compiler;
+        }
+
+        /**
+         * @return array
+         */
+        public function getOptions(): array
+        {
+            return $this->options;
+        }
+
+        /**
+         * @param array $options
+         */
+        public function setOptions(array $options): void
+        {
+            $this->options = $options;
+        }
+
+        /**
+         * @param string $key
+         * @param mixed $value
+         * @return void
+         */
+        public function addOption(string $key, mixed $value): void
+        {
+            $this->options[$key] = $value;
+        }
+
+        /**
+         * @param string $key
+         * @return void
+         */
+        public function removeOption(string $key): void
+        {
+            unset($this->options[$key]);
+        }
+
+        /**
+         * @return UpdateSource|null
+         */
+        public function getUpdateSource(): ?UpdateSource
+        {
+            return $this->update_source;
+        }
+
+        /**
+         * @param UpdateSource|null $update_source
+         */
+        public function setUpdateSource(?UpdateSource $update_source): void
+        {
+            $this->update_source = $update_source;
         }
 
         /**

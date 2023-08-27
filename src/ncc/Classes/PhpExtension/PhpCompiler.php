@@ -112,7 +112,7 @@
             $this->package->main_execution_policy = $this->project->build->getMain();
 
             // Add the option to create a symbolic link to the package
-            if(isset($this->project->project->options['create_symlink']) && $this->project->project->options['create_symlink'] === True)
+            if(isset($this->project->project->getOptions()['create_symlink']) && $this->project->project->getOptions()['create_symlink'] === True)
             {
                 $this->package->header->Options['create_symlink'] = true;
             }
@@ -126,13 +126,13 @@
                 ($this->package->header->RuntimeConstants ?? [])
             );
 
-            $this->package->header->CompilerExtension = $this->project->project->compiler;
+            $this->package->header->CompilerExtension = $this->project->project->getCompiler();
             $this->package->header->CompilerVersion = NCC_VERSION_NUMBER;
-            $this->package->header->Options = $this->project->project->options;
+            $this->package->header->Options = $this->project->project->getOptions();
 
-            if($this->project->project->update_source !== null)
+            if($this->project->project->getUpdateSource() !== null)
             {
-                $this->package->header->UpdateSource = $this->project->project->update_source;
+                $this->package->header->UpdateSource = $this->project->project->getUpdateSource();
             }
 
             Console::outDebug('scanning project files');

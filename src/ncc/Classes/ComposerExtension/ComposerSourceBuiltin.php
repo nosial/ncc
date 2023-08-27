@@ -336,9 +336,9 @@
             $project_configuration->assembly->setPackage(self::toPackageName($composer_package->name));
 
             // Add the update source
-            $project_configuration->project->update_source = new ProjectConfiguration\UpdateSource();
-            $project_configuration->project->update_source->source = sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->name));
-            $project_configuration->project->update_source->repository = null;
+            $project_configuration->project->setUpdateSource(new ProjectConfiguration\UpdateSource());
+            $project_configuration->project->getUpdateSource()?->setSource(sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->name)));
+            $project_configuration->project->getUpdateSource()?->setRepository(null);
 
             // Process the dependencies
             if($composer_package->require !== null && count($composer_package->require) > 0)
@@ -373,9 +373,9 @@
             $project_configuration->build->setSourcePath('.src');
 
             // Apply a compiler extension
-            $project_configuration->project->compiler->setExtension(CompilerExtensions::PHP);
-            $project_configuration->project->compiler->setMaximumVersion(CompilerExtensionSupportedVersions::PHP[0]);
-            $project_configuration->project->compiler->setMinimumVersion(CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)]);
+            $project_configuration->project->getCompiler()->setExtension(CompilerExtensions::PHP);
+            $project_configuration->project->getCompiler()->setMaximumVersion(CompilerExtensionSupportedVersions::PHP[0]);
+            $project_configuration->project->getCompiler()->setMinimumVersion(CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)]);
 
             return $project_configuration;
         }
@@ -758,7 +758,7 @@
 
                 if (count($static_files) > 0)
                 {
-                    $project_configuration->project->options['static_files'] = $static_files;
+                    $project_configuration->project->addOption('static_files', $static_files);
 
                     foreach ($static_files as $file)
                     {

@@ -135,6 +135,8 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Updated class `\ncc\Objects\ProjectConfiguration > Compiler` to use method calls rather than direct property access
  - Updated class `\ncc\Objects\ProjectConfiguration > ExecutionPolicy` to use method calls rather than direct property access
  - Updated class `\ncc\Objects\ProjectConfiguration > Installer` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > Project` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > UpdateSource` to use method calls rather than direct property access
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

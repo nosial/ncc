@@ -35,14 +35,46 @@
          *
          * @var string
          */
-        public $source;
+        private $source;
 
         /**
          * The repository to use for the source
          *
          * @var Repository|null
          */
-        public $repository;
+        private $repository;
+
+        /**
+         * @return string
+         */
+        public function getSource(): string
+        {
+            return $this->source;
+        }
+
+        /**
+         * @param string $source
+         */
+        public function setSource(string $source): void
+        {
+            $this->source = $source;
+        }
+
+        /**
+         * @return Repository|null
+         */
+        public function getRepository(): ?Repository
+        {
+            return $this->repository;
+        }
+
+        /**
+         * @param Repository|null $repository
+         */
+        public function setRepository(?Repository $repository): void
+        {
+            $this->repository = $repository;
+        }
 
         /**
          * Returns an array representation of the object
