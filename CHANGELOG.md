@@ -22,6 +22,7 @@ features and reduced the number of exceptions down to 15 exceptions.
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
+ - Fixed all @throw tags in the project to use the correct exception class
 
 ### Changed
  - Corrected code-smell and code style issues in `\ncc\Classes > HttpClient`
@@ -116,6 +117,24 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Corrected code-smell and code style issues in `\ncc\Objects > PackageLock`
  - Corrected code-smell and code style issues in `\ncc\Classes\PhpExtension > PhpRuntime`
  - Updated class `\ncc\Objects\ProjectConfiguration > Dependency` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration\Build > BuildConfiguration` to use method calls rather than direct
+   property access
+ - Updated class `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > Execute` to use method calls rather than direct
+   property access
+ - Changed all uppercase occurrences of `NCC` to `ncc` in the entire project
+ - Corrected code-smell and code style issues in `\ncc\Utilities > Base64`
+ - Corrected code-smell and code style issues in `\ncc\Utilities > Console`
+ - Updated class `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > ExitHandle` to use method calls rather than direct
+   property access
+ - Updated class `\ncc\Objects\ProjectConfiguration\ExecutionPolicy > ExitHandlers` to use method calls rather than 
+   direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration\UpdateSource > Repository` to use method calls rather than direct
+   property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > Assembly` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > Build` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > Compiler` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > ExecutionPolicy` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ProjectConfiguration > Installer` to use method calls rather than direct property access
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
@@ -174,6 +193,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Removed unused exception `NoAvailableUnitsException` in `\ncc\Exceptions` in favor for `OperationException`
  - Removed unused exception `InstallationException` in `\ncc\Exceptions` in favor for `OperationException`
  - Removed all unused exceptions from the project, reduced the number of exceptions in total.
+ - Removed unused `scope` property from `\ncc\Objects\ProjectConfiguration > Build`
 
 
 
@@ -211,7 +231,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Updated `\ncc\Managers > PackageManager` to display more logging messages
 
 ### Added
- - Dockerfile for building a docker image of NCC
+ - Dockerfile for building a docker image of ncc
 
 
 
@@ -236,4 +256,4 @@ features and reduced the number of exceptions down to 15 exceptions.
 ## [1.0.0] - 2022-01-29
 
 ### Added
- - Initial release of NCC
+ - Initial release of ncc

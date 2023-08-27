@@ -110,7 +110,7 @@
 
             if($version === Versions::LATEST)
             {
-                $version = $package_entry?->getLatestVersion();
+                $version = $package_entry->getLatestVersion();
             }
 
             try
@@ -152,14 +152,14 @@
 
             try
             {
-                switch($version_entry->Compiler->extension)
+                switch($version_entry->Compiler->getExtension())
                 {
                     case CompilerExtensions::PHP:
                         PhpRuntime::import($version_entry, $options);
                         break;
 
                     default:
-                        throw new ImportException(sprintf('Compiler extension %s is not supported in this runtime', $version_entry->Compiler->extension));
+                        throw new ImportException(sprintf('Compiler extension %s is not supported in this runtime', $version_entry->Compiler->getExtension()));
                 }
             }
             catch(Exception $e)

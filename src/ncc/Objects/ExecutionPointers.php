@@ -82,9 +82,9 @@
 
             if($overwrite)
             {
-                $this->deleteUnit($unit->execution_policy->name);
+                $this->deleteUnit($unit->execution_policy->getName());
             }
-            elseif($this->getUnit($unit->execution_policy->name) !== null)
+            elseif($this->getUnit($unit->execution_policy->getName()) !== null)
             {
                 return false;
             }
@@ -111,7 +111,7 @@
             $new_pointers = [];
             foreach($this->pointers as $pointer)
             {
-                if($pointer->execution_policy->name !== $name)
+                if($pointer->execution_policy->getName() !== $name)
                 {
                     $new_pointers[] = $pointer;
                 }
@@ -132,7 +132,7 @@
             /** @var ExecutionPointer $pointer */
             foreach($this->pointers as $pointer)
             {
-                if($pointer->execution_policy->name === $name)
+                if($pointer->execution_policy->getName() === $name)
                 {
                     return $pointer;
                 }

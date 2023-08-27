@@ -82,6 +82,7 @@
          * Saves the configuration file to disk
          *
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
          */
         public function save(): void
@@ -142,6 +143,7 @@
          * @param $value
          * @return bool
          * @throws IOException
+         * @throws AuthenticationException
          */
         public function updateProperty(string $property, $value): bool
         {

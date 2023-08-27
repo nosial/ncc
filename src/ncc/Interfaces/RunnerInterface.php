@@ -44,5 +44,4 @@
          * @return string
          */
         public static function getFileExtension(): string;
-
     }

@@ -36,35 +36,115 @@
          *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
          * The name of a supported runner instance
          *
          * @var string
          */
-        public $runner;
+        private $runner;
 
         /**
          * The message to display when the policy is invoked
          *
          * @var string|null
          */
-        public $message;
+        private $message;
 
         /**
          * The execution process of the policy
          *
          * @var Execute
          */
-        public $execute;
+        private $execute;
 
         /**
          * The configuration for exit handling
          *
          * @var ExitHandlers
          */
-        public $exit_handlers;
+        private $exit_handlers;
+
+        /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return string
+         */
+        public function getRunner(): string
+        {
+            return $this->runner;
+        }
+
+        /**
+         * @param string $runner
+         */
+        public function setRunner(string $runner): void
+        {
+            $this->runner = $runner;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getMessage(): ?string
+        {
+            return $this->message;
+        }
+
+        /**
+         * @param string|null $message
+         */
+        public function setMessage(?string $message): void
+        {
+            $this->message = $message;
+        }
+
+        /**
+         * @return Execute
+         */
+        public function getExecute(): Execute
+        {
+            return $this->execute;
+        }
+
+        /**
+         * @param Execute $execute
+         */
+        public function setExecute(Execute $execute): void
+        {
+            $this->execute = $execute;
+        }
+
+        /**
+         * @return ExitHandlers
+         */
+        public function getExitHandlers(): ExitHandlers
+        {
+            return $this->exit_handlers;
+        }
+
+        /**
+         * @param ExitHandlers $exit_handlers
+         */
+        public function setExitHandlers(ExitHandlers $exit_handlers): void
+        {
+            $this->exit_handlers = $exit_handlers;
+        }
 
         /**
          * @return bool

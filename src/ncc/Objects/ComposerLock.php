@@ -96,7 +96,7 @@
         {
             foreach($this->Packages as $package)
             {
-                if($package->Name == $name)
+                if($package->name === $name)
                 {
                     return $package;
                 }
@@ -113,10 +113,12 @@
         public function toArray(): array
         {
             $_packages = [];
-            if($this->Packages != null)
+            if($this->Packages !== null)
             {
                 foreach($this->Packages as $package)
+                {
                     $_packages[] = $package->toArray();
+                }
             }
             return [
                 '_readme' => $this->Readme,
@@ -140,26 +142,30 @@
          * @param array $data
          * @return static
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): ComposerLock
         {
-            $obj = new self();
-            $obj->Readme = $data['_readme'];
-            $obj->ContentHash = $data['content-hash'];
-            $obj->Packages = [];
-            if($data['packages'] != null)
+            $object = new self();
+
+            $object->Readme = $data['_readme'];
+            $object->ContentHash = $data['content-hash'];
+            $object->Packages = [];
+            if($data['packages'] !== null)
             {
                 foreach($data['packages'] as $package)
-                    $obj->Packages[] = ComposerJson::fromArray($package);
+                {
+                    $object->Packages[] = ComposerJson::fromArray($package);
+                }
             }
-            $obj->PackagesDev = $data['packages-dev'];
-            $obj->Aliases = $data['aliases'];
-            $obj->MinimumStability = $data['minimum-stability'];
-            $obj->StabilityFlags = $data['stability-flags'];
-            $obj->PreferStable = $data['prefer-stable'];
-            $obj->PreferLowest = $data['prefer-lowest'];
-            $obj->Platform = $data['platform'];
-            $obj->PlatformDev = $data['platform-dev'];
-            $obj->PluginApiVersion = $data['plugin-api-version'];
-            return $obj;
+            $object->PackagesDev = $data['packages-dev'];
+            $object->Aliases = $data['aliases'];
+            $object->MinimumStability = $data['minimum-stability'];
+            $object->StabilityFlags = $data['stability-flags'];
+            $object->PreferStable = $data['prefer-stable'];
+            $object->PreferLowest = $data['prefer-lowest'];
+            $object->Platform = $data['platform'];
+            $object->PlatformDev = $data['platform-dev'];
+            $object->PluginApiVersion = $data['plugin-api-version'];
+
+            return $object;
         }
     }

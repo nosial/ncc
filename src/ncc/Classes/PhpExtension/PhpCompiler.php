@@ -35,6 +35,7 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
@@ -42,6 +43,7 @@
     use ncc\Managers\PackageLockManager;
     use ncc\Objects\Package;
     use ncc\Objects\ProjectConfiguration;
+    use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\ThirdParty\nikic\PhpParser\ParserFactory;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
@@ -106,8 +108,8 @@
             // Create the package object
             $this->package = new Package();
             $this->package->assembly = $this->project->assembly;
-            $this->package->dependencies = $this->project->build->dependencies;
-            $this->package->main_execution_policy = $this->project->build->main;
+            $this->package->dependencies = $this->project->build->getDependencies();
+            $this->package->main_execution_policy = $this->project->build->getMain();
 
             // Add the option to create a symbolic link to the package
             if(isset($this->project->project->options['create_symlink']) && $this->project->project->options['create_symlink'] === True)
@@ -119,8 +121,8 @@
             // Global constants are overridden
             $this->package->header->RuntimeConstants = [];
             $this->package->header->RuntimeConstants = array_merge(
-                ($selected_build_configuration->define_constants ?? []),
-                ($this->project->build->define_constants ?? []),
+                $selected_build_configuration->getDefineConstants(),
+                ($this->project->build->getDefineConstants()),
                 ($this->package->header->RuntimeConstants ?? [])
             );
 
@@ -137,11 +139,11 @@
             Console::outDebug('theseer\DirectoryScanner - Copyright (c) 2009-2014 Arne Blankerts <arne@blankerts.de> All rights reserved.');
 
             // First scan the project files and create a file struct.
-            $DirectoryScanner = new DirectoryScanner();
+            $directory_scanner = new DirectoryScanner();
 
             try
             {
-                $DirectoryScanner->unsetFlag(FilesystemIterator::FOLLOW_SYMLINKS);
+                $directory_scanner->unsetFlag(FilesystemIterator::FOLLOW_SYMLINKS);
             }
             catch (Exception $e)
             {
@@ -149,14 +151,14 @@
             }
 
             // Include file components that can be compiled
-            $DirectoryScanner->setIncludes(ComponentFileExtensions::PHP);
+            $directory_scanner->setIncludes(ComponentFileExtensions::PHP);
 
-            if($selected_build_configuration->exclude_files !== null && count($selected_build_configuration->exclude_files) > 0)
+            if(count($selected_build_configuration->getExcludeFiles()) > 0)
             {
-                $DirectoryScanner->setExcludes($selected_build_configuration->exclude_files);
+                $directory_scanner->setExcludes($selected_build_configuration->getExcludeFiles());
             }
 
-            $source_path = $this->path . $this->project->build->source_path;
+            $source_path = $this->path . $this->project->build->getSourcePath();
 
             // TODO: Re-implement the scanning process outside the compiler, as this is will be redundant
             // Scan for components first.
@@ -165,7 +167,7 @@
                 Console::outVerbose('Scanning for components... ');
                 /** @var SplFileInfo $item */
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                foreach($DirectoryScanner($source_path, True) as $item)
+                foreach($directory_scanner($source_path, True) as $item)
                 {
                     // Ignore directories, they're not important. :-)
                     if(is_dir($item->getPathName()))
@@ -173,11 +175,11 @@
                         continue;
                     }
 
-                    $Component = new Package\Component();
-                    $Component->name = Functions::removeBasename($item->getPathname(), $this->path);
-                    $this->package->components[] = $Component;
+                    $component = new Package\Component();
+                    $component->name = Functions::removeBasename($item->getPathname(), $this->path);
+                    $this->package->components[] = $component;
 
-                    Console::outVerbose(sprintf('Found component %s', $Component->name));
+                    Console::outVerbose(sprintf('Found component %s', $component->name));
                 }
 
                 if(count($this->package->components) > 0)
@@ -190,22 +192,22 @@
                 }
 
                 // Clear previously excludes and includes
-                $DirectoryScanner->setExcludes();
-                $DirectoryScanner->setIncludes();
+                $directory_scanner->setExcludes();
+                $directory_scanner->setIncludes();
 
                 // Ignore component files
-                if($selected_build_configuration->exclude_files !== null && count($selected_build_configuration->exclude_files) > 0)
+                if(count($selected_build_configuration->getExcludeFiles()) > 0)
                 {
-                    $DirectoryScanner->setExcludes(array_merge($selected_build_configuration->exclude_files, ComponentFileExtensions::PHP));
+                    $directory_scanner->setExcludes(array_merge($selected_build_configuration->getExcludeFiles(), ComponentFileExtensions::PHP));
                 }
                 else
                 {
-                    $DirectoryScanner->setExcludes(ComponentFileExtensions::PHP);
+                    $directory_scanner->setExcludes(ComponentFileExtensions::PHP);
                 }
 
                 Console::outVerbose('Scanning for resources... ');
                 /** @var SplFileInfo $item */
-                foreach($DirectoryScanner($source_path) as $item)
+                foreach($directory_scanner($source_path) as $item)
                 {
                     // Ignore directories, they're not important. :-)
                     if(is_dir($item->getPathName()))
@@ -213,11 +215,11 @@
                         continue;
                     }
 
-                    $Resource = new Package\Resource();
-                    $Resource->Name = Functions::removeBasename($item->getPathname(), $this->path);
-                    $this->package->resources[] = $Resource;
+                    $resource = new Package\Resource();
+                    $resource->Name = Functions::removeBasename($item->getPathname(), $this->path);
+                    $this->package->resources[] = $resource;
 
-                    Console::outVerbose(sprintf('found resource %s', $Resource->Name));
+                    Console::outVerbose(sprintf('found resource %s', $resource->Name));
                 }
 
                 if(count($this->package->resources) > 0)
@@ -236,14 +238,14 @@
 
             $selected_dependencies = [];
 
-            if($this->project->build->dependencies !== null && count($this->project->build->dependencies) > 0)
+            if(count($this->project->build->getDependencies()) > 0)
             {
-                $selected_dependencies = array_merge($selected_dependencies, $this->project->build->dependencies);
+                $selected_dependencies = array_merge($selected_dependencies, $this->project->build->getDependencies());
             }
 
-            if($selected_build_configuration->dependencies !== null && count($selected_build_configuration->dependencies) > 0)
+            if(count($selected_build_configuration->getDependencies()) > 0)
             {
-                $selected_dependencies = array_merge($selected_dependencies, $selected_build_configuration->dependencies);
+                $selected_dependencies = array_merge($selected_dependencies, $selected_build_configuration->getDependencies());
             }
 
             // Process the dependencies
@@ -252,14 +254,14 @@
                 $package_lock_manager = new PackageLockManager();
                 $filesystem = new Filesystem();
 
-                $lib_path = $selected_build_configuration->output_path . DIRECTORY_SEPARATOR . 'libs';
+                $lib_path = $selected_build_configuration->getOutputPath() . DIRECTORY_SEPARATOR . 'libs';
                 if($filesystem->exists($lib_path))
                 {
                     $filesystem->remove($lib_path);
                 }
 
                 Console::outVerbose('Scanning for dependencies... ');
-                /** @var \ncc\Objects\ProjectConfiguration\Dependency $dependency */
+                /** @var Dependency $dependency */
                 foreach($selected_dependencies as $dependency)
                 {
                     Console::outVerbose(sprintf('processing dependency %s', $dependency->getName()));
@@ -325,10 +327,10 @@
          * Executes the compile process in the correct order and returns the finalized Package object
          *
          * @return Package|null
-         * @throws \ncc\Exceptions\BuildException
-         * @throws \ncc\Exceptions\IOException
-         * @throws \ncc\Exceptions\NotSupportedException
-         * @throws \ncc\Exceptions\PathNotFoundException
+         * @throws BuildException
+         * @throws IOException
+         * @throws NotSupportedException
+         * @throws PathNotFoundException
          */
         public function build(): ?Package
         {
@@ -386,7 +388,7 @@
                 // Get the data and
                 $resource->Data = IO::fread(Functions::correctDirectorySeparator($this->path . $resource->Name));
                 $resource->Data = Base64::encode($resource->Data);
-                $resource->Name = str_replace($this->project->build->source_path, (string)null, $resource->Name);
+                $resource->Name = str_replace($this->project->build->getSourcePath(), (string)null, $resource->Name);
                 $resource->updateChecksum();
                 $resources[] = $resource;
 
@@ -454,7 +456,7 @@
 
                 unset($parser);
 
-                $component->name = str_replace($this->project->build->source_path, (string)null, $component->name);
+                $component->name = str_replace($this->project->build->getSourcePath(), (string)null, $component->name);
                 $component->updateChecksum();
                 $components[] = $component;
                 ++$processed_items;
@@ -468,9 +470,9 @@
 
         /**
          * @return void
-         * @throws \ncc\Exceptions\IOException
-         * @throws \ncc\Exceptions\NotSupportedException
-         * @throws \ncc\Exceptions\PathNotFoundException
+         * @throws IOException
+         * @throws NotSupportedException
+         * @throws PathNotFoundException
          */
         public function compileExecutionPolicies(): void
         {

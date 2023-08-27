@@ -27,6 +27,7 @@
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GitException;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\NetworkException;
     use ncc\Interfaces\RepositorySourceInterface;
     use ncc\Objects\DefinedRemoteSource;
@@ -49,6 +50,7 @@
          * @throws AuthenticationException
          * @throws GitException
          * @throws NetworkException
+         * @throws IOException
          */
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -80,6 +82,7 @@
          * @throws AuthenticationException
          * @throws GitException
          * @throws NetworkException
+         * @throws IOException
          */
         public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -94,6 +97,7 @@
          * @throws AuthenticationException
          * @throws GitException
          * @throws NetworkException
+         * @throws IOException
          */
         public static function getNccPackage(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -110,6 +114,7 @@
          * @throws AuthenticationException
          * @throws GitException
          * @throws NetworkException
+         * @throws IOException
          */
         private static function getReleases(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): array
         {
@@ -180,6 +185,7 @@
          * @return array
          * @throws AuthenticationException
          * @throws GitException
+         * @throws IOException
          * @throws NetworkException
          */
         private static function getJsonResponse(HttpRequest $httpRequest, ?Entry $entry): array
@@ -207,6 +213,7 @@
          * @throws AuthenticationException
          * @throws GitException
          * @throws NetworkException
+         * @throws IOException
          */
         private static function processReleases(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry): mixed
         {

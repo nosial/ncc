@@ -28,8 +28,30 @@
 
     class PathNotFoundException extends Exception
     {
+        /**
+         * @var string
+         */
+        private string $path;
+
+        /**
+         * PathNotFoundException constructor.
+         *
+         * @param string $path
+         * @param Throwable|null $previous
+         */
         public function __construct(string $path, ?Throwable $previous = null)
         {
             parent::__construct(sprintf('Path "%s" not found', $path), ExceptionCodes::PATH_NOT_FOUND, $previous);
+            $this->path = $path;
+        }
+
+        /**
+         * Returns the path that was not found
+         *
+         * @return string
+         */
+        public function getPath(): string
+        {
+            return $this->path;
         }
     }

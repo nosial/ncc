@@ -44,21 +44,69 @@
          *
          * @var string
          */
-        public $extension;
+        private $extension;
 
         /**
          * The minimum version that is supported
          *
          * @var string
          */
-        public $minimum_version;
+        private $minimum_version;
 
         /**
          * The maximum version that is supported
          *
          * @var string
          */
-        public $maximum_version;
+        private $maximum_version;
+
+        /**
+         * @return string
+         */
+        public function getExtension(): string
+        {
+            return $this->extension;
+        }
+
+        /**
+         * @param string $extension
+         */
+        public function setExtension(string $extension): void
+        {
+            $this->extension = $extension;
+        }
+
+        /**
+         * @return string
+         */
+        public function getMinimumVersion(): string
+        {
+            return $this->minimum_version;
+        }
+
+        /**
+         * @param string $minimum_version
+         */
+        public function setMinimumVersion(string $minimum_version): void
+        {
+            $this->minimum_version = $minimum_version;
+        }
+
+        /**
+         * @return string
+         */
+        public function getMaximumVersion(): string
+        {
+            return $this->maximum_version;
+        }
+
+        /**
+         * @param string $maximum_version
+         */
+        public function setMaximumVersion(string $maximum_version): void
+        {
+            $this->maximum_version = $maximum_version;
+        }
 
         /**
          * Validates the compiler object

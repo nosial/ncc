@@ -30,32 +30,33 @@
         /**
          * @var NamespacePointer[]|null
          */
-        public $Psr4;
+        public $psr_4;
 
         /**
          * @var NamespacePointer[]|null
          */
-        public $Psr0;
+        public $psr_0;
 
         /**
          * @var string[]|null
          */
-        public $Classmap;
+        public $class_map;
 
         /**
          * @var string[]|null
          */
-        public $Files;
+        public $files;
 
         /**
          * @var string[]|null
          */
-        public $ExcludeFromClassMap;
+        public $exclude_from_class_map;
 
         /**
          * @param array $psr
          * @param mixed $pointer
          * @return array
+         * @noinspection PhpUnusedPrivateMethodInspection
          */
         private static function psrRestructure(array $psr, NamespacePointer $pointer): array
         {
@@ -70,7 +71,7 @@
 
                     $psr[(string)$pointer->Namespace] = $r;
                 }
-                elseif (!in_array($pointer->Path, $psr[(string)$pointer->Namespace]))
+                elseif (!in_array($pointer->Path, $psr[(string)$pointer->Namespace], true))
                 {
                     $psr[(string)$pointer->Namespace][] = $pointer->Path;
                 }
@@ -90,27 +91,27 @@
         public function toArray(): array
         {
             $_psr4 = null;
-            if($this->Psr4 !== null && count($this->Psr4) > 0)
+            if($this->psr_4 !== null && count($this->psr_4) > 0)
             {
-                $_psr4 = [];
-                foreach($this->Psr4 as $_psr)
-                    $_psr4 = self::psrRestructure($_psr4, $_psr);
+                $_psr4 = array_map(static function(NamespacePointer $pointer) {
+                    return $pointer->toArray();
+                }, $this->psr_4);
             }
 
             $_psr0 = null;
-            if($this->Psr0 !== null && count($this->Psr0) > 0)
+            if($this->psr_0 !== null && count($this->psr_0) > 0)
             {
-                $_psr0 = [];
-                foreach($this->Psr0 as $_psr)
-                    $_psr4 = self::psrRestructure($_psr0, $_psr);
+                $_psr0 = array_map(static function(NamespacePointer $pointer) {
+                    return $pointer->toArray();
+                }, $this->psr_0);
             }
 
             return [
                 'psr-4' => $_psr4,
                 'psr-0' => $_psr0,
-                'classmap' => $this->Classmap,
-                'files' => $this->Files,
-                'exclude-from-classmap' => $this->ExcludeFromClassMap,
+                'classmap' => $this->class_map,
+                'files' => $this->files,
+                'exclude-from-classmap' => $this->exclude_from_class_map,
             ];
         }
 
@@ -124,50 +125,56 @@
 
             if(isset($data['psr-4']))
             {
-                $object->Psr4 = [];
+                $object->psr_4 = [];
                 foreach($data['psr-4'] as $namespace => $path)
                 {
                     if(is_array($path))
                     {
                         foreach($path as $datum)
                         {
-                            $object->Psr4[] = new NamespacePointer($namespace, $datum);
+                            $object->psr_4[] = new NamespacePointer($namespace, $datum);
                         }
                     }
                     else
                     {
-                        $object->Psr4[] = new NamespacePointer($namespace, $path);
+                        $object->psr_4[] = new NamespacePointer($namespace, $path);
                     }
                 }
             }
 
             if(isset($data['psr-0']))
             {
-                $object->Psr0 = [];
+                $object->psr_0 = [];
                 foreach($data['psr-0'] as $namespace => $path)
                 {
                     if(is_array($path))
                     {
                         foreach($path as $datum)
                         {
-                            $object->Psr0[] = new NamespacePointer($namespace, $datum);
+                            $object->psr_0[] = new NamespacePointer($namespace, $datum);
                         }
                     }
                     else
                     {
-                        $object->Psr0[] = new NamespacePointer($namespace, $path);
+                        $object->psr_0[] = new NamespacePointer($namespace, $path);
                     }
                 }
             }
 
             if(isset($data['classmap']))
-                $object->Classmap = $data['classmap'];
+            {
+                $object->class_map = $data['classmap'];
+            }
 
             if(isset($data['files']))
-                $object->Files = $data['files'];
+            {
+                $object->files = $data['files'];
+            }
 
             if(isset($data['exclude-from-classmap']))
-                $object->ExcludeFromClassMap = $data['exclude-from-classmap'];
+            {
+                $object->exclude_from_class_map = $data['exclude-from-classmap'];
+            }
 
             return $object;
         }

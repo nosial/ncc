@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -51,76 +51,51 @@
          * @param int $size
          * @param array $options
          * @return void
-         *@copyright Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
+         * @copyright Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
+         * @copyright Copyright (c) 2023, Nosial. All rights reserved
          */
-        public static function inlineProgressBar(int $value, int $total, int $size=38, array $options=[]): void
+        public static function inlineProgressBar(int $value, int $total, int $size = 10, array $options = []): void
         {
-            if(!ncc::cliMode())
-                return;
-
-            if(Main::getLogLevel() !== null)
-            {
-                switch(Main::getLogLevel())
-                {
-                    case LogLevel::VERBOSE:
-                    case LogLevel::DEBUG:
-                    case LogLevel::SILENT:
-                        return;
-
-                    default:
-                        break;
-                }
-            }
-
             static $start_time;
 
-            // if we go over our bound, just ignore it
-            if($value > $total)
-                return;
-
-            if(empty($start_time)) $start_time=time();
-            $now = time();
-            $perc=(double)($value/$total);
-
-            $bar=floor($perc*$size);
-
-            $status_bar="\r[ ";
-            $status_bar.=str_repeat("=", $bar);
-            if($bar<$size){
-                $status_bar.=">";
-                $status_bar.=str_repeat(" ", $size-$bar);
-            } else {
-                $status_bar.="=";
-            }
-
-            /** @noinspection PhpRedundantOptionalArgumentInspection */
-            $disp=number_format($perc*100, 0);
-
-            $status_bar.=" ] $disp%  $value/$total";
-
-            if($value == 0)
-                return;
-
-            $rate = ($now-$start_time)/$value;
-            $left = $total - $value;
-            $eta = round($rate * $left, 2);
-            $elapsed = $now - $start_time;
-
-            $remaining_text = 'remaining: ';
-            if(isset($options['remaining_text']))
+            // Start time initialization
+            if (!$start_time)
             {
-                $remaining_text = $options['remaining_text'];
+                $start_time = time();
             }
 
-            $status_bar.= " $remaining_text ".number_format($eta)." sec.  elapsed: ".number_format($elapsed)." sec.";
+            // If the value is out of bounds or zero, return early
+            if ($value > $total || $value === 0)
+            {
+                return;
+            }
 
-            echo "$status_bar  ";
+            // Build status bar
+            $percentage = $value / $total;
+            $barLength = floor($percentage * $size);
+            $statusBar = "\r[ "
+                . str_repeat("=", $barLength)
+                . ($barLength < $size ? ">" : "=")
+                . str_repeat(" ", $size - $barLength)
+                . " ] "
+                . number_format($percentage * 100) . " % $value/$total";
+
+            // ETA and elapsed time calculation
+            $rate = (time() - $start_time) / $value;
+            $eta = round($rate * ($total - $value), 2);
+            $elapsed = time() - $start_time;
+            $remaining_text = $options['remaining_text'] ?? 'remaining: ';
+            $statusBar .= " $remaining_text " . number_format($eta) . " sec.  elapsed: " . number_format($elapsed) . " sec.";
+            print("$statusBar  ");
 
             flush();
 
-            // when done, send a newline
-            if($value == $total)
-                Console::out((string)null);
+            // Reset variables once the progress is complete
+            if ($value === $total)
+            {
+                print("\n");
+                $start_time = null; // This resets the start time for the next progress bar
+            }
         }
 
         /**
@@ -162,11 +137,11 @@
 
                 if ($timeDiff > 1.0)
                 {
-                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LIGHT_RED);
+                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_RED);
                 }
                 elseif ($timeDiff > 0.5)
                 {
-                    $fmt_tick = Console::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW);
+                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW);
                 }
             }
 
@@ -185,13 +160,19 @@
         public static function out(string $message, bool $newline=true, bool $no_prefix=false): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::INFO, Main::getLogLevel()))
+            {
                 return;
+            }
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()) && !$no_prefix)
+            if(!$no_prefix && Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            {
                 $message = self::setPrefix(LogLevel::INFO, $message);
+            }
 
             if($newline)
             {
@@ -212,34 +193,30 @@
         public static function outDebug(string $message, bool $newline=true): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
+            {
                 return;
+            }
 
             $backtrace = null;
             if(function_exists('debug_backtrace'))
+            {
                 $backtrace = debug_backtrace();
+            }
             $trace_msg = null;
             if($backtrace !== null && isset($backtrace[1]))
             {
-                $trace_msg = Console::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY);
+                $trace_msg = self::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY);
                 $trace_msg .= $backtrace[1]['type'];
-                $trace_msg .= Console::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN);
+                $trace_msg .= self::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN);
                 $trace_msg .= ' > ';
             }
 
-            /**  Apply syntax highlighting using regular expressions  */
-
-            // Hyperlinks
-            $message = preg_replace('/(https?:\/\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LIGHT_BLUE), $message);
-
-            // File Paths
-            $message = preg_replace('/(\/[^\s]+)/', Console::formatColor('$1', ConsoleColors::LIGHT_CYAN), $message);
-
-            /** @noinspection PhpUnnecessaryStringCastInspection */
-            $message = self::setPrefix(LogLevel::DEBUG, (string)$trace_msg . $message);
-
+            $message = self::setPrefix(LogLevel::DEBUG, $trace_msg . $message);
             self::out($message, $newline, true);
         }
 
@@ -253,10 +230,14 @@
         public static function outVerbose(string $message, bool $newline=true): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            {
                 return;
+            }
 
             self::out(self::setPrefix(LogLevel::VERBOSE, $message), $newline, true);
         }
@@ -295,10 +276,14 @@
         public static function outWarning(string $message, bool $newline=true): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::WARNING, Main::getLogLevel()))
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
@@ -320,10 +305,14 @@
         public static function outError(string $message, bool $newline=true, ?int $exit_code=null): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
+            {
                 return;
+            }
 
             if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
@@ -351,14 +340,16 @@
         public static function outException(string $message, Exception $e, ?int $exit_code=null): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
-            if(strlen($message) > 0 && Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
+            if($message !== '' && Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
             {
                 self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED) . $message);
             }
 
-            Console::out(PHP_EOL . '===== Exception Details =====');
+            self::out(PHP_EOL . '===== Exception Details =====');
             self::outExceptionDetails($e);
 
             if($exit_code !== null)
@@ -377,10 +368,11 @@
         private static function outExceptionDetails(Throwable $e, bool $sub=false): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             // Exception name without namespace
-
             $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::MAGENTA);
             $trace_error = self::formatColor( 'Error: ', ConsoleColors::RED);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());
@@ -396,16 +388,13 @@
                 }
             }
 
-            if($e->getPrevious() !== null)
+            // Check if previous is the same as the current
+            if(($e->getPrevious() !== null) && $e->getPrevious()->getMessage() !== $e->getMessage())
             {
-                // Check if previous is the same as the current
-                if($e->getPrevious()->getMessage() !== $e->getMessage())
-                {
-                    self::outExceptionDetails($e->getPrevious(), true);
-                }
+                self::outExceptionDetails($e->getPrevious(), true);
             }
 
-            if(Main::getArgs() !== null && !$sub)
+            if(!$sub && Main::getArgs() !== null)
             {
                 if(isset(Main::getArgs()['dbg-ex']))
                 {
@@ -415,7 +404,8 @@
                             'constants' => ncc::getConstants(),
                             'exception' => Functions::exceptionToArray($e)
                         ];
-                        IO::fwrite(getcwd() . DIRECTORY_SEPARATOR . time() . '.json', json_encode($dump, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), 0777);
+
+                        IO::fwrite(getcwd() . DIRECTORY_SEPARATOR . time() . '.json', json_encode($dump, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), 0777);
                     }
                     catch (Exception $e)
                     {
@@ -451,12 +441,7 @@
          */
         public static function getOptionInput(array $args, string $option, string $prompt): string
         {
-            if(isset($args[$option]))
-            {
-                return $args[$option];
-            }
-
-            return self::getInput($prompt);
+            return $args[$option] ?? self::getInput($prompt);
         }
 
         /**
@@ -479,7 +464,7 @@
                     $r = self::getInput($prompt);
                 }
 
-                if(strlen($r) > 0)
+                if($r !== '')
                 {
                     switch(strtoupper($r))
                     {
@@ -506,7 +491,9 @@
         public static function passwordInput(string $prompt): ?string
         {
             if(!ncc::cliMode())
+            {
                 return null;
+            }
 
             // passwordInput() is not properly implemented yet, defaulting to prompt
             return self::getInput($prompt);
@@ -537,12 +524,16 @@
         public static function outHelpSections(array $sections): void
         {
             if(!ncc::cliMode())
+            {
                 return;
+            }
 
             $padding = Functions::detectParametersPadding($sections);
 
             foreach($sections as $section)
-                Console::out('   ' . $section->toString($padding));
+            {
+                self::out('   ' . $section->toString($padding));
+            }
         }
 
     }

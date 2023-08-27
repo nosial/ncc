@@ -29,6 +29,7 @@
     use ncc\Enums\Versions;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Exceptions\RuntimeException;
     use ncc\Objects\Vault;
     use ncc\Utilities\Console;
@@ -76,6 +77,7 @@
          * Constructs the store file if it doesn't exist on the system (First initialization)
          *
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
          */
         public function constructStore(): void
@@ -105,6 +107,7 @@
          *
          * @return void
          * @throws IOException
+         * @throws PathNotFoundException
          * @throws RuntimeException
          */
         private function loadVault(): void
@@ -137,6 +140,7 @@
          * Saves the vault to the disk
          *
          * @return void
+         * @throws AuthenticationException
          * @throws IOException
          */
         public function saveVault(): void

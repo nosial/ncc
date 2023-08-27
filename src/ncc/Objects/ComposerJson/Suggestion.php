@@ -29,14 +29,14 @@ namespace ncc\Objects\ComposerJson;
          *
          * @var string
          */
-        public $PackageName;
+        public $package_name;
 
         /**
          * The comment for the suggestion
          *
          * @var string
          */
-        public $Comment;
+        public $comment;
 
         /**
          * @param string|null $packageName
@@ -44,8 +44,8 @@ namespace ncc\Objects\ComposerJson;
          */
         public function __construct(?string $packageName=null, ?string $comment=null)
         {
-            $this->PackageName = $packageName;
-            $this->Comment = $comment;
+            $this->package_name = $packageName;
+            $this->comment = $comment;
         }
 
         /**
@@ -56,8 +56,8 @@ namespace ncc\Objects\ComposerJson;
         public function toArray(): array
         {
             return [
-                'package_name' => $this->PackageName,
-                'comment' => $this->Comment,
+                'package_name' => $this->package_name,
+                'comment' => $this->comment,
             ];
         }
 
@@ -72,10 +72,10 @@ namespace ncc\Objects\ComposerJson;
             $object = new self();
 
             if(isset($data['package_name']))
-                $object->PackageName = $data['package_name'];
+                $object->package_name = $data['package_name'];
 
             if(isset($data['comment']))
-                $object->Comment = $data['comment'];
+                $object->comment = $data['comment'];
 
             return $object;
         }

@@ -22,6 +22,7 @@
 
 namespace ncc\Classes\LuaExtension;
 
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
@@ -32,11 +33,11 @@ namespace ncc\Classes\LuaExtension;
 
         /**
          * @inheritDoc
+         * @throws PathNotFoundException
          */
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
             $execution_unit = new ExecutionUnit();
-            $policy->execute->target = null;
             $execution_unit->execution_policy = $policy;
             $execution_unit->Data = IO::fread($path);
 

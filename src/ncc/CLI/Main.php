@@ -65,18 +65,18 @@
 
             if(isset(self::$args['ncc-cli']))
             {
-                // Initialize NCC
+                // Initialize ncc
                 try
                 {
                     ncc::initialize();
                 }
                 catch (PathNotFoundException $e)
                 {
-                    Console::outException('Cannot initialize NCC, one or more files were not found.', $e, 1);
+                    Console::outException('Cannot initialize ncc, one or more files were not found.', $e, 1);
                 }
                 catch (Exception $e)
                 {
-                    Console::outException('Cannot initialize NCC due to an unexpected error.', $e, 1);
+                    Console::outException('Cannot initialize ncc due to an unexpected error.', $e, 1);
                 }
 
                 define('NCC_CLI_MODE', 1);
@@ -118,7 +118,7 @@
 
                 if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS, true))
                 {
-                    Console::outWarning('This is an unstable build of NCC, expect some features to not work as expected');
+                    Console::outWarning('This is an unstable build of ncc, expect some features to not work as expected');
                 }
 
                 if(isset(self::$args['version']))
@@ -184,17 +184,17 @@
         }
 
         /**
-         * Displays the current version of NCC
+         * Displays the current version of ncc
          *
          * @return void
          */
         private static function displayVersion(): void
         {
-            Console::out(sprintf('NCC version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
+            Console::out(sprintf('ncc version %s (%s)', ncc_VERSION_NUMBER, ncc_VERSION_BRANCH));
         }
 
         /**
-         * Returns the arguments passed to NCC
+         * Returns the arguments passed to ncc
          *
          * @return array
          */
@@ -241,7 +241,7 @@
             }
             catch (Exception $e)
             {
-                Console::outWarning('An error occurred while shutting down NCC, ' . $e->getMessage());
+                Console::outWarning('An error occurred while shutting down ncc, ' . $e->getMessage());
             }
         }
 

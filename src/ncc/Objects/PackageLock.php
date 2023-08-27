@@ -25,6 +25,7 @@
     namespace ncc\Objects;
 
     use ncc\Enums\Versions;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\PackageLock\PackageEntry;
     use ncc\Utilities\Console;
@@ -77,27 +78,28 @@
          * @param Package $package
          * @param string $install_path
          * @return void
+         * @throws ConfigurationException
          */
         public function addPackage(Package $package, string $install_path): void
         {
-            Console::outVerbose("Adding package {$package->assembly->package} to package lock file");
+            Console::outVerbose("Adding package {$package->assembly->getPackage()} to package lock file");
 
-            if(!isset($this->Packages[$package->assembly->package]))
+            if(!isset($this->Packages[$package->assembly->getPackage()]))
             {
                 $package_entry = new PackageEntry();
                 $package_entry->addVersion($package, $install_path, true);
-                $package_entry->Name = $package->assembly->package;
+                $package_entry->Name = $package->assembly->getPackage();
                 $package_entry->UpdateSource = $package->header->UpdateSource;
                 $package_entry->getDataPath();
-                $this->Packages[$package->assembly->package] = $package_entry;
+                $this->Packages[$package->assembly->getPackage()] = $package_entry;
                 $this->update();
 
                 return;
             }
 
-            $this->Packages[$package->assembly->package]->UpdateSource = $package->header->UpdateSource;
-            $this->Packages[$package->assembly->package]->addVersion($package, $install_path, true);
-            $this->Packages[$package->assembly->package]->getDataPath();
+            $this->Packages[$package->assembly->getPackage()]->UpdateSource = $package->header->UpdateSource;
+            $this->Packages[$package->assembly->getPackage()]->addVersion($package, $install_path, true);
+            $this->Packages[$package->assembly->getPackage()]->getDataPath();
             $this->update();
         }
 

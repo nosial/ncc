@@ -1,4 +1,4 @@
-# Contributing to NCC
+# Contributing to ncc
 
 We welcome contributions to NCC! If you have an idea for how to improve the project, please don't hesitate to reach out.
 There are many ways to contribute, and we appreciate all forms of support.

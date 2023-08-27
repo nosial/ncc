@@ -34,42 +34,42 @@
          *
          * @var string[]|null
          */
-        public $pre_install;
+        private $pre_install;
 
         /**
          * An array of execution policies to execute post-installation
          *
          * @var string[]|null
          */
-        public $post_install;
+        private $post_install;
 
         /**
          * An array of execution policies to execute pre-uninstallation
          *
          * @var string[]|null
          */
-        public $pre_uninstall;
+        private $pre_uninstall;
 
         /**
          * An array of execution policies to execute post-uninstallation
          *
          * @var string[]|null
          */
-        public $post_uninstall;
+        private $post_uninstall;
 
         /**
          * An array of execution policies to execute pre-update
          *
          * @var string[]|null
          */
-        public $pre_update;
+        private $pre_update;
 
         /**
          * An array of execution policies to execute post-update
          *
          * @var string[]|null
          */
-        public $post_update;
+        private $post_update;
 
         /**
          * @inheritDoc

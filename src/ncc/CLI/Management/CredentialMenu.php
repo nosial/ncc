@@ -134,29 +134,21 @@ namespace ncc\CLI\Management;
 
                 while(true)
                 {
-                    try
+                    $password = Console::passwordInput('Password/Secret: ');
+                    if (!$entry->unlock($password))
                     {
-                        $password = Console::passwordInput('Password/Secret: ');
-                        if (!$entry->unlock($password))
+                        $tries++;
+                        if ($tries >= 3)
                         {
-                            $tries++;
-                            if ($tries >= 3)
-                            {
-                                Console::outError('Too many failed attempts.', true, 1);
-                                return;
-                            }
-
-                            Console::outError('Invalid password.', true, 1);
-                        }
-                        else
-                        {
-                            Console::out('Authentication successful.');
+                            Console::outError('Too many failed attempts.', true, 1);
                             return;
                         }
+
+                        Console::outError('Invalid password.', true, 1);
                     }
-                    catch (RuntimeException $e)
+                    else
                     {
-                        Console::outException('Cannot unlock entry.', $e, 1);
+                        Console::out('Authentication successful.');
                         return;
                     }
                 }

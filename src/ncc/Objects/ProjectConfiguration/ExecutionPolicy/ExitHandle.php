@@ -34,7 +34,7 @@
          *
          * @var string|null
          */
-        public $message;
+        private $message;
 
         /**
          * Indicates if the process should exit if the handle is triggered,
@@ -43,23 +43,93 @@
          * property will be set to true, otherwise for "success" and "warning"
          * the property will be false.
          *
-         * @var bool|null
+         * @var bool
          */
-        public $end_process;
+        private $end_process;
 
         /**
          * The name of another execution policy to execute (optionally) when this exit handle is triggered
          *
          * @var string|null
          */
-        public $run;
+        private $run;
 
         /**
          * The exit code that needs to be returned from the process to trigger this handle
          *
          * @var int
          */
-        public $exit_code;
+        private $exit_code;
+
+        public function __construct()
+        {
+            $this->end_process = false;
+            $this->exit_code = 0;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getMessage(): ?string
+        {
+            return $this->message;
+        }
+
+        /**
+         * @param string|null $message
+         */
+        public function setMessage(?string $message): void
+        {
+            $this->message = $message;
+        }
+
+        /**
+         * @return bool
+         */
+        public function getEndProcess(): bool
+        {
+            return $this->end_process;
+        }
+
+        /**
+         * @param bool $end_process
+         */
+        public function setEndProcess(bool $end_process): void
+        {
+            $this->end_process = $end_process;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getRun(): ?string
+        {
+            return $this->run;
+        }
+
+        /**
+         * @param string|null $run
+         */
+        public function setRun(?string $run): void
+        {
+            $this->run = $run;
+        }
+
+        /**
+         * @return int
+         */
+        public function getExitCode(): int
+        {
+            return $this->exit_code;
+        }
+
+        /**
+         * @param int $exit_code
+         */
+        public function setExitCode(int $exit_code): void
+        {
+            $this->exit_code = $exit_code;
+        }
 
         /**
          * @inheritDoc
@@ -97,9 +167,9 @@
             $object = new self();
 
             $object->message = Functions::array_bc($data, 'message');
-            $object->end_process = Functions::array_bc($data, 'end_process');
+            $object->end_process = Functions::array_bc($data, 'end_process') ?? false;
             $object->run = Functions::array_bc($data, 'run');
-            $object->exit_code = Functions::array_bc($data, 'exit_code');
+            $object->exit_code = Functions::array_bc($data, 'exit_code') ?? 0;
 
             return $object;
         }

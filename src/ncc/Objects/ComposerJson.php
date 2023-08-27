@@ -40,7 +40,7 @@
          *
          * @var string
          */
-        public $Name;
+        public $name;
 
         /**
          * A short description of the package. Usually
@@ -48,7 +48,7 @@
          *
          * @var string
          */
-        public $Description;
+        public $description;
 
         /**
          * The version of the package, in most cases this is not
@@ -60,14 +60,14 @@
          *
          * @var string|null
          */
-        public $Version;
+        public $version;
 
         /**
          * The type of package, it defaults to library
          *
          * @var string
          */
-        public $Type;
+        public $type;
 
         /**
          * An array of keywords that the package is related to.
@@ -82,21 +82,21 @@
          *
          * @var string[]
          */
-        public $Keywords;
+        public $keywords;
 
         /**
          * A URL to the website of the project
          *
          * @var string|null
          */
-        public $Homepage;
+        public $homepage;
 
         /**
          * A relative path to the readme document
          *
          * @var string|null
          */
-        public $Readme;
+        public $readme;
 
         /**
          * Release date of the version
@@ -105,7 +105,7 @@
          *
          * @var string|null
          */
-        public $Time;
+        public $time;
 
         /**
          * The license of the package. This can either be a string or
@@ -113,17 +113,17 @@
          *
          * @var string|string[]|null
          */
-        public $License;
+        public $license;
 
         /**
          * @var Author[]|null
          */
-        public $Authors;
+        public $authors;
 
         /**
          * @var Support|null
          */
-        public $Support;
+        public $support;
 
         /**
          * Map of packages required by this package. The package
@@ -131,7 +131,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $Require;
+        public $require;
 
         /**
          * Map of packages required for developing this package, or running tests,
@@ -141,7 +141,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $RequireDev;
+        public $require_dev;
 
         /**
          * Map of packages that conflict with this version of this package. They will
@@ -149,7 +149,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $Conflict;
+        public $conflict;
 
         /**
          * Map of packages that are replaced by this package. This allows you to fork a
@@ -159,7 +159,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $Replace;
+        public $replace;
 
         /**
          * Map of packages that are provided by this package. This is mostly useful for
@@ -169,7 +169,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $Provide;
+        public $provide;
 
         /**
          * Suggested packages that can enhance or work well with this package. These are
@@ -179,35 +179,35 @@
          *
          * @var Suggestion[]|null
          */
-        public $Suggest;
+        public $suggest;
 
         /**
          * Autoload mapping for a PHP autoloader.
          *
          * @var Autoloader|null
          */
-        public $Autoload;
+        public $autoload;
 
         /**
          * This section allows defining autoload rules for development purposes.
          *
          * @var Autoloader|null
          */
-        public $AutoloadDev;
+        public $autoload_dev;
 
         /**
          * A list of paths which should get appended to PHP's include_path.
          *
          * @var string[]|null
          */
-        public $IncludePath;
+        public $include_path;
 
         /**
          * Defines the installation target.
          *
          * @var string|null
          */
-        public $TargetDirectory;
+        public $target_directory;
 
         /**
          * This defines the default behavior for filtering packages by
@@ -222,31 +222,21 @@
          *
          * @var ComposerPackageTypes|null
          */
-        public $MinimumStability;
-
-        /**
-         * When this is enabled, Composer will prefer more stable packages over
-         * unstable ones when finding compatible stable packages is possible.
-         * If you require a dev version or only alphas are available for a package,
-         * those will still be selected granted that the minimum-stability allows for it.
-         *
-         * @var bool
-         */
-        public $PreferStable;
+        public $minimum_stability;
 
         /**
          * Custom package repositories to use.
          *
          * @var array|null
          */
-        public $Repositories;
+        public $repositories;
 
         /**
          * A set of configuration options. It is only used for projects.
          *
          * @var array|null
          */
-        public $Configuration;
+        public $configuration;
 
         /**
          * Composer allows you to hook into various parts of the installation
@@ -254,14 +244,14 @@
          *
          * @var array|null
          */
-        public $Scripts;
+        public $scripts;
 
         /**
          * Arbitrary extra data for consumption by scripts.
          *
          * @var array|null
          */
-        public $Extra;
+        public $extra;
 
         /**
          * A set of files that should be treated as binaries and made available into the bin-dir (from config).
@@ -275,14 +265,14 @@
          *
          * @var array|null
          */
-        public $Archive;
+        public $archive;
 
         /**
          * Indicates whether this package has been abandoned.
          *
          * @var bool
          */
-        public $Abandoned;
+        public $abandoned;
 
         /**
          * A list of regex patterns of branch names that are
@@ -292,14 +282,14 @@
          *
          * @var array|null
          */
-        public $NonFeatureBranches;
+        public $non_feature_branches;
 
         public function __construct()
         {
-            $this->Type = ComposerPackageTypes::LIBRARY;
-            $this->MinimumStability = ComposerStabilityTypes::STABLE;
+            $this->type = ComposerPackageTypes::LIBRARY;
+            $this->minimum_stability = ComposerStabilityTypes::STABLE;
             $this->PreferStable = false;
-            $this->Abandoned = false;
+            $this->abandoned = false;
         }
 
         /**
@@ -310,106 +300,106 @@
         public function toArray(): array
         {
             $_authors = null;
-            if($this->Authors !== null && count($this->Authors) > 0)
+            if($this->authors !== null && count($this->authors) > 0)
             {
                 $_authors = [];
-                foreach($this->Authors as $author)
+                foreach($this->authors as $author)
                 {
                     $_authors[] = $author->toArray();
                 }
             }
 
             $_require = null;
-            if($this->Require !== null && count($this->Require) > 0)
+            if($this->require !== null && count($this->require) > 0)
             {
                 $_require = [];
-                foreach($this->Require as $require)
+                foreach($this->require as $require)
                 {
-                    $_require[$require->PackageName] = $require->Version;
+                    $_require[$require->package_name] = $require->version;
                 }
             }
 
             $_require_dev = null;
-            if($this->RequireDev !== null && count($this->RequireDev) > 0)
+            if($this->require_dev !== null && count($this->require_dev) > 0)
             {
                 $_require_dev = [];
-                foreach($this->RequireDev as $require)
+                foreach($this->require_dev as $require)
                 {
-                    $_require_dev[$require->PackageName] = $require->Version;
+                    $_require_dev[$require->package_name] = $require->version;
                 }
             }
 
             $_conflict = null;
-            if($this->Conflict !== null && count($this->Conflict) > 0)
+            if($this->conflict !== null && count($this->conflict) > 0)
             {
                 $_conflict = [];
-                foreach($this->Conflict as $require)
+                foreach($this->conflict as $require)
                 {
-                    $_conflict[$require->PackageName] = $require->Version;
+                    $_conflict[$require->package_name] = $require->version;
                 }
             }
 
             $_replace = null;
-            if($this->Replace !== null && count($this->Replace) > 0)
+            if($this->replace !== null && count($this->replace) > 0)
             {
                 $_replace = [];
-                foreach($this->Replace as $require)
+                foreach($this->replace as $require)
                 {
-                    $_replace[$require->PackageName] = $require->Version;
+                    $_replace[$require->package_name] = $require->version;
                 }
             }
 
             $_provide = null;
-            if($this->Provide !== null && count($this->Provide) > 0)
+            if($this->provide !== null && count($this->provide) > 0)
             {
                 $_provide = [];
-                foreach($this->Provide as $require)
+                foreach($this->provide as $require)
                 {
-                    $_provide[$require->PackageName] = $require->Version;
+                    $_provide[$require->package_name] = $require->version;
                 }
             }
 
             $_suggest = null;
-            if($this->Suggest !== null && count($this->Suggest) > 0)
+            if($this->suggest !== null && count($this->suggest) > 0)
             {
                 $_suggest = [];
-                foreach($this->Suggest as $suggestion)
+                foreach($this->suggest as $suggestion)
                 {
-                    $_suggest[$suggestion->PackageName] = $suggestion->Comment;
+                    $_suggest[$suggestion->package_name] = $suggestion->comment;
                 }
             }
 
             return [
-                'name' => $this->Name,
-                'description' => $this->Description,
-                'version' => $this->Version,
-                'type' => $this->Type,
-                'keywords' => $this->Keywords,
-                'homepage' => $this->Homepage,
-                'readme' => $this->Readme,
-                'time' => $this->Time,
-                'license' => $this->License,
+                'name' => $this->name,
+                'description' => $this->description,
+                'version' => $this->version,
+                'type' => $this->type,
+                'keywords' => $this->keywords,
+                'homepage' => $this->homepage,
+                'readme' => $this->readme,
+                'time' => $this->time,
+                'license' => $this->license,
                 'authors' => $_authors,
-                'support' => $this->Support?->toArray(),
+                'support' => $this->support?->toArray(),
                 'require' => $_require,
                 'require_dev' => $_require_dev,
                 'conflict' => $_conflict,
                 'replace' => $_replace,
                 'provide' => $_provide,
                 'suggest' => $_suggest,
-                'autoload' => $this->Autoload?->toArray(),
-                'autoload-dev' => $this->AutoloadDev?->toArray(),
-                'include-path' => $this->IncludePath,
-                'target-dir' => $this->TargetDirectory,
-                'minimum-stability' => $this->MinimumStability,
-                'repositories' => $this->Repositories,
-                'config' => $this->Configuration,
-                'scripts' => $this->Scripts,
-                'extra' => $this->Extra,
+                'autoload' => $this->autoload?->toArray(),
+                'autoload-dev' => $this->autoload_dev?->toArray(),
+                'include-path' => $this->include_path,
+                'target-dir' => $this->target_directory,
+                'minimum-stability' => $this->minimum_stability,
+                'repositories' => $this->repositories,
+                'config' => $this->configuration,
+                'scripts' => $this->scripts,
+                'extra' => $this->extra,
                 'bin' => $this->Bin,
-                'archive' => $this->Archive,
-                'abandoned' => $this->Abandoned,
-                'non-feature-branches' => $this->NonFeatureBranches
+                'archive' => $this->archive,
+                'abandoned' => $this->abandoned,
+                'non-feature-branches' => $this->non_feature_branches
             ];
         }
 
@@ -418,136 +408,182 @@
             $object = new self();
 
             if(isset($data['name']))
-                $object->Name = $data['name'];
+            {
+                $object->name = $data['name'];
+            }
 
             if(isset($data['description']))
-                $object->Description = $data['description'];
+            {
+                $object->description = $data['description'];
+            }
 
             if(isset($data['version']))
-                $object->Version = $data['version'];
+            {
+                $object->version = $data['version'];
+            }
 
             if(isset($data['type']))
-                $object->Type = $data['type'];
+            {
+                $object->type = $data['type'];
+            }
 
             if(isset($data['keywords']))
-                $object->Keywords = $data['keywords'];
+            {
+                $object->keywords = $data['keywords'];
+            }
 
             if(isset($data['homepage']))
-                $object->Homepage = $data['homepage'];
+            {
+                $object->homepage = $data['homepage'];
+            }
 
             if(isset($data['readme']))
-                $object->Readme = $data['readme'];
+            {
+                $object->readme = $data['readme'];
+            }
 
             if(isset($data['time']))
-                $object->Time = $data['time'];
+            {
+                $object->time = $data['time'];
+            }
 
             if(isset($data['license']))
-                $object->License = $data['license'];
+            {
+                $object->license = $data['license'];
+            }
 
             if(isset($data['authors']))
             {
-                $object->Authors = [];
+                $object->authors = [];
                 foreach($data['authors'] as $author)
                 {
-                    $object->Authors[] = Author::fromArray($author);
+                    $object->authors[] = Author::fromArray($author);
                 }
             }
 
             if(isset($data['support']))
-                $object->Support = Support::fromArray($data['support']);
+            {
+                $object->support = Support::fromArray($data['support']);
+            }
 
             if(isset($data['require']))
             {
-                $object->Require = [];
+                $object->require = [];
                 foreach($data['require'] as $package => $version)
                 {
-                    $object->Require[] = new PackageLink($package, $version);
+                    $object->require[] = new PackageLink($package, $version);
                 }
             }
 
             if(isset($data['require_dev']))
             {
-                $object->RequireDev = [];
+                $object->require_dev = [];
                 foreach($data['require_dev'] as $package => $version)
                 {
-                    $object->RequireDev[] = new PackageLink($package, $version);
+                    $object->require_dev[] = new PackageLink($package, $version);
                 }
             }
 
             if(isset($data['conflict']))
             {
-                $object->Conflict = [];
+                $object->conflict = [];
                 foreach($data['conflict'] as $package => $version)
                 {
-                    $object->Conflict[] = new PackageLink($package, $version);
+                    $object->conflict[] = new PackageLink($package, $version);
                 }
             }
 
             if(isset($data['replace']))
             {
-                $object->Replace = [];
+                $object->replace = [];
                 foreach($data['replace'] as $package => $version)
                 {
-                    $object->Replace[] = new PackageLink($package, $version);
+                    $object->replace[] = new PackageLink($package, $version);
                 }
             }
 
             if(isset($data['provide']))
             {
-                $object->Provide = [];
+                $object->provide = [];
                 foreach($data['provide'] as $package => $version)
                 {
-                    $object->Provide[] = new PackageLink($package, $version);
+                    $object->provide[] = new PackageLink($package, $version);
                 }
             }
 
             if(isset($data['suggest']))
             {
-                $object->Suggest = [];
+                $object->suggest = [];
                 foreach($data['suggest'] as $package => $comment)
                 {
-                    $object->Suggest[] = new Suggestion($package, $comment);
+                    $object->suggest[] = new Suggestion($package, $comment);
                 }
             }
 
             if(isset($data['autoload']))
-                $object->Autoload = Autoloader::fromArray($data['autoload']);
+            {
+                $object->autoload = Autoloader::fromArray($data['autoload']);
+            }
 
             if(isset($data['autoload-dev']))
-                $object->AutoloadDev = Autoloader::fromArray($data['autoload-dev']);
+            {
+                $object->autoload_dev = Autoloader::fromArray($data['autoload-dev']);
+            }
 
             if(isset($data['include-path']))
-                $object->IncludePath = $data['include-path'];
+            {
+                $object->include_path = $data['include-path'];
+            }
 
             if(isset($data['target-dir']))
-                $object->TargetDirectory = $data['target-dir'];
+            {
+                $object->target_directory = $data['target-dir'];
+            }
 
             if(isset($data['minimum-stability']))
-                $object->MinimumStability = $data['minimum-stability'];
+            {
+                $object->minimum_stability = $data['minimum-stability'];
+            }
 
             if(isset($data['repositories']))
-                $object->Repositories = $data['repositories'];
+            {
+                $object->repositories = $data['repositories'];
+            }
 
             if(isset($data['config']))
-                $object->Configuration = $data['config'];
+            {
+                $object->configuration = $data['config'];
+            }
 
             if(isset($data['scripts']))
-                $object->Scripts = $data['scripts'];
+            {
+                $object->scripts = $data['scripts'];
+            }
 
             if(isset($data['extra']))
-                $object->Extra = $data['extra'];
+            {
+                $object->extra = $data['extra'];
+            }
 
             if(isset($data['bin']))
+            {
                 $object->Bin = $data['bin'];
+            }
 
             if(isset($data['archive']))
-                $object->Archive = $data['archive'];
+            {
+                $object->archive = $data['archive'];
+            }
 
             if(isset($data['abandoned']))
-                $object->Abandoned = $data['abandoned'];
+            {
+                $object->abandoned = $data['abandoned'];
+            }
 
             if(isset($data['non-feature-branches']))
-                $object->NonFeatureBranches = $data['non-feature-branches'];
+            {
+                $object->non_feature_branches = $data['non-feature-branches'];
+            }
 
             return $object;
         }

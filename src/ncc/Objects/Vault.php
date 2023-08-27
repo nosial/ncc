@@ -148,8 +148,6 @@
          * @param string $name
          * @param string $password
          * @return bool
-         * @throws RuntimeException
-         * @noinspection PhpUnused
          */
         public function authenticate(string $name, string $password): bool
         {

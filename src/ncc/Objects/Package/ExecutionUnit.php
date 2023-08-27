@@ -87,7 +87,10 @@
         public function getId(): string
         {
             if($this->id == null)
-                $this->id = hash('sha1', $this->execution_policy->name);
+            {
+                $this->id = hash('sha1', $this->execution_policy->getName());
+            }
+
             return $this->id;
         }
 

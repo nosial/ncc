@@ -46,49 +46,49 @@ namespace ncc\Classes\NccExtension;
                 return null;
             }
 
-            if($assembly->name !== null)
+            if($assembly->getName() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_NAME, $assembly->name, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_NAME, $assembly->getName(), $input);
             }
 
-            if($assembly->package !== null)
+            if($assembly->getPackage() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PACKAGE, $assembly->package, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PACKAGE, $assembly->getPackage(), $input);
             }
 
-            if($assembly->description !== null)
+            if($assembly->getDescription() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->description, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->getDescription(), $input);
             }
 
-            if($assembly->company !== null)
+            if($assembly->getCompany() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->company, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->getCompany(), $input);
             }
 
-            if($assembly->product !== null)
+            if($assembly->getProduct() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->product, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->getProduct(), $input);
             }
 
-            if($assembly->copyright !== null)
+            if($assembly->getCopyright() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->copyright, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->getCopyright(), $input);
             }
 
-            if($assembly->trademark !== null)
+            if($assembly->getTrademark() !== null)
             {
-                $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->trademark, $input);
+                $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->getTrademark(), $input);
             }
 
-            if($assembly->version !== null)
+            if($assembly->getVersion() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_VERSION, $assembly->version, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_VERSION, $assembly->getVersion(), $input);
             }
 
-            if($assembly->uuid !== null)
+            if($assembly->getUuid() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_UID, $assembly->uuid, $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_UID, $assembly->getUuid(), $input);
             }
 
             return $input;

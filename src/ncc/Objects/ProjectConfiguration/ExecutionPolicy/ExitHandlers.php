@@ -34,21 +34,69 @@
          *
          * @var ExitHandle|null
          */
-        public $success;
+        private $success;
 
         /**
          * The handle to execute when the process exits with a warning exit code
          *
          * @var ExitHandle|null
          */
-        public $warning;
+        private $warning;
 
         /**
          * The handle to execute when the process exits with a error exit code
          *
          * @var ExitHandle|null
          */
-        public $error;
+        private $error;
+
+        /**
+         * @return ExitHandle|null
+         */
+        public function getSuccess(): ?ExitHandle
+        {
+            return $this->success;
+        }
+
+        /**
+         * @param ExitHandle|null $success
+         */
+        public function setSuccess(?ExitHandle $success): void
+        {
+            $this->success = $success;
+        }
+
+        /**
+         * @return ExitHandle|null
+         */
+        public function getWarning(): ?ExitHandle
+        {
+            return $this->warning;
+        }
+
+        /**
+         * @param ExitHandle|null $warning
+         */
+        public function setWarning(?ExitHandle $warning): void
+        {
+            $this->warning = $warning;
+        }
+
+        /**
+         * @return ExitHandle|null
+         */
+        public function getError(): ?ExitHandle
+        {
+            return $this->error;
+        }
+
+        /**
+         * @param ExitHandle|null $error
+         */
+        public function setError(?ExitHandle $error): void
+        {
+            $this->error = $error;
+        }
 
         /**
          * @inheritDoc
@@ -65,26 +113,26 @@
         /**
          * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): ExitHandlers
         {
             $object = new self();
 
-            $object->success = Functions::array_bc($data, 'success');
-            if($object->success !== null)
+            $object->setSuccess(Functions::array_bc($data, 'success'));
+            if($object->getSuccess() !== null)
             {
-                $object->success = ExitHandle::fromArray($object->success);
+                $object->setSuccess(ExitHandle::fromArray((array)$object->getSuccess()));
             }
 
-            $object->warning = Functions::array_bc($data, 'warning');
-            if($object->warning !== null)
+            $object->setWarning(Functions::array_bc($data, 'warning'));
+            if($object->getWarning() !== null)
             {
-                $object->warning = ExitHandle::fromArray($object->warning);
+                $object->setWarning(ExitHandle::fromArray((array)$object->getWarning()));
             }
 
-            $object->error = Functions::array_bc($data, 'error');
-            if($object->error !== null)
+            $object->setError(Functions::array_bc($data, 'error'));
+            if($object->getError() !== null)
             {
-                $object->error = ExitHandle::fromArray($object->error);
+                $object->setError(ExitHandle::fromArray((array)$object->getError()));
             }
 
             return $object;

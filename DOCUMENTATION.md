@@ -1,25 +1,25 @@
-# NCC Documentation
+# ncc Documentation
 
 This document serves the purpose of presenting the documentation for using/developing
-NCC, from basic installation, basic usage, standards and much more.
+ncc, from basic installation, basic usage, standards and much more.
 
 ## Table of contents
 
 <!-- TOC -->
-* [NCC Documentation](#ncc-documentation)
+* [ncc Documentation](#ncc-documentation)
   * [Table of contents](#table-of-contents)
   * [Introduction](#introduction)
-  * [What is NCC?](#what-is-ncc)
-* [Building NCC from source](#building-ncc-from-source)
+  * [What is ncc?](#what-is-ncc)
+* [Building ncc from source](#building-ncc-from-source)
   * [Requirements to build](#requirements-to-build)
   * [Installing phpab](#installing-phpab)
-  * [Building NCC](#building-ncc)
+  * [Building ncc](#building-ncc)
     * [Redist](#redist)
     * [Tar](#tar)
-* [Installing NCC](#installing-ncc)
+* [Installing ncc](#installing-ncc)
   * [Command line arguments](#command-line-arguments)
-* [Uninstalling NCC](#uninstalling-ncc)
-* [NCC Command-line Interface](#ncc-command-line-interface)
+* [Uninstalling ncc](#uninstalling-ncc)
+* [ncc Command-line Interface](#ncc-command-line-interface)
   * [Management Commands](#management-commands)
   * [Utility Commands](#utility-commands)
   * [Options](#options)
@@ -66,17 +66,17 @@ NCC, from basic installation, basic usage, standards and much more.
 
 ## Introduction
 
-This section serves the basic introduction of NCC, what it's used for and how you can use it in your own projects or use 
-it to run and build other projects that are designed to be used with NCC. 
+This section serves the basic introduction of ncc, what it's used for and how you can use it in your own projects or use 
+it to run and build other projects that are designed to be used with ncc. 
 
-## What is NCC?
+## What is ncc?
 
-NCC (*Acronym for **N**osial **C**ode **C**ompiler*) is a multi-purpose compiler, package manager and toolkit. Allowing 
+ncc (*Acronym for **N**osial **C**ode **C**ompiler*) is a multi-purpose compiler, package manager and toolkit. Allowing 
 projects to be managed and built more easily without having to mess with all the traditional tools that comes with your 
-language of choice. Right now NCC only supports PHP as it's written in PHP but extensions for other languages/frameworks
+language of choice. Right now ncc only supports PHP as it's written in PHP but extensions for other languages/frameworks
 can be built into the software in the future when the need comes for it.
 
-NCC can make the process of building your code into a redistributable package much more efficient by treating each 
+ncc can make the process of building your code into a redistributable package much more efficient by treating each 
 building block of your project as a component that is interconnected in your environment instead of the more popular 
 route taken by package/dependency managers such as [composer](https://getcomposer.org/),[npm](https://www.npmjs.com/) or 
 [pypi (or pip)](https://pypi.org/).
@@ -84,9 +84,9 @@ route taken by package/dependency managers such as [composer](https://getcompose
 
 ------------------------------------------------------------------------------------
 
-# Building NCC from source
+# Building ncc from source
 
-Building NCC from source is easy with very few requirements to start building. At the moment ncc can only be debugged or
+Building ncc from source is easy with very few requirements to start building. At the moment ncc can only be debugged or
 tested  by building a redistributable source and installing it.
 
 ## Requirements to build
@@ -142,9 +142,9 @@ phive install phpab
 ln -s /home/user/.phive/phars/phpab-x.xx.x.phar /usr/local/bin/phpab
 ```
 
-## Building NCC
+## Building ncc
 
-First, navigate to the main directory of NCC's source code where the [Makefile](Makefile) is present. If you
+First, navigate to the main directory of ncc's source code where the [Makefile](Makefile) is present. If you
 already attempted to or had built ncc before, it's  recommended to use `make clean` before building.
 
 ### Redist
@@ -171,9 +171,9 @@ ncc onto the running machine.
 
 ------------------------------------------------------------------------------------
 
-# Installing NCC
+# Installing ncc
 
-Installing NCC is easy, you can either download the redistributable source from the [releases](https://git.n64.cc/nosial/ncc/-/releases)
+Installing ncc is easy, you can either download the redistributable source from the [releases](https://git.n64.cc/nosial/ncc/-/releases)
 page or you can build it from source using the instructions above.
 
 Once you have the redistributable source, you can simply run execute the `INSTALL` file to install ncc onto the running 
@@ -207,9 +207,9 @@ the Makefile task will automatically rebuild the checksum file for you.
 
 ------------------------------------------------------------------------------------
 
-# Uninstalling NCC
+# Uninstalling ncc
 
-Uninstalling NCC is easy, simply delete the directory where ncc was installed to, by default this is `/etc/ncc`.
+Uninstalling ncc is easy, simply delete the directory where ncc was installed to, by default this is `/etc/ncc`.
 
 It's recommended to run `ncc package --uninstall-all` before uninstalling ncc, this will uninstall all the packages
 that were installed using ncc and remove any artifacts that were created by these packages.
@@ -220,9 +220,9 @@ that were installed using ncc and remove any artifacts that were created by thes
 
 ------------------------------------------------------------------------------------
 
-# NCC Command-line Interface
+# ncc Command-line Interface
 
-NCC provides a command-line interface that can be used to manage packages, create projects, compile source code, manage
+ncc provides a command-line interface that can be used to manage packages, create projects, compile source code, manage
 remote sources, configure ncc, and more. You can run `ncc --help` to see a list of all the available commands.
 
 ![ncc cli](assets/ncc_cli.png)
@@ -250,7 +250,7 @@ Utility commands are used to perform tasks in the current directory or project.
 
 ## Options
 
-NCC also accepts a few command line arguments that can be used to alter the behavior of the command-line interface.
+ncc also accepts a few command line arguments that can be used to alter the behavior of the command-line interface.
 
 `-l <level>, --log-level <level>` Sets the log level, this can be one of `debug`, `verbose`, `info`, `warn`, `error`, `fatal`
 
@@ -262,7 +262,7 @@ NCC also accepts a few command line arguments that can be used to alter the beha
 
 `--no-color` Disables colored output
 
-`--no-banner` Omits displaying the NCC graphical banner
+`--no-banner` Omits displaying the ncc graphical banner
 
 ------------------------------------------------------------------------------------
 
@@ -283,7 +283,7 @@ file.
 This is the first step in using ncc, you must create a project before you can do anything else (*not really because you
 can install packages without needing to create a project and run them directly, but you get the point*)
 
-The NCC command-line tool provides a management command called `project` that can be used to create a new project
+The ncc command-line tool provides a management command called `project` that can be used to create a new project
 or to manage an existing project.
 
 ```shell
@@ -317,7 +317,7 @@ to the compiler, and more.
 | Name          | Type                                 | Required | Description                                                                                        |
 |---------------|--------------------------------------|----------|----------------------------------------------------------------------------------------------------|
 | compiler      | [project.compiler](#projectcompiler) | Yes      | The compiler extension that the project uses to compile the program                                |
-| options       | `array`                              | No       | An array of options to pass on to the compiler, the options vary depending on the compiler and NCC |
+| options       | `array`                              | No       | An array of options to pass on to the compiler, the options vary depending on the compiler and ncc |
 | update_source | `project.update_source`              | No       | The source for where the program can fetch updates from                                            |
 
 ### project.compiler
@@ -338,11 +338,11 @@ The `project.update_source` field contains information about the source where th
 | Name       | Type                               | Required | Description                                                                                                           |
 |------------|------------------------------------|----------|-----------------------------------------------------------------------------------------------------------------------|
 | source     | `string`                           | Yes      | The source where the program can fetch updates from, see [Remote Sources](#remote-sources) for additional information |
-| repository | `project.update_source.repository` | Yes      | The source to configure in NCC when installing the package                                                            |
+| repository | `project.update_source.repository` | Yes      | The source to configure in ncc when installing the package                                                            |
 
 ### project.update_source.repository
 
-The `project.update_source.repository` field contains information about the source to configure in NCC when installing
+The `project.update_source.repository` field contains information about the source to configure in ncc when installing
 the package. This allows you to set up a remote source that your package can use to fetch updates from, this is useful
 if you want to distribute your program to other people.
 
@@ -350,7 +350,7 @@ It would be useful to read more about [Remote Sources](#remote-sources) before c
 
 | Name | Type     | Required | Description                                                                           |
 |------|----------|----------|---------------------------------------------------------------------------------------|
-| name | `string` | Yes      | The name of the source to configure in NCC when installing the package (eg; `github`) |
+| name | `string` | Yes      | The name of the source to configure in ncc when installing the package (eg; `github`) |
 | type | `string` | Yes      | The API type to use with this source, see [Supported sources](#supported-sources)     |
 | host | `string` | Yes      | The host of the source, this is the domain name of the source (eg; `api.github.com`)  |
 | ssl  | `bool`   | No       | Whether to use SSL or not when connecting to this source                              |
@@ -443,7 +443,7 @@ running.
 
 The `installer` field contains allows you to configure the execution of policies during different stages of the
 installation process of the package. Note that these files only accepts an array of strings, which are the names of
-the execution policies that you want to run during the specified stage. NCC will reject the package if the execution
+the execution policies that you want to run during the specified stage. ncc will reject the package if the execution
 policy does not exist.
 
 | Name           | Type       | Required | Description                                                             |
@@ -468,7 +468,7 @@ configured correctly for the package to be built successfully.
 | exclude_files         | `string[]`              | No       | The files to exclude from the build process.                                                                               |
 | options               | `string[]`              | No       | The options to pass to the build process.                                                                                  |
 | main                  | `string`                | No       | The main execution policy to run when the package is executed, this is like the main entry point of the package.           |
-| define_constants      | `string[]`              | No       | Environment constants to define during the execution of your program, these values can be accessed by the NCC Runtime API. |
+| define_constants      | `string[]`              | No       | Environment constants to define during the execution of your program, these values can be accessed by the ncc Runtime API. |
 | pre_build             | `string[]`              | No       | The execution policies to run before the build process.                                                                    |
 | post_build            | `string[]`              | No       | The execution policies to run after the build process.                                                                     |
 | dependencies          | `dependency[]`          | No       | The dependencies that the package requires                                                                                 |
@@ -481,9 +481,9 @@ The `dependency` object contains information about a dependency that the package
 | Name        | Type     | Required | Description                                                                                                                                                               |
 |-------------|----------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | name        | `string` | Yes      | The package name of the dependency (eg; com.example.package)                                                                                                              |
-| source_type | `string` | No       | Where NCC should get the dependency from, accepted values are `static`, `local` or `remote`. If not specified, NCC will assume `remote`.                                  |
+| source_type | `string` | No       | Where ncc should get the dependency from, accepted values are `static`, `local` or `remote`. If not specified, ncc will assume `remote`.                                  |
 | source      | `string` | No       | The source of the dependency, this can a remote source (see [Remote Sources](#remote-sources)) if the source is `remote` or a a local file path if the source is `static` |
-| version     | `string` | No       | The version of the dependency to use, if not specified, NCC will use the latest version of the dependency. (eg; 'latest')                                                 |
+| version     | `string` | No       | The version of the dependency to use, if not specified, ncc will use the latest version of the dependency. (eg; 'latest')                                                 |
 
 #### Source Types
 

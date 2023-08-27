@@ -41,61 +41,205 @@
          *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
          * The package name used to identify the package
          *
          * @var string
          */
-        public $package;
+        private $package;
 
         /**
          * The software description
          *
          * @var string|null
          */
-        public $description;
+        private $description;
 
         /**
          * @var string|null
          */
-        public $company;
+        private $company;
 
         /**
          * The product name
          *
          * @var string|null
          */
-        public $product;
+        private $product;
 
         /**
          * The copyright header for the product
          *
          * @var string|null
          */
-        public $copyright;
+        private $copyright;
 
         /**
          * Product trademark
          *
          * @var string|null
          */
-        public $trademark;
+        private $trademark;
 
         /**
          * Software version
          *
          * @var string
          */
-        public $version;
+        private $version;
 
         /**
          * Universally Unique Identifier
          *
          * @var string
          */
-        public $uuid;
+        private $uuid;
+
+        /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return string
+         */
+        public function getPackage(): string
+        {
+            return $this->package;
+        }
+
+        /**
+         * @param string $package
+         */
+        public function setPackage(string $package): void
+        {
+            $this->package = $package;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getDescription(): ?string
+        {
+            return $this->description;
+        }
+
+        /**
+         * @param string|null $description
+         */
+        public function setDescription(?string $description): void
+        {
+            $this->description = $description;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getCompany(): ?string
+        {
+            return $this->company;
+        }
+
+        /**
+         * @param string|null $company
+         */
+        public function setCompany(?string $company): void
+        {
+            $this->company = $company;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getProduct(): ?string
+        {
+            return $this->product;
+        }
+
+        /**
+         * @param string|null $product
+         */
+        public function setProduct(?string $product): void
+        {
+            $this->product = $product;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getCopyright(): ?string
+        {
+            return $this->copyright;
+        }
+
+        /**
+         * @param string|null $copyright
+         */
+        public function setCopyright(?string $copyright): void
+        {
+            $this->copyright = $copyright;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getTrademark(): ?string
+        {
+            return $this->trademark;
+        }
+
+        /**
+         * @param string|null $trademark
+         */
+        public function setTrademark(?string $trademark): void
+        {
+            $this->trademark = $trademark;
+        }
+
+        /**
+         * @return string
+         */
+        public function getVersion(): string
+        {
+            return $this->version;
+        }
+
+        /**
+         * @param string $version
+         */
+        public function setVersion(string $version): void
+        {
+            $this->version = $version;
+        }
+
+        /**
+         * @return string
+         */
+        public function getUuid(): string
+        {
+            return $this->uuid;
+        }
+
+        /**
+         * @param string $uuid
+         */
+        public function setUuid(string $uuid): void
+        {
+            $this->uuid = $uuid;
+        }
 
         /**
          * Validates the object information to detect possible errors

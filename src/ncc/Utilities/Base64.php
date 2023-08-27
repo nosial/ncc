@@ -39,7 +39,9 @@ namespace ncc\Utilities;
         {
             // Builtin function is faster than raw implementation
             if(function_exists('base64_encode'))
+            {
                 return base64_encode($string);
+            }
 
             $base64 = str_split('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
             $bit_pattern = '';
@@ -79,7 +81,9 @@ namespace ncc\Utilities;
         public static function decode(string $string): string
         {
             if(function_exists('base64_decode'))
+            {
                 return base64_decode($string);
+            }
 
             $base64 = str_split('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
             $bit_pattern = '';
@@ -88,7 +92,7 @@ namespace ncc\Utilities;
 
             foreach (str_split($string) as $b64_encoded)
             {
-                $bit_pattern .= sprintf('%06s', decbin(array_search($b64_encoded, $base64)));
+                $bit_pattern .= sprintf('%06s', decbin(array_search($b64_encoded, $base64, true)));
             }
 
             $bit_pattern = str_split($bit_pattern, 8);

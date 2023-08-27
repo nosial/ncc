@@ -78,18 +78,18 @@
             }
 
             // Select the correct compiler for the specified extension
-            if (strtolower($configuration->project->compiler->extension) === CompilerExtensions::PHP)
+            if (strtolower($configuration->project->compiler->getExtension()) === CompilerExtensions::PHP)
             {
                 /** @var CompilerInterface $Compiler */
                 $Compiler = new PhpCompiler($configuration, $manager->getProjectPath());
             }
             else
             {
-                throw new NotSupportedException('The compiler extension \'' . $configuration->project->compiler->extension . '\' is not supported');
+                throw new NotSupportedException('The compiler extension \'' . $configuration->project->compiler->getExtension() . '\' is not supported');
             }
 
-            $build_configuration = $configuration->build->getBuildConfiguration($build_configuration)->name;
-            Console::out(sprintf('Building %s=%s', $configuration->assembly->package, $configuration->assembly->version));
+            $build_configuration = $configuration->build->getBuildConfiguration($build_configuration)->getName();
+            Console::out(sprintf('Building %s=%s', $configuration->assembly->getPackage(), $configuration->assembly->getVersion()));
             $Compiler->prepare($build_configuration);
             $Compiler->build();
 
@@ -120,7 +120,7 @@
                 elseif($project_type->ProjectType === ProjectType::NCC)
                 {
                     $project_manager = new ProjectManager($project_type->ProjectPath);
-                    $project_manager->getProjectConfiguration()->assembly->version = $version;
+                    $project_manager->getProjectConfiguration()->assembly->setVersion($version);
                     $project_path = $project_manager->build();
                 }
                 else
@@ -131,7 +131,7 @@
                 if($version !== null)
                 {
                     $package = Package::load($project_path);
-                    $package->assembly->version = Functions::convertToSemVer($version);
+                    $package->assembly->setVersion(Functions::convertToSemVer($version));
                     $package->save($project_path);
                 }
 
@@ -169,7 +169,7 @@
             /** @var ProjectConfiguration\ExecutionPolicy $policy */
             foreach($configuration->execution_policies as $policy)
             {
-                Console::outVerbose(sprintf('Compiling Execution Policy %s', $policy->name));
+                Console::outVerbose(sprintf('Compiling Execution Policy %s', $policy->getName()));
 
                 /** @noinspection DisconnectedForeachInstructionInspection */
                 if($total_items > 5)
@@ -177,7 +177,7 @@
                     Console::inlineProgressBar($processed_items, $total_items);
                 }
 
-                $unit_path = Functions::correctDirectorySeparator($path . $policy->execute->target);
+                $unit_path = Functions::correctDirectorySeparator($path . $policy->getExecute()->getTarget());
                 $execution_units[] = Functions::compileRunner($unit_path, $policy);
             }
 
@@ -207,15 +207,15 @@
             // Write the package to disk
             $FileSystem = new Filesystem();
             $BuildConfiguration = $configuration->build->getBuildConfiguration($build_configuration);
-            if(!$FileSystem->exists($path . $BuildConfiguration->output_path))
+            if(!$FileSystem->exists($path . $BuildConfiguration->getOutputPath()))
             {
-                Console::outDebug(sprintf('creating output directory %s', $path . $BuildConfiguration->output_path));
-                $FileSystem->mkdir($path . $BuildConfiguration->output_path);
+                Console::outDebug(sprintf('creating output directory %s', $path . $BuildConfiguration->getOutputPath()));
+                $FileSystem->mkdir($path . $BuildConfiguration->getOutputPath());
             }
 
             // Finally write the package to the disk
-            $FileSystem->mkdir($path . $BuildConfiguration->output_path);
-            $output_file = $path . $BuildConfiguration->output_path . DIRECTORY_SEPARATOR . $package->assembly->package . '.ncc';
+            $FileSystem->mkdir($path . $BuildConfiguration->getOutputPath());
+            $output_file = $path . $BuildConfiguration->getOutputPath() . DIRECTORY_SEPARATOR . $package->assembly->getPackage() . '.ncc';
             if($FileSystem->exists($output_file))
             {
                 Console::outDebug(sprintf('removing existing package %s', $output_file));
@@ -263,7 +263,7 @@
                 $units = [];
                 foreach($package->execution_units as $executionUnit)
                 {
-                    Console::outDebug(sprintf('compiling execution unit constant %s (%s)', $executionUnit->execution_policy->name, implode(', ', array_keys($refs))));
+                    Console::outDebug(sprintf('compiling execution unit constant %s (%s)', $executionUnit->execution_policy->getName(), implode(', ', array_keys($refs))));
                     $units[] = self::compileExecutionUnitConstants($executionUnit, $refs);
                 }
                 $package->execution_units = $units;
@@ -314,46 +314,47 @@
          */
         public static function compileExecutionUnitConstants(Package\ExecutionUnit $unit, array $refs): Package\ExecutionUnit
         {
-            $unit->execution_policy->message = self::compileConstants($unit->execution_policy->message, $refs);
+            $unit->execution_policy->setMessage(self::compileConstants($unit->execution_policy->getMessage(), $refs));
 
-            if($unit->execution_policy->exit_handlers !== null)
+            if($unit->execution_policy->getExitHandlers() !== null)
             {
-                if($unit->execution_policy->exit_handlers->success !== null)
+                if($unit->execution_policy->getExitHandlers()->getSuccess()?->getMessage() !== null)
                 {
-                    $unit->execution_policy->exit_handlers->success->message = self::compileConstants($unit->execution_policy->exit_handlers->success->message, $refs);
+                    $unit->execution_policy->getExitHandlers()->getSuccess()?->setMessage(
+                        self::compileConstants($unit->execution_policy->getExitHandlers()->getSuccess()->getMessage(), $refs)
+                    );
                 }
 
-                if($unit->execution_policy->exit_handlers->error !== null)
+                if($unit->execution_policy->getExitHandlers()->getError()?->getMessage() !== null)
                 {
-                    $unit->execution_policy->exit_handlers->error->message = self::compileConstants($unit->execution_policy->exit_handlers->error->message, $refs);
+                    $unit->execution_policy->getExitHandlers()->getError()?->setMessage(
+                        self::compileConstants($unit->execution_policy->getExitHandlers()->getError()->getMessage(), $refs)
+                    );
                 }
 
-                if($unit->execution_policy->exit_handlers->warning !== null)
+                if($unit->execution_policy->getExitHandlers()->getWarning()?->getMessage() !== null)
                 {
-                    $unit->execution_policy->exit_handlers->warning->message = self::compileConstants($unit->execution_policy->exit_handlers->warning->message, $refs);
+                    $unit->execution_policy->getExitHandlers()->getWarning()?->setMessage(
+                        self::compileConstants($unit->execution_policy->getExitHandlers()->getWarning()->getMessage(), $refs)
+                    );
                 }
+
             }
 
-            if($unit->execution_policy->execute !== null)
+            if($unit->execution_policy->getExecute() !== null)
             {
-                if($unit->execution_policy->execute->target !== null)
-                {
-                    $unit->execution_policy->execute->target = self::compileConstants($unit->execution_policy->execute->target, $refs);
-                }
+                $unit->execution_policy->getExecute()->setTarget(self::compileConstants($unit->execution_policy->getExecute()->getTarget(), $refs));
+                $unit->execution_policy->getExecute()->setWorkingDirectory(self::compileConstants($unit->execution_policy->getExecute()->getWorkingDirectory(), $refs));
 
-                if($unit->execution_policy->execute->working_directory !== null)
-                {
-                    $unit->execution_policy->execute->working_directory = self::compileConstants($unit->execution_policy->execute->working_directory, $refs);
-                }
-
-                if($unit->execution_policy->execute->options !== null && count($unit->execution_policy->execute->options) > 0)
+                if(count($unit->execution_policy->getExecute()->getOptions()) > 0)
                 {
                     $options = [];
-                    foreach($unit->execution_policy->execute->options as $key=> $value)
+                    foreach($unit->execution_policy->getExecute()->getOptions() as $key=> $value)
                     {
                         $options[self::compileConstants($key, $refs)] = self::compileConstants($value, $refs);
                     }
-                    $unit->execution_policy->execute->options = $options;
+
+                    $unit->execution_policy->getExecute()->setOptions($options);
                 }
             }
 

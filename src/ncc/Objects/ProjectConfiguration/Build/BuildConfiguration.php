@@ -41,49 +41,49 @@
          *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
          * Options to pass onto the extension compiler
          *
          * @var array
          */
-        public $options;
+        private $options;
 
         /**
          * The build output path for the build configuration, eg; build/%BUILD.NAME%
          *
          * @var string
          */
-        public $output_path;
+        private $output_path;
 
         /**
          * An array of constants to define for the build when importing or executing.
          *
          * @var string[]
          */
-        public $define_constants;
+        private $define_constants;
 
         /**
          * An array of files to exclude in this build configuration
          *
          * @var string[]
          */
-        public $exclude_files;
+        private $exclude_files;
 
         /**
          * An array of policies to execute pre-building the package
          *
-         * @var string[]|string
+         * @var string[]
          */
-        public $pre_build;
+        private $pre_build;
 
         /**
          * An array of policies to execute post-building the package
          *
-         * @var string
+         * @var string[]
          */
-        public $post_build;
+        private $post_build;
 
         /**
          * Dependencies required for the build configuration, cannot conflict with the
@@ -91,7 +91,7 @@
          *
          * @var Dependency[]
          */
-        public $dependencies;
+        private $dependencies;
 
         /**
          * Public Constructor
@@ -211,6 +211,207 @@
         }
 
         /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return array
+         */
+        public function getOptions(): array
+        {
+            return $this->options;
+        }
+
+        /**
+         * @param array $options
+         */
+        public function setOptions(array $options): void
+        {
+            $this->options = $options;
+        }
+
+        /**
+         * @return string
+         */
+        public function getOutputPath(): string
+        {
+            return $this->output_path;
+        }
+
+        /**
+         * @param string $output_path
+         */
+        public function setOutputPath(string $output_path): void
+        {
+            $this->output_path = $output_path;
+        }
+
+        /**
+         * @return array|string[]
+         */
+        public function getDefineConstants(): array
+        {
+            return $this->define_constants;
+        }
+
+        /**
+         * Sets a defined constant for the build configuration
+         *
+         * @param string $name
+         * @param string $value
+         */
+        public function setDefinedConstant(string $name, string $value): void
+        {
+            $this->define_constants[$name] = $value;
+        }
+
+        /**
+         * Removes a defined constant from the build configuration
+         *
+         * @param string $name
+         * @return void
+         */
+        public function removeDefinedConstant(string $name): void
+        {
+            unset($this->define_constants[$name]);
+        }
+
+        /**
+         * Returns excluded files
+         *
+         * @return array|string[]
+         */
+        public function getExcludeFiles(): array
+        {
+            return $this->exclude_files;
+        }
+
+        /**
+         * Adds a file to the excluded files list
+         *
+         * @param string $file
+         */
+        public function addExcludedFile(string $file): void
+        {
+            $this->exclude_files[] = $file;
+        }
+
+        /**
+         * Removes a file from the excluded files list
+         *
+         * @param string $file
+         * @return void
+         */
+        public function removeExcludedFile(string $file): void
+        {
+            $this->exclude_files = array_filter($this->exclude_files, static function($item) use ($file)
+            {
+                return $item !== $file;
+            });
+        }
+
+        /**
+         * @return array|string[]
+         */
+        public function getPreBuild(): array
+        {
+            return $this->pre_build;
+        }
+
+        /**
+         * @param string $pre_build
+         */
+        public function addPreBuild(string $pre_build): void
+        {
+            $this->pre_build[] = $pre_build;
+        }
+
+        /**
+         * Removes a pre-build policy
+         *
+         * @param string $pre_build
+         * @return void
+         */
+        public function removePreBuild(string $pre_build): void
+        {
+            $this->pre_build = array_filter($this->pre_build, static function($item) use ($pre_build)
+            {
+                return $item !== $pre_build;
+            });
+        }
+
+        /**
+         * @return array
+         */
+        public function getPostBuild(): array
+        {
+            return $this->post_build;
+        }
+
+        /**
+         * Adds a post-build policy
+         *
+         * @param string $post_build
+         */
+        public function addPostBuild(string $post_build): void
+        {
+            $this->post_build[] = $post_build;
+        }
+
+        /**
+         * @return Dependency[]
+         */
+        public function getDependencies(): array
+        {
+            return $this->dependencies;
+        }
+
+        /**
+         * @param Dependency[] $dependencies
+         */
+        public function setDependencies(array $dependencies): void
+        {
+            $this->dependencies = $dependencies;
+        }
+
+        /**
+         * Adds a dependency to the build configuration
+         *
+         * @param Dependency $dependency
+         * @return void
+         */
+        public function addDependency(Dependency $dependency): void
+        {
+            $this->dependencies[] = $dependency;
+        }
+
+        /**
+         * Removes a dependency from the build configuration
+         *
+         * @param Dependency $dependency
+         * @return void
+         */
+        public function removeDependency(Dependency $dependency): void
+        {
+            $this->dependencies = array_filter($this->dependencies, static function($item) use ($dependency)
+            {
+                return $item !== $dependency;
+            });
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
@@ -268,12 +469,12 @@
             $object = new BuildConfiguration();
 
             $object->name = Functions::array_bc($data, 'name');
-            $object->options = Functions::array_bc($data, 'options');
+            $object->options = Functions::array_bc($data, 'options') ?? [];
             $object->output_path = Functions::array_bc($data, 'output_path');
-            $object->define_constants = Functions::array_bc($data, 'define_constants');
-            $object->exclude_files = Functions::array_bc($data, 'exclude_files');
-            $object->pre_build = Functions::array_bc($data, 'pre_build');
-            $object->post_build = Functions::array_bc($data, 'post_build');
+            $object->define_constants = Functions::array_bc($data, 'define_constants') ?? [];
+            $object->exclude_files = Functions::array_bc($data, 'exclude_files') ?? [];
+            $object->pre_build = Functions::array_bc($data, 'pre_build') ?? [];
+            $object->post_build = Functions::array_bc($data, 'post_build') ?? [];
 
             if(Functions::array_bc($data, 'dependencies') !== null)
             {

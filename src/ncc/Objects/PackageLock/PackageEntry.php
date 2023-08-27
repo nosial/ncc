@@ -153,14 +153,14 @@
         {
             try
             {
-                if ($this->getVersion($package->assembly->version) !== null)
+                if ($this->getVersion($package->assembly->getVersion()) !== null)
                 {
                     if(!$overwrite)
                     {
                         return false;
                     }
 
-                    $this->removeVersion($package->assembly->version);
+                    $this->removeVersion($package->assembly->getVersion());
                 }
             }
             catch (IOException $e)
@@ -169,7 +169,7 @@
             }
 
             $version = new VersionEntry();
-            $version->Version = $package->assembly->version;
+            $version->Version = $package->assembly->getVersion();
             $version->Compiler = $package->header->CompilerExtension;
             $version->ExecutionUnits = $package->execution_units;
             $version->MainExecutionPolicy = $package->main_execution_policy;

@@ -42,77 +42,70 @@
          *
          * @var string
          */
-        public $source_path;
+        private $source_path;
 
         /**
          * The default configuration to use when building
          *
          * @var string
          */
-        public $default_configuration;
+        private $default_configuration;
 
         /**
          * An array of files to exclude from processing/bundling into the build output
          *
          * @var string[]
          */
-        public $exclude_files;
+        private $exclude_files;
 
         /**
          * Build options to pass on to the compiler
          *
          * @var array
          */
-        public $options;
-
-        /**
-         * The installation scope for the package (System/User/Shared)
-         *
-         * @var [type]
-         */
-        public $scope;
+        private $options;
 
         /**
          * The execution policy to use as the main execution point
          *
          * @var string|null
          */
-        public $main;
+        private $main;
 
         /**
          * An array of constants to define by default
          *
          * @var string[]
          */
-        public $define_constants;
+        private $define_constants;
 
         /**
          * An array of execution policies to execute pre build
          *
          * @var string[]
          */
-        public $pre_build;
+        private $pre_build;
 
         /**
          * An array of execution policies to execute post build
          *
          * @var string[]
          */
-        public $post_build;
+        private $post_build;
 
         /**
          * An array of dependencies that are required by default
          *
          * @var Dependency[]
          */
-        public $dependencies;
+        private $dependencies;
 
         /**
          * An array of build configurations
          *
          * @var BuildConfiguration[]
          */
-        public $build_configurations;
+        private $build_configurations;
 
         /**
          * Public Constructor
@@ -124,6 +117,138 @@
             $this->define_constants = [];
             $this->dependencies = [];
             $this->build_configurations = [];
+        }
+
+        /**
+         * @return string
+         */
+        public function getSourcePath(): string
+        {
+            return $this->source_path;
+        }
+
+        /**
+         * @param string $source_path
+         */
+        public function setSourcePath(string $source_path): void
+        {
+            $this->source_path = $source_path;
+        }
+
+        /**
+         * @return string
+         */
+        public function getDefaultConfiguration(): string
+        {
+            return $this->default_configuration;
+        }
+
+        /**
+         * @param string $default_configuration
+         */
+        public function setDefaultConfiguration(string $default_configuration): void
+        {
+            $this->default_configuration = $default_configuration;
+        }
+
+        /**
+         * @return array|string[]
+         */
+        public function getExcludeFiles(): array
+        {
+            return $this->exclude_files;
+        }
+
+        /**
+         * @param array|string[] $exclude_files
+         */
+        public function setExcludeFiles(array $exclude_files): void
+        {
+            $this->exclude_files = $exclude_files;
+        }
+
+        /**
+         * @param string $file
+         * @return void
+         */
+        public function excludeFile(string $file): void
+        {
+            $this->exclude_files[] = $file;
+        }
+
+        /**
+         * @param string $file
+         * @return void
+         */
+        public function removeExcludedFile(string $file): void
+        {
+            foreach($this->exclude_files as $key => $exclude_file)
+            {
+                if($exclude_file === $file)
+                {
+                    unset($this->exclude_files[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * @return array
+         */
+        public function getOptions(): array
+        {
+            return $this->options;
+        }
+
+        /**
+         * @param array $options
+         */
+        public function setOptions(array $options): void
+        {
+            $this->options = $options;
+        }
+
+        /**
+         * @param string $name
+         * @param string $value
+         * @return void
+         */
+        public function setOption(string $name, string $value): void
+        {
+            $this->options[$name] = $value;
+        }
+
+        /**
+         * @param string $name
+         * @return void
+         */
+        public function removeOption(string $name): void
+        {
+            foreach($this->options as $key => $option)
+            {
+                if($option === $name)
+                {
+                    unset($this->options[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getMain(): ?string
+        {
+            return $this->main;
+        }
+
+        /**
+         * @param string|null $main
+         * @return void
+         */
+        public function setMain(?string $main): void
+        {
+            $this->main = $main;
         }
 
         /**
@@ -165,6 +290,212 @@
         }
 
         /**
+         * @return Dependency[]
+         */
+        public function getDependencies(): array
+        {
+            return $this->dependencies;
+        }
+
+        /**
+         * @param Dependency[] $dependencies
+         * @return void
+         */
+        public function setDependencies(array $dependencies): void
+        {
+            $this->dependencies = $dependencies;
+        }
+
+        /**
+         * @return array|string[]
+         */
+        public function getDefineConstants(): array
+        {
+            return $this->define_constants;
+        }
+
+        /**
+         * @param array|string[] $define_constants
+         */
+        public function setDefineConstants(array $define_constants): void
+        {
+            $this->define_constants = $define_constants;
+        }
+
+        /**
+         * @param string $name
+         * @param string $value
+         * @return void
+         */
+        public function addDefineConstant(string $name, string $value): void
+        {
+            $this->define_constants[$name] = $value;
+        }
+
+        /**
+         * @param string $name
+         * @return void
+         */
+        public function removeDefineConstant(string $name): void
+        {
+            foreach($this->define_constants as $key => $define_constant)
+            {
+                if($define_constant === $name)
+                {
+                    unset($this->define_constants[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * @return string[]
+         */
+        public function getPreBuild(): array
+        {
+            return $this->pre_build;
+        }
+
+        /**
+         * @param string[] $pre_build
+         */
+        public function setPreBuild(array $pre_build): void
+        {
+            $this->pre_build = $pre_build;
+        }
+
+        /**
+         * Adds a new pre build policy to the build
+         *
+         * @param string $policy
+         * @return void
+         */
+        public function addPreBuildPolicy(string $policy): void
+        {
+            $this->pre_build[] = $policy;
+        }
+
+        /**
+         * @param string $policy
+         * @return void
+         */
+        public function removePreBuildPolicy(string $policy): void
+        {
+            foreach($this->pre_build as $key => $pre_build)
+            {
+                if($pre_build === $policy)
+                {
+                    unset($this->pre_build[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * @return string[]
+         */
+        public function getPostBuild(): array
+        {
+            return $this->post_build;
+        }
+
+        /**
+         * @param string[] $post_build
+         */
+        public function setPostBuild(array $post_build): void
+        {
+            $this->post_build = $post_build;
+        }
+
+        /**
+         * @param string $policy
+         * @return void
+         */
+        public function addPostBuildPolicy(string $policy): void
+        {
+            $this->post_build[] = $policy;
+        }
+
+        /**
+         * @param string $policy
+         * @return void
+         */
+        public function removePostBuildPolicy(string $policy): void
+        {
+            foreach($this->post_build as $key => $post_build)
+            {
+                if($post_build === $policy)
+                {
+                    unset($this->post_build[$key]);
+                    return;
+                }
+            }
+        }
+
+
+        /**
+         * Returns an array of all the build configurations defined in the project configuration
+         *
+         * @return array
+         * @noinspection PhpUnused
+         */
+        public function getBuildConfigurations(): array
+        {
+            $build_configurations = [];
+
+            foreach($this->build_configurations as $configuration)
+            {
+                $build_configurations[] = $configuration->getName();
+            }
+
+            return $build_configurations;
+        }
+
+        /**
+         * Returns the build configurations defined in the project configuration, throw an
+         * exception if there is no such configuration defined in the project configuration
+         *
+         * @param string $name
+         * @return BuildConfiguration
+         * @throws ConfigurationException
+         */
+        public function getBuildConfiguration(string $name): BuildConfiguration
+        {
+            if($name === BuildConfigurationValues::DEFAULT)
+            {
+                $name = $this->default_configuration;
+            }
+
+            foreach($this->build_configurations as $configuration)
+            {
+                if($configuration->getName() === $name)
+                {
+                    return $configuration;
+                }
+            }
+
+            throw new ConfigurationException(sprintf('The build configuration "%s" does not exist', $name));
+        }
+
+        /**
+         * @param array $build_configurations
+         * @return void
+         */
+        public function setBuildConfigurations(array $build_configurations): void
+        {
+            $this->build_configurations = $build_configurations;
+        }
+
+        /**
+         * @param BuildConfiguration $configuration
+         * @return void
+         */
+        public function addBuildConfiguration(BuildConfiguration $configuration): void
+        {
+            $this->build_configurations[] = $configuration;
+        }
+
+        /**
          * Validates the build configuration object
          *
          * @param bool $throw_exception
@@ -186,11 +517,11 @@
             $build_configurations = [];
             foreach($this->build_configurations as $configuration)
             {
-                if(in_array($configuration->name, $build_configurations, true))
+                if(in_array($configuration->getName(), $build_configurations, true))
                 {
                     if($throw_exception)
                     {
-                        throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $configuration->name));
+                        throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $configuration->getName()));
                     }
 
                     return false;
@@ -231,50 +562,6 @@
         }
 
         /**
-         * Returns an array of all the build configurations defined in the project configuration
-         *
-         * @return array
-         * @noinspection PhpUnused
-         */
-        public function getBuildConfigurations(): array
-        {
-            $build_configurations = [];
-
-            foreach($this->build_configurations as $configuration)
-            {
-                $build_configurations[] = $configuration->name;
-            }
-
-            return $build_configurations;
-        }
-
-        /**
-         * Returns the build configurations defined in the project configuration, throw an
-         * exception if there is no such configuration defined in the project configuration
-         *
-         * @param string $name
-         * @return BuildConfiguration
-         * @throws ConfigurationException
-         */
-        public function getBuildConfiguration(string $name): BuildConfiguration
-        {
-            if($name === BuildConfigurationValues::DEFAULT)
-            {
-                $name = $this->default_configuration;
-            }
-
-            foreach($this->build_configurations as $configuration)
-            {
-                if($configuration->name === $name)
-                {
-                    return $configuration;
-                }
-            }
-
-            throw new ConfigurationException(sprintf('The build configuration "%s" does not exist', $name));
-        }
-
-        /**
          * Returns an array representation of the object
          *
          * @param bool $bytecode
@@ -299,11 +586,6 @@
            if($this->options !== null && count($this->options) > 0)
            {
                $results[($bytecode ? Functions::cbc('options') : 'options')] = $this->options;
-           }
-
-           if($this->scope !== null)
-           {
-               $results[($bytecode ? Functions::cbc('scope') : 'scope')] = $this->scope;
            }
 
            if($this->main !== null)
@@ -363,7 +645,6 @@
             $object->default_configuration = Functions::array_bc($data, 'default_configuration');
             $object->exclude_files = (Functions::array_bc($data, 'exclude_files') ?? []);
             $object->options = (Functions::array_bc($data, 'options') ?? []);
-            $object->scope = Functions::array_bc($data, 'scope');
             $object->main = Functions::array_bc($data, 'main');
             $object->define_constants = (Functions::array_bc($data, 'define_constants') ?? []);
             $object->pre_build = (Functions::array_bc($data, 'pre_build') ?? []);

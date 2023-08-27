@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\ExecutionPolicy;
 
+    use ncc\Enums\SpecialConstants\RuntimeConstants;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -34,7 +35,7 @@
          *
          * @var string
          */
-        public $target;
+        private $target;
 
         /**
          * The working directory to execute the policy in, if not specified the
@@ -42,35 +43,35 @@
          *
          * @var string|null
          */
-        public $working_directory;
+        private $working_directory;
 
         /**
          * Options to pass to the process
          *
          * @var array
          */
-        public $options;
+        private $options;
 
         /**
          * An array of environment variables to pass on to the process
          *
-         * @var array|null
+         * @var array
          */
-        public $environment_variables;
+        private $environment_variables;
 
         /**
          * Indicates if the output should be displayed or suppressed
          *
-         * @var bool|null
+         * @var bool
          */
-        public $silent;
+        private $silent;
 
         /**
          * Indicates if the process should run in Tty mode (Overrides Silent & Pty mode)
          *
-         * @var bool|null
+         * @var bool
          */
-        public $tty;
+        private $tty;
 
         /**
          * The number of seconds to wait before giving up on the process, will automatically execute the error handler
@@ -78,12 +79,12 @@
          *
          * @var int|null
          */
-        public $timeout;
+        private $timeout;
 
         /**
          * @var int|null
          */
-        public $idle_timeout;
+        private $idle_timeout;
 
         /**
          * Public Constructor
@@ -92,10 +93,148 @@
         {
             $this->tty = false;
             $this->silent = false;
-            $this->timeout = null;
-            $this->idle_timeout = null;
             $this->working_directory = "%CWD%";
         }
+
+        /**
+         * Gets the target file to execute
+         *
+         * @return string
+         */
+        public function getTarget(): string
+        {
+            return $this->target;
+        }
+
+        /**
+         * Sets the target file to execute
+         *
+         * @param string $target
+         */
+        public function setTarget(string $target): void
+        {
+            $this->target = $target;
+        }
+
+        /**
+         * Returns the working directory to execute the policy in, if not specified the value "%CWD%" will be used as
+         * the default
+         *
+         * @return string
+         */
+        public function getWorkingDirectory(): string
+        {
+            return $this->working_directory ?? RuntimeConstants::CWD;
+        }
+
+        /**
+         * Sets the working directory to execute the policy in, if not specified, the value "%CWD%" will be used as
+         * the default
+         *
+         * @param string|null $working_directory
+         */
+        public function setWorkingDirectory(?string $working_directory): void
+        {
+            $this->working_directory = $working_directory;
+        }
+
+        /**
+         * @return array
+         */
+        public function getOptions(): array
+        {
+            return $this->options;
+        }
+
+        /**
+         * @param array $options
+         */
+        public function setOptions(array $options): void
+        {
+            $this->options = $options;
+        }
+
+        /**
+         * @return array
+         */
+        public function getEnvironmentVariables(): array
+        {
+            return $this->environment_variables;
+        }
+
+        /**
+         * @param array $environment_variables
+         */
+        public function setEnvironmentVariables(array $environment_variables): void
+        {
+            $this->environment_variables = $environment_variables;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isSilent(): bool
+        {
+            return $this->silent ?? false;
+        }
+
+        /**
+         * @param bool $silent
+         */
+        public function setSilent(bool $silent): void
+        {
+            $this->silent = $silent;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isTty(): bool
+        {
+            return $this->tty ?? true;
+        }
+
+        /**
+         * @param bool $tty
+         */
+        public function setTty(bool $tty): void
+        {
+            $this->tty = $tty;
+        }
+
+        /**
+         * @return int|null
+         */
+        public function getTimeout(): ?int
+        {
+            return $this->timeout;
+        }
+
+        /**
+         * @param int|null $timeout
+         */
+        public function setTimeout(?int $timeout): void
+        {
+            $this->timeout = $timeout;
+        }
+
+        /**
+         * @return int|null
+         */
+        public function getIdleTimeout(): ?int
+        {
+            return $this->idle_timeout;
+        }
+
+        /**
+         * @param int|null $idle_timeout
+         */
+        public function setIdleTimeout(?int $idle_timeout): void
+        {
+            $this->idle_timeout = $idle_timeout;
+        }
+
+
 
         /**
          * @inheritDoc
@@ -156,10 +295,10 @@
 
             $object->target = Functions::array_bc($data, 'target');
             $object->working_directory = Functions::array_bc($data, 'working_directory');
-            $object->options = Functions::array_bc($data, 'options');
-            $object->environment_variables = Functions::array_bc($data, 'environment_variables');
-            $object->silent = Functions::array_bc($data, 'silent');
-            $object->tty = Functions::array_bc($data, 'tty');
+            $object->options = Functions::array_bc($data, 'options') ?? [];
+            $object->environment_variables = Functions::array_bc($data, 'environment_variables') ?? [];
+            $object->silent = Functions::array_bc($data, 'silent') ?? false;
+            $object->tty = Functions::array_bc($data, 'tty') ?? true;
             $object->timeout = Functions::array_bc($data, 'timeout');
             $object->idle_timeout = Functions::array_bc($data, 'idle_timeout');
 

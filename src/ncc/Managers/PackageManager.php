@@ -39,6 +39,7 @@
     use ncc\Classes\PhpExtension\PhpInstaller;
     use ncc\CLI\Main;
     use ncc\Exceptions\AuthenticationException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
@@ -101,6 +102,7 @@
          * @throws OperationException
          * @throws PackageException
          * @throws PathNotFoundException
+         * @throws ConfigurationException
          */
         public function install(string $package_path, ?Entry $entry=null, array $options=[]): string
         {
@@ -116,14 +118,14 @@
 
             $package = Package::load($package_path);
 
-            if(RuntimeCache::get(sprintf('installed.%s=%s', $package->assembly->package, $package->assembly->version)))
+            if(RuntimeCache::get(sprintf('installed.%s=%s', $package->assembly->getPackage(), $package->assembly->getVersion())))
             {
-                Console::outDebug(sprintf('skipping installation of %s=%s, already processed', $package->assembly->package, $package->assembly->version));
-                return $package->assembly->package;
+                Console::outDebug(sprintf('skipping installation of %s=%s, already processed', $package->assembly->getPackage(), $package->assembly->getVersion()));
+                return $package->assembly->getPackage();
             }
 
-            $extension = $package->header->CompilerExtension->extension;
-            $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->assembly->package . '=' . $package->assembly->version);
+            $extension = $package->header->CompilerExtension->getExtension();
+            $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->assembly->getPackage() . '=' . $package->assembly->getVersion());
 
             $installer = match ($extension)
             {
@@ -131,20 +133,20 @@
                 default => throw new NotSupportedException(sprintf('Compiler extension %s is not supported with ncc', $extension))
             };
 
-            if($this->getPackageVersion($package->assembly->package, $package->assembly->version) !== null)
+            if($this->getPackageVersion($package->assembly->getPackage(), $package->assembly->getVersion()) !== null)
             {
                 if(in_array(InstallPackageOptions::REINSTALL, $options, true))
                 {
-                    if($this->getPackageLockManager()?->getPackageLock()?->packageExists($package->assembly->package, $package->assembly->version))
+                    if($this->getPackageLockManager()?->getPackageLock()?->packageExists($package->assembly->getPackage(), $package->assembly->getVersion()))
                     {
                         $this->getPackageLockManager()?->getPackageLock()?->removePackageVersion(
-                            $package->assembly->package, $package->assembly->version
+                            $package->assembly->getPackage(), $package->assembly->getVersion()
                         );
                     }
                 }
                 else
                 {
-                    throw new PackageException('The package ' . $package->assembly->package . '=' . $package->assembly->version . ' is already installed');
+                    throw new PackageException('The package ' . $package->assembly->getPackage() . '=' . $package->assembly->getVersion() . ' is already installed');
                 }
             }
 
@@ -195,7 +197,7 @@
                 }
             }
 
-            Console::out('Installing ' . $package->assembly->package);
+            Console::out('Installing ' . $package->assembly->getPackage());
 
             // Four For Directory Creation, preInstall, postInstall & initData methods
             $steps = (4 + count($package->components) + count ($package->resources) + count ($package->execution_units));
@@ -345,8 +347,8 @@
                 /** @var Package\ExecutionUnit $executionUnit */
                 foreach($package->execution_units as $executionUnit)
                 {
-                    Console::outDebug(sprintf('processing execution unit %s', $executionUnit->execution_policy->name));
-                    $execution_pointer_manager->addUnit($package->assembly->package, $package->assembly->version, $executionUnit);
+                    Console::outDebug(sprintf('processing execution unit %s', $executionUnit->execution_policy->getName()));
+                    $execution_pointer_manager->addUnit($package->assembly->getPackage(), $package->assembly->getVersion(), $executionUnit);
                     ++$current_steps;
                     Console::inlineProgressBar($current_steps, $steps);
                 }
@@ -366,10 +368,10 @@
                     throw new OperationException('Cannot create symlink, no main execution policy is defined');
                 }
 
-                Console::outDebug(sprintf('creating symlink to %s', $package->assembly->package));
+                Console::outDebug(sprintf('creating symlink to %s', $package->assembly->getPackage()));
 
                 $SymlinkManager = new SymlinkManager();
-                $SymlinkManager->add($package->assembly->package, $package->main_execution_policy);
+                $SymlinkManager->add($package->assembly->getPackage(), $package->main_execution_policy);
             }
 
             // Execute the post-installation stage after the installation is complete
@@ -416,15 +418,15 @@
             if($package->header->UpdateSource !== null && $package->header->UpdateSource->repository !== null)
             {
                 $sources_manager = new RemoteSourcesManager();
-                if($sources_manager->getRemoteSource($package->header->UpdateSource->repository->name) === null)
+                if($sources_manager->getRemoteSource($package->header->UpdateSource->repository->getName()) === null)
                 {
-                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->repository->name);
+                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->repository->getName());
 
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->name = $package->header->UpdateSource->repository->name;
-                    $defined_remote_source->host = $package->header->UpdateSource->repository->host;
-                    $defined_remote_source->type = $package->header->UpdateSource->repository->type;
-                    $defined_remote_source->ssl = $package->header->UpdateSource->repository->ssl;
+                    $defined_remote_source->name = $package->header->UpdateSource->repository->getName();
+                    $defined_remote_source->host = $package->header->UpdateSource->repository->getHost();
+                    $defined_remote_source->type = $package->header->UpdateSource->repository->getType();
+                    $defined_remote_source->ssl = $package->header->UpdateSource->repository->isSsl();
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }
@@ -433,9 +435,9 @@
             $this->getPackageLockManager()?->getPackageLock()?->addPackage($package, $installation_paths->getInstallationPath());
             $this->getPackageLockManager()?->save();
 
-            RuntimeCache::set(sprintf('installed.%s=%s', $package->assembly->package, $package->assembly->version), true);
+            RuntimeCache::set(sprintf('installed.%s=%s', $package->assembly->getPackage(), $package->assembly->getVersion()), true);
 
-            return $package->assembly->package;
+            return $package->assembly->getPackage();
         }
 
         /**
@@ -639,6 +641,7 @@
          * @throws OperationException
          * @throws PackageException
          * @throws PathNotFoundException
+         * @throws ConfigurationException
          */
         private function processDependency(Dependency $dependency, Package $package, string $package_path, ?Entry $entry=null, array $options=[]): void
         {
@@ -671,7 +674,7 @@
 
             if ($dependency->getSourceType() !== null && !$dependency_met)
             {
-                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->getName(), $dependency->getVersion(), $package->assembly->package, $package->assembly->version));
+                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->getName(), $dependency->getVersion(), $package->assembly->getPackage(), $package->assembly->getVersion()));
                 switch ($dependency->getSourceType())
                 {
                     case DependencySourceType::LOCAL:
@@ -925,9 +928,9 @@
                 $execution_pointer_manager = new ExecutionPointerManager();
                 foreach($version_entry->ExecutionUnits as $executionUnit)
                 {
-                    if(!$execution_pointer_manager->removeUnit($package, $version, $executionUnit->execution_policy->name))
+                    if(!$execution_pointer_manager->removeUnit($package, $version, $executionUnit->execution_policy->getName()))
                     {
-                        Console::outDebug(sprintf('warning: removing execution unit %s failed', $executionUnit->execution_policy->name));
+                        Console::outDebug(sprintf('warning: removing execution unit %s failed', $executionUnit->execution_policy->getName()));
                     }
                 }
             }
@@ -986,7 +989,7 @@
          */
         private static function initData(Package $package, InstallationPaths $paths): void
         {
-            Console::outVerbose(sprintf('Initializing data for %s', $package->assembly->name));
+            Console::outVerbose(sprintf('Initializing data for %s', $package->assembly->getName()));
 
             // Create data files
             $dependencies = [];

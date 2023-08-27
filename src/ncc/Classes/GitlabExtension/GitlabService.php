@@ -26,6 +26,7 @@
     use ncc\Classes\HttpClient;
     use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\GitException;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Interfaces\RepositorySourceInterface;
@@ -49,6 +50,7 @@
          * @return RepositoryQueryResults
          * @throws AuthenticationException
          * @throws GitException
+         * @throws IOException
          * @throws NetworkException
          */
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry=null): RepositoryQueryResults
@@ -91,6 +93,7 @@
          * @throws AuthenticationException
          * @throws GitException
          * @throws NetworkException
+         * @throws IOException
          */
         public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
@@ -181,6 +184,7 @@
          * @return array
          * @throws AuthenticationException
          * @throws GitException
+         * @throws IOException
          * @throws NetworkException
          */
         private static function getReleases(string $owner, string $repository, DefinedRemoteSource $definedRemoteSource, ?Entry $entry): array

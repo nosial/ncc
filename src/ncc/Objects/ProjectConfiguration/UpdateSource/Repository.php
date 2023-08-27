@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\UpdateSource;
 
+    use ncc\Enums\RemoteSourceType;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -34,28 +35,92 @@
          *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
          * The type of client that is used to connect to the remote source
          *
          * @var string|null
          */
-        public $type;
+        private $type;
 
         /**
          * The host of the remote source
          *
          * @var string
          */
-        public $host;
+        private $host;
 
         /**
          * If SSL should be used
          *
          * @var bool
          */
-        public $ssl;
+        private $ssl;
+
+        /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getType(): ?string
+        {
+            return $this->type;
+        }
+
+        /**
+         * @param string|null $type
+         */
+        public function setType(?string $type): void
+        {
+            $this->type = $type;
+        }
+
+        /**
+         * @return string
+         */
+        public function getHost(): string
+        {
+            return $this->host;
+        }
+
+        /**
+         * @param string $host
+         */
+        public function setHost(string $host): void
+        {
+            $this->host = $host;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isSsl(): bool
+        {
+            return $this->ssl;
+        }
+
+        /**
+         * @param bool $ssl
+         */
+        public function setSsl(bool $ssl): void
+        {
+            $this->ssl = $ssl;
+        }
 
         /**
          * @inheritDoc
@@ -78,9 +143,9 @@
             $object = new self();
 
             $object->name = Functions::array_bc($data, 'name');
-            $object->type = Functions::array_bc($data, 'type');
+            $object->type = Functions::array_bc($data, 'type') ?? RemoteSourceType::UNKNOWN;
             $object->host = Functions::array_bc($data, 'host');
-            $object->ssl = Functions::array_bc($data, 'ssl');
+            $object->ssl = Functions::array_bc($data, 'ssl') ?? false;
 
             return $object;
         }

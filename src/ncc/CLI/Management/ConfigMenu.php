@@ -24,6 +24,7 @@
 
     use JsonException;
     use ncc\Enums\Scopes;
+    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
     use ncc\Managers\ConfigurationManager;
     use ncc\Objects\CliHelpSection;
@@ -40,6 +41,7 @@
          * @param $args
          * @return void
          * @throws IOException
+         * @throws AuthenticationException
          */
         public static function start($args): void
         {

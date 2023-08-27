@@ -84,7 +84,7 @@
 
                     try
                     {
-                        Constants::register($assembly->package, $name, $value, true);
+                        Constants::register($assembly->getPackage(), $name, $value, true);
                     }
                     catch (IntegrityException $e)
                     {

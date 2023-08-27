@@ -294,7 +294,7 @@
          */
         public static function compileRunner(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
-            return match (strtolower($policy->runner))
+            return match (strtolower($policy->getRunner()))
             {
                 Runners::BASH => BashRunner::processUnit($path, $policy),
                 Runners::PHP => PhpRunner::processUnit($path, $policy),
@@ -303,7 +303,7 @@
                 Runners::PYTHON_2 => Python2Runner::processUnit($path, $policy),
                 Runners::PYTHON_3 => Python3Runner::processUnit($path, $policy),
                 Runners::LUA => LuaRunner::processUnit($path, $policy),
-                default => throw new NotSupportedException('The runner \'' . $policy->runner . '\' is not supported'),
+                default => throw new NotSupportedException('The runner \'' . $policy->getRunner() . '\' is not supported'),
             };
         }
 
@@ -371,7 +371,7 @@
             if(!$filesystem->exists(PathFinder::getCachePath(Scopes::SYSTEM)))
             {
                 Console::outDebug(sprintf('Initializing %s', PathFinder::getCachePath(Scopes::SYSTEM)));
-                $filesystem->mkdir(PathFinder::getCachePath(Scopes::SYSTEM), 0777);
+                $filesystem->mkdir(PathFinder::getCachePath(Scopes::SYSTEM));
             }
 
             if(!$filesystem->exists(PathFinder::getRunnerPath(Scopes::SYSTEM)))

@@ -85,6 +85,7 @@
          *
          * @return void
          * @throws AuthenticationException
+         * @throws IOException
          */
         public function load(): void
         {
@@ -279,6 +280,7 @@
          * @param string $package
          * @return void
          * @throws AuthenticationException
+         * @throws IOException
          */
         private function setAsRegistered(string $package): void
         {
@@ -299,6 +301,7 @@
          *
          * @return void
          * @throws AuthenticationException
+         * @throws IOException
          */
         public function sync(): void
         {

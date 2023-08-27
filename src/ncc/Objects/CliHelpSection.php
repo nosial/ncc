@@ -86,18 +86,24 @@
          */
         public static function fromArray(array $data): CliHelpSection
         {
-            $Object = new CliHelpSection();
+            $object = new CliHelpSection();
 
             if(isset($data['parameters']))
-                $Object->Parameters = $data['parameters'];
+            {
+                $object->Parameters = $data['parameters'];
+            }
 
             if(isset($data['description']))
-                $Object->Description = $data['description'];
+            {
+                $object->Description = $data['description'];
+            }
 
             if(isset($data['default']))
-                $Object->Default = $data['default'];
+            {
+                $object->Default = $data['default'];
+            }
 
-            return $Object;
+            return $object;
         }
 
         /**
@@ -125,16 +131,13 @@
 
                     $out[] .= $result;
                 }
+                elseif($basic)
+                {
+                    $out[] .= implode(' ', $this->Parameters);
+                }
                 else
                 {
-                    if($basic)
-                    {
-                        $out[] .= implode(' ', $this->Parameters);
-                    }
-                    else
-                    {
-                        $out[] .= Console::formatColor(implode(' ', $this->Parameters), ConsoleColors::GREEN);
-                    }
+                    $out[] .= Console::formatColor(implode(' ', $this->Parameters), ConsoleColors::GREEN);
                 }
             }
 

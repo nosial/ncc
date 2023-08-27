@@ -315,7 +315,7 @@
                             Console::out(sprintf('%s=%s (%s)',
                                 Console::formatColor($package, ConsoleColors::LIGHT_GREEN),
                                 Console::formatColor($version, ConsoleColors::LIGHT_MAGENTA),
-                                $package_manager->getPackageVersion($package, $version)->Compiler->extension
+                                $package_manager->getPackageVersion($package, $version)->Compiler->getExtension()
                             ));
                         }
                         catch(Exception $e)
@@ -458,49 +458,49 @@
 
             Console::out('Package installation details' . PHP_EOL);
 
-            if(!is_null($package->assembly->uuid))
+            if(!is_null($package->assembly->getUuid()))
             {
-                Console::out('  UUID: ' . Console::formatColor($package->assembly->uuid, ConsoleColors::LIGHT_GREEN));
+                Console::out('  UUID: ' . Console::formatColor($package->assembly->getUuid(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->package))
+            if(!is_null($package->assembly->getPackage()))
             {
-                Console::out('  Package: ' . Console::formatColor($package->assembly->package, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Package: ' . Console::formatColor($package->assembly->getPackage(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->name))
+            if(!is_null($package->assembly->getName()))
             {
-                Console::out('  Name: ' . Console::formatColor($package->assembly->name, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Name: ' . Console::formatColor($package->assembly->getName(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->version))
+            if(!is_null($package->assembly->getVersion()))
             {
-                Console::out('  Version: ' . Console::formatColor($package->assembly->version, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Version: ' . Console::formatColor($package->assembly->getVersion(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->description))
+            if(!is_null($package->assembly->getDescription()))
             {
-                Console::out('  Description: ' . Console::formatColor($package->assembly->description, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Description: ' . Console::formatColor($package->assembly->getDescription(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->product))
+            if(!is_null($package->assembly->getProduct()))
             {
-                Console::out('  Product: ' . Console::formatColor($package->assembly->product, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Product: ' . Console::formatColor($package->assembly->getProduct(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->company))
+            if(!is_null($package->assembly->getCompany()))
             {
-                Console::out('  Company: ' . Console::formatColor($package->assembly->company, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Company: ' . Console::formatColor($package->assembly->getCompany(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->copyright))
+            if(!is_null($package->assembly->getCopyright()))
             {
-                Console::out('  Copyright: ' . Console::formatColor($package->assembly->copyright, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Copyright: ' . Console::formatColor($package->assembly->getCopyright(), ConsoleColors::LIGHT_GREEN));
             }
 
-            if(!is_null($package->assembly->trademark))
+            if(!is_null($package->assembly->getTrademark()))
             {
-                Console::out('  Trademark: ' . Console::formatColor($package->assembly->trademark, ConsoleColors::LIGHT_GREEN));
+                Console::out('  Trademark: ' . Console::formatColor($package->assembly->getTrademark(), ConsoleColors::LIGHT_GREEN));
             }
             Console::out((string)null);
 
@@ -559,28 +559,28 @@
             }
 
             Console::out(sprintf('Extension: %s',
-                Console::formatColor($package->header->CompilerExtension->extension, ConsoleColors::GREEN)
+                Console::formatColor($package->header->CompilerExtension->getExtension(), ConsoleColors::GREEN)
             ));
 
-            if($package->header->CompilerExtension->maximum_version !== null)
+            if($package->header->CompilerExtension->getMinimumVersion() !== null)
             {
                 Console::out(sprintf('Maximum Version: %s',
-                    Console::formatColor($package->header->CompilerExtension->maximum_version, ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->CompilerExtension->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
                 ));
             }
 
 
-            if($package->header->CompilerExtension->minimum_version !== null)
+            if($package->header->CompilerExtension->getMinimumVersion() !== null)
             {
                 Console::out(sprintf('Minimum Version: %s',
-                    Console::formatColor($package->header->CompilerExtension->minimum_version, ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->CompilerExtension->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
                 ));
             }
 
 
             if(!$user_confirmation)
             {
-                $user_confirmation = Console::getBooleanInput(sprintf('Do you want to install %s', $package->assembly->package));
+                $user_confirmation = Console::getBooleanInput(sprintf('Do you want to install %s', $package->assembly->getPackage()));
             }
 
             if($user_confirmation)
@@ -588,7 +588,7 @@
                 try
                 {
                     $package_manager->install($package_path, $credential, $installer_options);
-                    Console::out(sprintf('Package %s installed successfully', $package->assembly->package));
+                    Console::out(sprintf('Package %s installed successfully', $package->assembly->getPackage()));
                 }
                 catch(Exception $e)
                 {

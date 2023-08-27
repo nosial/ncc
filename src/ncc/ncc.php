@@ -46,7 +46,7 @@
         private static $version_information;
 
         /**
-         * Returns the version information object about the current build of NCC
+         * Returns the version information object about the current build of ncc
          *
          * @param boolean $reload Indicates if the cached version is to be ignored and the version file to be reloaded and validated
          * @return NccVersionInformation
@@ -87,10 +87,9 @@
         }
 
         /**
-         * Initializes the NCC environment
+         * Initializes the ncc environment
          *
          * @return bool
-         * @throws IOException
          * @throws PathNotFoundException
          */
         public static function initialize(): bool
@@ -102,7 +101,7 @@
 
             // Set debugging/troubleshooting constants
             define('NCC_EXEC_LOCATION', __DIR__); // The directory of where ncc.php is located
-            define('NCC_EXEC_IWD', getcwd()); // The initial working directory when NCC was first invoked
+            define('NCC_EXEC_IWD', getcwd()); // The initial working directory when ncc was first invoked
 
             // Set version information about the current build
             $VersionInformation = self::getVersionInformation(true);
@@ -116,7 +115,7 @@
         }
 
         /**
-         * Determines if NCC is currently in CLI mode or not
+         * Determines if ncc is currently in CLI mode or not
          *
          * @return bool
          */
@@ -126,7 +125,7 @@
         }
 
         /**
-         * Returns the constants set by NCC
+         * Returns the constants set by ncc
          *
          * @return array
          */
@@ -135,7 +134,7 @@
             if(!defined('NCC_INIT'))
             {
                 /** @noinspection ClassConstantCanBeUsedInspection */
-                throw new RuntimeException('NCC Must be initialized before executing ' . get_called_class() . '::getConstants()');
+                throw new RuntimeException('ncc Must be initialized before executing ' . get_called_class() . '::getConstants()');
             }
 
             return [
