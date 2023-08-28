@@ -26,24 +26,25 @@
 
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Interfaces\SerializableObjectInterface;
     use ncc\Utilities\IO;
     use RuntimeException;
 
-    class Component
+    class Component implements SerializableObjectInterface
     {
         /**
          * The Vendor of the component
          *
          * @var string
          */
-        public $vendor;
+        private $vendor;
 
         /**
          * The name of the package
          *
          * @var string
          */
-        public $package_name;
+        private $package_name;
 
         /**
          * Attempts to resolve the component's build version
@@ -63,6 +64,22 @@
             }
 
             return IO::fread($component_path . 'VERSION');
+        }
+
+        /**
+         * @return string
+         */
+        public function getVendor(): string
+        {
+            return $this->vendor;
+        }
+
+        /**
+         * @return string
+         */
+        public function getPackageName(): string
+        {
+            return $this->package_name;
         }
 
         /**

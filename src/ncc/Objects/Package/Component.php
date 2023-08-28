@@ -24,30 +24,31 @@
 
     namespace ncc\Objects\Package;
 
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
-    class Component
+    class Component implements BytecodeObjectInterface
     {
         /**
          * The name of the component or the file name of the component
          *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
          * Flags associated with the component created by the compiler extension
          *
          * @var array
          */
-        public $flags;
+        private $flags;
 
         /**
          * The data type of the component
          *
          * @var string
          */
-        public $data_types;
+        private $data_type;
 
         /**
          * A sha1 hash checksum of the component, this will be compared against the data to determine
@@ -62,7 +63,7 @@
          *
          * @var mixed
          */
-        public $data;
+        private $data;
 
         /**
          * Validates the checksum of the component, returns false if the checksum or data is invalid or if the checksum
@@ -82,12 +83,7 @@
                 return true; // Return true if the data is null
             }
 
-            if(hash('sha1', $this->data, true) !== $this->checksum)
-            {
-                return false; // Return false if the checksum failed
-            }
-
-            return true;
+            return hash_equals($this->checksum, hash('sha1', $this->data, true));
         }
 
         /**
@@ -106,6 +102,106 @@
         }
 
         /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return array
+         */
+        public function getFlags(): array
+        {
+            return $this->flags;
+        }
+
+        /**
+         * @param array $flags
+         */
+        public function setFlags(array $flags): void
+        {
+            $this->flags = $flags;
+        }
+
+        /**
+         * @param string $flag
+         * @return void
+         */
+        public function addFlag(string $flag): void
+        {
+            $this->flags[] = $flag;
+        }
+
+        /**
+         * @param string $flag
+         * @return void
+         */
+        public function removeFlag(string $flag): void
+        {
+            $this->flags = array_filter($this->flags, static function($f) use ($flag) {
+                return $f !== $flag;
+            });
+        }
+
+        /**
+         * @return string
+         */
+        public function getDataType(): string
+        {
+            return $this->data_type;
+        }
+
+        /**
+         * @param string $data_type
+         */
+        public function setDataType(string $data_type): void
+        {
+            $this->data_type = $data_type;
+        }
+
+        /**
+         * @return string
+         */
+        public function getChecksum(): string
+        {
+            return $this->checksum;
+        }
+
+        /**
+         * @param string $checksum
+         */
+        public function setChecksum(string $checksum): void
+        {
+            $this->checksum = $checksum;
+        }
+
+        /**
+         * @return mixed
+         */
+        public function getData(): mixed
+        {
+            return $this->data;
+        }
+
+        /**
+         * @param mixed $data
+         */
+        public function setData(mixed $data): void
+        {
+            $this->data = $data;
+        }
+
+        /**
          * Returns an array representation of the component.
          *
          * @param bool $bytecode
@@ -116,7 +212,7 @@
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
                 ($bytecode ? Functions::cbc('flags') : 'flags') => $this->flags,
-                ($bytecode ? Functions::cbc('data_type') : 'data_type') => $this->data_types,
+                ($bytecode ? Functions::cbc('data_type') : 'data_type') => $this->data_type,
                 ($bytecode ? Functions::cbc('checksum') : 'checksum') => $this->checksum,
                 ($bytecode ? Functions::cbc('data') : 'data') => $this->data,
             ];
@@ -128,16 +224,16 @@
          * @param array $data
          * @return Component
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): Component
         {
-            $Object = new self();
+            $object = new self();
 
-            $Object->name = Functions::array_bc($data, 'name');
-            $Object->flags = Functions::array_bc($data, 'flags');
-            $Object->data_types = Functions::array_bc($data, 'data_type');
-            $Object->checksum = Functions::array_bc($data, 'checksum');
-            $Object->data = Functions::array_bc($data, 'data');
+            $object->name = Functions::array_bc($data, 'name');
+            $object->flags = Functions::array_bc($data, 'flags');
+            $object->data_type = Functions::array_bc($data, 'data_type');
+            $object->checksum = Functions::array_bc($data, 'checksum');
+            $object->data = Functions::array_bc($data, 'data');
 
-            return $Object;
+            return $object;
         }
     }

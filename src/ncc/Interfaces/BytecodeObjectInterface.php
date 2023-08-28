@@ -22,7 +22,7 @@
 
     namespace ncc\Interfaces;
 
-    interface BytecodeObjectInterface
+    interface BytecodeObjectInterface extends SerializableObjectInterface
     {
         /**
          * Returns an array representation of the object

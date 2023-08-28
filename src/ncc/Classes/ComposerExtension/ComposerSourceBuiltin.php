@@ -346,7 +346,7 @@
                 foreach ($composer_package->require as $item)
                 {
                     // Check if the dependency is already in the project configuration
-                    $package_name = self::toPackageName($item->package_name);
+                    $package_name = self::toPackageName($item->getPackageName());
 
                     if($package_name === null)
                     {
@@ -356,7 +356,7 @@
                     $dependency = new ProjectConfiguration\Dependency();
                     $dependency->setName($package_name);
                     $dependency->setSourceType(DependencySourceType::LOCAL);
-                    $dependency->setVersion(self::versionMap($item->package_name, $version_map));
+                    $dependency->setVersion(self::versionMap($item->getPackageName(), $version_map));
                     $dependency->setSource($package_name . '.ncc');
                     $project_configuration->build->addDependency($dependency);
                 }
@@ -688,34 +688,34 @@
                 $static_files = [];
 
                 // Extract all the source directories
-                if ($composer_package->autoload->psr_4 !== null && count($composer_package->autoload->psr_4) > 0)
+                if ($composer_package->autoload->getPsr4() !== null && count($composer_package->autoload->getPsr4()) > 0)
                 {
                     Console::outVerbose('Extracting PSR-4 source directories');
-                    foreach ($composer_package->autoload->psr_4 as $namespace_pointer)
+                    foreach ($composer_package->autoload->getPsr4() as $namespace_pointer)
                     {
-                        if ($namespace_pointer->Path !== null && !in_array($namespace_pointer->Path, $source_directories, true))
+                        if ($namespace_pointer->getPath() !== null && !in_array($namespace_pointer->getPath(), $source_directories, true))
                         {
-                            $source_directories[] = $package_path . DIRECTORY_SEPARATOR . $namespace_pointer->Path;
+                            $source_directories[] = $package_path . DIRECTORY_SEPARATOR . $namespace_pointer->getPath();
                         }
                     }
                 }
 
-                if ($composer_package->autoload->psr_0 !== null && count($composer_package->autoload->psr_0) > 0)
+                if ($composer_package->autoload->getPsr0() !== null && count($composer_package->autoload->getPsr0()) > 0)
                 {
                     Console::outVerbose('Extracting PSR-0 source directories');
-                    foreach ($composer_package->autoload->psr_0 as $namespace_pointer)
+                    foreach ($composer_package->autoload->getPsr0() as $namespace_pointer)
                     {
-                        if ($namespace_pointer->Path !== null && !in_array($namespace_pointer->Path, $source_directories, true))
+                        if ($namespace_pointer->getPath() !== null && !in_array($namespace_pointer->getPath(), $source_directories, true))
                         {
-                            $source_directories[] = $package_path . DIRECTORY_SEPARATOR . $namespace_pointer->Path;
+                            $source_directories[] = $package_path . DIRECTORY_SEPARATOR . $namespace_pointer->getPath();
                         }
                     }
                 }
 
-                if ($composer_package->autoload->files !== null && count($composer_package->autoload->files) > 0)
+                if ($composer_package->autoload->getFiles() !== null && count($composer_package->autoload->getFiles()) > 0)
                 {
                     Console::outVerbose('Extracting static files');
-                    foreach ($composer_package->autoload->files as $file)
+                    foreach ($composer_package->autoload->getFiles() as $file)
                     {
                         $static_files[] = $package_path . DIRECTORY_SEPARATOR . $file;
                     }
@@ -800,21 +800,21 @@
                     Console::out(sprintf('Authors for package %s:', $composer_package->name));
                     foreach($composer_package->authors as $author)
                     {
-                        Console::out(sprintf(' - %s', $author->Name));
+                        Console::out(sprintf(' - %s', $author->getName()));
 
-                        if($author->Email !== null)
+                        if($author->getEmail() !== null)
                         {
-                            Console::out(sprintf('   %s', $author->Email));
+                            Console::out(sprintf('   %s', $author->getEmail()));
                         }
 
-                        if($author->Homepage !== null)
+                        if($author->getHomepage() !== null)
                         {
-                            Console::out(sprintf('   %s', $author->Homepage));
+                            Console::out(sprintf('   %s', $author->getHomepage()));
                         }
 
-                        if($author->Role !== null)
+                        if($author->getRole() !== null)
                         {
-                            Console::out(sprintf('   %s', $author->Role));
+                            Console::out(sprintf('   %s', $author->getRole()));
                         }
 
                     }

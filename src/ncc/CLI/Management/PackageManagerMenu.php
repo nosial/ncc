@@ -237,7 +237,7 @@
                 Console::out('resources:');
                 foreach($package->resources as $resource)
                 {
-                    Console::out('  - ' . sprintf('%s - (%s)', $resource->Name, Functions::b2u(strlen($resource->Data))));
+                    Console::out('  - ' . sprintf('%s - (%s)', $resource->getName(), Functions::b2u(strlen($resource->getData()))));
                 }
             }
             else
@@ -252,7 +252,7 @@
                 {
                     try
                     {
-                        Console::out('  - ' . sprintf('#%s %s - %s', $component->data_types, $component->name, json_encode(($component->flags ?? []), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)));
+                        Console::out('  - ' . sprintf('#%s %s - %s', $component->getDataType(), $component->getName(), json_encode(($component->getFlags() ?? []), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)));
                     }
                     catch(JsonException $e)
                     {
@@ -315,7 +315,7 @@
                             Console::out(sprintf('%s=%s (%s)',
                                 Console::formatColor($package, ConsoleColors::LIGHT_GREEN),
                                 Console::formatColor($version, ConsoleColors::LIGHT_MAGENTA),
-                                $package_manager->getPackageVersion($package, $version)->Compiler->getExtension()
+                                $package_manager->getPackageVersion($package, $version)->getCompiler()->getExtension()
                             ));
                         }
                         catch(Exception $e)
@@ -559,21 +559,21 @@
             }
 
             Console::out(sprintf('Extension: %s',
-                Console::formatColor($package->header->CompilerExtension->getExtension(), ConsoleColors::GREEN)
+                Console::formatColor($package->header->getCompilerExtension()->getExtension(), ConsoleColors::GREEN)
             ));
 
-            if($package->header->CompilerExtension->getMinimumVersion() !== null)
+            if($package->header->getCompilerExtension()->getMinimumVersion() !== null)
             {
                 Console::out(sprintf('Maximum Version: %s',
-                    Console::formatColor($package->header->CompilerExtension->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->getCompilerExtension()->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
                 ));
             }
 
 
-            if($package->header->CompilerExtension->getMinimumVersion() !== null)
+            if($package->header->getCompilerExtension()->getMinimumVersion() !== null)
             {
                 Console::out(sprintf('Minimum Version: %s',
-                    Console::formatColor($package->header->CompilerExtension->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
+                    Console::formatColor($package->header->getCompilerExtension()->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
                 ));
             }
 

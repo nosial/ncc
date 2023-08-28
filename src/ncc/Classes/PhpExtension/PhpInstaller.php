@@ -79,38 +79,38 @@
          */
         public function processComponent(Package\Component $component): ?string
         {
-            if($component->data === null)
+            if($component->getData() === null)
             {
                 return null;
             }
 
             if(!$component->validate_checksum())
             {
-                throw new IntegrityException(sprintf('Checksum validation failed for component: %s', $component->name));
+                throw new IntegrityException(sprintf('Checksum validation failed for component: %s', $component->getName()));
             }
 
-            switch($component->data_types)
+            switch($component->getDataType())
             {
                 case ComponentDataType::AST:
                     try
                     {
-                        $stmts = $this->decodeRecursive($component->data);
+                        $stmts = $this->decodeRecursive($component->getData());
                     }
                     catch (Exception $e)
                     {
-                        throw new IntegrityException(sprintf('Cannot decode component: %s, %s', $component->name, $e->getMessage()));
+                        throw new IntegrityException(sprintf('Cannot decode component: %s, %s', $component->getName(), $e->getMessage()));
                     }
 
                     return (new Standard())->prettyPrintFile($stmts);
 
                 case ComponentDataType::BASE64_ENCODED:
-                   return Base64::decode($component->data);
+                   return Base64::decode($component->getData());
 
                 case ComponentDataType::PLAIN:
-                    return $component->data;
+                    return $component->getData();
 
                 default:
-                    throw new NotSupportedException(sprintf('Component data type %s is not supported.', $component->data_types));
+                    throw new NotSupportedException(sprintf('Component data type %s is not supported.', $component->getDataType()));
             }
         }
 
@@ -143,10 +143,10 @@
         {
             if(!$resource->validateChecksum())
             {
-                throw new IntegrityException('Checksum validation failed for resource ' . $resource->Name . ', the package may be corrupted.');
+                throw new IntegrityException('Checksum validation failed for resource ' . $resource->getName() . ', the package may be corrupted.');
             }
 
-            return Base64::decode($resource->Data);
+            return Base64::decode($resource->getData());
         }
 
         /**

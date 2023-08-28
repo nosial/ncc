@@ -88,18 +88,16 @@
             {
                 $package_entry = new PackageEntry();
                 $package_entry->addVersion($package, $install_path, true);
-                $package_entry->Name = $package->assembly->getPackage();
-                $package_entry->UpdateSource = $package->header->UpdateSource;
-                $package_entry->getDataPath();
+                $package_entry->setName($package->assembly->getPackage());
+                $package_entry->setUpdateSource($package->header->getUpdateSource());
                 $this->Packages[$package->assembly->getPackage()] = $package_entry;
                 $this->update();
 
                 return;
             }
 
-            $this->Packages[$package->assembly->getPackage()]->UpdateSource = $package->header->UpdateSource;
+            $this->Packages[$package->assembly->getPackage()]->setUpdateSource($package->header->getUpdateSource());
             $this->Packages[$package->assembly->getPackage()]->addVersion($package, $install_path, true);
-            $this->Packages[$package->assembly->getPackage()]->getDataPath();
             $this->update();
         }
 
@@ -254,7 +252,7 @@
                 foreach($packages as $_datum)
                 {
                     $entry = PackageEntry::fromArray($_datum);
-                    $object->Packages[$entry->Name] = $entry;
+                    $object->Packages[$entry->getName()] = $entry;
                 }
             }
 

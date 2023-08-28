@@ -1,56 +1,98 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Objects\ComposerJson;
 
-    class Autoloader
+    use ncc\Interfaces\SerializableObjectInterface;
+
+    class Autoloader implements SerializableObjectInterface
     {
 
         /**
          * @var NamespacePointer[]|null
          */
-        public $psr_4;
+        private $psr_4;
 
         /**
          * @var NamespacePointer[]|null
          */
-        public $psr_0;
+        private $psr_0;
 
         /**
          * @var string[]|null
          */
-        public $class_map;
+        private $class_map;
 
         /**
          * @var string[]|null
          */
-        public $files;
+        private $files;
 
         /**
          * @var string[]|null
          */
-        public $exclude_from_class_map;
+        private $exclude_from_class_map;
+
+        /**
+         * @return NamespacePointer[]|null
+         */
+        public function getPsr4(): ?array
+        {
+            return $this->psr_4;
+        }
+
+        /**
+         * @return NamespacePointer[]|null
+         */
+        public function getPsr0(): ?array
+        {
+            return $this->psr_0;
+        }
+
+        /**
+         * @return string[]|null
+         */
+        public function getClassMap(): ?array
+        {
+            return $this->class_map;
+        }
+
+        /**
+         * @return string[]|null
+         */
+        public function getFiles(): ?array
+        {
+            return $this->files;
+        }
+
+        /**
+         * @return string[]|null
+         */
+        public function getExcludeFromClassMap(): ?array
+        {
+            return $this->exclude_from_class_map;
+        }
 
         /**
          * @param array $psr
@@ -60,33 +102,31 @@
          */
         private static function psrRestructure(array $psr, NamespacePointer $pointer): array
         {
-            if (isset($psr[(string)$pointer->Namespace]))
+            if (isset($psr[(string)$pointer->getNamespace()]))
             {
-                if (!is_array($psr[(string)$pointer->Namespace]))
+                if (!is_array($psr[(string)$pointer->getNamespace()]))
                 {
                     $r = [
-                        $psr[(string)$pointer->Namespace],
-                        $pointer->Path
+                        $psr[(string)$pointer->getNamespace()],
+                        $pointer->getPath()
                     ];
 
-                    $psr[(string)$pointer->Namespace] = $r;
+                    $psr[(string)$pointer->getNamespace()] = $r;
                 }
-                elseif (!in_array($pointer->Path, $psr[(string)$pointer->Namespace], true))
+                elseif (!in_array($pointer->getPath(), $psr[(string)$pointer->getNamespace()], true))
                 {
-                    $psr[(string)$pointer->Namespace][] = $pointer->Path;
+                    $psr[(string)$pointer->getNamespace()][] = $pointer->getPath();
                 }
             }
             else
             {
-                $psr[(string)$pointer->Namespace] = $pointer->Path;
+                $psr[(string)$pointer->getNamespace()] = $pointer->getPath();
             }
             return $psr;
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @return array
+         * @inheritDoc
          */
         public function toArray(): array
         {
@@ -116,10 +156,9 @@
         }
 
         /**
-         * @param array $data
-         * @return static
+         * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): Autoloader
         {
             $object = new self();
 

@@ -38,8 +38,8 @@ namespace ncc\Classes\LuaExtension;
         public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
         {
             $execution_unit = new ExecutionUnit();
-            $execution_unit->execution_policy = $policy;
-            $execution_unit->Data = IO::fread($path);
+            $execution_unit->setExecutionPolicy($policy);
+            $execution_unit->setData(IO::fread($path));
 
             return $execution_unit;
         }

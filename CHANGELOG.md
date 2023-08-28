@@ -19,6 +19,8 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Added new exception `GitException` in `\ncc\Exceptions` to replace all git related exceptions
  - Added new exception `PackageException` in `\ncc\Exceptions` to replace all package related exceptions
  - Added new exception `OperationException` in `\ncc\Exceptions` to replace all generic related exceptions
+ - Added a new interface class `SerializableObjectInterface` to implement serializable objects, `BytecodeObjectInterface`
+   extends this interface to allow for serialization of compiled assets
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -137,6 +139,42 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Updated class `\ncc\Objects\ProjectConfiguration > Installer` to use method calls rather than direct property access
  - Updated class `\ncc\Objects\ProjectConfiguration > Project` to use method calls rather than direct property access
  - Updated class `\ncc\Objects\ProjectConfiguration > UpdateSource` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects\ComposerJson > Author` to use method calls rather than direct property access and
+   implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ComposerJson > Autoloader` to use method calls rather than direct property access and
+   implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ComposerJson > Funding` to use method calls rather than direct property access and
+   implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ComposerJson > NamespacePointer` to use method calls rather than direct property access
+   and implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ComposerJson > PackageLink` to use method calls rather than direct property access and
+   implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ComposerJson > Suggestion` to use method calls rather than direct property access and
+   implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ComposerJson > Support` to use method calls rather than direct property access and
+   implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\ExecutionPointers > ExecutionPointer` to use method calls rather than direct property
+   access and implemented `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\NccVersionInformation > Component` to use method calls rather than direct property access
+   and implemented `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\Package > Component` to use method calls rather than direct property access and
+   implemented `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\Package > ExecutionUnit` to use method calls rather than direct property access and
+   implemented `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\Package > Header` to use method calls rather than direct property access and implemented
+   `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\Package > Installer` to use method calls rather than direct property access and implemented
+   `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\Package > MagicBytes` to use method calls rather than direct property access and implemented
+   `SerializableObjectInterface`
+ - Updated class `\ncc\Objects\Package > Resource` to use method calls rather than direct property access and implemented
+   `BytecodeObjectInterface`
+ -  Updated class `\ncc\Objects\PackageLock > DependencyEntry` to use method calls rather than direct property access
+    and implemented `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\PackageLock > PackageEntry` to use method calls rather than direct property access
+   and implemented `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\PackageLock > VersionEntry` to use method calls rather than direct property access
+   and implemented `BytecodeObjectInterface`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

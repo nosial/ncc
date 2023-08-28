@@ -124,7 +124,7 @@
                 return $package->assembly->getPackage();
             }
 
-            $extension = $package->header->CompilerExtension->getExtension();
+            $extension = $package->header->getCompilerExtension()->getExtension();
             $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->assembly->getPackage() . '=' . $package->assembly->getVersion());
 
             $installer = match ($extension)
@@ -191,7 +191,7 @@
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
                 }
 
-                foreach($package->header->CompilerExtension->toArray() as $prop => $value)
+                foreach($package->header->getCompilerExtension()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('header.compiler.%s: %s', $prop, ($value ?? 'n/a')));
                 }
@@ -203,14 +203,14 @@
             $steps = (4 + count($package->components) + count ($package->resources) + count ($package->execution_units));
 
             // Include the Execution units
-            if($package->installer?->PreInstall !== null)
+            if($package->installer?->getPreInstall() !== null)
             {
-                $steps += count($package->installer->PreInstall);
+                $steps += count($package->installer->getPreInstall());
             }
 
-            if($package->installer?->PostInstall!== null)
+            if($package->installer?->getPostInstall()!== null)
             {
-                $steps += count($package->installer->PostInstall);
+                $steps += count($package->installer->getPostInstall());
             }
 
             $current_steps = 0;
@@ -258,9 +258,9 @@
                 throw new OperationException('Pre installation stage failed, ' . $e->getMessage(), $e);
             }
 
-            if($package->installer?->PreInstall !== null && count($package->installer->PreInstall) > 0)
+            if($package->installer?->getPreInstall() !== null && count($package->installer->getPreInstall()) > 0)
             {
-                foreach($package->installer->PreInstall as $unit_name)
+                foreach($package->installer->getPreInstall() as $unit_name)
                 {
                     try
                     {
@@ -279,14 +279,14 @@
             // Process & Install the components
             foreach($package->components as $component)
             {
-                Console::outDebug(sprintf('processing component %s (%s)', $component->name, $component->data_types));
+                Console::outDebug(sprintf('processing component %s (%s)', $component->getName(), $component->getDataType()));
 
                 try
                 {
                     $data = $installer->processComponent($component);
                     if($data !== null)
                     {
-                        $component_path = $installation_paths->getSourcePath() . DIRECTORY_SEPARATOR . $component->name;
+                        $component_path = $installation_paths->getSourcePath() . DIRECTORY_SEPARATOR . $component->getName();
                         $component_dir = dirname($component_path);
 
                         if(!$filesystem->exists($component_dir))
@@ -309,14 +309,14 @@
             // Process & Install the resources
             foreach($package->resources as $resource)
             {
-                Console::outDebug(sprintf('processing resource %s', $resource->Name));
+                Console::outDebug(sprintf('processing resource %s', $resource->getName()));
 
                 try
                 {
                     $data = $installer->processResource($resource);
                     if($data !== null)
                     {
-                        $resource_path = $installation_paths->getSourcePath() . DIRECTORY_SEPARATOR . $resource->Name;
+                        $resource_path = $installation_paths->getSourcePath() . DIRECTORY_SEPARATOR . $resource->getName();
                         $resource_dir = dirname($resource_path);
 
                         if(!$filesystem->exists($resource_dir))
@@ -347,7 +347,7 @@
                 /** @var Package\ExecutionUnit $executionUnit */
                 foreach($package->execution_units as $executionUnit)
                 {
-                    Console::outDebug(sprintf('processing execution unit %s', $executionUnit->execution_policy->getName()));
+                    Console::outDebug(sprintf('processing execution unit %s', $executionUnit->getExecutionPolicy()->getName()));
                     $execution_pointer_manager->addUnit($package->assembly->getPackage(), $package->assembly->getVersion(), $executionUnit);
                     ++$current_steps;
                     Console::inlineProgressBar($current_steps, $steps);
@@ -361,7 +361,7 @@
             }
 
             // After execution units are installed, create a symlink if needed
-            if(isset($package->header->Options['create_symlink']) && $package->header->Options['create_symlink'])
+            if(!is_null($package->header->getOption('create_symlink')) && $package->header->getOption('create_symlink'))
             {
                 if($package->main_execution_policy === null)
                 {
@@ -389,11 +389,11 @@
                 throw new OperationException('Post installation stage failed, ' . $e->getMessage(), $e);
             }
 
-            if($package->installer?->PostInstall !== null && count($package->installer->PostInstall) > 0)
+            if($package->installer?->getPostInstall() !== null && count($package->installer->getPostInstall()) > 0)
             {
                 Console::outDebug('executing post-installation units');
 
-                foreach($package->installer->PostInstall as $unit_name)
+                foreach($package->installer->getPostInstall() as $unit_name)
                 {
                     try
                     {
@@ -415,18 +415,18 @@
                 Console::outDebug('no post-installation units to execute');
             }
 
-            if($package->header->UpdateSource !== null && $package->header->UpdateSource->getRepository() !== null)
+            if($package->header->getUpdateSource()?->getRepository() !== null)
             {
                 $sources_manager = new RemoteSourcesManager();
-                if($sources_manager->getRemoteSource($package->header->UpdateSource->getRepository()->getName()) === null)
+                if($sources_manager->getRemoteSource($package->header->getUpdateSource()->getRepository()->getName()) === null)
                 {
-                    Console::outVerbose('Adding remote source ' . $package->header->UpdateSource->getRepository()->getName());
+                    Console::outVerbose('Adding remote source ' . $package->header->getUpdateSource()->getRepository()->getName());
 
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->name = $package->header->UpdateSource->getRepository()->getName();
-                    $defined_remote_source->host = $package->header->UpdateSource->getRepository()->getHost();
-                    $defined_remote_source->type = $package->header->UpdateSource->getRepository()->getType();
-                    $defined_remote_source->ssl = $package->header->UpdateSource->getRepository()->isSsl();
+                    $defined_remote_source->name = $package->header->getUpdateSource()?->getRepository()->getName();
+                    $defined_remote_source->host = $package->header->getUpdateSource()?->getRepository()->getHost();
+                    $defined_remote_source->type = $package->header->getUpdateSource()?->getRepository()->getType();
+                    $defined_remote_source->ssl = $package->header->getUpdateSource()?->getRepository()->isSsl();
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }
@@ -790,11 +790,11 @@
                         throw new OperationException('Version ' . $exploded[1] . ' not found for package ' . $exploded[0]);
                     }
 
-                    foreach ($version->Dependencies as $dependency)
+                    foreach ($version->getDependencies() as $dependency)
                     {
-                        if(!in_array($dependency->PackageName . '=' . $dependency->Version, $tree, true))
+                        if(!in_array($dependency->getPackageName() . '=' . $dependency->getVersion(), $tree, true))
                         {
-                            $packages[] = $dependency->PackageName . '=' . $dependency->Version;
+                            $packages[] = $dependency->getPackageName() . '=' . $dependency->getVersion();
                         }
                     }
                 }
@@ -840,12 +840,12 @@
                     else
                     {
                         $tree[$package_iter] = null;
-                        if($version_entry->Dependencies !== null && count($version_entry->Dependencies) > 0)
+                        if(count($version_entry->getDependencies()) > 0)
                         {
                             $tree[$package_iter] = [];
-                            foreach($version_entry->Dependencies as $dependency)
+                            foreach($version_entry->getDependencies() as $dependency)
                             {
-                                $dependency_name = sprintf('%s=%s', $dependency->PackageName, $dependency->Version);
+                                $dependency_name = sprintf('%s=%s', $dependency->getPackageName(), $dependency->getVersion());
                                 $tree[$package_iter] = $this->getPackageTree($tree[$package_iter], $dependency_name);
                             }
                         }
@@ -898,13 +898,13 @@
             $scanner = new DirectoryScanner();
             $filesystem = new Filesystem();
 
-            if($filesystem->exists($version_entry->Location))
+            if($filesystem->exists($version_entry->location))
             {
-                Console::outVerbose(sprintf('Removing package files from %s', $version_entry->Location));
+                Console::outVerbose(sprintf('Removing package files from %s', $version_entry->location));
 
                 /** @var SplFileInfo $item */
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                foreach($scanner($version_entry->Location, true) as $item)
+                foreach($scanner($version_entry->location, true) as $item)
                 {
                     if(is_file($item->getPath()))
                     {
@@ -916,21 +916,21 @@
             }
             else
             {
-                Console::outWarning(sprintf('warning: package location %s does not exist', $version_entry->Location));
+                Console::outWarning(sprintf('warning: package location %s does not exist', $version_entry->location));
             }
 
-            $filesystem->remove($version_entry->Location);
+            $filesystem->remove($version_entry->location);
 
-            if($version_entry->ExecutionUnits !== null && count($version_entry->ExecutionUnits) > 0)
+            if(count($version_entry->getExecutionUnits()) > 0)
             {
                 Console::outVerbose('Uninstalling execution units');
 
                 $execution_pointer_manager = new ExecutionPointerManager();
-                foreach($version_entry->ExecutionUnits as $executionUnit)
+                foreach($version_entry->getExecutionUnits() as $executionUnit)
                 {
-                    if(!$execution_pointer_manager->removeUnit($package, $version, $executionUnit->execution_policy->getName()))
+                    if(!$execution_pointer_manager->removeUnit($package, $version, $executionUnit->getExecutionPolicy()->getName()))
                     {
-                        Console::outDebug(sprintf('warning: removing execution unit %s failed', $executionUnit->execution_policy->getName()));
+                        Console::outDebug(sprintf('warning: removing execution unit %s failed', $executionUnit->getExecutionPolicy()->getName()));
                     }
                 }
             }
@@ -973,11 +973,11 @@
 
                 try
                 {
-                    $this->uninstallPackageVersion($package, $version_entry->Version);
+                    $this->uninstallPackageVersion($package, $version_entry->getVersion());
                 }
                 catch(Exception $e)
                 {
-                    Console::outDebug(sprintf('warning: unable to uninstall package %s=%s, %s (%s)', $package, $version_entry->Version, $e->getMessage(), $e->getCode()));
+                    Console::outDebug(sprintf('warning: unable to uninstall package %s=%s, %s (%s)', $package, $version_entry->getVersion(), $e->getMessage(), $e->getCode()));
                 }
             }
         }
@@ -999,14 +999,10 @@
             }
 
             $data_files = [
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'assembly' =>
-                    ZiProto::encode($package->assembly->toArray(true)),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'ext' =>
-                    ZiProto::encode($package->header->CompilerExtension->toArray()),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'const' =>
-                    ZiProto::encode($package->header->RuntimeConstants),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'dependencies' =>
-                    ZiProto::encode($dependencies),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'assembly' => ZiProto::encode($package->assembly->toArray(true)),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'ext' => ZiProto::encode($package->header->getCompilerExtension()->toArray()),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'const' => ZiProto::encode($package->header->getRuntimeConstants()),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'dependencies' => ZiProto::encode($dependencies),
             ];
 
             foreach($data_files as $file => $data)

@@ -291,7 +291,7 @@
 
     foreach($VersionInformation->Components as $component)
     {
-        $full_name = $component->vendor . '/' . $component->package_name;
+        $full_name = $component->getVendor() . '/' . $component->getPackageName();
 
         try
         {

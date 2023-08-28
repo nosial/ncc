@@ -140,26 +140,26 @@
                 throw new ImportException(sprintf('Failed to check if package %s is imported', $package), $e);
             }
 
-            if($version_entry->Dependencies !== null && count($version_entry->Dependencies) > 0)
+            if(count($version_entry->getDependencies()) > 0)
             {
                 // Import all dependencies first
                 /** @var Dependency $dependency */
-                foreach($version_entry->Dependencies as $dependency)
+                foreach($version_entry->getDependencies() as $dependency)
                 {
-                    self::import($dependency->PackageName, $dependency->getVersion(), $options);
+                    self::import($dependency->getPackageName(), $dependency->getVersion(), $options);
                 }
             }
 
             try
             {
-                switch($version_entry->Compiler->getExtension())
+                switch($version_entry->getCompiler()->getExtension())
                 {
                     case CompilerExtensions::PHP:
                         PhpRuntime::import($version_entry, $options);
                         break;
 
                     default:
-                        throw new ImportException(sprintf('Compiler extension %s is not supported in this runtime', $version_entry->Compiler->getExtension()));
+                        throw new ImportException(sprintf('Compiler extension %s is not supported in this runtime', $version_entry->getCompiler()->getExtension()));
                 }
             }
             catch(Exception $e)

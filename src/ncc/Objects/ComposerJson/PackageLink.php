@@ -25,21 +25,23 @@
 
     namespace ncc\Objects\ComposerJson;
 
-    class PackageLink
+    use ncc\Interfaces\SerializableObjectInterface;
+
+    class PackageLink implements SerializableObjectInterface
     {
         /**
          * The name of the package that is required
          *
          * @var string|null
          */
-        public $package_name;
+        private $package_name;
 
         /**
          * The version of the package that is required
          *
          * @var string|null
          */
-        public $version;
+        private $version;
 
         /**
          * @param string|null $package_name
@@ -52,9 +54,23 @@
         }
 
         /**
-         * Returns an array representation of object
-         *
-         * @return array
+         * @return string|null
+         */
+        public function getPackageName(): ?string
+        {
+            return $this->package_name;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getVersion(): ?string
+        {
+            return $this->version;
+        }
+
+        /**
+         * @inheritDoc
          */
         public function toArray(): array
         {
@@ -65,10 +81,7 @@
         }
 
         /**
-         * Constructs an object from an array representation
-         *
-         * @param array $data
-         * @return PackageLink
+         * @inheritDoc
          */
         public static function fromArray(array $data): PackageLink
         {

@@ -28,6 +28,7 @@
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\Package;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
@@ -36,42 +37,42 @@
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
 
-    class PackageEntry
+    class PackageEntry implements BytecodeObjectInterface
     {
         /**
          * The name of the package that's installed
          *
          * @var string
          */
-        public $Name;
+        private $name;
 
         /**
          * The latest version of the package entry, this is updated automatically
          *
          * @var string|null
          */
-        private $LatestVersion;
+        private $latest_version;
 
         /**
          * An array of installed versions for this package
          *
          * @var VersionEntry[]
          */
-        public $Versions;
+        private $versions;
 
         /**
          * The update source of the package entry
          *
          * @var UpdateSource|null
          */
-        public $UpdateSource;
+        private $update_source;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->Versions = [];
+            $this->versions = [];
         }
 
         /**
@@ -84,15 +85,15 @@
          */
         public function getVersion(string $version, bool $throw_exception=false): ?VersionEntry
         {
-            if($version === Versions::LATEST && $this->LatestVersion !== null)
+            if($version === Versions::LATEST && $this->latest_version !== null)
             {
                 /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $version = $this->LatestVersion;
+                $version = $this->latest_version;
             }
 
-            foreach($this->Versions as $versionEntry)
+            foreach($this->versions as $versionEntry)
             {
-                if($versionEntry->Version === $version)
+                if($versionEntry->getVersion() === $version)
                 {
                     return $versionEntry;
                 }
@@ -100,7 +101,7 @@
 
             if($throw_exception)
             {
-                throw new IOException(sprintf('Version %s of %s is not installed', $version, $this->Name));
+                throw new IOException(sprintf('Version %s of %s is not installed', $version, $this->name));
             }
 
             return null;
@@ -118,9 +119,9 @@
             $count = 0;
             $found_node = false;
 
-            foreach($this->Versions as $versionEntry)
+            foreach($this->versions as $versionEntry)
             {
-                if($versionEntry->Version === $version)
+                if($versionEntry->getVersion() === $version)
                 {
                     $found_node = true;
                     break;
@@ -131,7 +132,7 @@
 
             if($found_node)
             {
-                unset($this->Versions[$count]);
+                unset($this->versions[$count]);
                 $this->updateLatestVersion();
                 return true;
             }
@@ -169,23 +170,23 @@
             }
 
             $version = new VersionEntry();
-            $version->Version = $package->assembly->getVersion();
-            $version->Compiler = $package->header->CompilerExtension;
-            $version->ExecutionUnits = $package->execution_units;
-            $version->MainExecutionPolicy = $package->main_execution_policy;
-            $version->Location = $install_path;
+            $version->setVersion($package->assembly->getVersion());
+            $version->setCompiler($package->header->getCompilerExtension());
+            $version->setExecutionUnits($package->execution_units);
+            $version->main_execution_policy = $package->main_execution_policy;
+            $version->location = $install_path;
 
-            foreach($version->ExecutionUnits as $unit)
+            foreach($version->getExecutionUnits() as $unit)
             {
-                $unit->Data = null;
+                $unit->setData(null);
             }
 
             foreach($package->dependencies as $dependency)
             {
-                $version->Dependencies[] = new DependencyEntry($dependency);
+                $version->addDependency(new DependencyEntry($dependency));
             }
 
-            $this->Versions[] = $version;
+            $this->versions[] = $version;
             $this->updateLatestVersion();
             return true;
         }
@@ -199,9 +200,9 @@
         {
             $latest_version = null;
 
-            foreach($this->Versions as $version)
+            foreach($this->versions as $version)
             {
-                $version = $version->Version;
+                $version = $version->getVersion();
 
                 if($latest_version === null)
                 {
@@ -215,7 +216,7 @@
                 }
             }
 
-            $this->LatestVersion = $latest_version;
+            $this->latest_version = $latest_version;
         }
 
         /**
@@ -223,7 +224,7 @@
          */
         public function getLatestVersion(): ?string
         {
-            return $this->LatestVersion;
+            return $this->latest_version;
         }
 
         /**
@@ -235,12 +236,13 @@
         {
             $r = [];
 
-            foreach($this->Versions as $version)
+            foreach($this->versions as $version)
             {
-                $r[] = $version->Version;
+                $r[] = $version->getVersion();
             }
 
             return $r;
+
         }
 
         /**
@@ -249,7 +251,7 @@
          */
         public function getDataPath(): string
         {
-            $path = PathFinder::getPackageDataPath($this->Name);
+            $path = PathFinder::getPackageDataPath($this->name);
 
             if(!file_exists($path) && Resolver::resolveScope() === Scopes::SYSTEM)
             {
@@ -258,6 +260,38 @@
             }
 
             return $path;
+        }
+
+        /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return UpdateSource|null
+         */
+        public function getUpdateSource(): ?UpdateSource
+        {
+            return $this->update_source;
+        }
+
+        /**
+         * @param UpdateSource|null $update_source
+         */
+        public function setUpdateSource(?UpdateSource $update_source): void
+        {
+            $this->update_source = $update_source;
         }
 
         /**
@@ -270,16 +304,16 @@
         {
             $versions = [];
 
-            foreach($this->Versions as $version)
+            foreach($this->versions as $version)
             {
                 $versions[] = $version->toArray($bytecode);
             }
 
             return [
-                ($bytecode ? Functions::cbc('name')  : 'name')  => $this->Name,
-                ($bytecode ? Functions::cbc('latest_version')  : 'latest_version')  => $this->LatestVersion,
+                ($bytecode ? Functions::cbc('name')  : 'name')  => $this->name,
+                ($bytecode ? Functions::cbc('latest_version')  : 'latest_version')  => $this->latest_version,
                 ($bytecode ? Functions::cbc('versions')  : 'versions')  => $versions,
-                ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->UpdateSource?->toArray($bytecode)),
+                ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->update_source?->toArray($bytecode)),
             ];
         }
 
@@ -289,25 +323,25 @@
          * @param array $data
          * @return PackageEntry
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): PackageEntry
         {
             $object = new self();
 
-            $object->Name = Functions::array_bc($data, 'name');
-            $object->LatestVersion = Functions::array_bc($data, 'latest_version');
-            $object->UpdateSource = Functions::array_bc($data, 'update_source');
+            $object->name = Functions::array_bc($data, 'name');
+            $object->latest_version = Functions::array_bc($data, 'latest_version');
+            $object->update_source = Functions::array_bc($data, 'update_source');
             $versions = Functions::array_bc($data, 'versions');
 
-            if($object->UpdateSource !== null)
+            if($object->update_source !== null)
             {
-                $object->UpdateSource = UpdateSource::fromArray($object->UpdateSource);
+                $object->update_source = UpdateSource::fromArray($object->update_source);
             }
 
             if($versions !== null)
             {
                 foreach($versions as $_datum)
                 {
-                    $object->Versions[] = VersionEntry::fromArray($_datum);
+                    $object->versions[] = VersionEntry::fromArray($_datum);
                 }
             }
 

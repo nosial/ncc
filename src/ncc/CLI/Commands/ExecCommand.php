@@ -81,7 +81,7 @@ namespace ncc\CLI\Commands;
 
             try
             {
-                $units = $execution_pointer_manager->getUnits($package_entry->Name, $version_entry->Version);
+                $units = $execution_pointer_manager->getUnits($package_entry->getName(), $version_entry->getVersion());
             }
             catch(Exception $e)
             {
@@ -106,7 +106,7 @@ namespace ncc\CLI\Commands;
 
             try
             {
-                exit($execution_pointer_manager->executeUnit($package_entry->Name, $version_entry->Version, $unit_name, $options));
+                exit($execution_pointer_manager->executeUnit($package_entry->getName(), $version_entry->getVersion(), $unit_name, $options));
             }
             catch(Exception $e)
             {

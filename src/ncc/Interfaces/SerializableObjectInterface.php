@@ -20,45 +20,22 @@
      *
      */
 
-    namespace ncc\Classes\PhpExtension;
+    namespace ncc\Interfaces;
 
-    use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PathNotFoundException;
-    use ncc\Interfaces\RunnerInterface;
-    use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
-    use ncc\Utilities\IO;
-
-    class PhpRunner implements RunnerInterface
+    interface SerializableObjectInterface
     {
         /**
-         * @param string $path
-         * @param ExecutionPolicy $policy
-         * @return ExecutionUnit
-         * @throws IOException
-         * @throws PathNotFoundException
+         * Returns an array representation of the object
+         *
+         * @return array
          */
-        public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
-        {
-            $execution_unit = new ExecutionUnit();
-            if(!file_exists($path) && !is_file($path))
-            {
-                throw new PathNotFoundException($path);
-            }
-
-            $execution_unit->setExecutionPolicy($policy);
-            $execution_unit->setData(IO::fread($path));
-
-            return $execution_unit;
-        }
+        public function toArray(): array;
 
         /**
-         * Returns the file extension to use for the target file
+         * Constructs the object from a SerializableObjectInterface array representation
          *
-         * @return string
+         * @param array $data
+         * @return SerializableObjectInterface
          */
-        public static function getFileExtension(): string
-        {
-            return '.php';
-        }
+        public static function fromArray(array $data): SerializableObjectInterface;
     }

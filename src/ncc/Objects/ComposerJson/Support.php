@@ -25,75 +25,147 @@
 
     namespace ncc\Objects\ComposerJson;
 
-    class Support
+    use ncc\Interfaces\SerializableObjectInterface;
+
+    class Support implements SerializableObjectInterface
     {
         /**
          * Email address for support
          *
          * @var string|null
          */
-        public $email;
+        private $email;
 
         /**
          * URL to the issue tracker
          *
          * @var string|null
          */
-        public $issues;
+        private $issues;
 
         /**
          * URL to the forum
          *
          * @var string|null
          */
-        public $forum;
+        private $forum;
 
         /**
          * URL to the Wiki
          *
          * @var string|null
          */
-        public $wiki;
+        private $wiki;
 
         /**
          * The IRC channel for support, as irc://server/channel
          *
          * @var string|null
          */
-        public $irc;
+        private $irc;
 
         /**
          * URL to browse or download the sources
          *
          * @var string|null
          */
-        public $source;
+        private $source;
 
         /**
          * URL to the documentation
          *
          * @var string|null
          */
-        public $docs;
+        private $docs;
 
         /**
          * URL to the RSS feed
          *
          * @var string|null
          */
-        public $rss;
+        private $rss;
 
         /**
          * URL to the chat channel
          *
          * @var string|null
          */
-        public $chat;
+        private $chat;
 
         /**
-         * Returns an array representation of the object
-         *
-         * @return array
+         * @return string|null
+         */
+        public function getEmail(): ?string
+        {
+            return $this->email;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getIssues(): ?string
+        {
+            return $this->issues;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getForum(): ?string
+        {
+            return $this->forum;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getWiki(): ?string
+        {
+            return $this->wiki;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getIrc(): ?string
+        {
+            return $this->irc;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getSource(): ?string
+        {
+            return $this->source;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getDocs(): ?string
+        {
+            return $this->docs;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getRss(): ?string
+        {
+            return $this->rss;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getChat(): ?string
+        {
+            return $this->chat;
+        }
+
+        /**
+         * @inheritDoc
          */
         public function toArray(): array
         {
@@ -111,12 +183,9 @@
         }
 
         /**
-         * Constructs object from array representation
-         *
-         * @param array $data
-         * @return Support
+         * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): Support
         {
             $object = new self();
 

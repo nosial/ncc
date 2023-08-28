@@ -214,7 +214,7 @@
         {
             foreach($this->execution_units as $unit)
             {
-                if($unit->execution_policy->getName() === $name)
+                if($unit->getExecutionPolicy()->getName() === $name)
                 {
                     return $unit;
                 }
@@ -276,33 +276,33 @@
             $package_type = substr($encoding_header, 3, 2);
 
             $magic_bytes = new MagicBytes();
-            $magic_bytes->PackageStructureVersion = $package_structure_version;
+            $magic_bytes->setPackageStructureVersion($package_structure_version);
 
             // Determine the encoding type
             switch($encoding_type)
             {
                 case '300':
-                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
-                    $magic_bytes->IsCompressed = false;
-                    $magic_bytes->IsEncrypted = false;
+                    $magic_bytes->setEncoder(EncoderType::ZI_PROTO);
+                    $magic_bytes->setCompressed(false);
+                    $magic_bytes->setCompressed(false);
                     break;
 
                 case '301':
-                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
-                    $magic_bytes->IsCompressed = true;
-                    $magic_bytes->IsEncrypted = false;
+                    $magic_bytes->setEncoder(EncoderType::ZI_PROTO);
+                    $magic_bytes->setCompressed(true);
+                    $magic_bytes->setEncrypted(false);
                     break;
 
                 case '310':
-                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
-                    $magic_bytes->IsCompressed = false;
-                    $magic_bytes->IsEncrypted = true;
+                    $magic_bytes->setEncoder(EncoderType::ZI_PROTO);
+                    $magic_bytes->setCompressed(false);
+                    $magic_bytes->setEncrypted(true);
                     break;
 
                 case '311':
-                    $magic_bytes->Encoder = EncoderType::ZI_PROTO;
-                    $magic_bytes->IsCompressed = true;
-                    $magic_bytes->IsEncrypted = true;
+                    $magic_bytes->setEncoder(EncoderType::ZI_PROTO);
+                    $magic_bytes->setCompressed(true);
+                    $magic_bytes->setEncrypted(true);
                     break;
 
                 default:
@@ -313,18 +313,18 @@
             switch($package_type)
             {
                 case '40':
-                    $magic_bytes->IsInstallable = true;
-                    $magic_bytes->IsExecutable = false;
+                    $magic_bytes->setInstallable(true);
+                    $magic_bytes->setExecutable(false);
                     break;
 
                 case '41':
-                    $magic_bytes->IsInstallable = false;
-                    $magic_bytes->IsExecutable = true;
+                    $magic_bytes->setInstallable(false);
+                    $magic_bytes->setExecutable(true);
                     break;
 
                 case '42':
-                    $magic_bytes->IsInstallable = true;
-                    $magic_bytes->IsExecutable = true;
+                    $magic_bytes->setInstallable(true);
+                    $magic_bytes->setExecutable(true);
                     break;
 
                 default:

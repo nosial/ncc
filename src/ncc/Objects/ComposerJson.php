@@ -315,7 +315,7 @@
                 $_require = [];
                 foreach($this->require as $require)
                 {
-                    $_require[$require->package_name] = $require->version;
+                    $_require[$require->getPackageName()] = $require->getVersion();
                 }
             }
 
@@ -325,7 +325,7 @@
                 $_require_dev = [];
                 foreach($this->require_dev as $require)
                 {
-                    $_require_dev[$require->package_name] = $require->version;
+                    $_require_dev[$require->getPackageName()] = $require->getVersion();
                 }
             }
 
@@ -335,7 +335,7 @@
                 $_conflict = [];
                 foreach($this->conflict as $require)
                 {
-                    $_conflict[$require->package_name] = $require->version;
+                    $_conflict[$require->getPackageName()] = $require->getVersion();
                 }
             }
 
@@ -345,7 +345,7 @@
                 $_replace = [];
                 foreach($this->replace as $require)
                 {
-                    $_replace[$require->package_name] = $require->version;
+                    $_replace[$require->getPackageName()] = $require->getVersion();
                 }
             }
 
@@ -355,7 +355,7 @@
                 $_provide = [];
                 foreach($this->provide as $require)
                 {
-                    $_provide[$require->package_name] = $require->version;
+                    $_provide[$require->getPackageName()] = $require->getVersion();
                 }
             }
 
@@ -365,7 +365,7 @@
                 $_suggest = [];
                 foreach($this->suggest as $suggestion)
                 {
-                    $_suggest[$suggestion->package_name] = $suggestion->comment;
+                    $_suggest[$suggestion->getPackageName()] = $suggestion->getComment();
                 }
             }
 

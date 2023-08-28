@@ -58,7 +58,7 @@
         /**
          * @var ProjectConfiguration
          */
-        private $project;
+        private $project_configuration;
 
         /**
          * @var Package|null
@@ -76,7 +76,7 @@
          */
         public function __construct(ProjectConfiguration $project, string $path)
         {
-            $this->project = $project;
+            $this->project_configuration = $project;
             $this->path = $path;
         }
 
@@ -95,7 +95,7 @@
             try
             {
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                $this->project->validate(True);
+                $this->project_configuration->validate(True);
             }
             catch (Exception $e)
             {
@@ -103,36 +103,35 @@
             }
 
             // Select the build configuration
-            $selected_build_configuration = $this->project->build->getBuildConfiguration($build_configuration);
+            $selected_build_configuration = $this->project_configuration->build->getBuildConfiguration($build_configuration);
 
             // Create the package object
             $this->package = new Package();
-            $this->package->assembly = $this->project->assembly;
-            $this->package->dependencies = $this->project->build->getDependencies();
-            $this->package->main_execution_policy = $this->project->build->getMain();
+            $this->package->assembly = $this->project_configuration->assembly;
+            $this->package->dependencies = $this->project_configuration->build->getDependencies();
+            $this->package->main_execution_policy = $this->project_configuration->build->getMain();
 
             // Add the option to create a symbolic link to the package
-            if(isset($this->project->project->getOptions()['create_symlink']) && $this->project->project->getOptions()['create_symlink'] === True)
+            if(isset($this->project_configuration->project->getOptions()['create_symlink']) && $this->project_configuration->project->getOptions()['create_symlink'] === True)
             {
-                $this->package->header->Options['create_symlink'] = true;
+                $this->package->header->setOption('create_symlink', true);
             }
 
             // Add both the defined constants from the build configuration and the global constants.
             // Global constants are overridden
-            $this->package->header->RuntimeConstants = [];
-            $this->package->header->RuntimeConstants = array_merge(
+            $this->package->header->setRuntimeConstants(array_merge(
                 $selected_build_configuration->getDefineConstants(),
-                ($this->project->build->getDefineConstants()),
-                ($this->package->header->RuntimeConstants ?? [])
-            );
+                ($this->project_configuration->build->getDefineConstants()),
+                ($this->package->header->getRuntimeConstants() ?? [])
+            ));
 
-            $this->package->header->CompilerExtension = $this->project->project->getCompiler();
-            $this->package->header->CompilerVersion = NCC_VERSION_NUMBER;
-            $this->package->header->Options = $this->project->project->getOptions();
+            $this->package->header->setCompilerExtension($this->project_configuration->project->getCompiler());
+            $this->package->header->setCompilerVersion(NCC_VERSION_NUMBER);
+            $this->package->header->setOptions($this->project_configuration->project->getOptions());
 
-            if($this->project->project->getUpdateSource() !== null)
+            if($this->project_configuration->project->getUpdateSource() !== null)
             {
-                $this->package->header->UpdateSource = $this->project->project->getUpdateSource();
+                $this->package->header->setUpdateSource($this->project_configuration->project->getUpdateSource());
             }
 
             Console::outDebug('scanning project files');
@@ -158,7 +157,7 @@
                 $directory_scanner->setExcludes($selected_build_configuration->getExcludeFiles());
             }
 
-            $source_path = $this->path . $this->project->build->getSourcePath();
+            $source_path = $this->path . $this->project_configuration->build->getSourcePath();
 
             // TODO: Re-implement the scanning process outside the compiler, as this is will be redundant
             // Scan for components first.
@@ -176,10 +175,10 @@
                     }
 
                     $component = new Package\Component();
-                    $component->name = Functions::removeBasename($item->getPathname(), $this->path);
+                    $component->setName(Functions::removeBasename($item->getPathname(), $this->path));
                     $this->package->components[] = $component;
 
-                    Console::outVerbose(sprintf('Found component %s', $component->name));
+                    Console::outVerbose(sprintf('Found component %s', $component->getName()));
                 }
 
                 if(count($this->package->components) > 0)
@@ -216,10 +215,10 @@
                     }
 
                     $resource = new Package\Resource();
-                    $resource->Name = Functions::removeBasename($item->getPathname(), $this->path);
+                    $resource->setName(Functions::removeBasename($item->getPathname(), $this->path));
                     $this->package->resources[] = $resource;
 
-                    Console::outVerbose(sprintf('found resource %s', $resource->Name));
+                    Console::outVerbose(sprintf('found resource %s', $resource->getName()));
                 }
 
                 if(count($this->package->resources) > 0)
@@ -238,9 +237,9 @@
 
             $selected_dependencies = [];
 
-            if(count($this->project->build->getDependencies()) > 0)
+            if(count($this->project_configuration->build->getDependencies()) > 0)
             {
-                $selected_dependencies = array_merge($selected_dependencies, $this->project->build->getDependencies());
+                $selected_dependencies = array_merge($selected_dependencies, $this->project_configuration->build->getDependencies());
             }
 
             if(count($selected_build_configuration->getDependencies()) > 0)
@@ -292,7 +291,7 @@
                                     $filesystem->mkdir($lib_path);
                                 }
 
-                                $filesystem->copy($version->Location, $out_path);
+                                $filesystem->copy($version->location, $out_path);
                                 $dependency->Source = 'libs' . DIRECTORY_SEPARATOR . sprintf('%s=%s.lib', $dependency->getName(), $dependency->getVersion());
 
                             }
@@ -339,7 +338,7 @@
             $this->compileResources();
 
             PackageCompiler::compilePackageConstants($this->package, [
-                ConstantReferences::ASSEMBLY => $this->project->assembly,
+                ConstantReferences::ASSEMBLY => $this->project_configuration->assembly,
                 ConstantReferences::BUILD => null,
                 ConstantReferences::DATE_TIME => time()
             ]);
@@ -386,13 +385,12 @@
                 }
 
                 // Get the data and
-                $resource->Data = IO::fread(Functions::correctDirectorySeparator($this->path . $resource->Name));
-                $resource->Data = Base64::encode($resource->Data);
-                $resource->Name = str_replace($this->project->build->getSourcePath(), (string)null, $resource->Name);
+                $resource->setData(Base64::encode(IO::fread(Functions::correctDirectorySeparator($this->path . $resource->getName()))));
+                $resource->setName(str_replace($this->project_configuration->build->getSourcePath(), (string)null, $resource->getName()));
                 $resource->updateChecksum();
                 $resources[] = $resource;
 
-                Console::outDebug(sprintf('processed resource %s', $resource->Name));
+                Console::outDebug(sprintf('processed resource %s', $resource->getName()));
             }
 
             // Update the resources
@@ -436,7 +434,7 @@
                     Console::inlineProgressBar($processed_items, $total_items);
                 }
 
-                $content = IO::fread(Functions::correctDirectorySeparator($this->path . $component->name));
+                $content = IO::fread(Functions::correctDirectorySeparator($this->path . $component->getName()));
                 $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 
                 try
@@ -444,24 +442,24 @@
                     $stmts = $parser->parse($content);
                     $encoded = json_encode($stmts, JSON_THROW_ON_ERROR);
                     unset($stmts);
-                    $component->data_types = ComponentDataType::AST;
-                    $component->data = json_decode($encoded, true, 512, JSON_THROW_ON_ERROR);
+                    $component->setDataType(ComponentDataType::AST);
+                    $component->setData(json_decode($encoded, true, 512, JSON_THROW_ON_ERROR));
                 }
                 catch(Exception $e)
                 {
-                    $component->data_types = ComponentDataType::BASE64_ENCODED;
-                    $component->data = Base64::encode($content);
+                    $component->setDataType(ComponentDataType::BASE64_ENCODED);
+                    $component->setData(Base64::encode($content));
                     unset($e);
                 }
 
                 unset($parser);
 
-                $component->name = str_replace($this->project->build->getSourcePath(), (string)null, $component->name);
+                $component->setName(str_replace($this->project_configuration->build->getSourcePath(), (string)null, $component->getName()));
                 $component->updateChecksum();
                 $components[] = $component;
                 ++$processed_items;
 
-                Console::outDebug(sprintf('processed component %s (%s)', $component->name, $component->data_types));
+                Console::outDebug(sprintf('processed component %s (%s)', $component->getName(), $component->getDataType()));
             }
 
             // Update the components
@@ -476,7 +474,7 @@
          */
         public function compileExecutionPolicies(): void
         {
-            $this->package->execution_units = PackageCompiler::compileExecutionPolicies($this->path, $this->project);
+            $this->package->execution_units = PackageCompiler::compileExecutionPolicies($this->path, $this->project_configuration);
         }
 
         /**

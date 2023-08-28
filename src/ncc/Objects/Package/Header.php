@@ -24,94 +24,202 @@
 
     namespace ncc\Objects\Package;
 
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\Utilities\Functions;
 
-    class Header
+    class Header implements BytecodeObjectInterface
     {
         /**
          * The compiler extension information that was used to build the package
          *
          * @var Compiler
          */
-        public $CompilerExtension;
+        private $compiler_extension;
 
         /**
          * An array of constants that are set when the package is imported or executed during runtime.
          *
          * @var array
          */
-        public $RuntimeConstants;
+        private $runtime_constants;
 
         /**
          * The version of NCC that was used to compile the package, can be used for backwards compatibility
          *
          * @var string
          */
-        public $CompilerVersion;
+        private $compiler_version;
 
         /**
          * An array of options to pass on to the extension
          *
          * @var array|null
          */
-        public $Options;
+        private $options;
 
         /**
          * The optional update source to where the package can be updated from
          *
          * @var UpdateSource|null
          */
-        public $UpdateSource;
+        private $update_source;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->CompilerExtension = new Compiler();
-            $this->RuntimeConstants = [];
-            $this->Options = [];
+            $this->compiler_extension = new Compiler();
+            $this->runtime_constants = [];
+            $this->options = [];
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @param bool $bytecode
+         * @return Compiler
+         */
+        public function getCompilerExtension(): Compiler
+        {
+            return $this->compiler_extension;
+        }
+
+        /**
+         * @param Compiler $compiler_extension
+         */
+        public function setCompilerExtension(Compiler $compiler_extension): void
+        {
+            $this->compiler_extension = $compiler_extension;
+        }
+
+        /**
          * @return array
+         */
+        public function getRuntimeConstants(): array
+        {
+            return $this->runtime_constants;
+        }
+
+        /**
+         * @param array $runtime_constants
+         */
+        public function setRuntimeConstants(array $runtime_constants): void
+        {
+            $this->runtime_constants = $runtime_constants;
+        }
+
+        /**
+         * @return string
+         */
+        public function getCompilerVersion(): string
+        {
+            return $this->compiler_version;
+        }
+
+        /**
+         * @param string $compiler_version
+         */
+        public function setCompilerVersion(string $compiler_version): void
+        {
+            $this->compiler_version = $compiler_version;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getOptions(): ?array
+        {
+            return $this->options;
+        }
+
+        /**
+         * @param array|null $options
+         */
+        public function setOptions(?array $options): void
+        {
+            $this->options = $options;
+        }
+
+        /**
+         * @param string $key
+         * @param $value
+         * @return void
+         */
+        public function setOption(string $key, $value): void
+        {
+            $this->options[$key] = $value;
+        }
+
+        /**
+         * @param string $key
+         * @return void
+         */
+        public function removeOption(string $key): void
+        {
+            unset($this->options[$key]);
+        }
+
+        /**
+         * @param string $key
+         * @return mixed|null
+         */
+        public function getOption(string $key): mixed
+        {
+            return $this->options[$key] ?? null;
+        }
+
+        /**
+         * @return UpdateSource|null
+         */
+        public function getUpdateSource(): ?UpdateSource
+        {
+            return $this->update_source;
+        }
+
+        /**
+         * @param UpdateSource|null $update_source
+         */
+        public function setUpdateSource(?UpdateSource $update_source): void
+        {
+            $this->update_source = $update_source;
+        }
+
+        /**
+         * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('compiler_extension') : 'compiler_extension') => $this->CompilerExtension->toArray(),
-                ($bytecode ? Functions::cbc('runtime_constants') : 'runtime_constants') => $this->RuntimeConstants,
-                ($bytecode ? Functions::cbc('compiler_version') : 'compiler_version') => $this->CompilerVersion,
-                ($bytecode ? Functions::cbc('update_source') : 'update_source') => ($this->UpdateSource?->toArray($bytecode) ?? null),
-                ($bytecode ? Functions::cbc('options') : 'options') => $this->Options,
+                ($bytecode ? Functions::cbc('compiler_extension') : 'compiler_extension') => $this->compiler_extension->toArray(),
+                ($bytecode ? Functions::cbc('runtime_constants') : 'runtime_constants') => $this->runtime_constants,
+                ($bytecode ? Functions::cbc('compiler_version') : 'compiler_version') => $this->compiler_version,
+                ($bytecode ? Functions::cbc('update_source') : 'update_source') => ($this->update_source?->toArray($bytecode)),
+                ($bytecode ? Functions::cbc('options') : 'options') => $this->options,
             ];
         }
 
         /**
-         * Constructs the object from an array representation
-         *
-         * @param array $data
-         * @return static
+         * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): Header
         {
             $object = new self();
 
-            $object->CompilerExtension = Functions::array_bc($data, 'compiler_extension');
-            $object->RuntimeConstants = Functions::array_bc($data, 'runtime_constants');
-            $object->CompilerVersion = Functions::array_bc($data, 'compiler_version');
-            $object->UpdateSource = Functions::array_bc($data, 'update_source');
-            $object->Options = Functions::array_bc($data, 'options');
+            $object->compiler_extension = Functions::array_bc($data, 'compiler_extension');
+            $object->runtime_constants = Functions::array_bc($data, 'runtime_constants');
+            $object->compiler_version = Functions::array_bc($data, 'compiler_version');
+            $object->update_source = Functions::array_bc($data, 'update_source');
+            $object->options = Functions::array_bc($data, 'options');
 
-            if($object->CompilerExtension !== null)
-                $object->CompilerExtension = Compiler::fromArray($object->CompilerExtension);
-            if($object->UpdateSource !== null)
-                $object->UpdateSource = UpdateSource::fromArray($object->UpdateSource);
+            if($object->compiler_extension !== null)
+            {
+                $object->compiler_extension = Compiler::fromArray($object->compiler_extension);
+            }
+
+            if($object->update_source !== null)
+            {
+                $object->update_source = UpdateSource::fromArray($object->update_source);
+            }
 
             return $object;
         }

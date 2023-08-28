@@ -263,7 +263,7 @@
                 $units = [];
                 foreach($package->execution_units as $executionUnit)
                 {
-                    Console::outDebug(sprintf('compiling execution unit constant %s (%s)', $executionUnit->execution_policy->getName(), implode(', ', array_keys($refs))));
+                    Console::outDebug(sprintf('compiling execution unit constant %s (%s)', $executionUnit->getExecutionPolicy()->getName(), implode(', ', array_keys($refs))));
                     $units[] = self::compileExecutionUnitConstants($executionUnit, $refs);
                 }
                 $package->execution_units = $units;
@@ -271,14 +271,14 @@
             }
 
             $compiled_constants = [];
-            foreach($package->header->RuntimeConstants as $name => $value)
+            foreach($package->header->getRuntimeConstants() as $name => $value)
             {
                 Console::outDebug(sprintf('compiling runtime constant %s (%s)', $name, implode(', ', array_keys($refs))));
                 $compiled_constants[$name] = self::compileConstants($value, $refs);
             }
 
             $options = [];
-            foreach($package->header->Options as $name => $value)
+            foreach($package->header->getOptions() as $name => $value)
             {
                 if(is_array($value))
                 {
@@ -301,8 +301,8 @@
                 }
             }
 
-            $package->header->Options = $options;
-            $package->header->RuntimeConstants = $compiled_constants;
+            $package->header->setOptions($options);
+            $package->header->setRuntimeConstants($compiled_constants);
         }
 
         /**
@@ -314,47 +314,47 @@
          */
         public static function compileExecutionUnitConstants(Package\ExecutionUnit $unit, array $refs): Package\ExecutionUnit
         {
-            $unit->execution_policy->setMessage(self::compileConstants($unit->execution_policy->getMessage(), $refs));
+            $unit->getExecutionPolicy()->setMessage(self::compileConstants($unit->getExecutionPolicy()->getMessage(), $refs));
 
-            if($unit->execution_policy->getExitHandlers() !== null)
+            if($unit->getExecutionPolicy()->getExitHandlers() !== null)
             {
-                if($unit->execution_policy->getExitHandlers()->getSuccess()?->getMessage() !== null)
+                if($unit->getExecutionPolicy()->getExitHandlers()->getSuccess()?->getMessage() !== null)
                 {
-                    $unit->execution_policy->getExitHandlers()->getSuccess()?->setMessage(
-                        self::compileConstants($unit->execution_policy->getExitHandlers()->getSuccess()->getMessage(), $refs)
+                    $unit->getExecutionPolicy()->getExitHandlers()->getSuccess()?->setMessage(
+                        self::compileConstants($unit->getExecutionPolicy()->getExitHandlers()->getSuccess()->getMessage(), $refs)
                     );
                 }
 
-                if($unit->execution_policy->getExitHandlers()->getError()?->getMessage() !== null)
+                if($unit->getExecutionPolicy()->getExitHandlers()->getError()?->getMessage() !== null)
                 {
-                    $unit->execution_policy->getExitHandlers()->getError()?->setMessage(
-                        self::compileConstants($unit->execution_policy->getExitHandlers()->getError()->getMessage(), $refs)
+                    $unit->getExecutionPolicy()->getExitHandlers()->getError()?->setMessage(
+                        self::compileConstants($unit->getExecutionPolicy()->getExitHandlers()->getError()->getMessage(), $refs)
                     );
                 }
 
-                if($unit->execution_policy->getExitHandlers()->getWarning()?->getMessage() !== null)
+                if($unit->getExecutionPolicy()->getExitHandlers()->getWarning()?->getMessage() !== null)
                 {
-                    $unit->execution_policy->getExitHandlers()->getWarning()?->setMessage(
-                        self::compileConstants($unit->execution_policy->getExitHandlers()->getWarning()->getMessage(), $refs)
+                    $unit->getExecutionPolicy()->getExitHandlers()->getWarning()?->setMessage(
+                        self::compileConstants($unit->getExecutionPolicy()->getExitHandlers()->getWarning()->getMessage(), $refs)
                     );
                 }
 
             }
 
-            if($unit->execution_policy->getExecute() !== null)
+            if($unit->getExecutionPolicy()->getExecute() !== null)
             {
-                $unit->execution_policy->getExecute()->setTarget(self::compileConstants($unit->execution_policy->getExecute()->getTarget(), $refs));
-                $unit->execution_policy->getExecute()->setWorkingDirectory(self::compileConstants($unit->execution_policy->getExecute()->getWorkingDirectory(), $refs));
+                $unit->getExecutionPolicy()->getExecute()->setTarget(self::compileConstants($unit->getExecutionPolicy()->getExecute()->getTarget(), $refs));
+                $unit->getExecutionPolicy()->getExecute()->setWorkingDirectory(self::compileConstants($unit->getExecutionPolicy()->getExecute()->getWorkingDirectory(), $refs));
 
-                if(count($unit->execution_policy->getExecute()->getOptions()) > 0)
+                if(count($unit->getExecutionPolicy()->getExecute()->getOptions()) > 0)
                 {
                     $options = [];
-                    foreach($unit->execution_policy->getExecute()->getOptions() as $key=> $value)
+                    foreach($unit->getExecutionPolicy()->getExecute()->getOptions() as $key=> $value)
                     {
                         $options[self::compileConstants($key, $refs)] = self::compileConstants($value, $refs);
                     }
 
-                    $unit->execution_policy->getExecute()->setOptions($options);
+                    $unit->getExecutionPolicy()->getExecute()->setOptions($options);
                 }
             }
 
