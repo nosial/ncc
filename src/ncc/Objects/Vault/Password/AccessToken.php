@@ -35,7 +35,7 @@
          * 
          * @var string
          */
-        public $access_token;
+        private $access_token;
 
         /**
          * @inheritDoc
@@ -46,21 +46,19 @@
         }
 
         /**
-         * Returns a string representation of the object
-         *
-         * @return string
-         */
-        public function __toString(): string
-        {
-            return $this->access_token;
-        }
-
-        /**
          * @param string $AccessToken
          */
         public function setAccessToken(string $AccessToken): void
         {
             $this->access_token = $AccessToken;
+        }
+
+        /**
+         * @return string
+         */
+        public function getAccessToken(): string
+        {
+            return $this->access_token;
         }
 
         /**
@@ -86,9 +84,17 @@
         public static function fromArray(array $data): AccessToken
         {
             $object = new self();
-
             $object->access_token = Functions::array_bc($data, 'access_token');
-
             return $object;
+        }
+
+        /**
+         * Returns a string representation of the object
+         *
+         * @return string
+         */
+        public function __toString(): string
+        {
+            return $this->access_token;
         }
     }

@@ -140,7 +140,7 @@
                         return false;
                     }
 
-                    return $token === $this->password->access_token;
+                    return $token === $this->password->getAccessToken();
 
                 default:
                     return false;
