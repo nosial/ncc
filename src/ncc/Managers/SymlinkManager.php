@@ -192,8 +192,10 @@
         {
             foreach($this->SymlinkDictionary as $entry)
             {
-                if($entry->Package === $package)
+                if($entry->getPackage() === $package)
+                {
                     return true;
+                }
             }
 
             return false;
@@ -221,8 +223,8 @@
             }
 
             $entry = new SymlinkEntry();
-            $entry->Package = $package;
-            $entry->ExecutionPolicyName = $unit;
+            $entry->setPackage($package);
+            $entry->setExecutionPolicyName($unit);
 
             $this->SymlinkDictionary[] = $entry;
             $this->save();
@@ -250,13 +252,13 @@
 
             foreach($this->SymlinkDictionary as $key => $entry)
             {
-                if($entry->Package === $package)
+                if($entry->getPackage() === $package)
                 {
-                    if($entry->Registered)
+                    if($entry->isRegistered())
                     {
                         $filesystem = new Filesystem();
 
-                        $symlink_name = explode('.', $entry->Package)[count(explode('.', $entry->Package)) - 1];
+                        $symlink_name = explode('.', $entry->getPackage())[count(explode('.', $entry->getPackage())) - 1];
                         $symlink = self::$BinPath . DIRECTORY_SEPARATOR . $symlink_name;
 
                         if($filesystem->exists($symlink))
@@ -286,9 +288,9 @@
         {
             foreach($this->SymlinkDictionary as $key => $entry)
             {
-                if($entry->Package === $package)
+                if($entry->getPackage() === $package)
                 {
-                    $entry->Registered = true;
+                    $entry->setRegistered(true);
                     $this->SymlinkDictionary[$key] = $entry;
                     $this->save();
                     return;
@@ -316,10 +318,12 @@
 
             foreach($this->SymlinkDictionary as $entry)
             {
-                if($entry->Registered)
+                if($entry->isRegistered())
+                {
                     continue;
+                }
 
-                $symlink_name = explode('.', $entry->Package)[count(explode('.', $entry->Package)) - 1];
+                $symlink_name = explode('.', $entry->getPackage())[count(explode('.', $entry->getPackage())) - 1];
                 $symlink = self::$BinPath . DIRECTORY_SEPARATOR . $symlink_name;
 
                 if($filesystem->exists($symlink))
@@ -330,11 +334,11 @@
 
                 try
                 {
-                    $package_entry = $package_lock_manager->getPackageLock()->getPackage($entry->Package);
+                    $package_entry = $package_lock_manager->getPackageLock()->getPackage($entry->getPackage());
 
                     if($package_entry === null)
                     {
-                        Console::outWarning(sprintf('Package %s is not installed, skipping', $entry->Package));
+                        Console::outWarning(sprintf('Package %s is not installed, skipping', $entry->getPackage()));
                         continue;
                     }
 
@@ -344,13 +348,13 @@
                 catch(Exception $e)
                 {
                     $filesystem->remove($symlink);
-                    Console::outWarning(sprintf('Failed to get package %s, skipping', $entry->Package));
+                    Console::outWarning(sprintf('Failed to get package %s, skipping', $entry->getPackage()));
                     continue;
                 }
 
                 try
                 {
-                    $entry_point_path = $execution_pointer_manager->getEntryPointPath($entry->Package, $latest_version, $entry->ExecutionPolicyName);
+                    $entry_point_path = $execution_pointer_manager->getEntryPointPath($entry->getPackage(), $latest_version, $entry->getExecutionPolicyName());
                     $filesystem->symlink($entry_point_path, $symlink);
                 }
                 catch(Exception $e)
@@ -364,7 +368,7 @@
                     unset($e);
                 }
 
-                $this->setAsRegistered($entry->Package);
+                $this->setAsRegistered($entry->getPackage());
 
             }
         }

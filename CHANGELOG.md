@@ -175,6 +175,7 @@ features and reduced the number of exceptions down to 15 exceptions.
    and implemented `BytecodeObjectInterface`
  - Updated class `\ncc\Objects\PackageLock > VersionEntry` to use method calls rather than direct property access
    and implemented `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects\SymlinkDictionary > SymlinkEntry` to use method calls rather than direct property access
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

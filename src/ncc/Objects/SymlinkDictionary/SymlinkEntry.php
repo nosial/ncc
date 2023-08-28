@@ -34,29 +34,77 @@
          *
          * @var string
          */
-        public $Package;
+        private $package;
 
         /**
          * The name of the execution policy to execute
          *
          * @var string
          */
-        public $ExecutionPolicyName;
+        private $execution_policy_name;
 
         /**
          * Indicates if this symlink is currently registered by NCC
          *
          * @var bool
          */
-        public $Registered;
+        private $registered;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->ExecutionPolicyName = 'main';
-            $this->Registered = false;
+            $this->execution_policy_name = 'main';
+            $this->registered = false;
+        }
+
+        /**
+         * @return string
+         */
+        public function getPackage(): string
+        {
+            return $this->package;
+        }
+
+        /**
+         * @param string $package
+         */
+        public function setPackage(string $package): void
+        {
+            $this->package = $package;
+        }
+
+        /**
+         * @return string
+         */
+        public function getExecutionPolicyName(): string
+        {
+            return $this->execution_policy_name;
+        }
+
+        /**
+         * @param string $execution_policy_name
+         */
+        public function setExecutionPolicyName(string $execution_policy_name): void
+        {
+            $this->execution_policy_name = $execution_policy_name;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isRegistered(): bool
+        {
+            return $this->registered;
+        }
+
+        /**
+         * @param bool $registered
+         */
+        public function setRegistered(bool $registered): void
+        {
+            $this->registered = $registered;
         }
 
         /**
@@ -65,9 +113,9 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('package') : 'package') => $this->Package,
-                ($bytecode ? Functions::cbc('registered') : 'registered') => $this->Registered,
-                ($bytecode ? Functions::cbc('execution_policy_name') : 'execution_policy_name') => $this->ExecutionPolicyName
+                ($bytecode ? Functions::cbc('package') : 'package') => $this->package,
+                ($bytecode ? Functions::cbc('registered') : 'registered') => $this->registered,
+                ($bytecode ? Functions::cbc('execution_policy_name') : 'execution_policy_name') => $this->execution_policy_name
             ];
         }
 
@@ -78,9 +126,9 @@
         {
             $entry = new SymlinkEntry();
 
-            $entry->Package = Functions::array_bc($data, 'package');
-            $entry->Registered = (bool)Functions::array_bc($data, 'registered');
-            $entry->ExecutionPolicyName = Functions::array_bc($data, 'execution_policy_name');
+            $entry->package = Functions::array_bc($data, 'package');
+            $entry->registered = (bool)Functions::array_bc($data, 'registered');
+            $entry->execution_policy_name = Functions::array_bc($data, 'execution_policy_name');
 
             return $entry;
         }
