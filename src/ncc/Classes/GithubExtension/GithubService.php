@@ -55,11 +55,11 @@
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
+            $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $repository = urlencode($packageInput->package);
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/repos/$owner_f/$repository";
+            $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/repos/$owner_f/$repository");
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
             $query = new RepositoryQueryResults();
@@ -119,11 +119,11 @@
         private static function getReleases(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): array
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
+            $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $repository = urlencode($packageInput->package);
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/repos/$owner_f/$repository/releases";
+            $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/repos/$owner_f/$repository/releases");
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
             if(count($response_decoded) === 0)
@@ -190,19 +190,19 @@
          */
         private static function getJsonResponse(HttpRequest $httpRequest, ?Entry $entry): array
         {
-            $httpRequest->Type = HttpRequestType::GET;
+            $httpRequest->setType(HttpRequestType::GET);
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry, false);
-            $httpRequest->Headers[] = 'X-GitHub-Api-Version: 2022-11-28';
-            $httpRequest->Headers[] = 'Accept: application/vnd.github+json';
+            $httpRequest->addHeader('X-GitHub-Api-Version: 2022-11-28');
+            $httpRequest->addHeader('Accept: application/vnd.github+json');
 
             $response = HttpClient::request($httpRequest, true);
 
-            if ($response->StatusCode !== 200)
+            if ($response->getStatusCode() !== 200)
             {
-                throw new GitException(sprintf('Github returned an error (%s): %s', $response->StatusCode, $response->Body));
+                throw new GitException(sprintf('Github returned an error (%s): %s', $response->getStatusCode(), $response->getBody()));
             }
 
-            return Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
+            return Functions::loadJson($response->getBody(), Functions::FORCE_ARRAY);
         }
 
         /**
@@ -221,7 +221,7 @@
 
             if (count($releases) === 0)
             {
-                throw new GitException(sprintf('No releases found for %s/%s on %s.', $packageInput->vendor, $packageInput->package, $definedRemoteSource->host));
+                throw new GitException(sprintf('No releases found for %s/%s on %s.', $packageInput->vendor, $packageInput->package, $definedRemoteSource->getHost()));
             }
 
             if ($packageInput->version === Versions::LATEST)
@@ -265,7 +265,7 @@
 
                 if ($selected_version === null)
                 {
-                    throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->host));
+                    throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->getHost()));
                 }
             }
             else
@@ -275,7 +275,7 @@
 
             if (!isset($releases[$selected_version]))
             {
-                throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->host));
+                throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->getHost()));
             }
 
             return $releases[$selected_version];

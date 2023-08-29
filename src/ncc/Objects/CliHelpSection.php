@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -34,21 +34,21 @@
          *
          * @var array|null
          */
-        public $Parameters;
+        private $parameters;
 
         /**
          * A description of the option
          *
          * @var string|null
          */
-        public $Description;
+        private $description;
 
         /**
          * The default value of the option
          *
          * @var string|null
          */
-        public $Default;
+        private $default;
 
         /**
          * Public Constructor
@@ -59,9 +59,57 @@
          */
         public function __construct(?array $parameters=null, ?string $description=null, ?string $default=null)
         {
-            $this->Parameters = $parameters;
-            $this->Description = $description;
-            $this->Default = $default;
+            $this->parameters = $parameters;
+            $this->description = $description;
+            $this->default = $default;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getParameters(): ?array
+        {
+            return $this->parameters;
+        }
+
+        /**
+         * @param array|null $parameters
+         */
+        public function setParameters(?array $parameters): void
+        {
+            $this->parameters = $parameters;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getDescription(): ?string
+        {
+            return $this->description;
+        }
+
+        /**
+         * @param string|null $description
+         */
+        public function setDescription(?string $description): void
+        {
+            $this->description = $description;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getDefault(): ?string
+        {
+            return $this->default;
+        }
+
+        /**
+         * @param string|null $default
+         */
+        public function setDefault(?string $default): void
+        {
+            $this->default = $default;
         }
 
         /**
@@ -72,9 +120,9 @@
         public function toArray(): array
         {
             return [
-                'parameters' => $this->Parameters,
-                'description' => $this->Description,
-                'default' => $this->Default
+                'parameters' => $this->parameters,
+                'description' => $this->description,
+                'default' => $this->default
             ];
         }
 
@@ -90,17 +138,17 @@
 
             if(isset($data['parameters']))
             {
-                $object->Parameters = $data['parameters'];
+                $object->parameters = $data['parameters'];
             }
 
             if(isset($data['description']))
             {
-                $object->Description = $data['description'];
+                $object->description = $data['description'];
             }
 
             if(isset($data['default']))
             {
-                $object->Default = $data['default'];
+                $object->default = $data['default'];
             }
 
             return $object;
@@ -117,12 +165,12 @@
         {
             $out = [];
 
-            if(count($this->Parameters) > 0)
+            if(count($this->parameters) > 0)
             {
                 if($param_padding > 0)
                 {
                     /** @noinspection PhpRedundantOptionalArgumentInspection */
-                    $result = str_pad(implode(' ', $this->Parameters), $param_padding, ' ', STR_PAD_RIGHT);
+                    $result = str_pad(implode(' ', $this->parameters), $param_padding, ' ', STR_PAD_RIGHT);
 
                     if(!$basic)
                     {
@@ -133,22 +181,22 @@
                 }
                 elseif($basic)
                 {
-                    $out[] .= implode(' ', $this->Parameters);
+                    $out[] .= implode(' ', $this->parameters);
                 }
                 else
                 {
-                    $out[] .= Console::formatColor(implode(' ', $this->Parameters), ConsoleColors::GREEN);
+                    $out[] .= Console::formatColor(implode(' ', $this->parameters), ConsoleColors::GREEN);
                 }
             }
 
-            if($this->Description !== null)
+            if($this->description !== null)
             {
-                $out[] = $this->Description;
+                $out[] = $this->description;
             }
 
-            if($this->Default !== null)
+            if($this->default !== null)
             {
-                $out[] = '(Default: ' . $this->Default . ')';
+                $out[] = '(Default: ' . $this->default . ')';
             }
 
             return implode(' ', $out);

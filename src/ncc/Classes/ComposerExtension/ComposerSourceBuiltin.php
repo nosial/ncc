@@ -212,15 +212,15 @@
             $filesystem->mkdir($base_dir . DIRECTORY_SEPARATOR . 'build');
             $version_map = self::getVersionMap($composer_lock);
 
-            foreach ($composer_lock->Packages as $package)
+            foreach ($composer_lock->getPackages() as $package)
             {
-                $package_path = $base_dir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . $package->name;
+                $package_path = $base_dir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . $package->getName();
 
                 // Load the composer lock file
-                $composer_package = $composer_lock->getPackage($package->name);
+                $composer_package = $composer_lock->getPackage($package->getName());
                 if ($composer_package === null)
                 {
-                    throw new PackageException(sprintf('Package "%s" not found in composer lock file', $package->name));
+                    throw new PackageException(sprintf('Package "%s" not found in composer lock file', $package->getName()));
                 }
 
                 // Convert it to an NCC project configuration
@@ -250,9 +250,9 @@
         private static function getVersionMap(ComposerLock $composerLock): array
         {
             $version_map = [];
-            foreach($composerLock->Packages as $package)
+            foreach($composerLock->getPackges() as $package)
             {
-                $version_map[$package->name] = $package->version;
+                $version_map[$package->getName()] = $package->getVersion();
             }
             return $version_map;
         }
@@ -310,20 +310,12 @@
         {
             // Generate a new project configuration object
             $project_configuration = new ProjectConfiguration();
+            $project_configuration->assembly->setName($composer_package->getName());
+            $project_configuration->assembly->setDescription($composer_package->getDescription());
 
-            if (isset($composer_package->name))
+            if(isset($version_map[$composer_package->getName()]))
             {
-                $project_configuration->assembly->setName($composer_package->name);
-            }
-
-            if (isset($composer_package->description))
-            {
-                $project_configuration->assembly->setDescription($composer_package->description);
-            }
-
-            if(isset($version_map[$composer_package->name]))
-            {
-                $project_configuration->assembly->setVersion(self::versionMap($composer_package->name, $version_map));
+                $project_configuration->assembly->setVersion(self::versionMap($composer_package->getName(), $version_map));
             }
 
             if($project_configuration->assembly->getVersion() === null || $project_configuration->assembly->getVersion() === '')
@@ -333,17 +325,17 @@
 
 
             $project_configuration->assembly->setUuid(Uuid::v1()->toRfc4122());
-            $project_configuration->assembly->setPackage(self::toPackageName($composer_package->name));
+            $project_configuration->assembly->setPackage(self::toPackageName($composer_package->getName()));
 
             // Add the update source
             $project_configuration->project->setUpdateSource(new ProjectConfiguration\UpdateSource());
-            $project_configuration->project->getUpdateSource()?->setSource(sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->name)));
+            $project_configuration->project->getUpdateSource()?->setSource(sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->getName())));
             $project_configuration->project->getUpdateSource()?->setRepository(null);
 
             // Process the dependencies
-            if($composer_package->require !== null && count($composer_package->require) > 0)
+            if($composer_package->getRequire() !== null && count($composer_package->getRequire()) > 0)
             {
-                foreach ($composer_package->require as $item)
+                foreach ($composer_package->getRequire() as $item)
                 {
                     // Check if the dependency is already in the project configuration
                     $package_name = self::toPackageName($item->getPackageName());
@@ -674,7 +666,7 @@
             $filesystem = new Filesystem();
 
             // Process the source files
-            if ($composer_package->autoload !== null)
+            if ($composer_package->getAutoload() !== null)
             {
                 $source_directory = $package_path . DIRECTORY_SEPARATOR . '.src';
 
@@ -688,10 +680,10 @@
                 $static_files = [];
 
                 // Extract all the source directories
-                if ($composer_package->autoload->getPsr4() !== null && count($composer_package->autoload->getPsr4()) > 0)
+                if ($composer_package->getAutoloadDev()->getPsr4() !== null && count($composer_package->getAutoload()->getPsr4()) > 0)
                 {
                     Console::outVerbose('Extracting PSR-4 source directories');
-                    foreach ($composer_package->autoload->getPsr4() as $namespace_pointer)
+                    foreach ($composer_package->getAutoload()->getPsr4() as $namespace_pointer)
                     {
                         if ($namespace_pointer->getPath() !== null && !in_array($namespace_pointer->getPath(), $source_directories, true))
                         {
@@ -700,10 +692,10 @@
                     }
                 }
 
-                if ($composer_package->autoload->getPsr0() !== null && count($composer_package->autoload->getPsr0()) > 0)
+                if ($composer_package->getAutoload()->getPsr0() !== null && count($composer_package->getAutoload()->getPsr0()) > 0)
                 {
                     Console::outVerbose('Extracting PSR-0 source directories');
-                    foreach ($composer_package->autoload->getPsr0() as $namespace_pointer)
+                    foreach ($composer_package->getAutoload()->getPsr0() as $namespace_pointer)
                     {
                         if ($namespace_pointer->getPath() !== null && !in_array($namespace_pointer->getPath(), $source_directories, true))
                         {
@@ -712,10 +704,10 @@
                     }
                 }
 
-                if ($composer_package->autoload->getFiles() !== null && count($composer_package->autoload->getFiles()) > 0)
+                if ($composer_package->getAutoload()->getFiles() !== null && count($composer_package->getAutoload()->getFiles()) > 0)
                 {
                     Console::outVerbose('Extracting static files');
-                    foreach ($composer_package->autoload->getFiles() as $file)
+                    foreach ($composer_package->getAutoload()->getFiles() as $file)
                     {
                         $static_files[] = $package_path . DIRECTORY_SEPARATOR . $file;
                     }
@@ -751,7 +743,7 @@
 
                         $parsed_path = str_ireplace($package_path . DIRECTORY_SEPARATOR, '', $item->getPathName());
 
-                        Console::outDebug(sprintf('copying file %s for package %s', $parsed_path, $composer_package->name));
+                        Console::outDebug(sprintf('copying file %s for package %s', $parsed_path, $composer_package->getName()));
                         $filesystem->copy($item->getPathName(), $source_directory . DIRECTORY_SEPARATOR . $parsed_path);
                     }
                 }
@@ -763,7 +755,7 @@
                     foreach ($static_files as $file)
                     {
                         $parsed_path = str_ireplace($package_path . DIRECTORY_SEPARATOR, '', $file);
-                        Console::outDebug(sprintf('copying file %s for package %s', $parsed_path, $composer_package->name));
+                        Console::outDebug(sprintf('copying file %s for package %s', $parsed_path, $composer_package->getName()));
                         $filesystem->copy($file, $source_directory . DIRECTORY_SEPARATOR . $parsed_path);
                         unset($file);
                     }
@@ -789,16 +781,16 @@
                     // Check configuration if composer.extension.display_licenses is set
                     if($filesystem->exists($package_path . DIRECTORY_SEPARATOR . $license_file) && Functions::cbool(Functions::getConfigurationProperty('composer.extension.display_licenses')))
                     {
-                        Console::out(sprintf('License for package %s:', $composer_package->name));
+                        Console::out(sprintf('License for package %s:', $composer_package->getName()));
                         Console::out(IO::fread($package_path . DIRECTORY_SEPARATOR . $license_file));
                         break;
                     }
                 }
 
-                if(Functions::cbool(!is_null($composer_package->authors) && count($composer_package->authors) > 0 && Functions::getConfigurationProperty('composer.extension.display_authors')))
+                if(Functions::cbool(!is_null($composer_package->getAuthors()) && count($composer_package->getAuthors()) > 0 && Functions::getConfigurationProperty('composer.extension.display_authors')))
                 {
-                    Console::out(sprintf('Authors for package %s:', $composer_package->name));
-                    foreach($composer_package->authors as $author)
+                    Console::out(sprintf('Authors for package %s:', $composer_package->getName()));
+                    foreach($composer_package->getAuthors() as $author)
                     {
                         Console::out(sprintf(' - %s', $author->getName()));
 

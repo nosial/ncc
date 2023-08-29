@@ -25,6 +25,7 @@ features and reduced the number of exceptions down to 15 exceptions.
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
  - Fixed all @throw tags in the project to use the correct exception class
+ - Fixed hash comparisons to use `hash_equals` implementations to combat against Timing Attacks
 
 ### Changed
  - Corrected code-smell and code style issues in `\ncc\Classes > HttpClient`
@@ -177,6 +178,14 @@ features and reduced the number of exceptions down to 15 exceptions.
    and implemented `BytecodeObjectInterface`
  - Updated class `\ncc\Objects\SymlinkDictionary > SymlinkEntry` to use method calls rather than direct property access
  - Updated class `\ncc\Objects\Vault\Password > AccessToken` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > CliHelpSection` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > ComposerJson` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > ComposerLock` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > DefinedRemoteSource` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > HttpRequest` to use method calls rather than direct property access and implemented
+   `SerializableObjectInterface`
+ - Updated class `\ncc\Objects > HttpResponse` to use method calls rather than direct property access and implemented
+   `SerializableObjectInterface`
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`

@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -40,7 +40,7 @@
          *
          * @var string
          */
-        public $name;
+        private $name;
 
         /**
          * A short description of the package. Usually
@@ -48,7 +48,7 @@
          *
          * @var string
          */
-        public $description;
+        private $description;
 
         /**
          * The version of the package, in most cases this is not
@@ -60,14 +60,14 @@
          *
          * @var string|null
          */
-        public $version;
+        private $version;
 
         /**
          * The type of package, it defaults to library
          *
          * @var string
          */
-        public $type;
+        private $type;
 
         /**
          * An array of keywords that the package is related to.
@@ -82,21 +82,21 @@
          *
          * @var string[]
          */
-        public $keywords;
+        private $keywords;
 
         /**
          * A URL to the website of the project
          *
          * @var string|null
          */
-        public $homepage;
+        private $homepage;
 
         /**
          * A relative path to the readme document
          *
          * @var string|null
          */
-        public $readme;
+        private $readme;
 
         /**
          * Release date of the version
@@ -105,7 +105,7 @@
          *
          * @var string|null
          */
-        public $time;
+        private $time;
 
         /**
          * The license of the package. This can either be a string or
@@ -113,17 +113,17 @@
          *
          * @var string|string[]|null
          */
-        public $license;
+        private $license;
 
         /**
          * @var Author[]|null
          */
-        public $authors;
+        private $authors;
 
         /**
          * @var Support|null
          */
-        public $support;
+        private $support;
 
         /**
          * Map of packages required by this package. The package
@@ -131,7 +131,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $require;
+        private $require;
 
         /**
          * Map of packages required for developing this package, or running tests,
@@ -141,7 +141,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $require_dev;
+        private $require_dev;
 
         /**
          * Map of packages that conflict with this version of this package. They will
@@ -149,7 +149,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $conflict;
+        private $conflict;
 
         /**
          * Map of packages that are replaced by this package. This allows you to fork a
@@ -159,7 +159,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $replace;
+        private $replace;
 
         /**
          * Map of packages that are provided by this package. This is mostly useful for
@@ -169,7 +169,7 @@
          *
          * @var PackageLink[]|null
          */
-        public $provide;
+        private $provide;
 
         /**
          * Suggested packages that can enhance or work well with this package. These are
@@ -179,35 +179,35 @@
          *
          * @var Suggestion[]|null
          */
-        public $suggest;
+        private $suggest;
 
         /**
          * Autoload mapping for a PHP autoloader.
          *
          * @var Autoloader|null
          */
-        public $autoload;
+        private $autoload;
 
         /**
          * This section allows defining autoload rules for development purposes.
          *
          * @var Autoloader|null
          */
-        public $autoload_dev;
+        private $autoload_dev;
 
         /**
          * A list of paths which should get appended to PHP's include_path.
          *
          * @var string[]|null
          */
-        public $include_path;
+        private $include_path;
 
         /**
          * Defines the installation target.
          *
          * @var string|null
          */
-        public $target_directory;
+        private $target_directory;
 
         /**
          * This defines the default behavior for filtering packages by
@@ -222,21 +222,21 @@
          *
          * @var ComposerPackageTypes|null
          */
-        public $minimum_stability;
+        private $minimum_stability;
 
         /**
          * Custom package repositories to use.
          *
          * @var array|null
          */
-        public $repositories;
+        private $repositories;
 
         /**
          * A set of configuration options. It is only used for projects.
          *
          * @var array|null
          */
-        public $configuration;
+        private $configuration;
 
         /**
          * Composer allows you to hook into various parts of the installation
@@ -244,35 +244,35 @@
          *
          * @var array|null
          */
-        public $scripts;
+        private $scripts;
 
         /**
          * Arbitrary extra data for consumption by scripts.
          *
          * @var array|null
          */
-        public $extra;
+        private $extra;
 
         /**
          * A set of files that should be treated as binaries and made available into the bin-dir (from config).
          *
          * @var array|null
          */
-        public $Bin;
+        private $bin;
 
         /**
          * A set of options for creating package archives.
          *
          * @var array|null
          */
-        public $archive;
+        private $archive;
 
         /**
          * Indicates whether this package has been abandoned.
          *
          * @var bool
          */
-        public $abandoned;
+        private $abandoned;
 
         /**
          * A list of regex patterns of branch names that are
@@ -282,14 +282,496 @@
          *
          * @var array|null
          */
-        public $non_feature_branches;
+        private $non_feature_branches;
 
+        /**
+         * Public Constructor.
+         */
         public function __construct()
         {
             $this->type = ComposerPackageTypes::LIBRARY;
             $this->minimum_stability = ComposerStabilityTypes::STABLE;
-            $this->PreferStable = false;
             $this->abandoned = false;
+        }
+
+        /**
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * @param string $name
+         */
+        public function setName(string $name): void
+        {
+            $this->name = $name;
+        }
+
+        /**
+         * @return string
+         */
+        public function getDescription(): string
+        {
+            return $this->description;
+        }
+
+        /**
+         * @param string $description
+         */
+        public function setDescription(string $description): void
+        {
+            $this->description = $description;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getVersion(): ?string
+        {
+            return $this->version;
+        }
+
+        /**
+         * @param string|null $version
+         */
+        public function setVersion(?string $version): void
+        {
+            $this->version = $version;
+        }
+
+        /**
+         * @return string
+         */
+        public function getType(): string
+        {
+            return $this->type;
+        }
+
+        /**
+         * @param string $type
+         */
+        public function setType(string $type): void
+        {
+            $this->type = $type;
+        }
+
+        /**
+         * @return string[]
+         */
+        public function getKeywords(): array
+        {
+            return $this->keywords;
+        }
+
+        /**
+         * @param string[] $keywords
+         */
+        public function setKeywords(array $keywords): void
+        {
+            $this->keywords = $keywords;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getHomepage(): ?string
+        {
+            return $this->homepage;
+        }
+
+        /**
+         * @param string|null $homepage
+         */
+        public function setHomepage(?string $homepage): void
+        {
+            $this->homepage = $homepage;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getReadme(): ?string
+        {
+            return $this->readme;
+        }
+
+        /**
+         * @param string|null $readme
+         */
+        public function setReadme(?string $readme): void
+        {
+            $this->readme = $readme;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getTime(): ?string
+        {
+            return $this->time;
+        }
+
+        /**
+         * @param string|null $time
+         */
+        public function setTime(?string $time): void
+        {
+            $this->time = $time;
+        }
+
+        /**
+         * @return string|string[]|null
+         */
+        public function getLicense(): array|string|null
+        {
+            return $this->license;
+        }
+
+        /**
+         * @param string|string[]|null $license
+         */
+        public function setLicense(array|string|null $license): void
+        {
+            $this->license = $license;
+        }
+
+        /**
+         * @return Author[]|null
+         */
+        public function getAuthors(): ?array
+        {
+            return $this->authors;
+        }
+
+        /**
+         * @param Author[]|null $authors
+         */
+        public function setAuthors(?array $authors): void
+        {
+            $this->authors = $authors;
+        }
+
+        /**
+         * @return Support|null
+         */
+        public function getSupport(): ?Support
+        {
+            return $this->support;
+        }
+
+        /**
+         * @param Support|null $support
+         */
+        public function setSupport(?Support $support): void
+        {
+            $this->support = $support;
+        }
+
+        /**
+         * @return PackageLink[]|null
+         */
+        public function getRequire(): ?array
+        {
+            return $this->require;
+        }
+
+        /**
+         * @param PackageLink[]|null $require
+         */
+        public function setRequire(?array $require): void
+        {
+            $this->require = $require;
+        }
+
+        /**
+         * @return PackageLink[]|null
+         */
+        public function getRequireDev(): ?array
+        {
+            return $this->require_dev;
+        }
+
+        /**
+         * @param PackageLink[]|null $require_dev
+         */
+        public function setRequireDev(?array $require_dev): void
+        {
+            $this->require_dev = $require_dev;
+        }
+
+        /**
+         * @return PackageLink[]|null
+         */
+        public function getConflict(): ?array
+        {
+            return $this->conflict;
+        }
+
+        /**
+         * @param PackageLink[]|null $conflict
+         */
+        public function setConflict(?array $conflict): void
+        {
+            $this->conflict = $conflict;
+        }
+
+        /**
+         * @return PackageLink[]|null
+         */
+        public function getReplace(): ?array
+        {
+            return $this->replace;
+        }
+
+        /**
+         * @param PackageLink[]|null $replace
+         */
+        public function setReplace(?array $replace): void
+        {
+            $this->replace = $replace;
+        }
+
+        /**
+         * @return PackageLink[]|null
+         */
+        public function getProvide(): ?array
+        {
+            return $this->provide;
+        }
+
+        /**
+         * @param PackageLink[]|null $provide
+         */
+        public function setProvide(?array $provide): void
+        {
+            $this->provide = $provide;
+        }
+
+        /**
+         * @return Suggestion[]|null
+         */
+        public function getSuggest(): ?array
+        {
+            return $this->suggest;
+        }
+
+        /**
+         * @param Suggestion[]|null $suggest
+         */
+        public function setSuggest(?array $suggest): void
+        {
+            $this->suggest = $suggest;
+        }
+
+        /**
+         * @return Autoloader|null
+         */
+        public function getAutoload(): ?Autoloader
+        {
+            return $this->autoload;
+        }
+
+        /**
+         * @param Autoloader|null $autoload
+         */
+        public function setAutoload(?Autoloader $autoload): void
+        {
+            $this->autoload = $autoload;
+        }
+
+        /**
+         * @return Autoloader|null
+         */
+        public function getAutoloadDev(): ?Autoloader
+        {
+            return $this->autoload_dev;
+        }
+
+        /**
+         * @param Autoloader|null $autoload_dev
+         */
+        public function setAutoloadDev(?Autoloader $autoload_dev): void
+        {
+            $this->autoload_dev = $autoload_dev;
+        }
+
+        /**
+         * @return string[]|null
+         */
+        public function getIncludePath(): ?array
+        {
+            return $this->include_path;
+        }
+
+        /**
+         * @param string[]|null $include_path
+         */
+        public function setIncludePath(?array $include_path): void
+        {
+            $this->include_path = $include_path;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getTargetDirectory(): ?string
+        {
+            return $this->target_directory;
+        }
+
+        /**
+         * @param string|null $target_directory
+         */
+        public function setTargetDirectory(?string $target_directory): void
+        {
+            $this->target_directory = $target_directory;
+        }
+
+        /**
+         * @return ComposerPackageTypes|string|null
+         */
+        public function getMinimumStability(): ComposerPackageTypes|string|null
+        {
+            return $this->minimum_stability;
+        }
+
+        /**
+         * @param ComposerPackageTypes|string|null $minimum_stability
+         */
+        public function setMinimumStability(ComposerPackageTypes|string|null $minimum_stability): void
+        {
+            $this->minimum_stability = $minimum_stability;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getRepositories(): ?array
+        {
+            return $this->repositories;
+        }
+
+        /**
+         * @param array|null $repositories
+         */
+        public function setRepositories(?array $repositories): void
+        {
+            $this->repositories = $repositories;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getConfiguration(): ?array
+        {
+            return $this->configuration;
+        }
+
+        /**
+         * @param array|null $configuration
+         */
+        public function setConfiguration(?array $configuration): void
+        {
+            $this->configuration = $configuration;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getScripts(): ?array
+        {
+            return $this->scripts;
+        }
+
+        /**
+         * @param array|null $scripts
+         */
+        public function setScripts(?array $scripts): void
+        {
+            $this->scripts = $scripts;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getExtra(): ?array
+        {
+            return $this->extra;
+        }
+
+        /**
+         * @param array|null $extra
+         */
+        public function setExtra(?array $extra): void
+        {
+            $this->extra = $extra;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getBin(): ?array
+        {
+            return $this->bin;
+        }
+
+        /**
+         * @param array|null $bin
+         */
+        public function setBin(?array $bin): void
+        {
+            $this->bin = $bin;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getArchive(): ?array
+        {
+            return $this->archive;
+        }
+
+        /**
+         * @param array|null $archive
+         */
+        public function setArchive(?array $archive): void
+        {
+            $this->archive = $archive;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isAbandoned(): bool
+        {
+            return $this->abandoned;
+        }
+
+        /**
+         * @param bool $abandoned
+         */
+        public function setAbandoned(bool $abandoned): void
+        {
+            $this->abandoned = $abandoned;
+        }
+
+        /**
+         * @return array|null
+         */
+        public function getNonFeatureBranches(): ?array
+        {
+            return $this->non_feature_branches;
+        }
+
+        /**
+         * @param array|null $non_feature_branches
+         */
+        public function setNonFeatureBranches(?array $non_feature_branches): void
+        {
+            $this->non_feature_branches = $non_feature_branches;
         }
 
         /**
@@ -396,7 +878,7 @@
                 'config' => $this->configuration,
                 'scripts' => $this->scripts,
                 'extra' => $this->extra,
-                'bin' => $this->Bin,
+                'bin' => $this->bin,
                 'archive' => $this->archive,
                 'abandoned' => $this->abandoned,
                 'non-feature-branches' => $this->non_feature_branches
@@ -567,7 +1049,7 @@
 
             if(isset($data['bin']))
             {
-                $object->Bin = $data['bin'];
+                $object->bin = $data['bin'];
             }
 
             if(isset($data['archive']))

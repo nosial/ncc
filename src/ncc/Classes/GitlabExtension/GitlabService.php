@@ -56,22 +56,22 @@
         public static function getGitRepository(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry=null): RepositoryQueryResults
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
+            $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $project_f = str_ireplace("/", "%2F", $packageInput->package);
             $project_f = str_ireplace(".", "%2F", $project_f);
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/api/v4/projects/$owner_f%2F$project_f";
+            $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/api/v4/projects/$owner_f%2F$project_f");
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry);
 
             $response = HttpClient::request($httpRequest, true);
 
-            if($response->StatusCode !== 200)
+            if($response->getStatusCode() !== 200)
             {
-                throw new GitException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->StatusCode));
+                throw new GitException(sprintf('Failed to fetch releases for the given repository. Status code: %s', $response->getStatusCode()));
             }
 
-            $response_decoded = Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
+            $response_decoded = Functions::loadJson($response->getBody(), Functions::FORCE_ARRAY);
 
             $query = new RepositoryQueryResults();
             $query->Files->GitSshUrl = ($response_decoded['ssh_url_to_repo'] ?? null);
@@ -171,7 +171,7 @@
          */
         public static function getNccPackage(RemotePackageInput $packageInput, DefinedRemoteSource $definedRemoteSource, ?Entry $entry = null): RepositoryQueryResults
         {
-            throw new NotSupportedException(sprintf('The given repository source "%s" does not support ncc packages.', $definedRemoteSource->host));
+            throw new NotSupportedException(sprintf('The given repository source "%s" does not support ncc packages.', $definedRemoteSource->getHost()));
         }
 
         /**
@@ -190,23 +190,23 @@
         private static function getReleases(string $owner, string $repository, DefinedRemoteSource $definedRemoteSource, ?Entry $entry): array
         {
             $httpRequest = new HttpRequest();
-            $protocol = ($definedRemoteSource->ssl ? "https" : "http");
+            $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
             $owner_f = str_ireplace("/", "%2F", $owner);
             $owner_f = str_ireplace(".", "%2F", $owner_f);
             $repository_f = str_ireplace("/", "%2F", $repository);
             $repository_f = str_ireplace(".", "%2F", $repository_f);
 
-            $httpRequest->Url = $protocol . '://' . $definedRemoteSource->host . "/api/v4/projects/$owner_f%2F$repository_f/releases";
+            $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/api/v4/projects/$owner_f%2F$repository_f/releases");
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry);
 
             $response = HttpClient::request($httpRequest, true);
 
-            if($response->StatusCode !== 200)
+            if($response->getStatusCode() !== 200)
             {
-                throw new GitException(sprintf('Failed to fetch releases for repository %s/%s. Status code: %s', $owner, $repository, $response->StatusCode));
+                throw new GitException(sprintf('Failed to fetch releases for repository %s/%s. Status code: %s', $owner, $repository, $response->getStatusCode()));
             }
 
-            $response_decoded = Functions::loadJson($response->Body, Functions::FORCE_ARRAY);
+            $response_decoded = Functions::loadJson($response->getBody(), Functions::FORCE_ARRAY);
 
             if(count($response_decoded) === 0)
             {

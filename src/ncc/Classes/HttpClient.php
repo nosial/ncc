@@ -43,15 +43,15 @@ namespace ncc\Classes;
          */
         private static function prepareCurl(HttpRequest $request): CurlHandle
         {
-            $curl = curl_init($request->Url);
+            $curl = curl_init($request->geturl());
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_HEADER, true);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($curl, CURLOPT_MAXREDIRS, 5);
             curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
             curl_setopt($curl, CURLOPT_TIMEOUT, 10);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $request->Headers);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $request->Type);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $request->getHeaders());
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $request->getType());
             curl_setopt($curl, CURLOPT_NOPROGRESS, false);
 
             curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function($curl, $downloadSize, $downloaded)
@@ -73,7 +73,7 @@ namespace ncc\Classes;
                 }
             });
 
-            switch($request->Type)
+            switch($request->getType())
             {
                 case HttpRequestType::GET:
                     curl_setopt($curl, CURLOPT_HTTPGET, true);
@@ -81,17 +81,17 @@ namespace ncc\Classes;
 
                 case HttpRequestType::POST:
                     curl_setopt($curl, CURLOPT_POST, true);
-                    if($request->Body !== null)
+                    if($request->getBody() !== null)
                     {
-                        curl_setopt($curl, CURLOPT_POSTFIELDS, $request->Body);
+                        curl_setopt($curl, CURLOPT_POSTFIELDS, $request->getBody());
                     }
                     break;
 
                 case HttpRequestType::PUT:
                     curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
-                    if($request->Body !== null)
+                    if($request->getBody() !== null)
                     {
-                        curl_setopt($curl, CURLOPT_POSTFIELDS, $request->Body);
+                        curl_setopt($curl, CURLOPT_POSTFIELDS, $request->getBody());
                     }
                     break;
 
@@ -100,16 +100,16 @@ namespace ncc\Classes;
                     break;
             }
 
-            if (is_array($request->Authentication))
+            if (is_array($request->getAuthentication()))
             {
-                curl_setopt($curl, CURLOPT_USERPWD, $request->Authentication[0] . ':' . $request->Authentication[1]);
+                curl_setopt($curl, CURLOPT_USERPWD, $request->getAuthentication()[0] . ':' . $request->getAuthentication()[1]);
             }
-            else if (is_string($request->Authentication))
+            else if (is_string($request->getAuthentication()))
             {
-                curl_setopt($curl, CURLOPT_USERPWD, $request->Authentication);
+                curl_setopt($curl, CURLOPT_USERPWD, $request->getAuthentication());
             }
 
-            foreach ($request->Options as $option => $value)
+            foreach ($request->getOptions() as $option => $value)
             {
                 curl_setopt($curl, $option, $value);
             }
@@ -140,16 +140,16 @@ namespace ncc\Classes;
 
             $curl = self::prepareCurl($httpRequest);
 
-            Console::outDebug(sprintf(' => %s request %s', $httpRequest->Type, $httpRequest->Url));
+            Console::outDebug(sprintf(' => %s request %s', $httpRequest->getType(), $httpRequest->getUrl()));
 
-            if($httpRequest->Headers !== null && count($httpRequest->Headers) > 0)
+            if(count($httpRequest->getHeaders()) > 0)
             {
-                Console::outDebug(sprintf(' => headers: %s', implode(', ', $httpRequest->Headers)));
+                Console::outDebug(sprintf(' => headers: %s', implode(', ', $httpRequest->getHeaders())));
             }
 
-            if($httpRequest->Body !== null)
+            if($httpRequest->getBody() !== null)
             {
-                Console::outDebug(sprintf(' => body: %s', $httpRequest->Body));
+                Console::outDebug(sprintf(' => body: %s', $httpRequest->getBody()));
             }
 
             $response = curl_exec($curl);
@@ -166,13 +166,13 @@ namespace ncc\Classes;
             $body = substr($response, $headerSize);
 
             $httpResponse = new HttpResponse();
-            $httpResponse->StatusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            $httpResponse->Headers = self::parseHeaders($headers);
-            $httpResponse->Body = $body;
+            $httpResponse->setStatusCode(curl_getinfo($curl, CURLINFO_HTTP_CODE));
+            $httpResponse->setHeaders(self::parseHeaders($headers));
+            $httpResponse->setBody($body);
 
-            Console::outDebug(sprintf(' <= %s response', $httpResponse->StatusCode));
-            Console::outDebug(sprintf(' <= headers: %s', (implode(', ', $httpResponse->Headers))));
-            Console::outDebug(sprintf(' <= body: %s', $httpResponse->Body));
+            Console::outDebug(sprintf(' <= %s response', $httpResponse->getStatusCode()));
+            Console::outDebug(sprintf(' <= headers: %s', (implode(', ', $httpResponse->getHeaders()))));
+            Console::outDebug(sprintf(' <= body: %s', $httpResponse->getBody()));
 
             curl_close($curl);
 

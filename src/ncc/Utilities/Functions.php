@@ -203,9 +203,9 @@
 
             foreach($input as $optionsSection)
             {
-                if(count($optionsSection->Parameters) > 0)
+                if(count($optionsSection->getParameters()) > 0)
                 {
-                    foreach($optionsSection->Parameters as $parameter)
+                    foreach($optionsSection->getParameters() as $parameter)
                     {
                         if($current_count < strlen($parameter))
                         {
@@ -572,7 +572,7 @@
                 switch ($entry->getPassword()?->getAuthenticationType())
                 {
                     case AuthenticationType::ACCESS_TOKEN:
-                        $http_request->Headers[] = "Authorization: Bearer " . $entry->getPassword();
+                        $http_request->addHeader("Authorization: Bearer " . $entry->getPassword());
                         break;
 
                     case AuthenticationType::USERNAME_PASSWORD:
@@ -582,8 +582,8 @@
 
             if($expect_json)
             {
-                $http_request->Headers[] = "Accept: application/json";
-                $http_request->Headers[] = "Content-Type: application/json";
+                $http_request->addHeader("Accept: application/json");
+                $http_request->addHeader("Content-Type: application/json");
             }
 
             return $http_request;
@@ -607,8 +607,8 @@
 
             $out_path = self::getTmpDir() . "/" . basename($url);
             $http_request = new HttpRequest();
-            $http_request->Url = $url;
-            $http_request->Type = HttpRequestType::GET;
+            $http_request->setUrl($url);
+            $http_request->setType(HttpRequestType::GET);
             $http_request = self::prepareGitServiceRequest($http_request, $entry, false);
 
             Console::out('Downloading file ' . $url);
@@ -790,7 +790,7 @@
         {
             $results = new RepositoryQueryResults();
 
-            switch($definedRemoteSource->type)
+            switch($definedRemoteSource->getType())
             {
                 case DefinedRemoteSourceType::GITHUB:
                     $source = GithubService::class;
@@ -807,7 +807,7 @@
             // Check if the specified version is a release
             try
             {
-                Console::outVerbose(sprintf('Attempting to fetch source code from %s', $definedRemoteSource->host));
+                Console::outVerbose(sprintf('Attempting to fetch source code from %s', $definedRemoteSource->getHost()));
                 $release_results = $source::getRelease($packageInput, $definedRemoteSource, $entry);
             }
             catch(Exception $e)

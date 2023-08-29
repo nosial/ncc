@@ -866,7 +866,7 @@
                     try
                     {
                         $definedEntry = DefinedRemoteSource::fromArray(Functions::loadJsonFile($repo_path, Functions::FORCE_ARRAY));
-                        if(!$source_manager->getRemoteSource($definedEntry->name))
+                        if(!$source_manager->getRemoteSource($definedEntry->getName()))
                             $source_manager->addRemoteSource($definedEntry);
                     }
                     catch(Exception $e)
