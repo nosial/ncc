@@ -24,7 +24,7 @@ namespace ncc\Enums;
 
     /**
      * @author Zi Xing Narrakas
-     * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
+     * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
     final class RegexPatterns
     {

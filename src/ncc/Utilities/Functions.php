@@ -70,7 +70,7 @@
 
     /**
      * @author Zi Xing Narrakas
-     * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
+     * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
     class Functions
     {
@@ -162,9 +162,9 @@
          */
         public static function encodeJson(mixed $value, int $flags=0): string
         {
-            $flags = ($flags & self::ESCAPE_UNICODE ? 0 : JSON_UNESCAPED_UNICODE)
+            $flags = (($flags & self::ESCAPE_UNICODE) ? 0 : JSON_UNESCAPED_UNICODE)
                 | JSON_UNESCAPED_SLASHES
-                | ($flags & self::PRETTY ? JSON_PRETTY_PRINT : 0)
+                | (($flags & self::PRETTY) ? JSON_PRETTY_PRINT : 0)
                 | (defined('JSON_PRESERVE_ZERO_FRACTION') ? JSON_PRESERVE_ZERO_FRACTION : 0); // since PHP 5.6.6 & PECL JSON-C 1.3.7
 
             try
@@ -643,15 +643,7 @@
 
             if($unzip_executable !== null)
             {
-                $supported_types = array_merge($supported_types, [
-                    'application/zip',
-                    'application/x-zip',
-                    'application/x-zip-compressed',
-                    'application/octet-stream',
-                    'application/x-compress',
-                    'application/x-compressed',
-                    'multipart/x-zip'
-                ]);
+                array_push($supported_types, 'application/zip', 'application/x-zip', 'application/x-zip-compressed', 'application/octet-stream', 'application/x-compress', 'application/x-compressed', 'multipart/x-zip');
             }
             elseif(RuntimeCache::get('warning_zip_shown') !== true)
             {
@@ -661,12 +653,7 @@
 
             if($tar_executable !== null)
             {
-                $supported_types = array_merge($supported_types, [
-                    'application/x-tar',
-                    'application/x-gzip',
-                    'application/x-bzip2',
-                    'application/x-xz'
-                ]);
+                array_push($supported_types, 'application/x-tar', 'application/x-gzip', 'application/x-bzip2', 'application/x-xz');
             }
             elseif(RuntimeCache::get('warning_tar_shown') !== true)
             {
@@ -719,8 +706,7 @@
             }
 
             // Search files in the given directory recursively
-            $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-            foreach ($iterator as $file)
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $file)
             {
                 if(in_array($file->getFilename(), $files, true))
                 {
@@ -819,13 +805,13 @@
             // If the specified version is a release, download the source code
             if($release_results !== null)
             {
-                $results->ReleaseName = ($release_results->ReleaseName ?? null);
-                $results->ReleaseDescription = ($release_results->ReleaseDescription ?? null);
-                $results->Files = self::mergeFilesResults($release_results->Files, ($results->Files ?? null));
+                $results->setReleaseName($release_results->getReleaseName() ?? null);
+                $results->setReleaseDescription($release_results->getReleaseDescription() ?? null);
+                $results->setFiles(self::mergeFilesResults($release_results->getFiles(), ($results->getFiles() ?? null)));
 
-                if($release_results->Version !== null)
+                if($release_results->getVersion() !== null)
                 {
-                    $results->Version = $release_results->Version;
+                    $results->setVersion($release_results->getVersion());
                 }
             }
 
@@ -841,44 +827,44 @@
 
             if($git_results !== null)
             {
-                if($results->ReleaseName === null)
+                if($results->getReleaseName() === null)
                 {
-                    $results->ReleaseName = ($git_results->ReleaseName ?? null);
+                    $results->setReleaseName($git_results->getReleaseName() ?? null);
                 }
-                elseif($git_results->ReleaseName !== null)
+                elseif($git_results->getReleaseName() !== null)
                 {
-                    if(strlen($git_results->ReleaseName) > strlen($results->ReleaseName))
+                    if(strlen($git_results->getReleaseDescription()) > strlen($results->getReleaseDescription()))
                     {
-                        $results->ReleaseName = $git_results->ReleaseName;
+                        $results->setReleaseName($git_results->getReleaseName());
                     }
                 }
 
-                if($results->ReleaseDescription === null)
+                if($results->getReleaseDescription() === null)
                 {
-                    $results->ReleaseDescription = ($git_results->ReleaseDescription ?? null);
+                    $results->setReleaseDescription($git_results->getReleaseDescription() ?? null);
                 }
-                elseif($git_results->ReleaseDescription !== null)
+                elseif($git_results->getReleaseDescription() !== null)
                 {
-                    if(strlen($git_results->ReleaseDescription) > strlen($results->ReleaseDescription))
+                    if(strlen($git_results->getReleaseDescription()) > strlen($results->getReleaseDescription()))
                     {
-                        $results->ReleaseDescription = $git_results->ReleaseDescription;
+                        $results->setReleaseDescription($git_results->getReleaseDescription());
                     }
                 }
 
-                if($results->Version === null)
+                if($results->getVersion() === null)
                 {
-                    $results->Version = ($git_results->Version ?? null);
+                    $results->setVersion($git_results->getVersion() ?? null);
                 }
-                elseif($git_results->Version !== null)
+                elseif($git_results->getVersion() !== null)
                 {
                     // Version compare
-                    if(VersionComparator::compareVersion($git_results->Version, $results->Version) > 0)
+                    if(VersionComparator::compareVersion($git_results->getVersion(), $results->getVersion()) > 0)
                     {
-                        $results->Version = $git_results->Version;
+                        $results->setVersion($git_results->getVersion());
                     }
                 }
 
-                $results->Files = self::mergeFilesResults($git_results->Files, ($results->Files ?? null));
+                $results->setFiles(self::mergeFilesResults($git_results->getFiles(), ($results->getFiles() ?? null)));
             }
 
             try
@@ -893,44 +879,44 @@
 
             if($ncc_package_results !== null)
             {
-                if($results->ReleaseName === null)
+                if($results->getReleaseName() === null)
                 {
-                    $results->ReleaseName = ($ncc_package_results->ReleaseName ?? null);
+                    $results->setReleaseName($ncc_package_results->getReleaseName() ?? null);
                 }
-                elseif($ncc_package_results->ReleaseName !== null)
+                elseif($ncc_package_results->getReleaseName() !== null)
                 {
-                    if(strlen($ncc_package_results->ReleaseName) > strlen($results->ReleaseName))
+                    if(strlen($ncc_package_results->getReleaseName()) > strlen($results->getReleaseName()))
                     {
-                        $results->ReleaseName = $ncc_package_results->ReleaseName;
+                        $results->setReleaseName($ncc_package_results->getReleaseName());
                     }
                 }
 
-                if($results->ReleaseDescription === null)
+                if($results->getReleaseDescription() === null)
                 {
-                    $results->ReleaseDescription = ($ncc_package_results->ReleaseDescription ?? null);
+                    $results->setReleaseDescription($ncc_package_results->getReleaseDescription() ?? null);
                 }
-                elseif($ncc_package_results->ReleaseDescription !== null)
+                elseif($ncc_package_results->getReleaseDescription() !== null)
                 {
-                    if(strlen($ncc_package_results->ReleaseDescription) > strlen($results->ReleaseDescription))
+                    if(strlen($ncc_package_results->getReleaseDescription()) > strlen($results->getReleaseDescription()))
                     {
-                        $results->ReleaseDescription = $ncc_package_results->ReleaseDescription;
+                        $results->setReleaseDescription($ncc_package_results->getReleaseDescription());
                     }
                 }
 
-                if($results->Version === null)
+                if($results->getVersion() === null)
                 {
-                    $results->Version = ($ncc_package_results->Version ?? null);
+                    $results->setVersion($ncc_package_results->getVersion() ?? null);
                 }
-                elseif($ncc_package_results->Version !== null)
+                elseif($ncc_package_results->getVersion() !== null)
                 {
                     // Version compare
-                    if(VersionComparator::compareVersion($ncc_package_results->Version, $results->Version) > 0)
+                    if(VersionComparator::compareVersion($ncc_package_results->getVersion(), $results->getVersion()) > 0)
                     {
-                        $results->Version = $ncc_package_results->Version;
+                        $results->setVersion($ncc_package_results->getVersion());
                     }
                 }
 
-                $results->Files = self::mergeFilesResults($ncc_package_results->Files, ($results->Files ?? null));
+                $results->setFiles(self::mergeFilesResults($ncc_package_results->getFiles(), ($results->getFiles() ?? null)));
             }
 
             return $results;

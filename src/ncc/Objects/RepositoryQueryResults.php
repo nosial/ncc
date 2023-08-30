@@ -33,34 +33,99 @@
          *
          * @var Files
          */
-        public $Files;
+        private $files;
 
         /**
          * The version of the package returned by the query
          *
          * @var string|null
          */
-        public $Version;
+        private $version;
 
         /**
          * The name of the release returned by the query
          *
          * @var string|null
          */
-        public $ReleaseName;
+        private $release_name;
 
         /**
          * The description of the release returned by the query
          *
          * @var string|null
          */
-        public $ReleaseDescription;
+        private $release_description;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->Files = new Files();
+            $this->files = new Files();
         }
+
+        /**
+         * @return Files
+         */
+        public function getFiles(): Files
+        {
+            return $this->files;
+        }
+
+        /**
+         * @param Files $files
+         */
+        public function setFiles(Files $files): void
+        {
+            $this->files = $files;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getVersion(): ?string
+        {
+            return $this->version;
+        }
+
+        /**
+         * @param string|null $version
+         */
+        public function setVersion(?string $version): void
+        {
+            $this->version = $version;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getReleaseName(): ?string
+        {
+            return $this->release_name;
+        }
+
+        /**
+         * @param string|null $release_name
+         */
+        public function setReleaseName(?string $release_name): void
+        {
+            $this->release_name = $release_name;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getReleaseDescription(): ?string
+        {
+            return $this->release_description;
+        }
+
+        /**
+         * @param string|null $release_description
+         */
+        public function setReleaseDescription(?string $release_description): void
+        {
+            $this->release_description = $release_description;
+        }
+
     }

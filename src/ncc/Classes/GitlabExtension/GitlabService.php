@@ -57,10 +57,8 @@
         {
             $httpRequest = new HttpRequest();
             $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
-            $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
-            $owner_f = str_ireplace(".", "%2F", $owner_f);
-            $project_f = str_ireplace("/", "%2F", $packageInput->package);
-            $project_f = str_ireplace(".", "%2F", $project_f);
+            $owner_f = str_ireplace(array("/", "."), "%2F", $packageInput->getVendor());
+            $project_f = str_ireplace(array("/", "."), "%2F", $packageInput->getPackage());
             $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/api/v4/projects/$owner_f%2F$project_f");
             $httpRequest = Functions::prepareGitServiceRequest($httpRequest, $entry);
 
@@ -74,11 +72,11 @@
             $response_decoded = Functions::loadJson($response->getBody(), Functions::FORCE_ARRAY);
 
             $query = new RepositoryQueryResults();
-            $query->Files->GitSshUrl = ($response_decoded['ssh_url_to_repo'] ?? null);
-            $query->Files->GitHttpUrl = ($response_decoded['http_url_to_repo'] ?? null);
-            $query->Version = Functions::convertToSemVer($response_decoded['default_branch']);
-            $query->ReleaseDescription = ($response_decoded['description'] ?? null);
-            $query->ReleaseName = ($response_decoded['name'] ?? null);
+            $query->getFiles()->GitSshUrl = ($response_decoded['ssh_url_to_repo'] ?? null);
+            $query->getFiles()->GitHttpUrl = ($response_decoded['http_url_to_repo'] ?? null);
+            $query->setVersion(Functions::convertToSemVer($response_decoded['default_branch']));
+            $query->setReleaseDescription($response_decoded['description'] ?? null);
+            $query->setReleaseName($response_decoded['name'] ?? null);
 
             return $query;
         }
@@ -97,15 +95,15 @@
          */
         public static function getRelease(RemotePackageInput $package_input, DefinedRemoteSource $defined_remote_source, ?Entry $entry = null): RepositoryQueryResults
         {
-            $releases = self::getReleases($package_input->vendor, $package_input->package, $defined_remote_source, $entry);
+            $releases = self::getReleases($package_input->getVendor(), $package_input->getPackage(), $defined_remote_source, $entry);
 
             if(count($releases) === 0)
             {
-                throw new GitException(sprintf('No releases found for the repository %s/%s (selected version: %s)', $package_input->vendor, $package_input->package, $package_input->version));
+                throw new GitException(sprintf('No releases found for the repository %s/%s (selected version: %s)', $package_input->getVendor(), $package_input->getPackage(), $package_input->getVersion()));
             }
 
             // Query the latest package only
-            if($package_input->version === Versions::LATEST)
+            if($package_input->getVersion() === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach($releases as $release)
@@ -126,7 +124,7 @@
             }
 
             // Query a specific version
-            if(!isset($releases[$package_input->version]))
+            if(!isset($releases[$package_input->getVersion()]))
             {
                 // Find the closest thing to the requested version
                 $selected_version = null;
@@ -138,7 +136,7 @@
                         continue;
                     }
 
-                    if(VersionComparator::compareVersion($version, $package_input->version) === 1)
+                    if(VersionComparator::compareVersion($version, $package_input->getVersion()) === 1)
                     {
                         $selected_version = $version;
                     }
@@ -146,17 +144,17 @@
 
                 if($selected_version === null)
                 {
-                    throw new GitException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
+                    throw new GitException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->getVendor(), $package_input->getPackage(), $package_input->getVersion()));
                 }
             }
             else
             {
-                $selected_version = $package_input->version;
+                $selected_version = $package_input->getVersion();
             }
 
             if(!isset($releases[$selected_version]))
             {
-                throw new GitException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->vendor, $package_input->package, $package_input->version));
+                throw new GitException(sprintf('Could not find a release for %s/%s with the version %s', $package_input->getVendor(), $package_input->getPackage(), $package_input->getVersion()));
             }
 
             return $releases[$selected_version];
@@ -217,9 +215,9 @@
             foreach($response_decoded as $release)
             {
                 $query_results = new RepositoryQueryResults();
-                $query_results->ReleaseName = ($release['name'] ?? null);
-                $query_results->ReleaseDescription = ($release['description'] ?? null);
-                $query_results->Version = Functions::convertToSemVer($release['tag_name']);
+                $query_results->setReleaseName($release['name'] ?? null);
+                $query_results->setReleaseDescription($release['description'] ?? null);
+                $query_results->setVersion(Functions::convertToSemVer($release['tag_name']));
 
                 if(isset($release['assets']['sources']) && count($release['assets']['sources']) > 0)
                 {
@@ -227,25 +225,25 @@
                     {
                         if($source['format'] === 'zip')
                         {
-                            $query_results->Files->ZipballUrl = $source['url'];
+                            $query_results->getFiles()->ZipballUrl = $source['url'];
                             break;
                         }
 
                         if($source['format'] === 'tar.gz')
                         {
-                            $query_results->Files->ZipballUrl = $source['url'];
+                            $query_results->getFiles()->ZipballUrl = $source['url'];
                             break;
                         }
 
                         if($source['format'] === 'ncc')
                         {
-                            $query_results->Files->PackageUrl = $source['url'];
+                            $query_results->getFiles()->PackageUrl = $source['url'];
                             break;
                         }
                     }
                 }
 
-                $return[$query_results->Version] = $query_results;
+                $return[$query_results->getVersion()] = $query_results;
             }
 
             return $return;

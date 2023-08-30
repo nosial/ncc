@@ -27,40 +27,41 @@
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\PackageLock\PackageEntry;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
 
-    class PackageLock
+    class PackageLock implements BytecodeObjectInterface
     {
         /**
          * The version of package lock file structure
          *
          * @var string
          */
-        public $PackageLockVersion;
+        private $package_lock_version;
 
         /**
          * The Unix Timestamp for when this package lock file was last updated
          *
          * @var int
          */
-        public $LastUpdatedTimestamp;
+        private $last_updated_timestamp;
 
         /**
          * An array of installed packages in the PackageLock file
          *
          * @var PackageEntry[]
          */
-        public $Packages;
+        private $packages;
 
         /**
          * Public Constructor
          */
         public function __construct()
         {
-            $this->PackageLockVersion = Versions::PACKAGE_LOCK_VERSION;
-            $this->Packages = [];
+            $this->package_lock_version = Versions::PACKAGE_LOCK_VERSION;
+            $this->packages = [];
         }
 
         /**
@@ -70,8 +71,8 @@
          */
         private function update(): void
         {
-            $this->PackageLockVersion = Versions::PACKAGE_LOCK_VERSION;
-            $this->LastUpdatedTimestamp = time();
+            $this->package_lock_version = Versions::PACKAGE_LOCK_VERSION;
+            $this->last_updated_timestamp = time();
         }
 
         /**
@@ -82,22 +83,22 @@
          */
         public function addPackage(Package $package, string $install_path): void
         {
-            Console::outVerbose("Adding package {$package->assembly->getPackage()} to package lock file");
+            Console::outVerbose("Adding package {$package->getAssembly()->getPackage()} to package lock file");
 
-            if(!isset($this->Packages[$package->assembly->getPackage()]))
+            if(!isset($this->packages[$package->getAssembly()->getPackage()]))
             {
                 $package_entry = new PackageEntry();
                 $package_entry->addVersion($package, $install_path, true);
-                $package_entry->setName($package->assembly->getPackage());
-                $package_entry->setUpdateSource($package->header->getUpdateSource());
-                $this->Packages[$package->assembly->getPackage()] = $package_entry;
+                $package_entry->setName($package->getAssembly()->getPackage());
+                $package_entry->setUpdateSource($package->getHeader()->getUpdateSource());
+                $this->packages[$package->getAssembly()->getPackage()] = $package_entry;
                 $this->update();
 
                 return;
             }
 
-            $this->Packages[$package->assembly->getPackage()]->setUpdateSource($package->header->getUpdateSource());
-            $this->Packages[$package->assembly->getPackage()]->addVersion($package, $install_path, true);
+            $this->packages[$package->getAssembly()->getPackage()]->setUpdateSource($package->getHeader()->getUpdateSource());
+            $this->packages[$package->getAssembly()->getPackage()]->addVersion($package, $install_path, true);
             $this->update();
         }
 
@@ -112,14 +113,14 @@
         {
             Console::outVerbose(sprintf('Removing package %s version %s from package lock file', $package, $version));
 
-            if(isset($this->Packages[$package]))
+            if(isset($this->packages[$package]))
             {
-                $r = $this->Packages[$package]->removeVersion($version);
+                $r = $this->packages[$package]->removeVersion($version);
 
                 // Remove the entire package entry if there's no installed versions
-                if($r && $this->Packages[$package]->getLatestVersion() === null)
+                if($r && $this->packages[$package]->getLatestVersion() === null)
                 {
-                    unset($this->Packages[$package]);
+                    unset($this->packages[$package]);
                 }
 
                 $this->update();
@@ -139,9 +140,9 @@
         public function removePackage(string $package): bool
         {
             Console::outVerbose(sprintf('Removing package %s from package lock file', $package));
-            if(isset($this->Packages[$package]))
+            if(isset($this->packages[$package]))
             {
-                unset($this->Packages[$package]);
+                unset($this->packages[$package]);
                 $this->update();
                 return true;
             }
@@ -158,7 +159,7 @@
         public function getPackage(string $package): ?PackageEntry
         {
             Console::outDebug(sprintf('getting package %s from package lock file', $package));
-            return $this->Packages[$package] ?? null;
+            return $this->packages[$package] ?? null;
         }
 
         /**
@@ -207,12 +208,44 @@
         {
             $results = [];
 
-            foreach($this->Packages as $package => $entry)
+            foreach($this->packages as $package => $entry)
             {
                 $results[$package] = $entry->getVersions();
             }
 
             return $results;
+        }
+
+        /**
+         * @return string
+         */
+        public function getPackageLockVersion(): string
+        {
+            return $this->package_lock_version;
+        }
+
+        /**
+         * @param string $package_lock_version
+         */
+        public function setPackageLockVersion(string $package_lock_version): void
+        {
+            $this->package_lock_version = $package_lock_version;
+        }
+
+        /**
+         * @return int
+         */
+        public function getLastUpdatedTimestamp(): int
+        {
+            return $this->last_updated_timestamp;
+        }
+
+        /**
+         * @param int $last_updated_timestamp
+         */
+        public function setLastUpdatedTimestamp(int $last_updated_timestamp): void
+        {
+            $this->last_updated_timestamp = $last_updated_timestamp;
         }
 
         /**
@@ -224,14 +257,14 @@
         public function toArray(bool $bytecode=false): array
         {
             $package_entries = [];
-            foreach($this->Packages as $entry)
+            foreach($this->packages as $entry)
             {
                 $package_entries[] = $entry->toArray($bytecode);
             }
 
             return [
-                ($bytecode ? Functions::cbc('package_lock_version')  : 'package_lock_version') => $this->PackageLockVersion,
-                ($bytecode ? Functions::cbc('last_updated_timestamp') : 'last_updated_timestamp') => $this->LastUpdatedTimestamp,
+                ($bytecode ? Functions::cbc('package_lock_version')  : 'package_lock_version') => $this->package_lock_version,
+                ($bytecode ? Functions::cbc('last_updated_timestamp') : 'last_updated_timestamp') => $this->last_updated_timestamp,
                 ($bytecode ? Functions::cbc('packages') : 'packages') => $package_entries
              ];
         }
@@ -252,12 +285,12 @@
                 foreach($packages as $_datum)
                 {
                     $entry = PackageEntry::fromArray($_datum);
-                    $object->Packages[$entry->getName()] = $entry;
+                    $object->packages[$entry->getName()] = $entry;
                 }
             }
 
-            $object->PackageLockVersion = Functions::array_bc($data, 'package_lock_version');
-            $object->LastUpdatedTimestamp = Functions::array_bc($data, 'last_updated_timestamp');
+            $object->package_lock_version = Functions::array_bc($data, 'package_lock_version');
+            $object->last_updated_timestamp = Functions::array_bc($data, 'last_updated_timestamp');
 
             return $object;
         }

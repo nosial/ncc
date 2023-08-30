@@ -289,7 +289,7 @@
     Console::out('NCC Version: ' . NCC_VERSION_NUMBER . ' (' . NCC_VERSION_BRANCH . ')');
     Console::out('Build Flags: ' . implode(',', NCC_VERSION_FLAGS));
 
-    foreach($VersionInformation->Components as $component)
+    foreach($VersionInformation->getComponents() as $component)
     {
         $full_name = $component->getVendor() . '/' . $component->getPackageName();
 

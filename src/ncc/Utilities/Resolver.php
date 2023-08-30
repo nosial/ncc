@@ -304,7 +304,7 @@
             $project_file = Functions::searchDirectory($path, $project_files);
 
             $project_detection_results = new ProjectDetectionResults();
-            $project_detection_results->ProjectType = ProjectType::UNKNOWN;
+            $project_detection_results->setProjectType(ProjectType::UNKNOWN);
 
             if($project_file == null)
             {
@@ -315,15 +315,15 @@
             switch(basename($project_file))
             {
                 case 'project.json':
-                    $project_detection_results->ProjectType = ProjectType::NCC;
+                    $project_detection_results->setProjectType(ProjectType::NCC);
                     break;
 
                 case 'composer.json':
-                    $project_detection_results->ProjectType = ProjectType::COMPOSER;
+                    $project_detection_results->setProjectType(ProjectType::COMPOSER);
                     break;
             }
 
-            $project_detection_results->ProjectPath = dirname($project_file);
+            $project_detection_results->setProjectPath(dirname($project_file));
             return $project_detection_results;
         }
     }

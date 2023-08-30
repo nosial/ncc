@@ -97,7 +97,7 @@
             }
 
             $VaultObject = new Vault();
-            $VaultObject->version = Versions::CREDENTIALS_STORE_VERSION;
+            $VaultObject->setVersion(Versions::CREDENTIALS_STORE_VERSION);
 
             IO::fwrite($this->store_path, ZiProto::encode($VaultObject->toArray()), 0744);
         }
@@ -125,15 +125,14 @@
                 return;
             }
 
-            $VaultArray = ZiProto::decode(IO::fread($this->store_path));
-            $VaultObject = Vault::fromArray($VaultArray);
+            $vault_object = Vault::fromArray(ZiProto::decode(IO::fread($this->store_path)));
 
-            if($VaultObject->version !== Versions::CREDENTIALS_STORE_VERSION)
+            if($vault_object->getVersion() !== Versions::CREDENTIALS_STORE_VERSION)
             {
                 throw new RuntimeException('Credentials store version mismatch');
             }
 
-            $this->vault = $VaultObject;
+            $this->vault = $vault_object;
         }
 
         /**

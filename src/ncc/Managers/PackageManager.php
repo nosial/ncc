@@ -118,14 +118,14 @@
 
             $package = Package::load($package_path);
 
-            if(RuntimeCache::get(sprintf('installed.%s=%s', $package->assembly->getPackage(), $package->assembly->getVersion())))
+            if(RuntimeCache::get(sprintf('installed.%s=%s', $package->getAssembly()->getPackage(), $package->getAssembly()->getVersion())))
             {
-                Console::outDebug(sprintf('skipping installation of %s=%s, already processed', $package->assembly->getPackage(), $package->assembly->getVersion()));
-                return $package->assembly->getPackage();
+                Console::outDebug(sprintf('skipping installation of %s=%s, already processed', $package->getAssembly()->getPackage(), $package->getAssembly()->getVersion()));
+                return $package->getAssembly()->getPackage();
             }
 
-            $extension = $package->header->getCompilerExtension()->getExtension();
-            $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->assembly->getPackage() . '=' . $package->assembly->getVersion());
+            $extension = $package->getHeader()->getCompilerExtension()->getExtension();
+            $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->getAssembly()->getPackage() . '=' . $package->getAssembly()->getVersion());
 
             $installer = match ($extension)
             {
@@ -133,20 +133,20 @@
                 default => throw new NotSupportedException(sprintf('Compiler extension %s is not supported with ncc', $extension))
             };
 
-            if($this->getPackageVersion($package->assembly->getPackage(), $package->assembly->getVersion()) !== null)
+            if($this->getPackageVersion($package->getAssembly()->getPackage(), $package->getAssembly()->getVersion()) !== null)
             {
                 if(in_array(InstallPackageOptions::REINSTALL, $options, true))
                 {
-                    if($this->getPackageLockManager()?->getPackageLock()?->packageExists($package->assembly->getPackage(), $package->assembly->getVersion()))
+                    if($this->getPackageLockManager()?->getPackageLock()?->packageExists($package->getAssembly()->getPackage(), $package->getAssembly()->getVersion()))
                     {
                         $this->getPackageLockManager()?->getPackageLock()?->removePackageVersion(
-                            $package->assembly->getPackage(), $package->assembly->getVersion()
+                            $package->getAssembly()->getPackage(), $package->getAssembly()->getVersion()
                         );
                     }
                 }
                 else
                 {
-                    throw new PackageException('The package ' . $package->assembly->getPackage() . '=' . $package->assembly->getVersion() . ' is already installed');
+                    throw new PackageException('The package ' . $package->getAssembly()->getPackage() . '=' . $package->getAssembly()->getVersion() . ' is already installed');
                 }
             }
 
@@ -156,9 +156,9 @@
             ]);
 
             // Process all the required dependencies before installing the package
-            if($package->dependencies !== null && count($package->dependencies) > 0 && !in_array(InstallPackageOptions::SKIP_DEPENDENCIES, $options, true))
+            if(count($package->getDependencies()) > 0 && !in_array(InstallPackageOptions::SKIP_DEPENDENCIES, $options, true))
             {
-                foreach($package->dependencies as $dependency)
+                foreach($package->getDependencies() as $dependency)
                 {
                     // Uninstall the dependency if the option Reinstall is passed on
                     if(in_array(InstallPackageOptions::REINSTALL, $options, true) && $this->getPackageLockManager()?->getPackageLock()?->packageExists($dependency->getName(), $dependency->getVersion()))
@@ -181,36 +181,36 @@
 
             if(Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
-                Console::outDebug(sprintf('installer.install_path: %s', $installation_paths->getInstallationPath()));
+                Console::outDebug(sprintf('installer.install_path: %s', $installation_paths->getInstallationpath()));
                 Console::outDebug(sprintf('installer.data_path:    %s', $installation_paths->getDataPath()));
                 Console::outDebug(sprintf('installer.bin_path:     %s', $installation_paths->getBinPath()));
                 Console::outDebug(sprintf('installer.src_path:     %s', $installation_paths->getSourcePath()));
 
-                foreach($package->assembly->toArray() as $prop => $value)
+                foreach($package->getAssembly()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
                 }
 
-                foreach($package->header->getCompilerExtension()->toArray() as $prop => $value)
+                foreach($package->getHeader()->getCompilerExtension()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('header.compiler.%s: %s', $prop, ($value ?? 'n/a')));
                 }
             }
 
-            Console::out('Installing ' . $package->assembly->getPackage());
+            Console::out('Installing ' . $package->getAssembly()->getPackage());
 
             // Four For Directory Creation, preInstall, postInstall & initData methods
-            $steps = (4 + count($package->components) + count ($package->resources) + count ($package->execution_units));
+            $steps = (4 + count($package->getComponents()) + count ($package->getResources()) + count ($package->getExecutionUnits()));
 
             // Include the Execution units
-            if($package->installer?->getPreInstall() !== null)
+            if($package->getInstaller()?->getPreInstall() !== null)
             {
-                $steps += count($package->installer->getPreInstall());
+                $steps += count($package->getInstaller()?->getPreInstall());
             }
 
-            if($package->installer?->getPostInstall()!== null)
+            if($package->getInstaller()?->getPostInstall()!== null)
             {
-                $steps += count($package->installer->getPostInstall());
+                $steps += count($package->getInstaller()->getPostInstall());
             }
 
             $current_steps = 0;
@@ -218,7 +218,7 @@
 
             try
             {
-                $filesystem->mkdir($installation_paths->getInstallationPath(), 0755);
+                $filesystem->mkdir($installation_paths->getInstallationpath(), 0755);
                 $filesystem->mkdir($installation_paths->getBinPath(), 0755);
                 $filesystem->mkdir($installation_paths->getDataPath(), 0755);
                 $filesystem->mkdir($installation_paths->getSourcePath(), 0755);
@@ -258,9 +258,9 @@
                 throw new OperationException('Pre installation stage failed, ' . $e->getMessage(), $e);
             }
 
-            if($package->installer?->getPreInstall() !== null && count($package->installer->getPreInstall()) > 0)
+            if($package->getInstaller()?->getPreInstall() !== null && count($package->getInstaller()->getPreInstall()) > 0)
             {
-                foreach($package->installer->getPreInstall() as $unit_name)
+                foreach($package->getInstaller()->getPreInstall() as $unit_name)
                 {
                     try
                     {
@@ -277,7 +277,7 @@
             }
 
             // Process & Install the components
-            foreach($package->components as $component)
+            foreach($package->getComponents() as $component)
             {
                 Console::outDebug(sprintf('processing component %s (%s)', $component->getName(), $component->getDataType()));
 
@@ -307,7 +307,7 @@
             }
 
             // Process & Install the resources
-            foreach($package->resources as $resource)
+            foreach($package->getResources() as $resource)
             {
                 Console::outDebug(sprintf('processing resource %s', $resource->getName()));
 
@@ -337,7 +337,7 @@
             }
 
             // Install execution units
-            if($package->execution_units !== null && count($package->execution_units) > 0)
+            if($package->getExecutionUnits() !== null && count($package->getExecutionUnits()) > 0)
             {
                 Console::outDebug('package contains execution units, processing');
 
@@ -345,10 +345,10 @@
                 $unit_paths = [];
 
                 /** @var Package\ExecutionUnit $executionUnit */
-                foreach($package->execution_units as $executionUnit)
+                foreach($package->getExecutionUnits() as $executionUnit)
                 {
                     Console::outDebug(sprintf('processing execution unit %s', $executionUnit->getExecutionPolicy()->getName()));
-                    $execution_pointer_manager->addUnit($package->assembly->getPackage(), $package->assembly->getVersion(), $executionUnit);
+                    $execution_pointer_manager->addUnit($package->getAssembly()->getPackage(), $package->getAssembly()->getVersion(), $executionUnit);
                     ++$current_steps;
                     Console::inlineProgressBar($current_steps, $steps);
                 }
@@ -361,17 +361,17 @@
             }
 
             // After execution units are installed, create a symlink if needed
-            if(!is_null($package->header->getOption('create_symlink')) && $package->header->getOption('create_symlink'))
+            if(!is_null($package->getHeader()->getOption('create_symlink')) && $package->getHeader()->getOption('create_symlink'))
             {
-                if($package->main_execution_policy === null)
+                if($package->getMainExecutionPolicy() === null)
                 {
                     throw new OperationException('Cannot create symlink, no main execution policy is defined');
                 }
 
-                Console::outDebug(sprintf('creating symlink to %s', $package->assembly->getPackage()));
+                Console::outDebug(sprintf('creating symlink to %s', $package->getAssembly()->getPackage()));
 
                 $SymlinkManager = new SymlinkManager();
-                $SymlinkManager->add($package->assembly->getPackage(), $package->main_execution_policy);
+                $SymlinkManager->add($package->getAssembly()->getPackage(), $package->getMainExecutionPolicy());
             }
 
             // Execute the post-installation stage after the installation is complete
@@ -389,11 +389,11 @@
                 throw new OperationException('Post installation stage failed, ' . $e->getMessage(), $e);
             }
 
-            if($package->installer?->getPostInstall() !== null && count($package->installer->getPostInstall()) > 0)
+            if($package->getInstaller()?->getPostInstall() !== null && count($package->getInstaller()->getPostInstall()) > 0)
             {
                 Console::outDebug('executing post-installation units');
 
-                foreach($package->installer->getPostInstall() as $unit_name)
+                foreach($package->getInstaller()->getPostInstall() as $unit_name)
                 {
                     try
                     {
@@ -415,29 +415,29 @@
                 Console::outDebug('no post-installation units to execute');
             }
 
-            if($package->header->getUpdateSource()?->getRepository() !== null)
+            if($package->getHeader()->getUpdateSource()?->getRepository() !== null)
             {
                 $sources_manager = new RemoteSourcesManager();
-                if($sources_manager->getRemoteSource($package->header->getUpdateSource()->getRepository()->getName()) === null)
+                if($sources_manager->getRemoteSource($package->getHeader()->getUpdateSource()->getRepository()->getName()) === null)
                 {
-                    Console::outVerbose('Adding remote source ' . $package->header->getUpdateSource()->getRepository()->getName());
+                    Console::outVerbose('Adding remote source ' . $package->getHeader()->getUpdateSource()->getRepository()->getName());
 
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->setName($package->header->getUpdateSource()?->getRepository()?->getName());
-                    $defined_remote_source->setHost($package->header->getUpdateSource()?->getRepository()?->getHost());
-                    $defined_remote_source->setType($package->header->getUpdateSource()?->getRepository()?->getType());
-                    $defined_remote_source->setSsl($package->header->getUpdateSource()?->getRepository()?->isSsl());
+                    $defined_remote_source->setName($package->getHeader()->getUpdateSource()?->getRepository()?->getName());
+                    $defined_remote_source->setHost($package->getHeader()->getUpdateSource()?->getRepository()?->getHost());
+                    $defined_remote_source->setType($package->getHeader()->getUpdateSource()?->getRepository()?->getType());
+                    $defined_remote_source->setSsl($package->getHeader()->getUpdateSource()?->getRepository()?->isSsl());
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }
             }
 
-            $this->getPackageLockManager()?->getPackageLock()?->addPackage($package, $installation_paths->getInstallationPath());
+            $this->getPackageLockManager()?->getPackageLock()?->addPackage($package, $installation_paths->getInstallationpath());
             $this->getPackageLockManager()?->save();
 
-            RuntimeCache::set(sprintf('installed.%s=%s', $package->assembly->getPackage(), $package->assembly->getVersion()), true);
+            RuntimeCache::set(sprintf('installed.%s=%s', $package->getAssembly()->getPackage(), $package->getAssembly()->getVersion()), true);
 
-            return $package->assembly->getPackage();
+            return $package->getAssembly()->getPackage();
         }
 
         /**
@@ -452,29 +452,24 @@
         {
             $input = new RemotePackageInput($source);
 
-            if($input->source === null)
+            if($input->getSource() === null)
             {
                 throw new PackageException('No source specified');
             }
 
-            if($input->package === null)
+            if($input->getVersion() === null)
             {
-                throw new PackageException('No package specified');
+                $input->setVersion(Versions::LATEST);
             }
 
-            if($input->version === null)
-            {
-                $input->version = Versions::LATEST;
-            }
+            Console::outVerbose('Fetching package ' . $input->getPackage() . ' from ' . $input->getSource() . ' (' . $input->getVersion() . ')');
 
-            Console::outVerbose('Fetching package ' . $input->package . ' from ' . $input->source . ' (' . $input->version . ')');
-
-            $remote_source_type = Resolver::detectRemoteSourceType($input->source);
+            $remote_source_type = Resolver::detectRemoteSourceType($input->getSource());
             if($remote_source_type === RemoteSourceType::BUILTIN)
             {
-                Console::outDebug('using builtin source ' . $input->source);
+                Console::outDebug('using builtin source ' . $input->getSource());
 
-                if ($input->source === 'composer')
+                if ($input->getSource() === 'composer')
                 {
                     try
                     {
@@ -486,29 +481,29 @@
                     }
                 }
 
-                throw new NotSupportedException(sprintf('Builtin source %s is not supported', $input->source));
+                throw new NotSupportedException(sprintf('Builtin source %s is not supported', $input->getSource()));
             }
 
             if($remote_source_type === RemoteSourceType::DEFINED)
             {
-                Console::outDebug('using defined source ' . $input->source);
+                Console::outDebug('using defined source ' . $input->getSource());
                 /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $source = (new RemoteSourcesManager())->getRemoteSource($input->source);
+                $source = (new RemoteSourcesManager())->getRemoteSource($input->getSource());
                 if($source === null)
                 {
-                    throw new OperationException('Remote source ' . $input->source . ' is not defined');
+                    throw new OperationException('Remote source ' . $input->getSource() . ' is not defined');
                 }
 
                 $repositoryQueryResults = Functions::getRepositoryQueryResults($input, $source, $entry);
                 $exceptions = [];
 
-                if($repositoryQueryResults->Files->ZipballUrl !== null)
+                if($repositoryQueryResults->getFiles()->ZipballUrl !== null)
                 {
                     try
                     {
-                        Console::outDebug(sprintf('fetching package %s from %s', $input->package, $repositoryQueryResults->Files->ZipballUrl));
-                        $archive = Functions::downloadGitServiceFile($repositoryQueryResults->Files->ZipballUrl, $entry);
-                        return PackageCompiler::tryCompile(Functions::extractArchive($archive), $repositoryQueryResults->Version);
+                        Console::outDebug(sprintf('fetching package %s from %s', $input->getPackage(), $repositoryQueryResults->getFiles()->ZipballUrl));
+                        $archive = Functions::downloadGitServiceFile($repositoryQueryResults->getFiles()->ZipballUrl, $entry);
+                        return PackageCompiler::tryCompile(Functions::extractArchive($archive), $repositoryQueryResults->getVersion());
                     }
                     catch(Throwable $e)
                     {
@@ -517,13 +512,13 @@
                     }
                 }
 
-                if($repositoryQueryResults->Files->TarballUrl !== null)
+                if($repositoryQueryResults->getFiles()->TarballUrl !== null)
                 {
                     try
                     {
-                        Console::outDebug(sprintf('fetching package %s from %s', $input->package, $repositoryQueryResults->Files->TarballUrl));
-                        $archive = Functions::downloadGitServiceFile($repositoryQueryResults->Files->TarballUrl, $entry);
-                        return PackageCompiler::tryCompile(Functions::extractArchive($archive), $repositoryQueryResults->Version);
+                        Console::outDebug(sprintf('fetching package %s from %s', $input->getPackage(), $repositoryQueryResults->getFiles()->TarballUrl));
+                        $archive = Functions::downloadGitServiceFile($repositoryQueryResults->getFiles()->TarballUrl, $entry);
+                        return PackageCompiler::tryCompile(Functions::extractArchive($archive), $repositoryQueryResults->getVersion());
                     }
                     catch(Exception $e)
                     {
@@ -532,12 +527,12 @@
                     }
                 }
 
-                if($repositoryQueryResults->Files->PackageUrl !== null)
+                if($repositoryQueryResults->getFiles()->PackageUrl !== null)
                 {
                     try
                     {
-                        Console::outDebug(sprintf('fetching package %s from %s', $input->package, $repositoryQueryResults->Files->PackageUrl));
-                        return Functions::downloadGitServiceFile($repositoryQueryResults->Files->PackageUrl, $entry);
+                        Console::outDebug(sprintf('fetching package %s from %s', $input->getPackage(), $repositoryQueryResults->getFiles()->PackageUrl));
+                        return Functions::downloadGitServiceFile($repositoryQueryResults->getFiles()->PackageUrl, $entry);
                     }
                     catch(Exception $e)
                     {
@@ -546,19 +541,19 @@
                     }
                 }
 
-                if($repositoryQueryResults->Files->GitHttpUrl !== null || $repositoryQueryResults->Files->GitSshUrl !== null)
+                if($repositoryQueryResults->getFiles()->GitHttpUrl !== null || $repositoryQueryResults->getFiles()->GitSshUrl !== null)
                 {
                     try
                     {
-                        Console::outDebug(sprintf('fetching package %s from %s', $input->package, $repositoryQueryResults->Files->GitHttpUrl ?? $repositoryQueryResults->Files->GitSshUrl));
-                        $git_repository = GitClient::cloneRepository($repositoryQueryResults->Files->GitHttpUrl ?? $repositoryQueryResults->Files->GitSshUrl);
+                        Console::outDebug(sprintf('fetching package %s from %s', $input->getPackage(), $repositoryQueryResults->getFiles()->GitHttpUrl ?? $repositoryQueryResults->getFiles()->GitSshUrl));
+                        $git_repository = GitClient::cloneRepository($repositoryQueryResults->getFiles()->GitHttpUrl ?? $repositoryQueryResults->getFiles()->GitSshUrl);
 
                         foreach(GitClient::getTags($git_repository) as $tag)
                         {
-                            if(VersionComparator::compareVersion($tag, $repositoryQueryResults->Version) === 0)
+                            if(VersionComparator::compareVersion($tag, $repositoryQueryResults->getVersion()) === 0)
                             {
                                 GitClient::checkout($git_repository, $tag);
-                                return PackageCompiler::tryCompile($git_repository, $repositoryQueryResults->Version);
+                                return PackageCompiler::tryCompile($git_repository, $repositoryQueryResults->getVersion());
                             }
                         }
 
@@ -674,7 +669,7 @@
 
             if ($dependency->getSourceType() !== null && !$dependency_met)
             {
-                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->getName(), $dependency->getVersion(), $package->assembly->getPackage(), $package->assembly->getVersion()));
+                Console::outVerbose(sprintf('Installing dependency %s=%s for %s=%s', $dependency->getName(), $dependency->getVersion(), $package->getAssembly()->getPackage(), $package->getAssembly()->getVersion()));
                 switch ($dependency->getSourceType())
                 {
                     case DependencySourceType::LOCAL:
@@ -989,19 +984,19 @@
          */
         private static function initData(Package $package, InstallationPaths $paths): void
         {
-            Console::outVerbose(sprintf('Initializing data for %s', $package->assembly->getName()));
+            Console::outVerbose(sprintf('Initializing data for %s', $package->getAssembly()->getName()));
 
             // Create data files
             $dependencies = [];
-            foreach($package->dependencies as $dependency)
+            foreach($package->getDependencies() as $dependency)
             {
                 $dependencies[] = $dependency->toArray(true);
             }
 
             $data_files = [
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'assembly' => ZiProto::encode($package->assembly->toArray(true)),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'ext' => ZiProto::encode($package->header->getCompilerExtension()->toArray()),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'const' => ZiProto::encode($package->header->getRuntimeConstants()),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'assembly' => ZiProto::encode($package->getAssembly()->toArray(true)),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'ext' => ZiProto::encode($package->getHeader()->getCompilerExtension()->toArray()),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'const' => ZiProto::encode($package->getHeader()->getRuntimeConstants()),
                 $paths->getDataPath() . DIRECTORY_SEPARATOR . 'dependencies' => ZiProto::encode($dependencies),
             ];
 

@@ -154,14 +154,14 @@
         {
             try
             {
-                if ($this->getVersion($package->assembly->getVersion()) !== null)
+                if ($this->getVersion($package->getAssembly()->getVersion()) !== null)
                 {
                     if(!$overwrite)
                     {
                         return false;
                     }
 
-                    $this->removeVersion($package->assembly->getVersion());
+                    $this->removeVersion($package->getAssembly()->getVersion());
                 }
             }
             catch (IOException $e)
@@ -170,10 +170,10 @@
             }
 
             $version = new VersionEntry();
-            $version->setVersion($package->assembly->getVersion());
-            $version->setCompiler($package->header->getCompilerExtension());
-            $version->setExecutionUnits($package->execution_units);
-            $version->main_execution_policy = $package->main_execution_policy;
+            $version->setVersion($package->getAssembly()->getVersion());
+            $version->setCompiler($package->getHeader()->getCompilerExtension());
+            $version->setExecutionUnits($package->getExecutionUnits());
+            $version->main_execution_policy = $package->getMainExecutionPolicy();
             $version->location = $install_path;
 
             foreach($version->getExecutionUnits() as $unit)
@@ -181,7 +181,7 @@
                 $unit->setData(null);
             }
 
-            foreach($package->dependencies as $dependency)
+            foreach($package->getDependencies() as $dependency)
             {
                 $version->addDependency(new DependencyEntry($dependency));
             }

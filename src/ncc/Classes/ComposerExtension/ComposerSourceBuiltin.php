@@ -85,7 +85,7 @@
          */
         public static function fetch(RemotePackageInput $packageInput): string
         {
-            $package_path = self::require($packageInput->vendor, $packageInput->package, $packageInput->version);
+            $package_path = self::require($packageInput->getVendor(), $packageInput->getPackage(), $packageInput->getVersion());
             $packages = self::compilePackages($package_path . DIRECTORY_SEPARATOR . 'composer.lock');
             $real_package_name = explode('=', $packageInput->toStandard(false))[0];
 
@@ -232,10 +232,10 @@
                 $built_package = $project_manager->build();
 
                 // Copy the project to the build directory
-                $out_path = $base_dir . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . sprintf('%s.ncc', $project_configuration->assembly->getPackage());
+                $out_path = $base_dir . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . sprintf('%s.ncc', $project_configuration->getAssembly()->getPackage());
                 $filesystem->copy($built_package, $out_path);
                 $filesystem->remove($built_package);
-                $built_packages[$project_configuration->assembly->getPackage()] = $out_path;
+                $built_packages[$project_configuration->getAssembly()->getPackage()] = $out_path;
             }
 
             return $built_packages;
@@ -310,27 +310,27 @@
         {
             // Generate a new project configuration object
             $project_configuration = new ProjectConfiguration();
-            $project_configuration->assembly->setName($composer_package->getName());
-            $project_configuration->assembly->setDescription($composer_package->getDescription());
+            $project_configuration->getAssembly()->setName($composer_package->getName());
+            $project_configuration->getAssembly()->setDescription($composer_package->getDescription());
 
             if(isset($version_map[$composer_package->getName()]))
             {
-                $project_configuration->assembly->setVersion(self::versionMap($composer_package->getName(), $version_map));
+                $project_configuration->getAssembly()->setVersion(self::versionMap($composer_package->getName(), $version_map));
             }
 
-            if($project_configuration->assembly->getVersion() === null || $project_configuration->assembly->getVersion() === '')
+            if($project_configuration->getAssembly()->getVersion() === '')
             {
-                $project_configuration->assembly->setVersion('1.0.0');
+                $project_configuration->getAssembly()->setVersion('1.0.0');
             }
 
 
-            $project_configuration->assembly->setUuid(Uuid::v1()->toRfc4122());
-            $project_configuration->assembly->setPackage(self::toPackageName($composer_package->getName()));
+            $project_configuration->getAssembly()->setUuid(Uuid::v1()->toRfc4122());
+            $project_configuration->getAssembly()->setPackage(self::toPackageName($composer_package->getName()));
 
             // Add the update source
-            $project_configuration->project->setUpdateSource(new ProjectConfiguration\UpdateSource());
-            $project_configuration->project->getUpdateSource()?->setSource(sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->getName())));
-            $project_configuration->project->getUpdateSource()?->setRepository(null);
+            $project_configuration->getProject()->setUpdateSource(new ProjectConfiguration\UpdateSource());
+            $project_configuration->getProject()->getUpdateSource()?->setSource(sprintf('%s@composer', str_ireplace('\\', '/', $composer_package->getName())));
+            $project_configuration->getProject()->getUpdateSource()?->setRepository(null);
 
             // Process the dependencies
             if($composer_package->getRequire() !== null && count($composer_package->getRequire()) > 0)
@@ -350,7 +350,7 @@
                     $dependency->setSourceType(DependencySourceType::LOCAL);
                     $dependency->setVersion(self::versionMap($item->getPackageName(), $version_map));
                     $dependency->setSource($package_name . '.ncc');
-                    $project_configuration->build->addDependency($dependency);
+                    $project_configuration->getBuild()->addDependency($dependency);
                 }
             }
 
@@ -360,14 +360,14 @@
             $build_configuration->setOutputPath('build');
 
             // Apply the final properties
-            $project_configuration->build->addBuildConfiguration($build_configuration);
-            $project_configuration->build->setDefaultConfiguration('default');
-            $project_configuration->build->setSourcePath('.src');
+            $project_configuration->getBuild()->addBuildConfiguration($build_configuration);
+            $project_configuration->getBuild()->setDefaultConfiguration('default');
+            $project_configuration->getBuild()->setSourcePath('.src');
 
             // Apply a compiler extension
-            $project_configuration->project->getCompiler()->setExtension(CompilerExtensions::PHP);
-            $project_configuration->project->getCompiler()->setMaximumVersion(CompilerExtensionSupportedVersions::PHP[0]);
-            $project_configuration->project->getCompiler()->setMinimumVersion(CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)]);
+            $project_configuration->getProject()->getCompiler()->setExtension(CompilerExtensions::PHP);
+            $project_configuration->getProject()->getCompiler()->setMaximumVersion(CompilerExtensionSupportedVersions::PHP[0]);
+            $project_configuration->getProject()->getCompiler()->setMinimumVersion(CompilerExtensionSupportedVersions::PHP[(count(CompilerExtensionSupportedVersions::PHP) - 1)]);
 
             return $project_configuration;
         }
@@ -750,7 +750,7 @@
 
                 if (count($static_files) > 0)
                 {
-                    $project_configuration->project->addOption('static_files', $static_files);
+                    $project_configuration->getProject()->addOption('static_files', $static_files);
 
                     foreach ($static_files as $file)
                     {

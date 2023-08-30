@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -32,27 +32,27 @@
         /**
          * @var string
          */
-        public $vendor;
+        private $vendor;
 
         /**
          * @var string
          */
-        public $package;
+        private $package;
 
         /**
          * @var string|null
          */
-        public $version;
+        private $version;
 
         /**
          * @var string|null
          */
-        public $branch;
+        private $branch;
 
         /**
          * @var string
          */
-        public $source;
+        private $source;
 
         /**
          * Public Constructor & String Parser
@@ -78,6 +78,86 @@
             {
                 throw new InvalidArgumentException(sprintf('Invalid remote package input: %s', $input));
             }
+        }
+
+        /**
+         * @return string
+         */
+        public function getVendor(): string
+        {
+            return $this->vendor;
+        }
+
+        /**
+         * @param string $vendor
+         */
+        public function setVendor(string $vendor): void
+        {
+            $this->vendor = $vendor;
+        }
+
+        /**
+         * @return string
+         */
+        public function getPackage(): string
+        {
+            return $this->package;
+        }
+
+        /**
+         * @param string $package
+         */
+        public function setPackage(string $package): void
+        {
+            $this->package = $package;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getVersion(): ?string
+        {
+            return $this->version;
+        }
+
+        /**
+         * @param string|null $version
+         */
+        public function setVersion(?string $version): void
+        {
+            $this->version = $version;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getBranch(): ?string
+        {
+            return $this->branch;
+        }
+
+        /**
+         * @param string|null $branch
+         */
+        public function setBranch(?string $branch): void
+        {
+            $this->branch = $branch;
+        }
+
+        /**
+         * @return string
+         */
+        public function getSource(): string
+        {
+            return $this->source;
+        }
+
+        /**
+         * @param string $source
+         */
+        public function setSource(string $source): void
+        {
+            $this->source = $source;
         }
 
         /**

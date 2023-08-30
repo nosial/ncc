@@ -125,41 +125,41 @@
             $this->project_configuration = new ProjectConfiguration();
 
             // Set the compiler information
-            $this->project_configuration->project->setCompiler($compiler);
+            $this->project_configuration->getProject()->setCompiler($compiler);
 
             // Set the assembly information
-            $this->project_configuration->assembly->setName($name);
-            $this->project_configuration->assembly->setPackage($package);
-            $this->project_configuration->assembly->setVersion('1.0.0');
-            $this->project_configuration->assembly->setUuid(Uuid::v1()->toRfc4122());
+            $this->project_configuration->getAssembly()->setName($name);
+            $this->project_configuration->getAssembly()->setPackage($package);
+            $this->project_configuration->getAssembly()->setVersion('1.0.0');
+            $this->project_configuration->getAssembly()->setUuid(Uuid::v1()->toRfc4122());
 
             // Set the build information
-            $this->project_configuration->build->setSourcePath($src);
+            $this->project_configuration->getBuild()->setSourcePath($src);
 
-            if($this->project_configuration->build->getSourcePath() === null)
+            if($this->project_configuration->getBuild()->getSourcePath() === null)
             {
-                $this->project_configuration->build->setSourcePath($this->project_path);
+                $this->project_configuration->getBuild()->setSourcePath($this->project_path);
             }
 
-            $this->project_configuration->build->setDefaultConfiguration('debug');
+            $this->project_configuration->getBuild()->setDefaultConfiguration('debug');
 
             // Assembly constants if the program wishes to check for this
-            $this->project_configuration->build->addDefineConstant('ASSEMBLY_PACKAGE', '%ASSEMBLY.PACKAGE%');
-            $this->project_configuration->build->addDefineConstant('ASSEMBLY_VERSION', '%ASSEMBLY.VERSION%');
-            $this->project_configuration->build->addDefineConstant('ASSEMBLY_UID', '%ASSEMBLY.UID%');
+            $this->project_configuration->getBuild()->addDefineConstant('ASSEMBLY_PACKAGE', '%ASSEMBLY.PACKAGE%');
+            $this->project_configuration->getBuild()->addDefineConstant('ASSEMBLY_VERSION', '%ASSEMBLY.VERSION%');
+            $this->project_configuration->getBuild()->addDefineConstant('ASSEMBLY_UID', '%ASSEMBLY.UID%');
 
             // Generate configurations
             $debug_configuration = new ProjectConfiguration\Build\BuildConfiguration();
             $debug_configuration->setName('debug');
             $debug_configuration->setOutputPath('build/debug');
             $debug_configuration->setDefinedConstant('DEBUG', '1'); // Debugging constant if the program wishes to check for this
-            $this->project_configuration->build->addBuildConfiguration($debug_configuration);
+            $this->project_configuration->getBuild()->addBuildConfiguration($debug_configuration);
 
             $release_configuration = new ProjectConfiguration\Build\BuildConfiguration();
             $release_configuration->setName('release');
             $release_configuration->setOutputPath('build/release');
             $release_configuration->setDefinedConstant('DEBUG', '0'); // Debugging constant if the program wishes to check for this
-            $this->project_configuration->build->addBuildConfiguration($release_configuration);
+            $this->project_configuration->getBuild()->addBuildConfiguration($release_configuration);
 
             // Finally, create project.json
             $this->project_configuration->toFile($this->project_path . DIRECTORY_SEPARATOR . 'project.json');
@@ -184,8 +184,8 @@
             {
                 if (
                     $option === InitializeProjectOptions::CREATE_SOURCE_DIRECTORY &&
-                    !file_exists($this->project_configuration->build->getSourcePath()) &&
-                    !mkdir($concurrentDirectory = $this->project_configuration->build->getSourcePath()) &&
+                    !file_exists($this->project_configuration->getBuild()->getSourcePath()) &&
+                    !mkdir($concurrentDirectory = $this->project_configuration->getBuild()->getSourcePath()) &&
                     !is_dir($concurrentDirectory)
                 )
                 {

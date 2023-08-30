@@ -56,18 +56,17 @@
         {
             $httpRequest = new HttpRequest();
             $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
-            $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
-            $owner_f = str_ireplace(".", "%2F", $owner_f);
-            $repository = urlencode($packageInput->package);
+            $owner_f = str_ireplace(array("/", "."), "%2F", $packageInput->getVendor());
+            $repository = urlencode($packageInput->getPackage());
             $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/repos/$owner_f/$repository");
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
             $query = new RepositoryQueryResults();
-            $query->Files->GitSshUrl = ($response_decoded['ssh_url'] ?? null);
-            $query->Files->GitHttpUrl = ($response_decoded['clone_url'] ?? null);
-            $query->Version = Functions::convertToSemVer($response_decoded['default_branch'] ?? null);
-            $query->ReleaseDescription = ($response_decoded['description'] ?? null);
-            $query->ReleaseName = ($response_decoded['name'] ?? null);
+            $query->getFiles()->GitSshUrl = ($response_decoded['ssh_url'] ?? null);
+            $query->getFiles()->GitHttpUrl = ($response_decoded['clone_url'] ?? null);
+            $query->setVersion(Functions::convertToSemVer($response_decoded['default_branch'] ?? null));
+            $query->setReleaseDescription($response_decoded['description'] ?? null);
+            $query->setReleaseName($response_decoded['name'] ?? null);
 
             return $query;
         }
@@ -120,9 +119,8 @@
         {
             $httpRequest = new HttpRequest();
             $protocol = ($definedRemoteSource->isSsl() ? "https" : "http");
-            $owner_f = str_ireplace("/", "%2F", $packageInput->vendor);
-            $owner_f = str_ireplace(".", "%2F", $owner_f);
-            $repository = urlencode($packageInput->package);
+            $owner_f = str_ireplace(array("/", "."), "%2F", $packageInput->getVersion());
+            $repository = urlencode($packageInput->getPackage());
             $httpRequest->setUrl($protocol . '://' . $definedRemoteSource->getHost() . "/repos/$owner_f/$repository/releases");
             $response_decoded = self::getJsonResponse($httpRequest, $entry);
 
@@ -135,11 +133,11 @@
             foreach($response_decoded as $release)
             {
                 $query_results = new RepositoryQueryResults();
-                $query_results->Version = Functions::convertToSemVer($release['tag_name']);
-                $query_results->ReleaseName = $release['name'];
-                $query_results->ReleaseDescription = $release['body'];
-                $query_results->Files->ZipballUrl = ($release['zipball_url'] ?? null);
-                $query_results->Files->TarballUrl = ($release['tarball_url'] ?? null);
+                $query_results->setVersion(Functions::convertToSemVer($release['tag_name']));
+                $query_results->setReleaseName($release['name']);
+                $query_results->getReleaseDescription($release['body']);
+                $query_results->getFiles()->ZipballUrl = ($release['zipball_url'] ?? null);
+                $query_results->getFiles()->TarballUrl = ($release['tarball_url'] ?? null);
 
                 if(isset($release['assets']))
                 {
@@ -148,12 +146,12 @@
                         $parsed_asset = self::parseAsset($asset);
                         if($parsed_asset !== null)
                         {
-                            $query_results->Files->PackageUrl = $parsed_asset;
+                            $query_results->getFiles()->PackageUrl = $parsed_asset;
                         }
                     }
                 }
 
-                $return[$query_results->Version] = $query_results;
+                $return[$query_results->getVersion()] = $query_results;
             }
 
             return $return;
@@ -221,10 +219,10 @@
 
             if (count($releases) === 0)
             {
-                throw new GitException(sprintf('No releases found for %s/%s on %s.', $packageInput->vendor, $packageInput->package, $definedRemoteSource->getHost()));
+                throw new GitException(sprintf('No releases found for %s/%s on %s.', $packageInput->getVendor(), $packageInput->getPackage(), $definedRemoteSource->getHost()));
             }
 
-            if ($packageInput->version === Versions::LATEST)
+            if ($packageInput->getVersion() === Versions::LATEST)
             {
                 $latest_version = null;
                 foreach ($releases as $release)
@@ -245,7 +243,7 @@
             }
 
             // Query a specific version
-            if (!isset($releases[$packageInput->version]))
+            if (!isset($releases[$packageInput->getVersion()]))
             {
                 // Find the closest thing to the requested version
                 $selected_version = null;
@@ -257,7 +255,7 @@
                         continue;
                     }
 
-                    if (VersionComparator::compareVersion($version, $packageInput->version) === 1)
+                    if (VersionComparator::compareVersion($version, $packageInput->getVersion()) === 1)
                     {
                         $selected_version = $version;
                     }
@@ -265,17 +263,17 @@
 
                 if ($selected_version === null)
                 {
-                    throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->getHost()));
+                    throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->getVersion(), $packageInput->getVendor(), $packageInput->getPackage(), $definedRemoteSource->getHost()));
                 }
             }
             else
             {
-                $selected_version = $packageInput->version;
+                $selected_version = $packageInput->getVersion();
             }
 
             if (!isset($releases[$selected_version]))
             {
-                throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->version, $packageInput->vendor, $packageInput->package, $definedRemoteSource->getHost()));
+                throw new GitException(sprintf('Version %s not found for %s/%s on %s.', $packageInput->getVersion(), $packageInput->getVendor(), $packageInput->getPackage(), $definedRemoteSource->getHost()));
             }
 
             return $releases[$selected_version];

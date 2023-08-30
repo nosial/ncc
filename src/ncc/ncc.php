@@ -33,7 +33,7 @@
 
     /**
      * @author Zi Xing Narrakas
-     * @copyright Copyright (C) 2022-2022. Nosial - All Rights Reserved.
+     * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
     class ncc
     {
@@ -73,12 +73,12 @@
                 throw new RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
             }
 
-            if(self::$version_information->Version === null)
+            if(self::$version_information->getVersion() === null)
             {
                 throw new RuntimeException('The version number is not specified in the version information file');
             }
 
-            if(self::$version_information->Branch === null)
+            if(self::$version_information->getBranch() === null)
             {
                 throw new RuntimeException('The version branch is not specified in the version information file');
             }
@@ -105,10 +105,10 @@
 
             // Set version information about the current build
             $VersionInformation = self::getVersionInformation(true);
-            define('NCC_VERSION_NUMBER', $VersionInformation->Version);
-            define('NCC_VERSION_BRANCH', $VersionInformation->Branch);
-            define('NCC_VERSION_UPDATE_SOURCE', $VersionInformation->UpdateSource);
-            define('NCC_VERSION_FLAGS', $VersionInformation->Flags);
+            define('NCC_VERSION_NUMBER', $VersionInformation->getVersion());
+            define('NCC_VERSION_BRANCH', $VersionInformation->getBranch());
+            define('NCC_VERSION_UPDATE_SOURCE', $VersionInformation->getUpdateSource());
+            define('NCC_VERSION_FLAGS', $VersionInformation->getFlags());
 
             define('NCC_INIT', 1);
             return true;

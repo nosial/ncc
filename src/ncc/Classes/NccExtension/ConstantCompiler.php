@@ -144,7 +144,7 @@ namespace ncc\Classes\NccExtension;
                     InstallConstants::INSTALL_PATH_DATA
                 ],
                 [
-                    $installationPaths->getInstallationPath(),
+                    $installationPaths->getInstallationpath(),
                     $installationPaths->getBinPath(),
                     $installationPaths->getSourcePath(),
                     $installationPaths->getDataPath()

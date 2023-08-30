@@ -103,35 +103,35 @@
             }
 
             // Select the build configuration
-            $selected_build_configuration = $this->project_configuration->build->getBuildConfiguration($build_configuration);
+            $selected_build_configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
             // Create the package object
             $this->package = new Package();
-            $this->package->assembly = $this->project_configuration->assembly;
-            $this->package->dependencies = $this->project_configuration->build->getDependencies();
-            $this->package->main_execution_policy = $this->project_configuration->build->getMain();
+            $this->package->setAssembly($this->project_configuration->getAssembly());
+            $this->package->setDependencies($this->project_configuration->getBuild()->getDependencies());
+            $this->package->setMainExecutionPolicy($this->project_configuration->getBuild()->getMain());
 
             // Add the option to create a symbolic link to the package
-            if(isset($this->project_configuration->project->getOptions()['create_symlink']) && $this->project_configuration->project->getOptions()['create_symlink'] === True)
+            if(isset($this->project_configuration->getProject()->getOptions()['create_symlink']) && $this->project_configuration->getProject()->getOptions()['create_symlink'] === True)
             {
-                $this->package->header->setOption('create_symlink', true);
+                $this->package->getHeader()->setOption('create_symlink', true);
             }
 
             // Add both the defined constants from the build configuration and the global constants.
             // Global constants are overridden
-            $this->package->header->setRuntimeConstants(array_merge(
+            $this->package->getHeader()->setRuntimeConstants(array_merge(
                 $selected_build_configuration->getDefineConstants(),
-                ($this->project_configuration->build->getDefineConstants()),
-                ($this->package->header->getRuntimeConstants() ?? [])
+                ($this->project_configuration->getBuild()->getDefineConstants()),
+                ($this->package->getHeader()->getRuntimeConstants() ?? [])
             ));
 
-            $this->package->header->setCompilerExtension($this->project_configuration->project->getCompiler());
-            $this->package->header->setCompilerVersion(NCC_VERSION_NUMBER);
-            $this->package->header->setOptions($this->project_configuration->project->getOptions());
+            $this->package->getHeader()->setCompilerExtension($this->project_configuration->getProject()->getCompiler());
+            $this->package->getHeader()->setCompilerVersion(NCC_VERSION_NUMBER);
+            $this->package->getHeader()->setOptions($this->project_configuration->getProject()->getOptions());
 
-            if($this->project_configuration->project->getUpdateSource() !== null)
+            if($this->project_configuration->getProject()->getUpdateSource() !== null)
             {
-                $this->package->header->setUpdateSource($this->project_configuration->project->getUpdateSource());
+                $this->package->getHeader()->setUpdateSource($this->project_configuration->getProject()->getUpdateSource());
             }
 
             Console::outDebug('scanning project files');
@@ -157,7 +157,7 @@
                 $directory_scanner->setExcludes($selected_build_configuration->getExcludeFiles());
             }
 
-            $source_path = $this->path . $this->project_configuration->build->getSourcePath();
+            $source_path = $this->path . $this->project_configuration->getBuild()->getSourcePath();
 
             // TODO: Re-implement the scanning process outside the compiler, as this is will be redundant
             // Scan for components first.
@@ -176,14 +176,14 @@
 
                     $component = new Package\Component();
                     $component->setName(Functions::removeBasename($item->getPathname(), $this->path));
-                    $this->package->components[] = $component;
+                    $this->package->addComponent($component);
 
                     Console::outVerbose(sprintf('Found component %s', $component->getName()));
                 }
 
-                if(count($this->package->components) > 0)
+                if(count($this->package->getComponents()) > 0)
                 {
-                    Console::outVerbose(count($this->package->components) . ' component(s) found');
+                    Console::outVerbose(count($this->package->getComponents()) . ' component(s) found');
                 }
                 else
                 {
@@ -216,14 +216,14 @@
 
                     $resource = new Package\Resource();
                     $resource->setName(Functions::removeBasename($item->getPathname(), $this->path));
-                    $this->package->resources[] = $resource;
+                    $this->package->addResource($resource);
 
                     Console::outVerbose(sprintf('found resource %s', $resource->getName()));
                 }
 
-                if(count($this->package->resources) > 0)
+                if(count($this->package->getResources()) > 0)
                 {
-                    Console::outVerbose(count($this->package->resources) . ' resources(s) found');
+                    Console::outVerbose(count($this->package->getResources()) . ' resources(s) found');
                 }
                 else
                 {
@@ -237,9 +237,9 @@
 
             $selected_dependencies = [];
 
-            if(count($this->project_configuration->build->getDependencies()) > 0)
+            if(count($this->project_configuration->getBuild()->getDependencies()) > 0)
             {
-                $selected_dependencies = array_merge($selected_dependencies, $this->project_configuration->build->getDependencies());
+                $selected_dependencies = array_merge($selected_dependencies, $this->project_configuration->getBuild()->getDependencies());
             }
 
             if(count($selected_build_configuration->getDependencies()) > 0)
@@ -310,9 +310,9 @@
                     $this->package->addDependency($dependency);
                 }
 
-                if(count($this->package->dependencies) > 0)
+                if(count($this->package->getDependencies()) > 0)
                 {
-                    Console::outVerbose(count($this->package->dependencies) . ' dependency(ies) found');
+                    Console::outVerbose(count($this->package->getDependencies()) . ' dependency(ies) found');
                 }
                 else
                 {
@@ -338,7 +338,7 @@
             $this->compileResources();
 
             PackageCompiler::compilePackageConstants($this->package, [
-                ConstantReferences::ASSEMBLY => $this->project_configuration->assembly,
+                ConstantReferences::ASSEMBLY => $this->project_configuration->getAssembly(),
                 ConstantReferences::BUILD => null,
                 ConstantReferences::DATE_TIME => time()
             ]);
@@ -361,13 +361,13 @@
                 throw new BuildException('The prepare() method must be called before building the package');
             }
 
-            if(count($this->package->resources) === 0)
+            if(count($this->package->getResources()) === 0)
             {
                 return;
             }
 
             // Process the resources
-            $total_items = count($this->package->resources);
+            $total_items = count($this->package->getResources());
             $processed_items = 1;
             $resources = [];
 
@@ -376,7 +376,7 @@
                 Console::out('Processing resources');
             }
 
-            foreach($this->package->resources as $resource)
+            foreach($this->package->getResources() as $resource)
             {
                 /** @noinspection DisconnectedForeachInstructionInspection */
                 if($total_items > 5)
@@ -386,7 +386,7 @@
 
                 // Get the data and
                 $resource->setData(Base64::encode(IO::fread(Functions::correctDirectorySeparator($this->path . $resource->getName()))));
-                $resource->setName(str_replace($this->project_configuration->build->getSourcePath(), (string)null, $resource->getName()));
+                $resource->setName(str_replace($this->project_configuration->getBuild()->getSourcePath(), (string)null, $resource->getName()));
                 $resource->updateChecksum();
                 $resources[] = $resource;
 
@@ -394,7 +394,7 @@
             }
 
             // Update the resources
-            $this->package->resources = $resources;
+            $this->package->setResources($resources);
         }
 
         /**
@@ -412,12 +412,12 @@
                 throw new BuildException('The prepare() method must be called before building the package');
             }
 
-            if(count($this->package->components) === 0)
+            if(count($this->package->getComponents()) === 0)
             {
                 return;
             }
 
-            $total_items = count($this->package->components);
+            $total_items = count($this->package->getComponents());
             $processed_items = 1;
             $components = [];
 
@@ -427,7 +427,7 @@
             }
 
             // Process the components and attempt to create an AST representation of the source
-            foreach($this->package->components as $component)
+            foreach($this->package->getComponents() as $component)
             {
                 if($total_items > 5)
                 {
@@ -454,7 +454,7 @@
 
                 unset($parser);
 
-                $component->setName(str_replace($this->project_configuration->build->getSourcePath(), (string)null, $component->getName()));
+                $component->setName(str_replace($this->project_configuration->getBuild()->getSourcePath(), (string)null, $component->getName()));
                 $component->updateChecksum();
                 $components[] = $component;
                 ++$processed_items;
@@ -463,7 +463,7 @@
             }
 
             // Update the components
-            $this->package->components = $components;
+            $this->package->setComponents($components);
         }
 
         /**
@@ -474,7 +474,7 @@
          */
         public function compileExecutionPolicies(): void
         {
-            $this->package->execution_units = PackageCompiler::compileExecutionPolicies($this->path, $this->project_configuration);
+            $this->package->setExecutionUnits(PackageCompiler::compileExecutionPolicies($this->path, $this->project_configuration));
         }
 
         /**

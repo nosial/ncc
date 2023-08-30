@@ -51,63 +51,63 @@
          *
          * @var MagicBytes
          */
-        public $magic_bytes;
+        private $magic_bytes;
 
         /**
          * The true header of the package
          *
          * @var Header
          */
-        public $header;
+        private $header;
 
         /**
          * The assembly object of the package
          *
          * @var Assembly
          */
-        public $assembly;
+        private $assembly;
 
         /**
          * An array of dependencies that the package depends on
          *
          * @var Dependency[]
          */
-        public $dependencies;
+        private $dependencies;
 
         /**
          * The Main Execution Policy object for the package if the package is an executable package.
          *
          * @var string|null
          */
-        public $main_execution_policy;
+        private $main_execution_policy;
 
         /**
          * The installer object that is used to install the package if the package is install-able
          *
          * @var Installer|null
          */
-        public $installer;
+        private $installer;
 
         /**
          * An array of execution units defined in the package
          *
          * @var ExecutionUnit[]
          */
-        public $execution_units;
+        private $execution_units;
 
         /**
          * An array of resources that the package depends on
          *
          * @var Resource[]
          */
-        public $resources;
+        private $resources;
 
         /**
          * An array of components for the package
          *
          * @var Component[]
          */
-        public $components;
+        private $components;
 
         /**
          * Public Constructor
@@ -156,6 +156,218 @@
                 if($dep->getName() === $name)
                 {
                     unset($this->dependencies[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * @return MagicBytes
+         */
+        public function getMagicBytes(): MagicBytes
+        {
+            return $this->magic_bytes;
+        }
+
+        /**
+         * @param MagicBytes $magic_bytes
+         */
+        public function setMagicBytes(MagicBytes $magic_bytes): void
+        {
+            $this->magic_bytes = $magic_bytes;
+        }
+
+        /**
+         * @return Header
+         */
+        public function getHeader(): Header
+        {
+            return $this->header;
+        }
+
+        /**
+         * @param Header $header
+         */
+        public function setHeader(Header $header): void
+        {
+            $this->header = $header;
+        }
+
+        /**
+         * @return Assembly
+         */
+        public function getAssembly(): Assembly
+        {
+            return $this->assembly;
+        }
+
+        /**
+         * @param Assembly $assembly
+         */
+        public function setAssembly(Assembly $assembly): void
+        {
+            $this->assembly = $assembly;
+        }
+
+        /**
+         * @return array|Dependency[]
+         */
+        public function getDependencies(): array
+        {
+            return $this->dependencies;
+        }
+
+        /**
+         * @param array|Dependency[] $dependencies
+         */
+        public function setDependencies(array $dependencies): void
+        {
+            $this->dependencies = $dependencies;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getMainExecutionPolicy(): ?string
+        {
+            return $this->main_execution_policy;
+        }
+
+        /**
+         * @param string|null $main_execution_policy
+         */
+        public function setMainExecutionPolicy(?string $main_execution_policy): void
+        {
+            $this->main_execution_policy = $main_execution_policy;
+        }
+
+        /**
+         * @return Installer|null
+         */
+        public function getInstaller(): ?Installer
+        {
+            return $this->installer;
+        }
+
+        /**
+         * @param Installer|null $installer
+         */
+        public function setInstaller(?Installer $installer): void
+        {
+            $this->installer = $installer;
+        }
+
+        /**
+         * @return array|ExecutionUnit[]
+         */
+        public function getExecutionUnits(): array
+        {
+            return $this->execution_units;
+        }
+
+        /**
+         * @param array|ExecutionUnit[] $execution_units
+         */
+        public function setExecutionUnits(array $execution_units): void
+        {
+            $this->execution_units = $execution_units;
+        }
+
+        /**
+         * @return array|Resource[]
+         */
+        public function getResources(): array
+        {
+            return $this->resources;
+        }
+
+        /**
+         * @param array|Resource[] $resources
+         */
+        public function setResources(array $resources): void
+        {
+            $this->resources = $resources;
+        }
+
+        /**
+         * @param Resource $resource
+         * @return void
+         */
+        public function addResource(Resource $resource): void
+        {
+            foreach($this->resources as $res)
+            {
+                if($res->getName() === $resource->getName())
+                {
+                    $this->removeResource($res->getName());
+                    break;
+                }
+            }
+
+            $this->resources[] = $resource;
+        }
+
+        /**
+         * @param string $name
+         * @return void
+         */
+        private function removeResource(string $name): void
+        {
+            foreach($this->resources as $key => $res)
+            {
+                if($res->getName() === $name)
+                {
+                    unset($this->resources[$key]);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * @return array|Component[]
+         */
+        public function getComponents(): array
+        {
+            return $this->components;
+        }
+
+        /**
+         * @param array|Component[] $components
+         */
+        public function setComponents(array $components): void
+        {
+            $this->components = $components;
+        }
+
+        /**
+         * @param Component $component
+         * @return void
+         */
+        public function addComponent(Component $component): void
+        {
+            foreach($this->components as $comp)
+            {
+                if($comp->getName() === $component->getName())
+                {
+                    $this->removeComponent($comp->getName());
+                    break;
+                }
+            }
+
+            $this->components[] = $component;
+        }
+
+        /**
+         * @param string $name
+         * @return void
+         */
+        public function removeComponent(string $name): void
+        {
+            foreach($this->components as $key => $comp)
+            {
+                if($comp->getName() === $name)
+                {
+                    unset($this->components[$key]);
                     return;
                 }
             }
@@ -248,7 +460,7 @@
          */
         public static function load(string $path): Package
         {
-            if(!file_exists($path) || !is_file($path) || !is_readable($path))
+            if(!is_file($path) || !is_readable($path))
             {
                 throw new PathNotFoundException($path);
             }
@@ -265,7 +477,7 @@
             // Extract the package structure version
             $package_structure_version = strtoupper(substr($header, 11, 3));
 
-            if(!in_array($package_structure_version, PackageStructureVersions::ALL))
+            if(!in_array($package_structure_version, PackageStructureVersions::ALL, true))
             {
                 throw new PackageException(sprintf("The package '%s' does not appear to be a valid NCC Package (Unsupported Package Structure Version)", $path));
             }

@@ -186,6 +186,20 @@ features and reduced the number of exceptions down to 15 exceptions.
    `SerializableObjectInterface`
  - Updated class `\ncc\Objects > HttpResponse` to use method calls rather than direct property access and implemented
    `SerializableObjectInterface`
+ - Corrected code-smell and code style issues in `\ncc\Objects > HttpResponseCache`
+ - Corrected code-smell and code style issues in `\ncc\Objects > InstallationPaths`
+ - Updated class `\ncc\Objects > NccVersionInformation` to use method calls rather than direct property access and implemented
+   `SerializableObjectInterface`
+ - Updated class `\ncc\Objects > Package` to use method calls rather than direct property access and implemented
+   `SerializableObjectInterface`
+ - Updated class `\ncc\Objects > PackageLock` to use method calls rather than direct property access and implemented
+   `BytecodeObjectInterface`
+ - Updated class `\ncc\Objects > ProjectConfiguration` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > ProjectDetectionResults` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > RemotePackageInput` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > RepositoryQueryResults` to use method calls rather than direct property access
+ - Updated class `\ncc\Objects > Vault` to use method calls rather than direct property access
+
 
 ### Removed
  - Removed `FileNotFoundException` and `DirectoryNotFoundException` from `\ncc\Exceptions`
@@ -245,6 +259,8 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Removed unused exception `InstallationException` in `\ncc\Exceptions` in favor for `OperationException`
  - Removed all unused exceptions from the project, reduced the number of exceptions in total.
  - Removed unused `scope` property from `\ncc\Objects\ProjectConfiguration > Build`
+ - Removed unused `\ncc\Objects > NccUpdateInformation`
+ - Removed unused `\ncc\Objects > PhpConfiguration`
 
 
 

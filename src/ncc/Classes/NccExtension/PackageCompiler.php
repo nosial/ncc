@@ -65,31 +65,31 @@
         {
             $configuration = $manager->getProjectConfiguration();
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
-                foreach($configuration->assembly->toArray() as $prop => $value)
+                foreach($configuration->getAssembly()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
                 }
-                foreach($configuration->project->getCompiler()->toArray() as $prop => $value)
+                foreach($configuration->getProject()->getCompiler()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('compiler.%s: %s', $prop, ($value ?? 'n/a')));
                 }
             }
 
             // Select the correct compiler for the specified extension
-            if (strtolower($configuration->project->getCompiler()->getExtension()) === CompilerExtensions::PHP)
+            if (strtolower($configuration->getProject()->getCompiler()->getExtension()) === CompilerExtensions::PHP)
             {
                 /** @var CompilerInterface $Compiler */
                 $Compiler = new PhpCompiler($configuration, $manager->getProjectPath());
             }
             else
             {
-                throw new NotSupportedException('The compiler extension \'' . $configuration->project->getCompiler()->getExtension() . '\' is not supported');
+                throw new NotSupportedException('The compiler extension \'' . $configuration->getProject()->getCompiler()->getExtension() . '\' is not supported');
             }
 
-            $build_configuration = $configuration->build->getBuildConfiguration($build_configuration)->getName();
-            Console::out(sprintf('Building %s=%s', $configuration->assembly->getPackage(), $configuration->assembly->getVersion()));
+            $build_configuration = $configuration->getBuild()->getBuildConfiguration($build_configuration)->getName();
+            Console::out(sprintf('Building %s=%s', $configuration->getAssembly()->getPackage(), $configuration->getAssembly()->getVersion()));
             $Compiler->prepare($build_configuration);
             $Compiler->build();
 
@@ -113,25 +113,25 @@
 
             try
             {
-                if($project_type->ProjectType === ProjectType::COMPOSER)
+                if($project_type->getProjectType() === ProjectType::COMPOSER)
                 {
-                    $project_path = ComposerSourceBuiltin::fromLocal($project_type->ProjectPath);
+                    $project_path = ComposerSourceBuiltin::fromLocal($project_type->getProjectPath());
                 }
-                elseif($project_type->ProjectType === ProjectType::NCC)
+                elseif($project_type->getProjectType() === ProjectType::NCC)
                 {
-                    $project_manager = new ProjectManager($project_type->ProjectPath);
-                    $project_manager->getProjectConfiguration()->assembly->setVersion($version);
+                    $project_manager = new ProjectManager($project_type->getProjectPath());
+                    $project_manager->getProjectConfiguration()->getAssembly()->setVersion($version);
                     $project_path = $project_manager->build();
                 }
                 else
                 {
-                    throw new NotSupportedException(sprintf('Failed to compile %s, project type %s is not supported', $project_type->ProjectPath, $project_type->ProjectType));
+                    throw new NotSupportedException(sprintf('Failed to compile %s, project type %s is not supported', $project_type->getProjectPath(), $project_type->getProjectType()));
                 }
 
                 if($version !== null)
                 {
                     $package = Package::load($project_path);
-                    $package->assembly->setVersion(Functions::convertToSemVer($version));
+                    $package->getAssembly()->setVersion(Functions::convertToSemVer($version));
                     $package->save($project_path);
                 }
 
@@ -156,18 +156,18 @@
          */
         public static function compileExecutionPolicies(string $path, ProjectConfiguration $configuration): array
         {
-            if(count($configuration->execution_policies) === 0)
+            if(count($configuration->getExecutionPolicies()) === 0)
             {
                 return [];
             }
 
             Console::out('Compiling Execution Policies');
-            $total_items = count($configuration->execution_policies);
+            $total_items = count($configuration->getExecutionPolicies());
             $execution_units = [];
             $processed_items = 1;
 
             /** @var ProjectConfiguration\ExecutionPolicy $policy */
-            foreach($configuration->execution_policies as $policy)
+            foreach($configuration->getExecutionPolicies() as $policy)
             {
                 Console::outVerbose(sprintf('Compiling Execution Policy %s', $policy->getName()));
 
@@ -206,7 +206,7 @@
 
             // Write the package to disk
             $FileSystem = new Filesystem();
-            $BuildConfiguration = $configuration->build->getBuildConfiguration($build_configuration);
+            $BuildConfiguration = $configuration->getBuild()->getBuildConfiguration($build_configuration);
             if(!$FileSystem->exists($path . $BuildConfiguration->getOutputPath()))
             {
                 Console::outDebug(sprintf('creating output directory %s', $path . $BuildConfiguration->getOutputPath()));
@@ -215,7 +215,7 @@
 
             // Finally write the package to the disk
             $FileSystem->mkdir($path . $BuildConfiguration->getOutputPath());
-            $output_file = $path . $BuildConfiguration->getOutputPath() . DIRECTORY_SEPARATOR . $package->assembly->getPackage() . '.ncc';
+            $output_file = $path . $BuildConfiguration->getOutputPath() . DIRECTORY_SEPARATOR . $package->getAssembly()->getPackage() . '.ncc';
             if($FileSystem->exists($output_file))
             {
                 Console::outDebug(sprintf('removing existing package %s', $output_file));
@@ -244,41 +244,41 @@
          */
         public static function compilePackageConstants(Package $package, array $refs): void
         {
-            if($package->assembly !== null)
+            if($package->getAssembly() !== null)
             {
                 $assembly = [];
 
-                foreach($package->assembly->toArray() as $key => $value)
+                foreach($package->getAssembly()->toArray() as $key => $value)
                 {
                     Console::outDebug(sprintf('compiling constant Assembly.%s (%s)', $key, implode(', ', array_keys($refs))));
                     $assembly[$key] = self::compileConstants($value, $refs);
                 }
-                $package->assembly = Assembly::fromArray($assembly);
+                $package->setAssembly(Assembly::fromArray($assembly));
 
                 unset($assembly);
             }
 
-            if($package->execution_units !== null && count($package->execution_units) > 0)
+            if(count($package->getExecutionUnits()) > 0)
             {
                 $units = [];
-                foreach($package->execution_units as $executionUnit)
+                foreach($package->ExecutionUnits() as $executionUnit)
                 {
                     Console::outDebug(sprintf('compiling execution unit constant %s (%s)', $executionUnit->getExecutionPolicy()->getName(), implode(', ', array_keys($refs))));
                     $units[] = self::compileExecutionUnitConstants($executionUnit, $refs);
                 }
-                $package->execution_units = $units;
+                $package->setExecutionUnits($units);
                 unset($units);
             }
 
             $compiled_constants = [];
-            foreach($package->header->getRuntimeConstants() as $name => $value)
+            foreach($package->getHeader()->getRuntimeConstants() as $name => $value)
             {
                 Console::outDebug(sprintf('compiling runtime constant %s (%s)', $name, implode(', ', array_keys($refs))));
                 $compiled_constants[$name] = self::compileConstants($value, $refs);
             }
 
             $options = [];
-            foreach($package->header->getOptions() as $name => $value)
+            foreach($package->getHeader()->getOptions() as $name => $value)
             {
                 if(is_array($value))
                 {
@@ -301,8 +301,8 @@
                 }
             }
 
-            $package->header->setOptions($options);
-            $package->header->setRuntimeConstants($compiled_constants);
+            $package->getHeader()->setOptions($options);
+            $package->getHeader()->setRuntimeConstants($compiled_constants);
         }
 
         /**
