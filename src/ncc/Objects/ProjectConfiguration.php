@@ -411,7 +411,9 @@
          *
          * @param string $path
          * @return ProjectConfiguration
+         * @throws ConfigurationException
          * @throws IOException
+         * @throws NotSupportedException
          * @throws PathNotFoundException
          */
         public static function fromFile(string $path): ProjectConfiguration
