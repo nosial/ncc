@@ -79,7 +79,7 @@
             }
 
             // Detect if the folder exists or not
-            if(!file_exists($path) || !is_dir($path))
+            if(!is_dir($path))
             {
                 throw new PathNotFoundException($path);
             }
