@@ -42,9 +42,15 @@ namespace ncc\Enums;
          */
         public const UNKNOWN = 'unknown';
 
+        /**
+         * No remote source type
+         */
+        public const NONE = 'none';
+
         public const All = [
             self::BUILTIN,
             self::DEFINED,
-            self::UNKNOWN
+            self::UNKNOWN,
+            self::NONE
         ];
     }

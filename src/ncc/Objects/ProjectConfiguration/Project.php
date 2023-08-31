@@ -180,12 +180,7 @@
                 throw new ConfigurationException('The project configuration is missing the required property "compiler" in the project section.');
             }
 
-            $object->options = Functions::array_bc($data, 'options');
-            if($object->options === null)
-            {
-                $object->options = [];
-            }
-
+            $object->options = Functions::array_bc($data, 'options') ?? [];
             $object->update_source = Functions::array_bc($data, 'update_source');
             if($object->update_source !== null)
             {

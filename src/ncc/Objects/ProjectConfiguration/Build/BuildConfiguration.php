@@ -96,10 +96,11 @@
         /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(string $name, string $output_path)
         {
+            $this->name = $name;
+            $this->output_path = $output_path;
             $this->options = [];
-            $this->output_path = 'build';
             $this->define_constants = [];
             $this->exclude_files = [];
             $this->pre_build = [];
@@ -114,97 +115,47 @@
          * @return bool
          * @throws ConfigurationException
          */
-        public function validate(bool $throw_exception=True): bool
+        public function validate(): bool
         {
             if(!Validate::nameFriendly($this->name))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             if(!Validate::pathName($this->output_path))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             if($this->define_constants !== null && !is_array($this->define_constants))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             if($this->exclude_files !== null && !is_array($this->exclude_files))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             if($this->pre_build !== null && !is_array($this->pre_build))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             if($this->post_build !== null && !is_array($this->post_build))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             if($this->dependencies !== null && !is_array($this->dependencies))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
-                }
-
-                return False;
+                throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
             /** @var Dependency $dependency */
             foreach($this->dependencies as $dependency)
             {
-                try
-                {
-                    if (!$dependency->validate($throw_exception))
-                    {
-                        return False;
-                    }
-                }
-                catch (ConfigurationException $e)
-                {
-                    if($throw_exception)
-                    {
-                        throw $e;
-                    }
-
-                    return False;
-                }
+                $dependency->validate();
             }
 
             return True;
@@ -418,37 +369,30 @@
         {
             $results = [];
 
-            if($this->name !== null && $this->name !== '')
-            {
-                $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
-            }
+            $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
+            $results[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->output_path;
 
-            if($this->options !== null && count($this->options) > 0)
+            if(count($this->options) > 0)
             {
                 $results[($bytecode ? Functions::cbc('options') : 'options')] = $this->options;
             }
 
-            if($this->output_path !== null && $this->output_path !== '')
-            {
-                $results[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->output_path;
-            }
-
-            if($this->define_constants !== null && count($this->define_constants) > 0)
+            if(count($this->define_constants) > 0)
             {
                 $results[($bytecode ? Functions::cbc('define_constants') : 'define_constants')] = $this->define_constants;
             }
 
-            if($this->exclude_files !== null && count($this->exclude_files) > 0)
+            if(count($this->exclude_files) > 0)
             {
                 $results[($bytecode ? Functions::cbc('exclude_files') : 'exclude_files')] = $this->exclude_files;
             }
 
-            if($this->pre_build !== null && count($this->pre_build) > 0)
+            if(count($this->pre_build) > 0)
             {
                 $results[($bytecode ? Functions::cbc('pre_build') : 'pre_build')] = $this->pre_build;
             }
 
-            if($this->dependencies !== null && count($this->dependencies) > 0)
+            if(count($this->dependencies) > 0)
             {
                 $dependencies = array_map(static function(Dependency $Dependency) use ($bytecode)
                 {
@@ -463,22 +407,35 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): BuildConfiguration
         {
-            $object = new BuildConfiguration();
+            $name = Functions::array_bc($data, 'name');
+            $output_path = Functions::array_bc($data, 'output_path');
 
-            $object->name = Functions::array_bc($data, 'name');
+            if($name === null)
+            {
+                throw new ConfigurationException('Build configuration "name" property is required');
+            }
+
+            if($output_path === null)
+            {
+                throw new ConfigurationException('Build configuration "output_path" property is required');
+            }
+
+            $object = new BuildConfiguration($name, $output_path);
+
             $object->options = Functions::array_bc($data, 'options') ?? [];
-            $object->output_path = Functions::array_bc($data, 'output_path');
             $object->define_constants = Functions::array_bc($data, 'define_constants') ?? [];
             $object->exclude_files = Functions::array_bc($data, 'exclude_files') ?? [];
             $object->pre_build = Functions::array_bc($data, 'pre_build') ?? [];
             $object->post_build = Functions::array_bc($data, 'post_build') ?? [];
 
-            if(Functions::array_bc($data, 'dependencies') !== null)
+            $dependencies = Functions::array_bc($data, 'dependencies');
+            if($dependencies !== null)
             {
-                foreach(Functions::array_bc($data, 'dependencies') as $item)
+                foreach($dependencies as $item)
                 {
                     $object->dependencies[] = Dependency::fromArray($item);
                 }

@@ -31,6 +31,7 @@
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Build;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
@@ -43,7 +44,7 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
-    class ProjectConfiguration implements BytecodeObjectInterface
+    class ProjectConfiguration implements BytecodeObjectInterface, ValidatableObjectInterface
     {
         /**
          * The project configuration
@@ -60,6 +61,13 @@
         private $assembly;
 
         /**
+         * Build configuration for the project
+         *
+         * @var Build
+         */
+        private $build;
+
+        /**
          * An array of execution policies
          *
          * @var ExecutionPolicy[]
@@ -74,21 +82,14 @@
         private $installer;
 
         /**
-         * Build configuration for the project
-         *
-         * @var Build
-         */
-        private $build;
-
-        /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(Project $project, Assembly $assembly, Build $build)
         {
-            $this->project = new Project();
-            $this->assembly = new Assembly();
+            $this->project = $project;
+            $this->assembly = $assembly;
+            $this->build = $build;
             $this->execution_policies = [];
-            $this->build = new Build();
         }
 
         /**
@@ -172,55 +173,19 @@
         }
 
         /**
-         * Validates the object for any errors
-         *
-         * @param bool $throw_exception
-         * @return bool
-         * @throws ConfigurationException
-         * @throws NotSupportedException
+         * @inheritDoc
          */
-        public function validate(bool $throw_exception=True): bool
+        public function validate(): void
         {
-            if(!$this->project->validate($throw_exception))
-            {
-                return false;
-            }
-
-            if(!$this->assembly->validate($throw_exception))
-            {
-                return false;
-            }
-
-            if(!$this->build->validate($throw_exception))
-            {
-                return false;
-            }
-
-
-            try
-            {
-                $this->getRequiredExecutionPolicies(BuildConfigurationValues::ALL);
-            }
-            catch(Exception $e)
-            {
-                if($throw_exception)
-                {
-                    throw $e;
-                }
-
-                return false;
-            }
+            $this->project->validate();
+            $this->assembly->validate();
+            $this->build->validate();
 
             if($this->build->getMain() !== null)
             {
                 if($this->execution_policies === null || count($this->execution_policies) === 0)
                 {
-                    if($throw_exception)
-                    {
-                        throw new ConfigurationException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->getMain()));
-                    }
-
-                    return false;
+                    throw new ConfigurationException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->getMain()));
                 }
 
 
@@ -236,25 +201,14 @@
 
                 if(!$found)
                 {
-                    if($throw_exception)
-                    {
-                        throw new ConfigurationException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->getMain()));
-                    }
-                    return false;
+                    throw new ConfigurationException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->getMain()));
                 }
 
                 if($this->build->getMain() === BuildConfigurationValues::ALL)
                 {
-                    if($throw_exception)
-                    {
-                        throw new ConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
-                    }
-
-                    return false;
+                    throw new ConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
                 }
             }
-
-            return true;
         }
 
         /**
@@ -301,9 +255,8 @@
             // Check the installer by batch
             if($this->installer !== null)
             {
-                $array_rep = $this->installer->toArray();
                 /** @var string[] $value */
-                foreach($array_rep as $key => $value)
+                foreach($this->installer->toArray() as $key => $value)
                 {
                     if($value === null || count($value) === 0)
                     {
@@ -510,17 +463,8 @@
          */
         public function toArray(bool $bytecode=false): array
         {
-            $execution_policies = null;
-            if($this->execution_policies !== null)
-            {
-                $execution_policies = [];
-                foreach($this->execution_policies as $executionPolicy)
-                {
-                    $execution_policies[$executionPolicy->getName()] = $executionPolicy->toArray($bytecode);
-                }
-            }
-
             $results = [];
+
             if($this->project !== null)
             {
                 $results[($bytecode ? Functions::cbc('project') : 'project')] = $this->project->toArray($bytecode);
@@ -541,8 +485,15 @@
                 $results[($bytecode ? Functions::cbc('installer') : 'installer')] = $this->installer->toArray($bytecode);
             }
 
-            if($execution_policies !== null && count($execution_policies) > 0)
+            if(count($this->execution_policies) > 0)
             {
+                $execution_policies = [];
+
+                foreach($this->execution_policies as $executionPolicy)
+                {
+                    $execution_policies[$executionPolicy->getName()] = $executionPolicy->toArray($bytecode);
+                }
+
                 $results[($bytecode ? Functions::cbc('execution_policies') : 'execution_policies')] = $execution_policies;
             }
 
@@ -558,30 +509,37 @@
          */
         public static function fromArray(array $data): ProjectConfiguration
         {
-            $object = new self();
-
-            $object->project = Functions::array_bc($data, 'project');
-            if($object->project !== null)
+            $project = Functions::array_bc($data, 'project');
+            if($project !== null)
             {
-                $object->project = Project::fromArray($object->project);
+                $project = Project::fromArray($project);
             }
             else
             {
                 throw new ConfigurationException('The project configuration is missing the required property "project" in the root of the configuration');
             }
 
-            $object->assembly = Functions::array_bc($data, 'assembly');
-            if($object->assembly !== null)
+            $assembly = Functions::array_bc($data, 'assembly');
+            if($assembly !== null)
             {
-                $object->assembly = Assembly::fromArray($object->assembly);
+                $assembly = Assembly::fromArray($assembly);
+            }
+            else
+            {
+                throw new ConfigurationException('The project configuration is missing the required property "assembly" in the root of the configuration');
             }
 
-
-            $object->build = Functions::array_bc($data, 'build');
-            if($object->build !== null)
+            $build = Functions::array_bc($data, 'build');
+            if($build !== null)
             {
-                $object->build = Build::fromArray($object->build);
+                $build = Build::fromArray($build);
             }
+            else
+            {
+                throw new ConfigurationException('The project configuration is missing the required property "build" in the root of the configuration');
+            }
+
+            $object = new self($project, $assembly, $build);
 
             $object->installer = Functions::array_bc($data, 'installer');
             if($object->installer !== null)
@@ -592,11 +550,9 @@
             $execution_policies = Functions::array_bc($data, 'execution_policies');
             if(!is_null($execution_policies))
             {
-                $object->execution_policies = [];
-                foreach(Functions::array_bc($data, 'execution_policies') as $execution_policy)
-                {
-                    $object->execution_policies[] = ExecutionPolicy::fromArray($execution_policy);
-                }
+                $object->execution_policies = array_map(static function($policy) {
+                    return ExecutionPolicy::fromArray($policy);
+                }, $execution_policies);
             }
 
             return $object;

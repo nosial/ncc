@@ -46,13 +46,6 @@
         private $runner;
 
         /**
-         * The message to display when the policy is invoked
-         *
-         * @var string|null
-         */
-        private $message;
-
-        /**
          * The execution process of the policy
          *
          * @var Execute
@@ -62,9 +55,16 @@
         /**
          * The configuration for exit handling
          *
-         * @var ExitHandlers
+         * @var ExitHandlers|null
          */
         private $exit_handlers;
+
+        /**
+         * The message to display when the policy is invoked
+         *
+         * @var string|null
+         */
+        private $message;
 
         /**
          * @return string

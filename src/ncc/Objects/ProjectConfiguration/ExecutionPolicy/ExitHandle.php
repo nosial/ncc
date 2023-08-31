@@ -24,11 +24,26 @@
 
     namespace ncc\Objects\ProjectConfiguration\ExecutionPolicy;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
     class ExitHandle implements BytecodeObjectInterface
     {
+        /**
+         * The name of another execution policy to execute (optionally) when this exit handle is triggered
+         *
+         * @var string
+         */
+        private $run;
+
+        /**
+         * The exit code that needs to be returned from the process to trigger this handle
+         *
+         * @var int
+         */
+        private $exit_code;
+
         /**
          * The message to display when the handle is triggered
          *
@@ -47,24 +62,11 @@
          */
         private $end_process;
 
-        /**
-         * The name of another execution policy to execute (optionally) when this exit handle is triggered
-         *
-         * @var string|null
-         */
-        private $run;
-
-        /**
-         * The exit code that needs to be returned from the process to trigger this handle
-         *
-         * @var int
-         */
-        private $exit_code;
-
-        public function __construct()
+        public function __construct(string $run, int $exit_code=0)
         {
+            $this->run = $run;
+            $this->exit_code = $exit_code;
             $this->end_process = false;
-            $this->exit_code = 0;
         }
 
         /**
@@ -161,15 +163,21 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): ExitHandle
         {
-            $object = new self();
+            $run = Functions::array_bc($data, 'run');
+            if($run === null)
+            {
+                throw new ConfigurationException('Exit handle "run" property is required');
+            }
 
-            $object->message = Functions::array_bc($data, 'message');
+            $object = new self($run, (Functions::array_bc($data, 'exit_code') ?? 0));
+
             $object->end_process = Functions::array_bc($data, 'end_process') ?? false;
+            $object->message = Functions::array_bc($data, 'message');
             $object->run = Functions::array_bc($data, 'run');
-            $object->exit_code = Functions::array_bc($data, 'exit_code') ?? 0;
 
             return $object;
         }

@@ -25,6 +25,7 @@
     namespace ncc\Objects\ProjectConfiguration\UpdateSource;
 
     use ncc\Enums\RemoteSourceType;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -57,6 +58,14 @@
          * @var bool
          */
         private $ssl;
+
+        public function __construct(string $name, string $host, ?string $type=null, bool $ssl=false)
+        {
+            $this->name = $name;
+            $this->host = $host;
+            $this->type = $type;
+            $this->ssl = $ssl;
+        }
 
         /**
          * @return string
@@ -137,16 +146,30 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): Repository
         {
-            $object = new self();
+            $name = Functions::array_bc($data, 'name');
+            $type = Functions::array_bc($data, 'type');
+            $host = Functions::array_bc($data, 'host');
+            $ssl = Functions::array_bc($data, 'ssl') ?? false;
 
-            $object->name = Functions::array_bc($data, 'name');
-            $object->type = Functions::array_bc($data, 'type') ?? RemoteSourceType::UNKNOWN;
-            $object->host = Functions::array_bc($data, 'host');
-            $object->ssl = Functions::array_bc($data, 'ssl') ?? false;
+            if($name === null)
+            {
+                throw new ConfigurationException("The UpdateSource's Repository property requires 'main'");
+            }
 
-            return $object;
+            if($type === null)
+            {
+                throw new ConfigurationException("The UpdateSource's Repository property requires 'type'");
+            }
+
+            if($host === null)
+            {
+                throw new ConfigurationException("The UpdateSource's Repository property requires 'host'");
+            }
+
+            return new self($name, $host, $type, $ssl);
         }
     }

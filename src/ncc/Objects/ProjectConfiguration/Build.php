@@ -27,6 +27,7 @@
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
@@ -35,7 +36,7 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
-    class Build implements BytecodeObjectInterface
+    class Build implements BytecodeObjectInterface, ValidatableObjectInterface
     {
         /**
          * The source directory that the compiler will target to generate a build
@@ -110,8 +111,10 @@
         /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(string $source_path, ?string $default_configuration=null)
         {
+            $this->source_path = $source_path;
+            $this->default_configuration = $default_configuration ?? BuildConfigurationValues::DEFAULT;
             $this->exclude_files = [];
             $this->options = [];
             $this->define_constants = [];
@@ -365,7 +368,7 @@
         }
 
         /**
-         * Adds a new pre build policy to the build
+         * Adds a new pre-build policy to the build
          *
          * @param string $policy
          * @return void
@@ -496,13 +499,9 @@
         }
 
         /**
-         * Validates the build configuration object
-         *
-         * @param bool $throw_exception
-         * @return bool
-         * @throws ConfigurationException
+         * @inheritDoc
          */
-        public function validate(bool $throw_exception=True): bool
+        public function validate(): void
         {
             // Check the defined constants
             foreach($this->define_constants as $name => $value)
@@ -519,46 +518,24 @@
             {
                 if(in_array($configuration->getName(), $build_configurations, true))
                 {
-                    if($throw_exception)
-                    {
-                        throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $configuration->getName()));
-                    }
-
-                    return false;
+                    throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $configuration->getName()));
                 }
             }
 
             foreach($this->build_configurations as $configuration)
             {
-                if (!$configuration->validate($throw_exception))
-                {
-                    return false;
-                }
+                $configuration->validate();
             }
 
             if($this->default_configuration === null)
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException('The default build configuration is not set');
-                }
-
-                return false;
+                throw new ConfigurationException('The default build configuration is not set');
             }
 
             if(!Validate::nameFriendly($this->default_configuration))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('The default build configuration name "%s" is not valid', $this->default_configuration));
-                }
-
-                return false;
+                throw new ConfigurationException(sprintf('The default build configuration name "%s" is not valid', $this->default_configuration));
             }
-
-            $this->getBuildConfiguration($this->default_configuration);
-
-            return true;
         }
 
         /**
@@ -621,10 +598,12 @@
            if($this->build_configurations !== null && count($this->build_configurations) > 0)
            {
                 $configurations = [];
+
                 foreach($this->build_configurations as $configuration)
                 {
                      $configurations[] = $configuration->toArray($bytecode);
                 }
+
                 $results[($bytecode ? Functions::cbc('configurations') : 'configurations')] = $configurations;
            }
 
@@ -636,31 +615,38 @@
          *
          * @param array $data
          * @return Build
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): Build
         {
-            $object = new self();
+            $source_path = Functions::array_bc($data, 'source_path');
+            if($source_path === null)
+            {
+                throw new ConfigurationException('The property \'project.build.source_path\' must not be null.');
+            }
 
-            $object->source_path = Functions::array_bc($data, 'source_path');
-            $object->default_configuration = Functions::array_bc($data, 'default_configuration');
+            $object = new self($source_path, Functions::array_bc($data, 'default_configuration'));
+
             $object->exclude_files = (Functions::array_bc($data, 'exclude_files') ?? []);
             $object->options = (Functions::array_bc($data, 'options') ?? []);
-            $object->main = Functions::array_bc($data, 'main');
             $object->define_constants = (Functions::array_bc($data, 'define_constants') ?? []);
             $object->pre_build = (Functions::array_bc($data, 'pre_build') ?? []);
             $object->post_build = (Functions::array_bc($data, 'post_build') ?? []);
+            $object->main = Functions::array_bc($data, 'main');
 
-            if(Functions::array_bc($data, 'dependencies') !== null)
+            $dependencies = Functions::array_bc($data, 'dependencies');
+            if($dependencies !== null)
             {
-                foreach(Functions::array_bc($data, 'dependencies') as $dependency)
+                foreach($dependencies as $dependency)
                 {
                     $object->dependencies[] = Dependency::fromArray($dependency);
                 }
             }
 
-            if(Functions::array_bc($data, 'configurations') !== null)
+            $configurations = Functions::array_bc($data, 'configurations');
+            if($configurations !== null)
             {
-                foreach(Functions::array_bc($data, 'configurations') as $configuration)
+                foreach($configurations as $configuration)
                 {
                     $object->build_configurations[] = BuildConfiguration::fromArray($configuration);
                 }

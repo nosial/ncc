@@ -24,8 +24,11 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Enums\RemoteSourceType;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
 
@@ -33,7 +36,7 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
-    class Dependency implements BytecodeObjectInterface
+    class Dependency implements BytecodeObjectInterface, ValidatableObjectInterface
     {
         /**
          * @var string
@@ -41,9 +44,14 @@
         private $name;
 
         /**
-         * @var string|null
+         * @var string
          */
         private $source_type;
+
+        /**
+         * @var string
+         */
+        private $version;
 
         /**
          * @var string|null
@@ -51,9 +59,20 @@
         private $source;
 
         /**
-         * @var string|null
+         * Dependency constructor.
+         *
+         * @param string $name
+         * @param string|null $source_type
+         * @param string|null $source
+         * @param string|null $version
          */
-        private $version;
+        public function __construct(string $name, ?string $source_type=null, ?string $source=null, ?string $version=null)
+        {
+            $this->name = $name;
+            $this->source_type = $source_type ?? RemoteSourceType::NONE;
+            $this->version = $version ?? Versions::LATEST;
+            $this->source = $source;
+        }
 
         /**
          * Returns the name of the dependency
@@ -79,22 +98,23 @@
         /**
          * Optional. Returns the type of source from where ncc can fetch the dependency from
          *
-         * @return string|null
+         * @return string
          */
-        public function getSourceType(): ?string
+        public function getSourceType(): string
         {
             return $this->source_type;
         }
 
         /**
-         * Sets the type of source from where ncc can fetch the dependency from
+         * Sets the type of source from where ncc can fetch the dependency from,
+         * if the source type is not defined, it will be set to RemoteSourceType::NONE
          *
          * @param string|null $source_type
          * @return void
          */
         public function setSourceType(?string $source_type): void
         {
-            $this->source_type = $source_type;
+            $this->source_type = ($source_type ?? RemoteSourceType::NONE);
         }
 
         /**
@@ -125,50 +145,35 @@
          */
         public function getVersion(): string
         {
-            return $this->version ?? 'latest';
+            return $this->version ?? Versions::LATEST;
         }
 
         /**
          * Returns the required version of the dependency or null if no version is required
+         * if the version is not defined, it will be set to Versions::LATEST
          *
          * @param string|null $version
          * @return void
          */
         public function setVersion(?string $version): void
         {
-            $this->version = $version;
+            $this->version = ($version ?? Versions::LATEST);
         }
 
         /**
-         * Validates the dependency configuration
-         *
-         * @param bool $throw_exception
-         * @return bool
-         * @throws ConfigurationException
+         * @inheritDoc
          */
-        public function validate(bool $throw_exception): bool
+        public function validate(): void
         {
             if(!Validate::packageName($this->name))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid dependency name "%s"', $this->name));
-                }
-
-                return false;
+                throw new ConfigurationException(sprintf('Invalid dependency name "%s"', $this->name));
             }
 
-            if($this->version !== null && !Validate::version($this->version))
+            if($this->version !== Versions::LATEST && !Validate::version($this->version))
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException(sprintf('Invalid dependency version "%s"', $this->version));
-                }
-
-                return false;
+                throw new ConfigurationException(sprintf('Invalid dependency version "%s"', $this->version));
             }
-
-            return true;
         }
 
         /**
@@ -179,20 +184,12 @@
             $results = [];
 
             $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
-
-            if($this->source_type !== null && $this->source_type !== '')
-            {
-                $results[($bytecode ? Functions::cbc('source_type') : 'source_type')] = $this->source_type;
-            }
+            $results[($bytecode ? Functions::cbc('source_type') : 'source_type')] = $this->source_type;
+            $results[($bytecode ? Functions::cbc('version') : 'version')] = $this->version;
 
             if($this->source !== null && $this->source !== '')
             {
                 $results[($bytecode ? Functions::cbc('source') : 'source')] = $this->source;
-            }
-
-            if($this->version !== null && $this->version !== '')
-            {
-                $results[($bytecode ? Functions::cbc('version') : 'version')] = $this->version;
             }
 
             return $results;
@@ -200,16 +197,21 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): Dependency
         {
-            $object = new self();
+            $name = Functions::array_bc($data, 'name');
 
-            $object->name = Functions::array_bc($data, 'name');
-            $object->source_type = Functions::array_bc($data, 'source_type');
-            $object->source = Functions::array_bc($data, 'source');
-            $object->version = Functions::array_bc($data, 'version');
+            if($name === null)
+            {
+                throw new ConfigurationException('Dependency name is required');
+            }
 
-            return $object;
+            return new self($name,
+                Functions::array_bc($data, 'source_type'),
+                Functions::array_bc($data, 'source'),
+                Functions::array_bc($data, 'version')
+            );
         }
     }

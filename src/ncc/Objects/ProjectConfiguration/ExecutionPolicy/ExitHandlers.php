@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\ExecutionPolicy;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -112,6 +113,7 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): ExitHandlers
         {

@@ -32,44 +32,57 @@
         /**
          * An array of execution policies to execute pre-installation
          *
-         * @var string[]|null
+         * @var string[]
          */
         private $pre_install;
 
         /**
          * An array of execution policies to execute post-installation
          *
-         * @var string[]|null
+         * @var string[]
          */
         private $post_install;
 
         /**
          * An array of execution policies to execute pre-uninstallation
          *
-         * @var string[]|null
+         * @var string[]
          */
         private $pre_uninstall;
 
         /**
          * An array of execution policies to execute post-uninstallation
          *
-         * @var string[]|null
+         * @var string[]
          */
         private $post_uninstall;
 
         /**
          * An array of execution policies to execute pre-update
          *
-         * @var string[]|null
+         * @var string[]
          */
         private $pre_update;
 
         /**
          * An array of execution policies to execute post-update
          *
-         * @var string[]|null
+         * @var string[]
          */
         private $post_update;
+
+        /**
+         * Installer constructor.
+         */
+        public function __construct()
+        {
+            $this->pre_install = [];
+            $this->post_install = [];
+            $this->pre_uninstall = [];
+            $this->post_uninstall = [];
+            $this->pre_update = [];
+            $this->post_update = [];
+        }
 
         /**
          * @inheritDoc
@@ -78,32 +91,32 @@
         {
             $results = [];
 
-            if($this->pre_install !== null && count($this->pre_install) > 0)
+            if(count($this->pre_install) > 0)
             {
                 $results[($bytecode ? Functions::cbc('pre_install') : 'pre_install')] = $this->pre_install;
             }
 
-            if($this->post_install !== null && count($this->post_install) > 0)
+            if(count($this->post_install) > 0)
             {
                 $results[($bytecode ? Functions::cbc('post_install') : 'post_install')] = $this->post_install;
             }
 
-            if($this->pre_uninstall !== null && count($this->pre_uninstall) > 0)
+            if(count($this->pre_uninstall) > 0)
             {
                 $results[($bytecode ? Functions::cbc('pre_uninstall') : 'pre_uninstall')] = $this->pre_uninstall;
             }
 
-            if($this->post_uninstall !== null && count($this->post_uninstall) > 0)
+            if(count($this->post_uninstall) > 0)
             {
                 $results[($bytecode ? Functions::cbc('post_uninstall') : 'post_uninstall')] = $this->post_uninstall;
             }
 
-            if($this->pre_update !== null && count($this->pre_update) > 0)
+            if(count($this->pre_update) > 0)
             {
                 $results[($bytecode ? Functions::cbc('pre_update') : 'pre_update')] = $this->pre_update;
             }
 
-            if($this->post_update !== null && count($this->post_update) > 0)
+            if(count($this->post_update) > 0)
             {
                 $results[($bytecode ? Functions::cbc('post_update') : 'post_update')] = $this->post_update;
             }
@@ -118,12 +131,12 @@
         {
             $object = new self();
 
-            $object->pre_install = Functions::array_bc($data, 'pre_install');
-            $object->post_install = Functions::array_bc($data, 'post_install');
-            $object->pre_uninstall = Functions::array_bc($data, 'pre_uninstall');
-            $object->post_uninstall = Functions::array_bc($data, 'post_uninstall');
-            $object->pre_update = Functions::array_bc($data, 'pre_update');
-            $object->post_update = Functions::array_bc($data, 'post_update');
+            $object->pre_install = Functions::array_bc($data, 'pre_install') ?? [];
+            $object->post_install = Functions::array_bc($data, 'post_install') ?? [];
+            $object->pre_uninstall = Functions::array_bc($data, 'pre_uninstall') ?? [];
+            $object->post_uninstall = Functions::array_bc($data, 'post_uninstall') ?? [];
+            $object->pre_update = Functions::array_bc($data, 'pre_update') ?? [];
+            $object->post_update = Functions::array_bc($data, 'post_update') ?? [];
 
             return $object;
         }

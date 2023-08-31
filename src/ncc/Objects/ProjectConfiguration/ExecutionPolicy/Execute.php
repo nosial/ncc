@@ -25,6 +25,7 @@
     namespace ncc\Objects\ProjectConfiguration\ExecutionPolicy;
 
     use ncc\Enums\SpecialConstants\RuntimeConstants;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -41,7 +42,7 @@
          * The working directory to execute the policy in, if not specified the
          * value "%CWD%" will be used as the default
          *
-         * @var string|null
+         * @var string
          */
         private $working_directory;
 
@@ -89,11 +90,14 @@
         /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(string $target, ?string $working_directory)
         {
-            $this->tty = false;
+            $this->target = $target;
+            $this->working_directory = $working_directory ?? RuntimeConstants::CWD;
+            $this->options = [];
+            $this->environment_variables = [];
             $this->silent = false;
-            $this->working_directory = "%CWD%";
+            $this->tty = true;
         }
 
         /**
@@ -135,7 +139,7 @@
          */
         public function setWorkingDirectory(?string $working_directory): void
         {
-            $this->working_directory = $working_directory;
+            $this->working_directory = $working_directory ?? RuntimeConstants::CWD;
         }
 
         /**
@@ -175,7 +179,7 @@
          */
         public function isSilent(): bool
         {
-            return $this->silent ?? false;
+            return $this->silent;
         }
 
         /**
@@ -191,7 +195,7 @@
          */
         public function isTty(): bool
         {
-            return $this->tty ?? true;
+            return $this->tty;
         }
 
         /**
@@ -234,8 +238,6 @@
             $this->idle_timeout = $idle_timeout;
         }
 
-
-
         /**
          * @inheritDoc
          */
@@ -243,44 +245,17 @@
         {
             $results = [];
 
+            $results[($bytecode ? Functions::cbc('working_directory') : 'working_directory')] = $this->working_directory;
+            $results[($bytecode ? Functions::cbc('options') : 'options')] = $this->options;
+            $results[($bytecode ? Functions::cbc('environment_variables') : 'environment_variables')] = $this->environment_variables;
+            $results[($bytecode ? Functions::cbc('silent') : 'silent')] = (bool)$this->silent;
+            $results[($bytecode ? Functions::cbc('tty') : 'tty')] = (bool)$this->tty;
+            $results[($bytecode ? Functions::cbc('timeout') : 'timeout')] = (int)$this->timeout;
+            $results[($bytecode ? Functions::cbc('idle_timeout') : 'idle_timeout')] = (int)$this->idle_timeout;
+
             if($this->target !== null)
             {
                 $results[($bytecode ? Functions::cbc('target') : 'target')] = $this->target;
-            }
-
-            if($this->working_directory !== null)
-            {
-                $results[($bytecode ? Functions::cbc('working_directory') : 'working_directory')] = $this->working_directory;
-            }
-
-            if($this->options !== null)
-            {
-                $results[($bytecode ? Functions::cbc('options') : 'options')] = $this->options;
-            }
-
-            if($this->environment_variables !== null)
-            {
-                $results[($bytecode ? Functions::cbc('environment_variables') : 'environment_variables')] = $this->environment_variables;
-            }
-
-            if($this->silent !== null)
-            {
-                $results[($bytecode ? Functions::cbc('silent') : 'silent')] = (bool)$this->silent;
-            }
-
-            if($this->tty !== null)
-            {
-                $results[($bytecode ? Functions::cbc('tty') : 'tty')] = (bool)$this->tty;
-            }
-
-            if($this->timeout !== null)
-            {
-                $results[($bytecode ? Functions::cbc('timeout') : 'timeout')] = (int)$this->timeout;
-            }
-
-            if($this->idle_timeout !== null)
-            {
-                $results[($bytecode ? Functions::cbc('idle_timeout') : 'idle_timeout')] = (int)$this->idle_timeout;
             }
 
             return $results;
@@ -288,13 +263,19 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): Execute
         {
-            $object = new self();
+            $target = Functions::array_bc($data, 'target');
 
-            $object->target = Functions::array_bc($data, 'target');
-            $object->working_directory = Functions::array_bc($data, 'working_directory');
+            if($target === null)
+            {
+                throw new ConfigurationException("The ExecutionPolicy's Execute target is required");
+            }
+
+            $object = new self($target, Functions::array_bc($data, 'working_directory'));
+
             $object->options = Functions::array_bc($data, 'options') ?? [];
             $object->environment_variables = Functions::array_bc($data, 'environment_variables') ?? [];
             $object->silent = Functions::array_bc($data, 'silent') ?? false;

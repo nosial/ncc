@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\UpdateSource\Repository;
     use ncc\Utilities\Functions;
@@ -43,6 +44,16 @@
          * @var Repository|null
          */
         private $repository;
+
+        /**
+         * @param string $source
+         * @param Repository|null $repository
+         */
+        public function __construct(string $source, ?Repository $repository=null)
+        {
+            $this->source = $source;
+            $this->repository = $repository;
+        }
 
         /**
          * @return string
@@ -77,10 +88,7 @@
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @param bool $bytecode
-         * @return array
+         * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
         {
@@ -90,25 +98,17 @@
             ];
         }
 
-
         /**
-         * Constructs object from an array representation
-         *
-         * @param array $data
-         * @return UpdateSource
+         * @inheritDoc
          */
         public static function fromArray(array $data): UpdateSource
         {
-            $object = new self();
-
-            $object->source = Functions::array_bc($data, 'source');
-            $object->repository = Functions::array_bc($data, 'repository');
-
-            if($object->repository !== null)
+            $source = Functions::array_bc($data, 'source');
+            if($source === null)
             {
-                $object->repository = Repository::fromArray($object->repository);
+                throw new ConfigurationException('The UpdateSource requires the "source" property');
             }
 
-            return $object;
+            return new self($source, Functions::array_bc($data, 'repository'));
         }
     }

@@ -21,6 +21,9 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Added new exception `OperationException` in `\ncc\Exceptions` to replace all generic related exceptions
  - Added a new interface class `SerializableObjectInterface` to implement serializable objects, `BytecodeObjectInterface`
    extends this interface to allow for serialization of compiled assets
+ - Added a new interface class `ValidatableObjectInterface` to implement validatable objects, this method will throw a
+   `ConfigurationException` if the object is not valid or a `NotSupportedException` if the object contains methods that
+   are not supported by the current version of ncc or project.
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -211,6 +214,13 @@ features and reduced the number of exceptions down to 15 exceptions.
  - `\ncc\Objects > ProjectConfiguration > fromArray()` Throws an `ConfigurationException` if the property 'project' is
    missing in the root configuration
  - `\ncc\Objects\ProjectConfiguration > Project > __construct()` now requires the parameter `$compiler`
+ - `\ncc\Objects\ProjectConfiguration > Dependency > __construct()` now requires the parameters `$name`, `$source_type`,
+   `$source` and `$version`
+ - `\ncc\Objects\ProjectConfiguration > Dependency > fromArray()` Throws an `ConfigurationException` if the property
+   `name` is missing in the dependency configuration
+ - Also updated a bunch of objects in a similar fashion to the ones above, (BuildConfiguration, Execute, ExitHandle, 
+   ExitHandler, Repository, Assembly, Build, Dependency, ExecutionPolicy, Installer, Project, UpdateSource) I'm not
+   going to list them all here, but you can find them in the commit history.
 
 
 ### Removed
