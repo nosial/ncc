@@ -551,6 +551,10 @@
 
         /**
          * @inheritDoc
+         * @param array $data
+         * @return ProjectConfiguration
+         * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         public static function fromArray(array $data): ProjectConfiguration
         {
@@ -560,6 +564,10 @@
             if($object->project !== null)
             {
                 $object->project = Project::fromArray($object->project);
+            }
+            else
+            {
+                throw new ConfigurationException('The project configuration is missing the required property "project" in the root of the configuration');
             }
 
             $object->assembly = Functions::array_bc($data, 'assembly');

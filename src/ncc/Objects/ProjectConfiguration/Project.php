@@ -53,9 +53,9 @@
         /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(Compiler $compiler)
         {
-            $this->compiler = new Compiler();
+            $this->compiler = $compiler;
             $this->options = [];
         }
 
@@ -129,17 +129,13 @@
         /**
          * Validates the Project object
          *
-         * @param bool $throw_exception
          * @return bool
          * @throws ConfigurationException
          * @throws NotSupportedException
          */
-        public function validate(bool $throw_exception=True): bool
+        public function validate(): bool
         {
-            if(!$this->compiler->validate($throw_exception))
-            {
-                return False;
-            }
+            $this->compiler->validate();
 
             return True;
         }
@@ -170,22 +166,28 @@
          *
          * @param array $data
          * @return Project
+         * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         public static function fromArray(array $data): Project
         {
-            $object = new self();
-
             if(Functions::array_bc($data, 'compiler') !== null)
             {
-                $object->compiler = Compiler::fromArray(Functions::array_bc($data, 'compiler'));
+                $object = new self(Compiler::fromArray(Functions::array_bc($data, 'compiler')));
             }
-
-            if(Functions::array_bc($data, 'options') !== null)
+            else
             {
-                $object->options = Functions::array_bc($data, 'options');
+                throw new ConfigurationException('The project configuration is missing the required property "compiler" in the project section.');
             }
 
-            if(Functions::array_bc($data, 'update_source') !== null)
+            $object->options = Functions::array_bc($data, 'options');
+            if($object->options === null)
+            {
+                $object->options = [];
+            }
+
+            $object->update_source = Functions::array_bc($data, 'update_source');
+            if($object->update_source !== null)
             {
                 $object->update_source = UpdateSource::fromArray(Functions::array_bc($data, 'update_source'));
             }

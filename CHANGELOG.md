@@ -199,6 +199,18 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Updated class `\ncc\Objects > RemotePackageInput` to use method calls rather than direct property access
  - Updated class `\ncc\Objects > RepositoryQueryResults` to use method calls rather than direct property access
  - Updated class `\ncc\Objects > Vault` to use method calls rather than direct property access
+ - `\ncc\Objects\ProjectConfiguration > Compiler`: Added Public Constructor to automatically determine the minimum and
+   maximum supported compiler version for the selected extension
+ - `\ncc\Objects\ProjectConfiguration > Compiler > fromArray()` throws an ConfigurationException if the property `extension` is null
+ - `\ncc\Objects\ProjectConfiguration > Compiler > fromArray()` throws an NotSupportedException if the `extension` uses an
+   unsupported compiler extension
+ - `\ncc\Objects\ProjectConfiguration > Compiler > validate()` No longer accepts `$throw_exception` and throws an 
+   `ConfigurationException` or `NotSupportedException` if the validation fails, otherwise it returns `True`.
+ - `\ncc\Objects\ProjectConfiguration > Project > fromArray()` Throws an `ConfigurationException` if the property `compiler` 
+   is missing in the project configuration
+ - `\ncc\Objects > ProjectConfiguration > fromArray()` Throws an `ConfigurationException` if the property 'project' is
+   missing in the root configuration
+ - `\ncc\Objects\ProjectConfiguration > Project > __construct()` now requires the parameter `$compiler`
 
 
 ### Removed
@@ -261,6 +273,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Removed unused `scope` property from `\ncc\Objects\ProjectConfiguration > Build`
  - Removed unused `\ncc\Objects > NccUpdateInformation`
  - Removed unused `\ncc\Objects > PhpConfiguration`
+ - Removed parameter `$throw_exception` from `\ncc\Objects\ProjectConfiguration > Project > validate()`
 
 
 

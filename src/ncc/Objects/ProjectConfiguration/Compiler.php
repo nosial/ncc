@@ -1,4 +1,5 @@
 <?php
+
     /*
      * Copyright (c) Nosial 2022-2023, all rights reserved.
      *
@@ -20,6 +21,7 @@
      *
      */
 
+    /** @noinspection PhpUnused */
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Objects\ProjectConfiguration;
@@ -59,6 +61,44 @@
          * @var string
          */
         private $maximum_version;
+
+        /**
+         * Compiler constructor.
+         *
+         * @param string $extension
+         * @param string|null $minimum_version
+         * @param string|null $maximum_version
+         * @throws NotSupportedException
+         */
+        public function __construct(string $extension, ?string $minimum_version=null, ?string $maximum_version=null)
+        {
+            $extension = strtolower($extension);
+
+            /** @noinspection DegradedSwitchInspection */
+            switch($extension)
+            {
+                case CompilerExtensions::PHP:
+
+                    if($minimum_version === null)
+                    {
+                        $minimum_version = CompilerExtensionSupportedVersions::PHP[0];
+                    }
+
+                    if($maximum_version === null)
+                    {
+                        $maximum_version = CompilerExtensionSupportedVersions::PHP[count(CompilerExtensionSupportedVersions::PHP) - 1];
+                    }
+
+                    break;
+
+                default:
+                    throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported in ncc', $extension));
+            }
+
+            $this->extension = $extension;
+            $this->minimum_version = $minimum_version;
+            $this->maximum_version = $maximum_version;
+        }
 
         /**
          * @return string
@@ -111,53 +151,32 @@
         /**
          * Validates the compiler object
          *
-         * @param bool $throw_exception
          * @return bool
          * @throws ConfigurationException
          * @throws NotSupportedException
          */
-        public function validate(bool $throw_exception=True): bool
+        public function validate(): bool
         {
             if($this->extension === null)
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException('The property \'extension\' must not be null.');
-                }
-
-                return False;
+                throw new ConfigurationException('The property \'extension\' must not be null.');
             }
 
             if($this->minimum_version === null)
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException('The property \'minimum_version\' must not be null.');
-                }
-
-                return False;
+                throw new ConfigurationException('The property \'minimum_version\' must not be null.');
             }
 
             if($this->maximum_version === null)
             {
-                if($throw_exception)
-                {
-                    throw new ConfigurationException('The property \'maximum_version\' must not be null.');
-                }
-
-                return False;
+                throw new ConfigurationException('The property \'maximum_version\' must not be null.');
             }
 
             try
             {
                 if(VersionComparator::compareVersion($this->minimum_version, $this->maximum_version) === 1)
                 {
-                    if($throw_exception)
-                    {
-                        throw new ConfigurationException('The minimum version cannot be greater version number than the maximum version');
-                    }
-
-                    return False;
+                    throw new ConfigurationException('The minimum version cannot be greater version number than the maximum version');
                 }
             }
             catch (Exception $e)
@@ -165,40 +184,32 @@
                 throw new ConfigurationException('Version comparison failed: ' . $e->getMessage());
             }
 
-            if(!in_array($this->extension, CompilerExtensions::ALL))
-             {
-                if($throw_exception)
-                {
-                    throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
-                }
+            /** @noinspection InArrayMissUseInspection */
+            if(!in_array($this->extension, CompilerExtensions::ALL, true))
+            {
+                throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
+            }
 
-                return False;
-             }
-
+            /** @noinspection DegradedSwitchInspection */
             switch($this->extension)
             {
                 case CompilerExtensions::PHP:
-                    if(!in_array($this->maximum_version, CompilerExtensionSupportedVersions::PHP))
+
+                    if(!in_array($this->maximum_version, CompilerExtensionSupportedVersions::PHP, true))
                     {
-                        if($throw_exception)
-                        {
-                            throw new NotSupportedException('The MaximumVersion does not support version ' . $this->maximum_version . ' for the extension ' . $this->extension);
-                        }
-                        return False;
+                        throw new NotSupportedException('The property "project.compiler.maximum_version" does not support version ' . $this->maximum_version . ' for the extension ' . $this->extension);
+
                     }
 
-                    if(!in_array($this->minimum_version, CompilerExtensionSupportedVersions::PHP))
+                    if(!in_array($this->minimum_version, CompilerExtensionSupportedVersions::PHP, true))
                     {
-                        if($throw_exception)
-                        {
-                            throw new NotSupportedException('The MinimumVersion does not support version ' . $this->minimum_version . ' for the extension ' . $this->extension);
-                        }
-                        return False;
+                        throw new NotSupportedException('The property "project.compiler.minimum_version" does not support version ' . $this->minimum_version . ' for the extension ' . $this->extension);
                     }
+
                     break;
 
                 default:
-                    throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
+                    throw new NotSupportedException('The compiler extension "' . $this->extension . '" is not supported by ncc');
             }
 
              return True;
@@ -230,15 +241,21 @@
 
         /**
          * @inheritDoc
+         * @param array $data
+         * @return Compiler
+         * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         public static function fromArray(array $data): Compiler
         {
-            $object = new self();
+            if(Functions::array_bc($data, 'extension') === null)
+            {
+                throw new ConfigurationException('The property \'project.compiler.extension\' must not be null.');
+            }
 
-            $object->maximum_version = Functions::array_bc($data, 'maximum_version');
-            $object->extension = Functions::array_bc($data, 'extension');
-            $object->minimum_version = Functions::array_bc($data, 'minimum_version');
-            
-            return $object;
+            return new self(Functions::array_bc($data, 'extension'),
+                Functions::array_bc($data, 'maximum_version'),
+                Functions::array_bc($data, 'minimum_version')
+            );
         }
     }

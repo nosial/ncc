@@ -208,15 +208,14 @@
          * Attempts to load the project configuration
          *
          * @return void
-         * @throws ConfigurationException
          * @throws IOException
          * @throws PathNotFoundException
          */
         public function load(): void
         {
-            if(!file_exists($this->project_file_path) && !is_file($this->project_file_path))
+            if(!is_file($this->project_file_path))
             {
-                throw new ConfigurationException('The project configuration file \'' . $this->project_file_path . '\' was not found');
+                throw new PathNotFoundException($this->project_file_path);
             }
 
             $this->project_configuration = ProjectConfiguration::fromFile($this->project_file_path);
