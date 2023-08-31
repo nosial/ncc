@@ -2,10 +2,10 @@
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
-    namespace ExampleLibrary;
+    namespace old_tests\example_project\src\ExampleLibrary;
 
-    use ExampleLibrary\Exceptions\FileNotFoundException;
-    use ExampleLibrary\Objects\Person;
+    use old_tests\example_project\src\ExampleLibrary\Exceptions\FileNotFoundException;
+    use old_tests\example_project\src\ExampleLibrary\Objects\Person;
 
     class ExampleLibrary
     {
@@ -44,7 +44,7 @@
          *
          * @param int $amount
          * @return array
-         * @throws Exceptions\InvalidNameException
+         * @throws \old_tests\example_project\src\ExampleLibrary\Exceptions\InvalidNameException
          */
         public function generatePeople(int $amount=10): array
         {

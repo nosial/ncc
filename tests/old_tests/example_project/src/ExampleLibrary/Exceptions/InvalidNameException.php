@@ -2,7 +2,7 @@
 
     /** @noinspection PhpPropertyOnlyWrittenInspection */
 
-    namespace ExampleLibrary\Exceptions;
+    namespace old_tests\example_project\src\ExampleLibrary\Exceptions;
 
     use Exception;
     use Throwable;

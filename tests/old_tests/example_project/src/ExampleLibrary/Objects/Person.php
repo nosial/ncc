@@ -1,8 +1,8 @@
 <?php
 
-    namespace ExampleLibrary\Objects;
+    namespace old_tests\example_project\src\ExampleLibrary\Objects;
 
-    use ExampleLibrary\Exceptions\InvalidNameException;
+    use old_tests\example_project\src\ExampleLibrary\Exceptions\InvalidNameException;
 
     class Person
     {
