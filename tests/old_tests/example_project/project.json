@@ -1,0 +1,154 @@
+{
+    "project": {
+        "compiler": {
+            "extension": "php",
+            "minimum_version": "8.0",
+            "maximum_version": "8.1"
+        },
+        "update_source": {
+            "source": "Nosial/ExampleLibrary=latest@n64",
+            "repository": {
+                "name": "n64",
+                "type": "gitlab",
+                "host": "git.n64.cc",
+                "ssl": true
+            }
+        },
+        "options": []
+    },
+    "assembly": {
+        "name": "ExampleLibrary",
+        "package": "com.example.library",
+        "description": null,
+        "company": null,
+        "product": null,
+        "copyright": null,
+        "trademark": null,
+        "version": "1.0.0",
+        "uid": "d99f9236-53e4-11ed-ba40-ad95ec91b530"
+    },
+    "execution_policies": {
+        "bash": {
+            "runner": "bash",
+            "message": "Running Bash Script",
+            "exec": {
+                "target": "scripts/unit.bash",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        },
+        "lua": {
+            "runner": "lua",
+            "message": "Running Lua Script",
+            "exec": {
+                "target": "scripts/unit.lua",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        },
+        "php": {
+            "runner": "php",
+            "message": "Running PHP Script",
+            "exec": {
+                "target": "scripts/unit.php",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        },
+        "perl": {
+            "runner": "perl",
+            "message": "Running Perl Script",
+            "exec": {
+                "target": "scripts/unit.pl",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        },
+        "python": {
+            "runner": "python",
+            "message": "Running Python Script",
+            "exec": {
+                "target": "scripts/unit.py",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        },
+        "python3": {
+            "runner": "python3",
+            "message": "Running Python3 Script",
+            "exec": {
+                "target": "scripts/unit.py",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        },
+        "shell": {
+            "runner": "sh",
+            "message": "Running Shell Script",
+            "exec": {
+                "target": "scripts/unit.sh",
+                "working_directory": "%INSTALL_PATH.SRC%",
+                "silent": false,
+                "tty": true
+            }
+        }
+    },
+    "installer": {
+        "pre_install": [],
+        "post_install": [],
+        "pre_update": [],
+        "post_update": [],
+        "pre_uninstall": [],
+        "post_uninstall": []
+    },
+    "build": {
+        "source_path": "src/ExampleLibrary",
+        "default_configuration": "debug",
+        "exclude_files": [],
+        "options": [],
+        "main": "main",
+        "create_symlink": true,
+        "define_constants": {
+            "ASSEMBLY_NAME": "%ASSEMBLY.NAME%",
+            "ASSEMBLY_PACKAGE": "%ASSEMBLY.PACKAGE%",
+            "ASSEMBLY_VERSION": "%ASSEMBLY.VERSION%",
+            "ASSEMBLY_UID": "%ASSEMBLY.UID%"
+        },
+        "pre_build": [],
+        "post_build": [],
+        "dependencies": [],
+        "configurations": [
+            {
+                "name": "debug",
+                "options": [],
+                "output_path": "build/debug",
+                "define_constants": {
+                    "DEBUG": "1"
+                },
+                "main_execution": "hello_world",
+                "exclude_files": [],
+                "pre_build": [],
+                "post_build": [],
+                "dependencies": []
+            },
+            {
+                "name": "release",
+                "options": [],
+                "output_path": "build/release",
+                "define_constants": {
+                    "DEBUG": "0"
+                },
+                "exclude_files": [],
+                "pre_build": [],
+                "post_build": [],
+                "dependencies": []
+            }
+        ]
+    }
+}
