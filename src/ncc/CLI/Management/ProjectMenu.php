@@ -34,7 +34,7 @@
         /**
          * Displays the main help menu
          *
-         * @param $args
+         * @param array $args
          * @return void
          */
         public static function start(array $args): void
@@ -57,7 +57,7 @@
         /**
          * Initializes a new project
          *
-         * @param $args
+         * @param array $args
          * @return void
          */
         private static function initializeProject(array $args): void
@@ -116,6 +116,12 @@
             Console::out(sprintf('Modify the project configuration in \'%s\'', $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'project.json'));
         }
 
+        /**
+         * Applies a template to the project
+         *
+         * @param array $args
+         * @return void
+         */
         private static function applyTemplate(array $args): void
         {
             if(isset($args['path']) || isset($args['p']))
@@ -123,7 +129,6 @@
                 $project_path = $args['path'] ?? $args['p'];
             }
             else
-            {
                 if(is_file(getcwd() . DIRECTORY_SEPARATOR . 'project.json'))
                 {
                     $project_path = getcwd();
@@ -133,7 +138,6 @@
                     Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
                     return;
                 }
-            }
 
             if(isset($args['name']) || isset($args['n']))
             {
