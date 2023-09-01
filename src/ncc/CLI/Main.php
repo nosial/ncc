@@ -190,7 +190,7 @@
          */
         private static function displayVersion(): void
         {
-            Console::out(sprintf('ncc version %s (%s)', ncc_VERSION_NUMBER, ncc_VERSION_BRANCH));
+            Console::out(sprintf('ncc version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
         }
 
         /**

@@ -1,37 +1,56 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Classes\NccExtension;
+    namespace ncc\Classes\NccExtension;
 
     use ncc\Enums\SpecialConstants\BuildConstants;
     use ncc\Enums\SpecialConstants\DateTimeConstants;
     use ncc\Enums\SpecialConstants\InstallConstants;
     use ncc\Enums\SpecialConstants\AssemblyConstants;
     use ncc\Enums\SpecialConstants\RuntimeConstants;
+    use ncc\Managers\ProjectManager;
     use ncc\Objects\InstallationPaths;
+    use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Assembly;
 
     class ConstantCompiler
     {
+        /**
+         * Compiles all constants (Usually used during pre-compiling time)
+         *
+         * @param ProjectConfiguration $project_configuration
+         * @param string|null $input
+         * @return string
+         */
+        public static function compileConstants(ProjectConfiguration $project_configuration, ?string $input): string
+        {
+            $input = self::compileAssemblyConstants($input, $project_configuration->getAssembly());
+            $input = self::compileBuildConstants($input);
+            $input = self::compileDateTimeConstants($input, time());
+            $input = self::compileRuntimeConstants($input);
+
+            return $input;
+        }
+
         /**
          * Compiles assembly constants about the project (Usually used during compiling time)
          *
@@ -46,15 +65,19 @@ namespace ncc\Classes\NccExtension;
                 return null;
             }
 
-            if($assembly->getName() !== null)
-            {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_NAME, $assembly->getName(), $input);
-            }
-
-            if($assembly->getPackage() !== null)
-            {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PACKAGE, $assembly->getPackage(), $input);
-            }
+            $input = str_replace(
+                [
+                    AssemblyConstants::ASSEMBLY_NAME,
+                    AssemblyConstants::ASSEMBLY_PACKAGE,
+                    AssemblyConstants::ASSEMBLY_VERSION,
+                    AssemblyConstants::ASSEMBLY_UID
+                ],
+                [
+                    $assembly->getName(),
+                    $assembly->getPackage(),
+                    $assembly->getVersion(),
+                    $assembly->getUuid()
+                ], $input);
 
             if($assembly->getDescription() !== null)
             {
@@ -80,17 +103,6 @@ namespace ncc\Classes\NccExtension;
             {
                 $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->getTrademark(), $input);
             }
-
-            if($assembly->getVersion() !== null)
-            {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_VERSION, $assembly->getVersion(), $input);
-            }
-
-            if($assembly->getUuid() !== null)
-            {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_UID, $assembly->getUuid(), $input);
-            }
-
             return $input;
         }
 
@@ -126,10 +138,10 @@ namespace ncc\Classes\NccExtension;
          * Compiles installation constants (Usually used during compiling time)
          *
          * @param string|null $input
-         * @param InstallationPaths $installationPaths
+         * @param InstallationPaths $installation_paths
          * @return string|null
          */
-        public static function compileInstallConstants(?string $input, InstallationPaths $installationPaths): ?string
+        public static function compileInstallConstants(?string $input, InstallationPaths $installation_paths): ?string
         {
             if($input === null)
             {
@@ -144,10 +156,10 @@ namespace ncc\Classes\NccExtension;
                     InstallConstants::INSTALL_PATH_DATA
                 ],
                 [
-                    $installationPaths->getInstallationpath(),
-                    $installationPaths->getBinPath(),
-                    $installationPaths->getSourcePath(),
-                    $installationPaths->getDataPath()
+                    $installation_paths->getInstallationpath(),
+                    $installation_paths->getBinPath(),
+                    $installation_paths->getSourcePath(),
+                    $installation_paths->getDataPath()
                 ], $input);
         }
 

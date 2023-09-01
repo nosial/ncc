@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy\Execute;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy\ExitHandlers;
@@ -65,6 +66,20 @@
          * @var string|null
          */
         private $message;
+
+        /**
+         * ExecutionPolicy constructor.
+         *
+         * @param string $name
+         * @param string $runner
+         * @param Execute $execute
+         */
+        public function __construct(string $name, string $runner, Execute $execute)
+        {
+            $this->name = $name;
+            $this->runner = $runner;
+            $this->execute = $execute;
+        }
 
         /**
          * @return string
@@ -192,21 +207,33 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): ExecutionPolicy
         {
-            $object = new self();
+            $name = Functions::array_bc($data, 'name');
+            $runner = Functions::array_bc($data, 'runner');
+            $execute = Functions::array_bc($data, 'execute');
 
-            $object->name = Functions::array_bc($data, 'name');
-            $object->runner = Functions::array_bc($data, 'runner');
-            $object->message = Functions::array_bc($data, 'message');
-            $object->execute = Functions::array_bc($data, 'execute');
-            $object->exit_handlers = Functions::array_bc($data, 'exit_handlers');
-
-            if($object->execute !== null)
+            if($name === null || $name === '')
             {
-                $object->execute = Execute::fromArray($object->execute);
+                throw new ConfigurationException('ExecutionPolicy name cannot be null or empty');
             }
+
+            if($runner === null || $runner === '')
+            {
+                throw new ConfigurationException('ExecutionPolicy runner cannot be null or empty');
+            }
+
+            if($execute === null)
+            {
+                throw new ConfigurationException('ExecutionPolicy execute cannot be null');
+            }
+
+            $object = new self($name, $runner, Execute::fromArray($execute));
+
+            $object->message = Functions::array_bc($data, 'message');
+            $object->exit_handlers = Functions::array_bc($data, 'exit_handlers');
 
             if($object->exit_handlers !== null)
             {

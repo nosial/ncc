@@ -502,9 +502,9 @@
                 }
                 else
                 {
-                    $this->handleExit($package, $version, $unit->getExecutionPolicy()->getExitHandlers()->getSuccess(), $process);
-                    $this->handleExit($package, $version, $unit->getExecutionPolicy()->getExitHandlers()->getWarning(), $process);
-                    $this->handleExit($package, $version, $unit->executigetExecutionPolicy()on_policy->getExitHandlers()->getError(), $process);
+                    $this->handleExit($package, $version, $unit->getExecutionPolicy()->getExitHandlers()?->getSuccess(), $process);
+                    $this->handleExit($package, $version, $unit->getExecutionPolicy()->getExitHandlers()?->getWarning(), $process);
+                    $this->handleExit($package, $version, $unit->getExecutionPolicy()->getExitHandlers()?->getError(), $process);
                 }
             }
 

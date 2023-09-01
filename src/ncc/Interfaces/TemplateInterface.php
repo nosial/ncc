@@ -20,17 +20,17 @@
      *
      */
 
-    $build_directory = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'build';
-    $autoload_path = $build_directory . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'autoload.php';
+    namespace ncc\Interfaces;
 
-    if(!is_dir($build_directory))
+    use ncc\Managers\ProjectManager;
+
+    interface TemplateInterface
     {
-        throw new \RuntimeException('Build directory does not exist, to run tests you must build the project.');
+        /**
+         * Applies the template to the project
+         *
+         * @param ProjectManager $project_manager
+         * @return void
+         */
+        public static function applyTemplate(ProjectManager $project_manager): void;
     }
-
-    if(!is_file($autoload_path))
-    {
-        throw new \RuntimeException('Autoload file does not exist in \'' . $build_directory .'\', to run tests you must build the project.');
-    }
-
-    require($autoload_path);

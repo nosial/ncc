@@ -23,15 +23,10 @@
     namespace ncc\CLI\Management;
 
     use Exception;
-    use ncc\Enums\CompilerExtensionDefaultVersions;
-    use ncc\Enums\CompilerExtensions;
-    use ncc\Enums\CompilerExtensionSupportedVersions;
-    use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PathNotFoundException;
+    use ncc\Enums\ProjectTemplates;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
-    use ncc\Objects\ProjectConfiguration\Compiler;
+    use ncc\Objects\ProjectConfiguration;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
 
@@ -42,185 +37,136 @@
          *
          * @param $args
          * @return void
-         * @throws ConfigurationException
-         * @throws IOException
-         * @throws PathNotFoundException
          */
-        public static function start($args): void
+        public static function start(array $args): void
         {
             if(isset($args['create']))
             {
-                self::createProject($args);
+                self::initializeProject($args);
+                return;
+            }
+
+            if(isset($args['template']))
+            {
+                self::applyTemplate($args);
+                return;
             }
 
             self::displayOptions();
         }
 
         /**
-         * Creates a new project
+         * Initializes a new project
          *
          * @param $args
          * @return void
-         * @throws ConfigurationException
-         * @throws IOException
-         * @throws PathNotFoundException
          */
-        public static function createProject($args): void
+        private static function initializeProject(array $args): void
         {
-            // First determine the source directory of the project
-            $current_directory = getcwd();
-            if(isset($args['src']))
+            if(isset($args['path']) || isset($args['p']))
             {
-                // Make sure directory separators are corrected
-                $args['src'] = str_ireplace('/', DIRECTORY_SEPARATOR, $args['src']);
-                $args['src'] = str_ireplace('\\', DIRECTORY_SEPARATOR, $args['src']);
-
-                // Remove the trailing slash
-                if(substr($args['src'], -1) === DIRECTORY_SEPARATOR)
-                {
-                    $args['src'] = substr($args['src'], 0, -1);
-                }
-
-                $full_path = getcwd() . DIRECTORY_SEPARATOR . $args['src'];
-
-                if(file_exists($full_path) && is_dir($full_path))
-                {
-                    $real_src = getcwd() . DIRECTORY_SEPARATOR . $args['src'];
-                }
-                else
-                {
-                    Console::outError('The selected source directory \'' . $full_path . '\' was not found or is not a directory', true, 1);
-                    return;
-                }
+                $project_path = $args['path'] ?? $args['p'];
             }
             else
             {
-                $real_src = getcwd() . DIRECTORY_SEPARATOR . 'src';
+                Console::outError('Missing required option: --path|-p, please specify the path to the project', true, 1);
+                return;
             }
 
-            // Remove basename from real_src
-            $real_src = Functions::removeBasename($real_src, $current_directory);
-
-            // Fetch the rest of the information needed for the project
-            //$compiler_extension = Console::getOptionInput($args, 'ce', 'Compiler Extension (php, java): ');
-            $package_name = Console::getOptionInput($args, 'package', 'Package Name (com.example.foo): ');
-            $project_name = Console::getOptionInput($args, 'name', 'Project Name (Foo Bar Library): ');
-            $Compiler = new Compiler();
-
-            // Detect the specified compiler extension
-            if(isset($args['ext']) || isset($args['extension']))
+            if(isset($args['name']) || isset($args['n']))
             {
-                $compiler_extension = strtolower(($args['extension'] ?? $args['ext']));
-
-                if(in_array($compiler_extension, CompilerExtensions::ALL))
-                {
-                    $Compiler->setExtension($compiler_extension);
-                }
-                else
-                {
-                    Console::outError('Unsupported extension: ' . $compiler_extension, true, 1);
-                    return;
-                }
+                $project_name = $args['name'] ?? $args['n'];
             }
             else
             {
-                // Default PHP Extension
-                $Compiler->setExtension(CompilerExtensions::PHP);
+                Console::outError('Missing required option: --name|-n, please specify the name of the project', true, 1);
+                return;
             }
 
-            // If a minimum and maximum version is specified
-            if(
-                (isset($args['max-version']) || isset($args['max-ver'])) &&
-                (isset($args['min-version']) || isset($args['min-ver']))
-            )
+            if(isset($args['package']) || isset($args['pkg']))
             {
-                $max_version = strtolower($args['max-version'] ?? $args['max-ver']);
-                $min_version = strtolower($args['min-version'] ?? $args['min-ver']);
-
-                switch($Compiler->getExtension())
-                {
-                    case CompilerExtensions::PHP:
-
-                        if(!in_array($max_version, CompilerExtensionSupportedVersions::PHP))
-                        {
-                            Console::outError('The extension \'' . $Compiler->getExtension() . '\' does not support version ' . $max_version, true, 1);
-                            return;
-                        }
-                        if(!in_array($min_version, CompilerExtensionSupportedVersions::PHP))
-                        {
-                            Console::outError('The extension \'' . $Compiler->getExtension() . '\' does not support version ' . $min_version, true, 1);
-                            return;
-                        }
-
-                        $Compiler->setMaximumVersion($max_version);
-                        $Compiler->setMinimumVersion($min_version);
-
-                        break;
-
-                    default:
-                        Console::outError('Unsupported extension: ' . $Compiler->getExtension(), true, 1);
-                        return;
-                }
+                $package_name = $args['package'] ?? $args['pkg'];
             }
-            // If a single version is specified
-            elseif(isset($args['version']) || isset($args['ver']))
-            {
-                $version = strtolower($args['version'] ?? $args['ver']);
-                switch($Compiler->getExtension())
-                {
-                    case CompilerExtensions::PHP:
-                        if(!in_array($version, CompilerExtensionSupportedVersions::PHP))
-                        {
-                            Console::outError('The extension \'' . $Compiler->getExtension() . '\' does not support version ' . $version, true, 1);
-                            return;
-                        }
-
-                        $Compiler->setMaximumVersion($version);
-                        $Compiler->setMinimumVersion($version);
-
-                        break;
-
-                    default:
-                        Console::outError('Unsupported extension: ' . $Compiler->getExtension(), true, 1);
-                        return;
-                }
-            }
-            // If no version is specified, use the default version
             else
             {
-                switch($Compiler->getExtension())
-                {
-                    case CompilerExtensions::PHP:
-                        $Compiler->setMinimumVersion(CompilerExtensionDefaultVersions::PHP[0]);
-                        $Compiler->setMaximumVersion(CompilerExtensionDefaultVersions::PHP[1]);
-                        break;
-
-                    default:
-                        Console::outError('Unsupported extension: ' . $Compiler->getExtension(), true, 1);
-                        return;
-                }
+                Console::outError('Missing required option: --package|--pkg, please specify the package name of the project', true, 1);
+                return;
             }
 
-            // Now create the project
-            $ProjectManager = new ProjectManager($current_directory);
+            if(isset($args['ext']))
+            {
+                $compiler_extension = $args['ext'];
+            }
+            else
+            {
+                Console::outError('Missing required option: --ext, please specify the compiler extension of the project', true, 1);
+                return;
+            }
 
             try
             {
-                $ProjectManager->initializeProject($Compiler, $project_name, $package_name, $real_src);
-            }
-            catch (ConfigurationException $e)
-            {
-                Console::outException(sprintf('The project configuration is invalid: %s', $e->getMessage()), $e, 1);
-                return;
+                $project_manager = ProjectManager::initializeProject($project_path, $project_name, $package_name, $compiler_extension);
             }
             catch(Exception $e)
             {
-                Console::outException('There was an unexpected error while trying to initialize the project', $e, 1);
+                Console::outException('There was an error while trying to initialize the project', $e, 1);
                 return;
             }
 
-            Console::out('Project successfully created');
-            exit(0);
+            Console::out(sprintf('Project successfully created in \'%s\'', $project_manager->getProjectPath()));
+            Console::out(sprintf('Modify the project configuration in \'%s\'', $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'project.json'));
+        }
+
+        private static function applyTemplate(array $args): void
+        {
+            if(isset($args['path']) || isset($args['p']))
+            {
+                $project_path = $args['path'] ?? $args['p'];
+            }
+            else
+            {
+                if(is_file(getcwd() . DIRECTORY_SEPARATOR . 'project.json'))
+                {
+                    $project_path = getcwd();
+                }
+                else
+                {
+                    Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
+                    return;
+                }
+            }
+
+            if(isset($args['name']) || isset($args['n']))
+            {
+                $template_name = $args['name'] ?? $args['n'];
+            }
+            else
+            {
+                Console::outError('Missing required option: --name|-n, please specify the name of the template', true, 1);
+                return;
+            }
+
+            try
+            {
+                $project_manager = new ProjectManager($project_path);
+            }
+            catch(Exception $e)
+            {
+                Console::outException('There was an error while trying to load the project', $e, 1);
+                return;
+            }
+
+            try
+            {
+                $project_manager->applyTemplate($template_name);
+            }
+            catch(Exception $e)
+            {
+                Console::outException('There was an error while trying to apply the template', $e, 1);
+                return;
+            }
+
+            Console::out(sprintf('Template successfully applied to project in \'%s\'', $project_manager->getProjectPath()));
         }
 
         /**
@@ -232,19 +178,23 @@
         {
             $options = [
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
-                new CliHelpSection(['create', '--src', '--package', '--name'], 'Creates a new NCC project'),
-                new CliHelpSection(['create', '--ext'], 'Specifies the compiler extension'),
-                new CliHelpSection(['create', '--min-version', '--min-ver', '--maximum-ver', '-max-ver'], 'Specifies the compiler extension version'),
-                new CliHelpSection(['create-makefile'], 'Generates a Makefile for the project'),
+                new CliHelpSection(['create', '--path|-p', '--name|-n', '--package|--pkg', '--ext'], 'Creates a new ncc project'),
+                new CliHelpSection(['template', '--path|-p', '--name|-n'], 'Applies a template to the project'),
             ];
 
             $options_padding = Functions::detectParametersPadding($options) + 4;
 
             Console::out('Usage: ncc project {command} [options]');
-            Console::out('Options:' . PHP_EOL);
+            Console::out('Options:');
             foreach($options as $option)
             {
                 Console::out('   ' . $option->toString($options_padding));
+            }
+
+            Console::out(PHP_EOL . 'Available Templates:');
+            foreach(ProjectTemplates::ALL as $template)
+            {
+                Console::out('   ' . $template);
             }
         }
     }

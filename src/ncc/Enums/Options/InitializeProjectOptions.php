@@ -24,5 +24,13 @@
 
     final class InitializeProjectOptions
     {
-        public const CREATE_SOURCE_DIRECTORY = 1;
+        /**
+         * A custom path to the project's source directory
+         */
+        public const PROJECT_SRC_PATH = 'PROJECT_SRC_PATH';
+
+        /**
+         * A boolean option that indicates whether to overwrite the project file if it already exists
+         */
+        public const OVERWRITE_PROJECT_FILE = 'OVERWRITE_PROJECT_FILE';
     }

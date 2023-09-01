@@ -88,9 +88,12 @@
         private $idle_timeout;
 
         /**
-         * Public Constructor
+         * Execute constructor.
+         *
+         * @param string $target
+         * @param string|null $working_directory
          */
-        public function __construct(string $target, ?string $working_directory)
+        public function __construct(string $target, ?string $working_directory=null)
         {
             $this->target = $target;
             $this->working_directory = $working_directory ?? RuntimeConstants::CWD;

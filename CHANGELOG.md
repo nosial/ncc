@@ -24,6 +24,9 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Added a new interface class `ValidatableObjectInterface` to implement validatable objects, this method will throw a
    `ConfigurationException` if the object is not valid or a `NotSupportedException` if the object contains methods that
    are not supported by the current version of ncc or project.
+ - Added a new interface class `TemplateInterface` to implement template classes
+ - Added new template PhpCliTemplate `phpcli`
+ - Added new template PhpLibraryTemplate `phplib`
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -221,6 +224,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Also updated a bunch of objects in a similar fashion to the ones above, (BuildConfiguration, Execute, ExitHandle, 
    ExitHandler, Repository, Assembly, Build, Dependency, ExecutionPolicy, Installer, Project, UpdateSource) I'm not
    going to list them all here, but you can find them in the commit history.
+ - Implemented a template engine and refactored the CLI menu for the Project Manager and added a new `template` command
 
 
 ### Removed

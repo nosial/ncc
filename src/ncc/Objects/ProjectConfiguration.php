@@ -141,77 +141,6 @@
         }
 
         /**
-         * @return Installer|null
-         */
-        public function getInstaller(): ?Installer
-        {
-            return $this->installer;
-        }
-
-        /**
-         * @param Installer|null $installer
-         */
-        public function setInstaller(?Installer $installer): void
-        {
-            $this->installer = $installer;
-        }
-
-        /**
-         * @return Build
-         */
-        public function getBuild(): Build
-        {
-            return $this->build;
-        }
-
-        /**
-         * @param Build $build
-         */
-        public function setBuild(Build $build): void
-        {
-            $this->build = $build;
-        }
-
-        /**
-         * @inheritDoc
-         */
-        public function validate(): void
-        {
-            $this->project->validate();
-            $this->assembly->validate();
-            $this->build->validate();
-
-            if($this->build->getMain() !== null)
-            {
-                if($this->execution_policies === null || count($this->execution_policies) === 0)
-                {
-                    throw new ConfigurationException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->getMain()));
-                }
-
-
-                $found = false;
-                foreach($this->execution_policies as $policy)
-                {
-                    if($policy->getName() === $this->build->getMain())
-                    {
-                        $found = true;
-                        break;
-                    }
-                }
-
-                if(!$found)
-                {
-                    throw new ConfigurationException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->getMain()));
-                }
-
-                if($this->build->getMain() === BuildConfigurationValues::ALL)
-                {
-                    throw new ConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
-                }
-            }
-        }
-
-        /**
          * @param string $name
          * @return ExecutionPolicy|null
          */
@@ -226,6 +155,44 @@
             }
 
             return null;
+        }
+
+        /**
+         * @param ExecutionPolicy $policy
+         * @param bool $overwrite
+         * @return void
+         * @throws ConfigurationException
+         */
+        public function addExecutionPolicy(ExecutionPolicy $policy, bool $overwrite=true): void
+        {
+            if(!$overwrite)
+            {
+                foreach($this->execution_policies as $executionPolicy)
+                {
+                    if($executionPolicy->getName() === $policy->getName())
+                    {
+                        throw new ConfigurationException('An execution policy with the name \'' . $policy->getName() . '\' already exists');
+                    }
+                }
+            }
+
+            $this->execution_policies[] = $policy;
+        }
+
+        /**
+         * @param string $name
+         * @return void
+         */
+        public function removeExecutionPolicy(string $name): void
+        {
+            foreach($this->execution_policies as $key => $executionPolicy)
+            {
+                if($executionPolicy->getName() === $name)
+                {
+                    unset($this->execution_policies[$key]);
+                    return;
+                }
+            }
         }
 
         /**
@@ -388,6 +355,77 @@
         }
 
         /**
+         * @return Installer|null
+         */
+        public function getInstaller(): ?Installer
+        {
+            return $this->installer;
+        }
+
+        /**
+         * @param Installer|null $installer
+         */
+        public function setInstaller(?Installer $installer): void
+        {
+            $this->installer = $installer;
+        }
+
+        /**
+         * @return Build
+         */
+        public function getBuild(): Build
+        {
+            return $this->build;
+        }
+
+        /**
+         * @param Build $build
+         */
+        public function setBuild(Build $build): void
+        {
+            $this->build = $build;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function validate(): void
+        {
+            $this->project->validate();
+            $this->assembly->validate();
+            $this->build->validate();
+
+            if($this->build->getMain() !== null)
+            {
+                if($this->execution_policies === null || count($this->execution_policies) === 0)
+                {
+                    throw new ConfigurationException(sprintf('Build configuration build.main uses an execution policy "%s" but no policies are defined', $this->build->getMain()));
+                }
+
+
+                $found = false;
+                foreach($this->execution_policies as $policy)
+                {
+                    if($policy->getName() === $this->build->getMain())
+                    {
+                        $found = true;
+                        break;
+                    }
+                }
+
+                if(!$found)
+                {
+                    throw new ConfigurationException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->getMain()));
+                }
+
+                if($this->build->getMain() === BuildConfigurationValues::ALL)
+                {
+                    throw new ConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
+                }
+            }
+        }
+
+        /**
          * Writes a json representation of the object to a file
          *
          * @param string $path
@@ -493,7 +531,7 @@
 
                 foreach($this->execution_policies as $executionPolicy)
                 {
-                    $execution_policies[$executionPolicy->getName()] = $executionPolicy->toArray($bytecode);
+                    $execution_policies[] = $executionPolicy->toArray($bytecode);
                 }
 
                 $results[($bytecode ? Functions::cbc('execution_policies') : 'execution_policies')] = $execution_policies;

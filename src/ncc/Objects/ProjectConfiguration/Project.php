@@ -52,9 +52,16 @@
 
         /**
          * Public Constructor
+         * @param string|Compiler $compiler
+         * @throws NotSupportedException
          */
-        public function __construct(Compiler $compiler)
+        public function __construct(string|Compiler $compiler)
         {
+            if(is_string($compiler))
+            {
+                $compiler = new Compiler($compiler);
+            }
+
             $this->compiler = $compiler;
             $this->options = [];
         }

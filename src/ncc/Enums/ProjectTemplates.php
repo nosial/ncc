@@ -20,17 +20,25 @@
      *
      */
 
-    $build_directory = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'build';
-    $autoload_path = $build_directory . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'autoload.php';
+    namespace ncc\Enums;
 
-    if(!is_dir($build_directory))
+    final class ProjectTemplates
     {
-        throw new \RuntimeException('Build directory does not exist, to run tests you must build the project.');
-    }
+        /**
+         * A template that is used to create a PHP library project
+         */
+        public const PHP_LIBRARY = 'phplib';
 
-    if(!is_file($autoload_path))
-    {
-        throw new \RuntimeException('Autoload file does not exist in \'' . $build_directory .'\', to run tests you must build the project.');
-    }
+        /**
+         * A template that is used to create a PHP CLI application project
+         */
+        public const PHP_CLI = 'phpcli';
 
-    require($autoload_path);
+        /**
+         * An array of all the available project templates
+         */
+        public const ALL = [
+            self::PHP_LIBRARY,
+            self::PHP_CLI
+        ];
+    }
