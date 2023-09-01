@@ -26,7 +26,6 @@
     use ncc\Enums\ProjectTemplates;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
-    use ncc\Objects\ProjectConfiguration;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
 
