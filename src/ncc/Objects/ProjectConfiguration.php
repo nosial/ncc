@@ -437,11 +437,14 @@
         {
             if(!$bytecode)
             {
-                Functions::encodeJsonFile($this->toArray($bytecode), $path, Functions::FORCE_ARRAY | Functions::PRETTY | Functions::ESCAPE_UNICODE);
+                Functions::encodeJsonFile(
+                    Functions::cleanArray($this->toArray($bytecode)), $path,
+                    Functions::FORCE_ARRAY | Functions::PRETTY | Functions::ESCAPE_UNICODE
+                );
                 return;
             }
 
-            Functions::encodeJsonFile($this->toArray($bytecode), $path, Functions::FORCE_ARRAY);
+            Functions::encodeJsonFile(Functions::cleanArray($this->toArray($bytecode)), $path, Functions::FORCE_ARRAY);
         }
 
         /**

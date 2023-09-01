@@ -40,6 +40,7 @@
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
 
     class ProjectManager

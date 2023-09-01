@@ -27,6 +27,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Added a new interface class `TemplateInterface` to implement template classes
  - Added new template PhpCliTemplate `phpcli`
  - Added new template PhpLibraryTemplate `phplib`
+ - Added the ability to clean arrays in `\ncc\Utilities > Functions > cleanArray()`
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`

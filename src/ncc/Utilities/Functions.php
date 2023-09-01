@@ -1058,4 +1058,23 @@
             RuntimeCache::set('posix_isatty', posix_isatty(STDOUT));
             return (bool)RuntimeCache::get('posix_isatty');
         }
+
+        /**
+         * Cleans an array by removing empty values
+         *
+         * @param array $input
+         * @return array
+         */
+        public static function cleanArray(array $input): array
+        {
+            foreach ($input as $key => $value)
+            {
+                if (is_array($value) && ($input[$key] = self::cleanArray($value)) === [])
+                {
+                    unset($input[$key]);
+                }
+            }
+            return $input;
+        }
+
     }
