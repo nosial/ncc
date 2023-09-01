@@ -128,16 +128,15 @@
             {
                 $project_path = $args['path'] ?? $args['p'];
             }
+            elseif(is_file(getcwd() . DIRECTORY_SEPARATOR . 'project.json'))
+            {
+                $project_path = getcwd();
+            }
             else
-                if(is_file(getcwd() . DIRECTORY_SEPARATOR . 'project.json'))
-                {
-                    $project_path = getcwd();
-                }
-                else
-                {
-                    Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
-                    return;
-                }
+            {
+                Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
+                return;
+            }
 
             if(isset($args['name']) || isset($args['n']))
             {
