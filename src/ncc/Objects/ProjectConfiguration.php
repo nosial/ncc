@@ -165,11 +165,15 @@
          */
         public function addExecutionPolicy(ExecutionPolicy $policy, bool $overwrite=true): void
         {
-            if(!$overwrite)
+            foreach($this->execution_policies as $execution_policy)
             {
-                foreach($this->execution_policies as $executionPolicy)
+                if($execution_policy->getName() === $policy->getName())
                 {
-                    if($executionPolicy->getName() === $policy->getName())
+                    if($overwrite)
+                    {
+                        $this->removeExecutionPolicy($execution_policy->getName());
+                    }
+                    else
                     {
                         throw new ConfigurationException('An execution policy with the name \'' . $policy->getName() . '\' already exists');
                     }
