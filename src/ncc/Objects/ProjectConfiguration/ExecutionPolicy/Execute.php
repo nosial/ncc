@@ -251,10 +251,10 @@
             $results[($bytecode ? Functions::cbc('working_directory') : 'working_directory')] = $this->working_directory;
             $results[($bytecode ? Functions::cbc('options') : 'options')] = $this->options;
             $results[($bytecode ? Functions::cbc('environment_variables') : 'environment_variables')] = $this->environment_variables;
-            $results[($bytecode ? Functions::cbc('silent') : 'silent')] = (bool)$this->silent;
-            $results[($bytecode ? Functions::cbc('tty') : 'tty')] = (bool)$this->tty;
-            $results[($bytecode ? Functions::cbc('timeout') : 'timeout')] = (int)$this->timeout;
-            $results[($bytecode ? Functions::cbc('idle_timeout') : 'idle_timeout')] = (int)$this->idle_timeout;
+            $results[($bytecode ? Functions::cbc('silent') : 'silent')] = $this->silent;
+            $results[($bytecode ? Functions::cbc('tty') : 'tty')] = $this->tty;
+            $results[($bytecode ? Functions::cbc('timeout') : 'timeout')] = $this->timeout;
+            $results[($bytecode ? Functions::cbc('idle_timeout') : 'idle_timeout')] = $this->idle_timeout;
 
             if($this->target !== null)
             {
