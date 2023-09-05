@@ -36,12 +36,12 @@
         /**
          * @var int
          */
-        private static $largestTickLength = 0;
+        private static $largest_tick_length = 0;
 
         /**
          * @var float|int
          */
-        private static $lastTickTime;
+        private static $last_tick_time;
 
         /**
          * Inline Progress bar, created by dealnews.com.
@@ -119,21 +119,21 @@
 
             $tick_time = (string)microtime(true);
 
-            if(strlen($tick_time) > self::$largestTickLength)
+            if(strlen($tick_time) > self::$largest_tick_length)
             {
-                self::$largestTickLength = strlen($tick_time);
+                self::$largest_tick_length = strlen($tick_time);
             }
 
-            if(strlen($tick_time) < self::$largestTickLength)
+            if(strlen($tick_time) < self::$largest_tick_length)
             {
                 /** @noinspection PhpRedundantOptionalArgumentInspection */
-                $tick_time = str_pad($tick_time, (strlen($tick_time) + (self::$largestTickLength - strlen($tick_time))), ' ', STR_PAD_RIGHT);
+                $tick_time = str_pad($tick_time, (strlen($tick_time) + (self::$largest_tick_length - strlen($tick_time))), ' ', STR_PAD_RIGHT);
             }
 
             $fmt_tick = $tick_time;
-            if(self::$lastTickTime !== null)
+            if(self::$last_tick_time !== null)
             {
-                $timeDiff = microtime(true) - self::$lastTickTime;
+                $timeDiff = microtime(true) - self::$last_tick_time;
 
                 if ($timeDiff > 1.0)
                 {
@@ -145,7 +145,7 @@
                 }
             }
 
-            self::$lastTickTime = $tick_time;
+            self::$last_tick_time = $tick_time;
             return '[' . $fmt_tick . '] ' . $input;
         }
 
