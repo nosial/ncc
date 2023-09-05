@@ -171,7 +171,7 @@
 
             $version = new VersionEntry();
             $version->setVersion($package->getAssembly()->getVersion());
-            $version->setCompiler($package->getHeader()->getCompilerExtension());
+            $version->setCompiler($package->getMetadata()->getCompilerExtension());
             $version->setExecutionUnits($package->getExecutionUnits());
             $version->main_execution_policy = $package->getMainExecutionPolicy();
             $version->location = $install_path;

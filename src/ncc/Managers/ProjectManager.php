@@ -25,23 +25,26 @@
 
     namespace ncc\Managers;
 
-    use JetBrains\PhpStorm\NoReturn;
+    use ncc\Classes\PhpExtension\NccCompiler;
     use ncc\Classes\PhpExtension\PhpCliTemplate;
     use ncc\Classes\PhpExtension\PhpLibraryTemplate;
+    use ncc\Enums\BuildOutputType;
+    use ncc\Enums\CompilerExtensions;
+    use ncc\Enums\ComponentFileExtensions;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\InitializeProjectOptions;
-    use ncc\Classes\NccExtension\PackageCompiler;
     use ncc\Enums\ProjectTemplates;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
-    use ncc\Utilities\Validate;
+    use ncc\Utilities\IO;
 
     class ProjectManager
     {
@@ -148,7 +151,16 @@
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
-            return PackageCompiler::compile($this, $build_configuration);
+            $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
+
+            return match (strtolower($this->project_configuration->getProject()->getCompiler()->getExtension()))
+            {
+                CompilerExtensions::PHP => match (strtolower($configuration->getBuildType())) {
+                    BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration),
+                    default => throw new BuildException(sprintf('php cannot produce the build type \'%s\'', $configuration->getBuildType())),
+                },
+                default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension())),
+            };
         }
 
         /**
@@ -176,6 +188,124 @@
                 default:
                     throw new NotSupportedException('The given template \'' . $template_name . '\' is not supported');
             }
+        }
+
+        /**
+         * Returns an array of file extensions for the components that are part of this project
+         *
+         * @return array
+         * @throws NotSupportedException
+         */
+        public function getComponentFileExtensions(): array
+        {
+            return match ($this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
+            {
+                CompilerExtensions::PHP => ComponentFileExtensions::PHP,
+                default => throw new NotSupportedException(
+                    sprintf('The compiler extension \'%s\' is not supported', $this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
+                ),
+            };
+        }
+
+        /**
+         * Returns an array of ExecutionUnits associated with the project by selecting all required execution units
+         * from the project configuration and reading the contents of the files
+         *
+         * @param string $build_configuration
+         * @return ExecutionUnit[]
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws PathNotFoundException
+         */
+        public function getExecutionUnits(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        {
+            $execution_units = [];
+
+            foreach($this->project_configuration->getRequiredExecutionPolicies($build_configuration) as $policy)
+            {
+                $execution_policy = $this->project_configuration->getExecutionPolicy($policy);
+                $execution_file = $this->getProjectPath() . DIRECTORY_SEPARATOR . $execution_policy->getExecute()->getTarget();
+                if(!is_file($execution_file))
+                {
+                    throw new IOException(sprintf('The execution policy %s points to a non-existent file \'%s\'', $execution_policy->getName(), $execution_file));
+                }
+
+                $execution_units[] = new ExecutionUnit($execution_policy, IO::fread($execution_file));
+            }
+
+            return $execution_units;
+        }
+
+        /**
+         * Returns an array of file paths for the components that are part of this project
+         *
+         * @param string $build_configuration
+         * @return array
+         * @throws ConfigurationException
+         * @throws NotSupportedException
+         */
+        public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        {
+            $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
+
+            return array_map(static function ($file) {
+                return $file;
+            }, Functions::scanDirectory($this->getProjectSourcePath(), $this->getComponentFileExtensions(), $configuration->getExcludeFiles()));
+        }
+
+        /**
+         * Returns an array of file paths for the resources that are part of this project
+         *
+         * @param string $build_configuration
+         * @return array
+         * @throws ConfigurationException
+         * @throws NotSupportedException
+         */
+        public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        {
+            $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
+
+            return array_map(static function ($file) {
+                return $file;
+            }, Functions::scanDirectory($this->getProjectSourcePath(), [], array_merge(
+                $configuration->getExcludeFiles(), $this->getComponentFileExtensions()
+            )));
+        }
+
+        /**
+         * Returns an array of runtime constants for the project & build configuration
+         *
+         * @param string $build_configuration
+         * @return array
+         * @throws ConfigurationException
+         */
+        public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        {
+            $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
+
+            /** @noinspection ArrayMergeMissUseInspection */
+            return array_merge(
+                $configuration->getDefineConstants(),
+                $this->project_configuration->getBuild()->getDefineConstants()
+            );
+        }
+
+        /**
+         * Returns an array of compiler options associated with the build configuration
+         *
+         * @param string $build_configuration
+         * @return array
+         * @throws ConfigurationException
+         */
+        public function getCompilerOptions(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        {
+            $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
+
+            /** @noinspection ArrayMergeMissUseInspection */
+            return array_merge(
+                $configuration->getOptions(),
+                $this->project_configuration->getBuild()->getOptions()
+            );
         }
 
         /**

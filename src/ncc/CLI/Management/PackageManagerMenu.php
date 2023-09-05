@@ -178,7 +178,7 @@
             try
             {
                 Console::out('magic_bytes: ' . json_encode(($package->getMagicBytes()?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                Console::out('header: ' . json_encode(($package->getHeader()?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                Console::out('header: ' . json_encode(($package->getMetadata()?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
                 Console::out('assembly: ' . json_encode(($package->getAssembly()?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
                 Console::out('installer: ' . json_encode(($package->getInstaller()?->toArray() ?? []), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             }
@@ -559,15 +559,15 @@
             }
 
             Console::out(sprintf('Extension: %s',
-                Console::formatColor($package->getHeader()->getCompilerExtension()->getExtension(), ConsoleColors::GREEN)
+                Console::formatColor($package->getMetadata()->getCompilerExtension()->getExtension(), ConsoleColors::GREEN)
             ));
 
             Console::out(sprintf('Maximum Version: %s',
-                Console::formatColor($package->getHeader()->getCompilerExtension()->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
+                Console::formatColor($package->getMetadata()->getCompilerExtension()->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
             ));
 
             Console::out(sprintf('Minimum Version: %s',
-                Console::formatColor($package->getHeader()->getCompilerExtension()->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
+                Console::formatColor($package->getMetadata()->getCompilerExtension()->getMinimumVersion(), ConsoleColors::LIGHT_MAGENTA)
             ));
 
             if(!$user_confirmation)

@@ -34,11 +34,12 @@
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\Package\Header;
+    use ncc\Objects\Package\Metadata;
     use ncc\Objects\Package\Installer;
     use ncc\Objects\Package\MagicBytes;
     use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Assembly;
+    use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
@@ -56,9 +57,9 @@
         /**
          * The true header of the package
          *
-         * @var Header
+         * @var Metadata
          */
-        private $header;
+        private $metadata;
 
         /**
          * The assembly object of the package
@@ -73,13 +74,6 @@
          * @var Dependency[]
          */
         private $dependencies;
-
-        /**
-         * The Main Execution Policy object for the package if the package is an executable package.
-         *
-         * @var string|null
-         */
-        private $main_execution_policy;
 
         /**
          * The installer object that is used to install the package if the package is install-able
@@ -112,11 +106,11 @@
         /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(Assembly $assembly, Compiler $compiler)
         {
             $this->magic_bytes = new MagicBytes();
-            $this->header = new Header();
-            $this->assembly = new Assembly();
+            $this->metadata = new Metadata($compiler);
+            $this->assembly = $assembly;
             $this->execution_units = [];
             $this->components = [];
             $this->dependencies = [];
@@ -178,19 +172,19 @@
         }
 
         /**
-         * @return Header
+         * @return Metadata
          */
-        public function getHeader(): Header
+        public function getMetadata(): Metadata
         {
-            return $this->header;
+            return $this->metadata;
         }
 
         /**
-         * @param Header $header
+         * @param Metadata $metadata
          */
-        public function setHeader(Header $header): void
+        public function setMetadata(Metadata $metadata): void
         {
-            $this->header = $header;
+            $this->metadata = $metadata;
         }
 
         /**
@@ -271,6 +265,24 @@
         public function setExecutionUnits(array $execution_units): void
         {
             $this->execution_units = $execution_units;
+        }
+
+        /**
+         * @param ExecutionUnit $unit
+         * @return void
+         */
+        public function addExecutionUnit(ExecutionUnit $unit): void
+        {
+            foreach($this->execution_units as $exec_unit)
+            {
+                if($exec_unit->getId() === $unit->getId())
+                {
+                    $this->removeExecutionUnit($exec_unit->getId());
+                    break;
+                }
+            }
+
+            $this->execution_units[] = $unit;
         }
 
         /**
@@ -590,7 +602,7 @@
             }
 
             return [
-                ($bytecode ? Functions::cbc('header') : 'header') => $this?->header?->toArray($bytecode),
+                ($bytecode ? Functions::cbc('header') : 'header') => $this?->metadata?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('assembly') : 'assembly') => $this?->assembly?->toArray($bytecode),
                 ($bytecode ? Functions::cbc('dependencies') : 'dependencies') => $_dependencies,
                 ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this?->main_execution_policy,
@@ -608,10 +620,10 @@
         {
             $object = new self();
 
-            $object->header = Functions::array_bc($data, 'header');
-            if($object->header !== null)
+            $object->metadata = Functions::array_bc($data, 'header');
+            if($object->metadata !== null)
             {
-                $object->header = Header::fromArray($object->header);
+                $object->metadata = Metadata::fromArray($object->metadata);
             }
 
             $object->assembly = Functions::array_bc($data, 'assembly');

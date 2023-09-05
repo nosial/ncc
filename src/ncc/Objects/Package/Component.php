@@ -24,6 +24,8 @@
 
     namespace ncc\Objects\Package;
 
+    use ncc\Enums\ComponentDataType;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
 
@@ -61,9 +63,23 @@
         /**
          * The raw data of the component, this is to be processed by the compiler extension
          *
-         * @var mixed
+         * @var string
          */
         private $data;
+
+        /**
+         * @param string $name
+         * @param string $data
+         * @param string $data_type
+         */
+        public function __construct(string $name, string $data, string $data_type=ComponentDataType::PLAIN)
+        {
+            $this->name = $name;
+            $this->flags = [];
+            $this->data_type = $data_type;
+            $this->data = $data;
+            $this->checksum = hash('sha1', $data, true);
+        }
 
         /**
          * Validates the checksum of the component, returns false if the checksum or data is invalid or if the checksum
@@ -71,34 +87,9 @@
          *
          * @return bool
          */
-        public function validate_checksum(): bool
+        public function validateChecksum(): bool
         {
-            if($this->checksum === null)
-            {
-                return true; // Return true if the checksum is empty
-            }
-
-            if($this->data === null)
-            {
-                return true; // Return true if the data is null
-            }
-
             return hash_equals($this->checksum, hash('sha1', $this->data, true));
-        }
-
-        /**
-         * Updates the checksum of the resource
-         *
-         * @return void
-         */
-        public function updateChecksum(): void
-        {
-            $this->checksum = null;
-
-            if(is_string($this->data))
-            {
-                $this->checksum = hash('sha1', $this->data, true);
-            }
         }
 
         /**
@@ -148,7 +139,8 @@
          */
         public function removeFlag(string $flag): void
         {
-            $this->flags = array_filter($this->flags, static function($f) use ($flag) {
+            $this->flags = array_filter($this->flags, static function($f) use ($flag)
+            {
                 return $f !== $flag;
             });
         }
@@ -162,14 +154,6 @@
         }
 
         /**
-         * @param string $data_type
-         */
-        public function setDataType(string $data_type): void
-        {
-            $this->data_type = $data_type;
-        }
-
-        /**
          * @return string
          */
         public function getChecksum(): string
@@ -178,27 +162,22 @@
         }
 
         /**
-         * @param string $checksum
+         * @return string
          */
-        public function setChecksum(string $checksum): void
-        {
-            $this->checksum = $checksum;
-        }
-
-        /**
-         * @return mixed
-         */
-        public function getData(): mixed
+        public function getData(): string
         {
             return $this->data;
         }
 
         /**
          * @param mixed $data
+         * @param string $data_type
          */
-        public function setData(mixed $data): void
+        public function setData(mixed $data, string $data_type=ComponentDataType::PLAIN): void
         {
             $this->data = $data;
+            $this->data_type = $data_type;
+            $this->checksum = hash('sha1', $data, true);
         }
 
         /**
@@ -223,16 +202,28 @@
          *
          * @param array $data
          * @return Component
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): Component
         {
-            $object = new self();
+            $name = Functions::array_bc($data, 'name');
+            $component_data = Functions::array_bc($data, 'data');
+            $data_type = Functions::array_bc($data, 'data_type') ?? ComponentDataType::PLAIN;
 
-            $object->name = Functions::array_bc($data, 'name');
+            if($name === null)
+            {
+                throw new ConfigurationException('The component name is missing');
+            }
+
+            if($component_data === null)
+            {
+                throw new ConfigurationException('The component data is missing');
+            }
+
+            $object = new self($name, $component_data, $data_type);
+
             $object->flags = Functions::array_bc($data, 'flags');
-            $object->data_type = Functions::array_bc($data, 'data_type');
             $object->checksum = Functions::array_bc($data, 'checksum');
-            $object->data = Functions::array_bc($data, 'data');
 
             return $object;
         }

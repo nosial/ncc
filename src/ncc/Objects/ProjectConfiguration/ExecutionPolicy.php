@@ -146,17 +146,17 @@
         }
 
         /**
-         * @return ExitHandlers
+         * @return ?ExitHandlers
          */
-        public function getExitHandlers(): ExitHandlers
+        public function getExitHandlers(): ?ExitHandlers
         {
             return $this->exit_handlers;
         }
 
         /**
-         * @param ExitHandlers $exit_handlers
+         * @param ExitHandlers|null $exit_handlers
          */
-        public function setExitHandlers(ExitHandlers $exit_handlers): void
+        public function setExitHandlers(?ExitHandlers $exit_handlers): void
         {
             $this->exit_handlers = $exit_handlers;
         }

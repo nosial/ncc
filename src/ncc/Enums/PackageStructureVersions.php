@@ -24,9 +24,21 @@ namespace ncc\Enums;
 
     final class PackageStructureVersions
     {
+        /**
+         * ncc 1.0.0 to 1.0.3
+         */
         public const _1_0 = '1.0';
 
+        /**
+         * ncc 1.0.4 and above
+         */
+        public const _2_0 = '2.0';
+
+        /**
+         * All supported versions
+         */
         public const ALL = [
-            self::_1_0
+            self::_1_0,
+            self::_2_0
         ];
     }

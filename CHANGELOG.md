@@ -226,6 +226,7 @@ features and reduced the number of exceptions down to 15 exceptions.
    ExitHandler, Repository, Assembly, Build, Dependency, ExecutionPolicy, Installer, Project, UpdateSource) I'm not
    going to list them all here, but you can find them in the commit history.
  - Implemented a template engine and refactored the CLI menu for the Project Manager and added a new `template` command
+ - Refactored the entire package structure to ncc package structure 2.0 for memory efficiency and performance
 
 
 ### Removed

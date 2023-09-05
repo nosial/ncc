@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\Build;
 
+    use ncc\Enums\BuildOutputType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Dependency;
@@ -42,6 +43,11 @@
          * @var string
          */
         private $name;
+
+        /**
+         * @var string
+         */
+        private $build_type;
 
         /**
          * Options to pass onto the extension compiler
@@ -99,6 +105,7 @@
         public function __construct(string $name, string $output_path)
         {
             $this->name = $name;
+            $this->build_type = BuildOutputType::NCC_PACKAGE;
             $this->output_path = $output_path;
             $this->options = [];
             $this->define_constants = [];
@@ -175,6 +182,22 @@
         public function setName(string $name): void
         {
             $this->name = $name;
+        }
+
+        /**
+         * @return string
+         */
+        public function getBuildType(): string
+        {
+            return $this->build_type;
+        }
+
+        /**
+         * @param string $build_type
+         */
+        public function setBuildType(string $build_type): void
+        {
+            $this->build_type = $build_type;
         }
 
         /**
@@ -370,6 +393,7 @@
             $results = [];
 
             $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
+            $results[($bytecode ? Functions::cbc('build_type') : 'build_type')] = $this->build_type;
             $results[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->output_path;
 
             if(count($this->options) > 0)
@@ -412,6 +436,7 @@
         public static function fromArray(array $data): BuildConfiguration
         {
             $name = Functions::array_bc($data, 'name');
+            $build_type = Functions::array_bc($data, 'build_type');
             $output_path = Functions::array_bc($data, 'output_path');
 
             if($name === null)

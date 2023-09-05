@@ -25,6 +25,7 @@
     namespace ncc\Objects;
 
     use Exception;
+    use InvalidArgumentException;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
@@ -142,9 +143,9 @@
 
         /**
          * @param string $name
-         * @return ExecutionPolicy|null
+         * @return ExecutionPolicy
          */
-        private function getExecutionPolicy(string $name): ?ExecutionPolicy
+        public function getExecutionPolicy(string $name): ExecutionPolicy
         {
             foreach($this->execution_policies as $executionPolicy)
             {
@@ -154,7 +155,7 @@
                 }
             }
 
-            return null;
+            throw new InvalidArgumentException('Execution policy \'' . $name . '\' does not exist');
         }
 
         /**
@@ -203,12 +204,12 @@
          * Runs a check on the project configuration and determines what policies are required
          *
          * @param string $build_configuration
-         * @return array
+         * @return string[]
          * @throws ConfigurationException
          */
         public function getRequiredExecutionPolicies(string $build_configuration=BuildConfigurationValues::DEFAULT): array
         {
-            if($this->execution_policies === null || count($this->execution_policies) === 0)
+            if(count($this->execution_policies) === 0)
             {
                 return [];
             }
@@ -220,7 +221,6 @@
             foreach($this->execution_policies as $execution_policy)
             {
                 $defined_polices[] = $execution_policy->getName();
-                //$execution_policy->validate();
             }
 
             // Check the installer by batch
@@ -249,57 +249,50 @@
                 }
             }
 
-            if(count($this->build->getPostBuild()) > 0)
+            foreach($this->build->getPostBuild() as $unit)
             {
-                foreach($this->build->getPostBuild() as $unit)
+                if(!in_array($unit, $defined_polices, true))
                 {
-                    if(!in_array($unit, $defined_polices, true))
-                    {
-                        throw new ConfigurationException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
-                    }
+                    throw new ConfigurationException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
+                }
 
-                    if(!in_array($unit, $required_policies, true))
-                    {
-                        $required_policies[] = $unit;
-                    }
+                if(!in_array($unit, $required_policies, true))
+                {
+                    $required_policies[] = $unit;
                 }
             }
 
-            if(count($this->build->getPreBuild()) > 0)
+            foreach($this->build->getPreBuild() as $unit)
             {
-                foreach($this->build->getPreBuild() as $unit)
+                if(!in_array($unit, $defined_polices, true))
                 {
-                    if(!in_array($unit, $defined_polices, true))
-                    {
-                        throw new ConfigurationException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
-                    }
+                    throw new ConfigurationException('The property \'build.pre_build\' in the project configuration calls for an undefined execution policy \'' . $unit . '\'');
+                }
 
-                    if(!in_array($unit, $required_policies, true))
-                    {
-                        $required_policies[] = $unit;
-                    }
+                if(!in_array($unit, $required_policies, true))
+                {
+                    $required_policies[] = $unit;
                 }
             }
 
-            /** @noinspection DegradedSwitchInspection */
-            switch($build_configuration)
+            if($this->build->getMain() !== null)
             {
-                case BuildConfigurationValues::ALL:
-                    /** @var BuildConfiguration $configuration */
-                    foreach($this->build->getBuildConfigurations() as $configuration)
-                    {
-                        foreach($this->processBuildPolicies($configuration, $defined_polices) as $policy)
-                        {
-                            if(!in_array($policy, $required_policies, true))
-                            {
-                                $required_policies[] = $policy;
-                            }
-                        }
-                    }
-                    break;
+                if(!in_array($this->build->getMain(), $defined_polices, true))
+                {
+                    throw new ConfigurationException('The property \'build.main\' in the project configuration calls for an undefined execution policy \'' . $this->build->getMain() . '\'');
+                }
 
-                default:
-                    $configuration = $this->build->getBuildConfiguration($build_configuration);
+                if(!in_array($this->build->getMain(), $required_policies, true))
+                {
+                    $required_policies[] = $this->build->getMain();
+                }
+            }
+
+            if($build_configuration === BuildConfigurationValues::ALL)
+            {
+                /** @var BuildConfiguration $configuration */
+                foreach($this->build->getBuildConfigurations() as $configuration)
+                {
                     foreach($this->processBuildPolicies($configuration, $defined_polices) as $policy)
                     {
                         if(!in_array($policy, $required_policies, true))
@@ -307,52 +300,62 @@
                             $required_policies[] = $policy;
                         }
                     }
-                    break;
+                }
+            }
+            else
+            {
+                $configuration = $this->build->getBuildConfiguration($build_configuration);
+                foreach($this->processBuildPolicies($configuration, $defined_polices) as $policy)
+                {
+                    if(!in_array($policy, $required_policies, true))
+                    {
+                        $required_policies[] = $policy;
+                    }
+                }
             }
 
             foreach($required_policies as $policy)
             {
                 $execution_policy = $this->getExecutionPolicy($policy);
 
-                if($execution_policy?->getExitHandlers()->getSuccess()?->getRun() !== null)
+                if($execution_policy?->getExitHandlers()?->getSuccess()?->getRun() !== null)
                 {
-                    if(!in_array($execution_policy?->getExitHandlers()->getSuccess()?->getRun(), $defined_polices, true))
+                    if(!in_array($execution_policy?->getExitHandlers()?->getSuccess()?->getRun(), $defined_polices, true))
                     {
-                        throw new ConfigurationException('The execution policy \'' . $execution_policy?->getName() . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->getExitHandlers()->getSuccess()?->getRun() . '\'');
+                        throw new ConfigurationException('The execution policy \'' . $execution_policy?->getName() . '\' Success exit handler points to a undefined execution policy \'' . $execution_policy?->getExitHandlers()?->getSuccess()?->getRun() . '\'');
                     }
 
-                    if(!in_array($execution_policy?->getExitHandlers()->getSuccess()?->getRun(), $required_policies, true))
+                    if(!in_array($execution_policy?->getExitHandlers()?->getSuccess()?->getRun(), $required_policies, true))
                     {
-                        $required_policies[] = $execution_policy?->getExitHandlers()->getSuccess()?->getRun();
+                        $required_policies[] = $execution_policy?->getExitHandlers()?->getSuccess()?->getRun();
                     }
                 }
 
-                if($execution_policy?->getExitHandlers()->getWarning()?->getRun() !== null)
+                if($execution_policy?->getExitHandlers()?->getWarning()?->getRun() !== null)
                 {
-                    if(!in_array($execution_policy?->getExitHandlers()->getWarning()?->getRun(), $defined_polices, true))
+                    if(!in_array($execution_policy?->getExitHandlers()?->getWarning()?->getRun(), $defined_polices, true))
                     {
-                        throw new ConfigurationException('The execution policy \'' . $execution_policy?->getName() . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->getExitHandlers()->getWarning()?->getRun() . '\'');
+                        throw new ConfigurationException('The execution policy \'' . $execution_policy?->getName() . '\' Warning exit handler points to a undefined execution policy \'' . $execution_policy?->getExitHandlers()?->getWarning()?->getRun() . '\'');
                     }
 
-                    if(!in_array($execution_policy?->getExitHandlers()->getWarning()?->getRun(), $required_policies, true))
+                    if(!in_array($execution_policy?->getExitHandlers()?->getWarning()?->getRun(), $required_policies, true))
                     {
-                        $required_policies[] = $execution_policy?->getExitHandlers()->getWarning()?->getRun();
+                        $required_policies[] = $execution_policy?->getExitHandlers()?->getWarning()?->getRun();
                     }
                 }
 
-                if($execution_policy?->getExitHandlers()->getError()?->getRun() !== null)
+                if($execution_policy?->getExitHandlers()?->getError()?->getRun() !== null)
                 {
-                    if(!in_array($execution_policy?->getExitHandlers()->getError()?->getRun(), $defined_polices, true))
+                    if(!in_array($execution_policy?->getExitHandlers()?->getError()?->getRun(), $defined_polices, true))
                     {
-                        throw new ConfigurationException('The execution policy \'' . $execution_policy?->getName() . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->getExitHandlers()->getError()?->getRun() . '\'');
+                        throw new ConfigurationException('The execution policy \'' . $execution_policy?->getName() . '\' Error exit handler points to a undefined execution policy \'' . $execution_policy?->getExitHandlers()?->getError()?->getRun() . '\'');
                     }
 
-                    if(!in_array($execution_policy?->getExitHandlers()->getError()?->getRun(), $required_policies, true))
+                    if(!in_array($execution_policy?->getExitHandlers()?->getError()?->getRun(), $required_policies, true))
                     {
-                        $required_policies[] = $execution_policy?->getExitHandlers()->getError()?->getRun();
+                        $required_policies[] = $execution_policy?->getExitHandlers()?->getError()?->getRun();
                     }
                 }
-
             }
 
             return $required_policies;

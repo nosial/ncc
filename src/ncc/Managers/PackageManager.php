@@ -124,7 +124,7 @@
                 return $package->getAssembly()->getPackage();
             }
 
-            $extension = $package->getHeader()->getCompilerExtension()->getExtension();
+            $extension = $package->getMetadata()->getCompilerExtension()->getExtension();
             $installation_paths = new InstallationPaths($this->packages_path . DIRECTORY_SEPARATOR . $package->getAssembly()->getPackage() . '=' . $package->getAssembly()->getVersion());
 
             $installer = match ($extension)
@@ -191,7 +191,7 @@
                     Console::outDebug(sprintf('assembly.%s: %s', $prop, ($value ?? 'n/a')));
                 }
 
-                foreach($package->getHeader()->getCompilerExtension()->toArray() as $prop => $value)
+                foreach($package->getMetadata()->getCompilerExtension()->toArray() as $prop => $value)
                 {
                     Console::outDebug(sprintf('header.compiler.%s: %s', $prop, ($value ?? 'n/a')));
                 }
@@ -361,7 +361,7 @@
             }
 
             // After execution units are installed, create a symlink if needed
-            if(!is_null($package->getHeader()->getOption('create_symlink')) && $package->getHeader()->getOption('create_symlink'))
+            if(!is_null($package->getMetadata()->getOption('create_symlink')) && $package->getMetadata()->getOption('create_symlink'))
             {
                 if($package->getMainExecutionPolicy() === null)
                 {
@@ -415,18 +415,18 @@
                 Console::outDebug('no post-installation units to execute');
             }
 
-            if($package->getHeader()->getUpdateSource()?->getRepository() !== null)
+            if($package->getMetadata()->getUpdateSource()?->getRepository() !== null)
             {
                 $sources_manager = new RemoteSourcesManager();
-                if($sources_manager->getRemoteSource($package->getHeader()->getUpdateSource()->getRepository()->getName()) === null)
+                if($sources_manager->getRemoteSource($package->getMetadata()->getUpdateSource()->getRepository()->getName()) === null)
                 {
-                    Console::outVerbose('Adding remote source ' . $package->getHeader()->getUpdateSource()->getRepository()->getName());
+                    Console::outVerbose('Adding remote source ' . $package->getMetadata()->getUpdateSource()->getRepository()->getName());
 
                     $defined_remote_source = new DefinedRemoteSource();
-                    $defined_remote_source->setName($package->getHeader()->getUpdateSource()?->getRepository()?->getName());
-                    $defined_remote_source->setHost($package->getHeader()->getUpdateSource()?->getRepository()?->getHost());
-                    $defined_remote_source->setType($package->getHeader()->getUpdateSource()?->getRepository()?->getType());
-                    $defined_remote_source->setSsl($package->getHeader()->getUpdateSource()?->getRepository()?->isSsl());
+                    $defined_remote_source->setName($package->getMetadata()->getUpdateSource()?->getRepository()?->getName());
+                    $defined_remote_source->setHost($package->getMetadata()->getUpdateSource()?->getRepository()?->getHost());
+                    $defined_remote_source->setType($package->getMetadata()->getUpdateSource()?->getRepository()?->getType());
+                    $defined_remote_source->setSsl($package->getMetadata()->getUpdateSource()?->getRepository()?->isSsl());
 
                     $sources_manager->addRemoteSource($defined_remote_source);
                 }
@@ -995,8 +995,8 @@
 
             $data_files = [
                 $paths->getDataPath() . DIRECTORY_SEPARATOR . 'assembly' => ZiProto::encode($package->getAssembly()->toArray(true)),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'ext' => ZiProto::encode($package->getHeader()->getCompilerExtension()->toArray()),
-                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'const' => ZiProto::encode($package->getHeader()->getRuntimeConstants()),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'ext' => ZiProto::encode($package->getMetadata()->getCompilerExtension()->toArray()),
+                $paths->getDataPath() . DIRECTORY_SEPARATOR . 'const' => ZiProto::encode($package->getMetadata()->getRuntimeConstants()),
                 $paths->getDataPath() . DIRECTORY_SEPARATOR . 'dependencies' => ZiProto::encode($dependencies),
             ];
 

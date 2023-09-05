@@ -24,12 +24,13 @@
 
     namespace ncc\Objects\Package;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\Utilities\Functions;
 
-    class Header implements BytecodeObjectInterface
+    class Metadata implements BytecodeObjectInterface
     {
         /**
          * The compiler extension information that was used to build the package
@@ -67,11 +68,22 @@
         private $update_source;
 
         /**
+         * @var string|null
+         */
+        private $main_execution_policy;
+
+        /**
+         * @var Installer|null
+         */
+        private $installer;
+
+        /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(Compiler $compiler)
         {
-            $this->compiler_extension = new Compiler();
+            $this->compiler_extension = $compiler;
+            $this->compiler_version = NCC_VERSION_NUMBER;
             $this->runtime_constants = [];
             $this->options = [];
         }
@@ -185,6 +197,38 @@
         }
 
         /**
+         * @return string|null
+         */
+        public function getMainExecutionPolicy(): ?string
+        {
+            return $this->main_execution_policy;
+        }
+
+        /**
+         * @param string|null $main_execution_policy
+         */
+        public function setMainExecutionPolicy(?string $main_execution_policy): void
+        {
+            $this->main_execution_policy = $main_execution_policy;
+        }
+
+        /**
+         * @return Installer|null
+         */
+        public function getInstaller(): ?Installer
+        {
+            return $this->installer;
+        }
+
+        /**
+         * @param Installer|null $installer
+         */
+        public function setInstaller(?Installer $installer): void
+        {
+            $this->installer = $installer;
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
@@ -201,20 +245,20 @@
         /**
          * @inheritDoc
          */
-        public static function fromArray(array $data): Header
+        public static function fromArray(array $data): Metadata
         {
-            $object = new self();
+            $compiler_extension = Functions::array_bc($data, 'compiler_extension');
+            if($compiler_extension === null)
+            {
+                throw new ConfigurationException('The compiler extension information is not specified in the package header');
+            }
 
-            $object->compiler_extension = Functions::array_bc($data, 'compiler_extension');
+            $object = new self(Compiler::fromArray($compiler_extension));
+
             $object->runtime_constants = Functions::array_bc($data, 'runtime_constants');
             $object->compiler_version = Functions::array_bc($data, 'compiler_version');
             $object->update_source = Functions::array_bc($data, 'update_source');
             $object->options = Functions::array_bc($data, 'options');
-
-            if($object->compiler_extension !== null)
-            {
-                $object->compiler_extension = Compiler::fromArray($object->compiler_extension);
-            }
 
             if($object->update_source !== null)
             {

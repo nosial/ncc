@@ -17,6 +17,11 @@
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">
     <option name="suggestChangeDefaultLanguageLevel" value="false" />
   </component>
+  <component name="PhpRuntimeConfiguration">
+    <extensions>
+      <extension name="msgpack" enabled="true" />
+    </extensions>
+  </component>
   <component name="PhpStanOptionsConfiguration">
     <option name="transferred" value="true" />
   </component>

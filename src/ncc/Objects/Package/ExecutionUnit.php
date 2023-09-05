@@ -24,8 +24,10 @@
 
     namespace ncc\Objects\Package;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
+    use ncc\Utilities\Base64;
     use ncc\Utilities\Functions;
 
     class ExecutionUnit implements BytecodeObjectInterface
@@ -50,15 +52,21 @@
         private $data;
 
         /**
+         * @param ExecutionPolicy $execution_policy
+         * @param string $data
+         */
+        public function __construct(ExecutionPolicy $execution_policy, string $data)
+        {
+            $this->execution_policy = $execution_policy;
+            $this->id = hash('sha1', $this->execution_policy->getName());
+            $this->data = $data;
+        }
+
+        /**
          * @return string
          */
         public function getId(): string
         {
-            if($this->id === null)
-            {
-                $this->id = hash('sha1', $this->execution_policy->getName());
-            }
-
             return $this->id;
         }
 
@@ -71,27 +79,11 @@
         }
 
         /**
-         * @param ExecutionPolicy $execution_policy
-         */
-        public function setExecutionPolicy(ExecutionPolicy $execution_policy): void
-        {
-            $this->execution_policy = $execution_policy;
-        }
-
-        /**
          * @return string
          */
         public function getData(): string
         {
             return $this->data;
-        }
-
-        /**
-         * @param string $data
-         */
-        public function setData(string $data): void
-        {
-            $this->data = $data;
         }
 
         /**
@@ -101,7 +93,7 @@
         {
             return [
                 ($bytecode ? Functions::cbc('execution_policy') : 'execution_policy') => $this->execution_policy->toArray($bytecode),
-                ($bytecode ? Functions::cbc('data') : 'data') => $this->data,
+                ($bytecode ? Functions::cbc('data') : 'data') => Base64::encode($this->data),
             ];
         }
 
@@ -110,16 +102,19 @@
          */
         public static function fromArray(array $data): ExecutionUnit
         {
-            $object = new self();
+            $execution_policy = Functions::array_bc($data, 'execution_policy');
+            $execution_data = Functions::array_bc($data, 'data');
 
-            $object->execution_policy = Functions::array_bc($data, 'execution_policy');
-            $object->data = Functions::array_bc($data, 'data');
-
-            if($object->execution_policy !== null)
+            if($execution_policy === null)
             {
-                $object->execution_policy = ExecutionPolicy::fromArray($object->execution_policy);
+                throw new ConfigurationException('Missing execution policy for execution unit');
             }
 
-            return $object;
+            if($execution_data === null)
+            {
+                throw new ConfigurationException('Missing execution data for execution unit');
+            }
+
+            return new self(ExecutionPolicy::fromArray($execution_policy), Base64::decode($execution_data));
         }
     }

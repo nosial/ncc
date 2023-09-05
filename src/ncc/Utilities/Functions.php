@@ -23,6 +23,7 @@
     namespace ncc\Utilities;
 
     use Exception;
+    use FilesystemIterator;
     use JsonException;
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\DefinedRemoteSourceType;
@@ -63,6 +64,7 @@
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
     use ncc\ThirdParty\Symfony\Process\Process;
+    use ncc\ThirdParty\theseer\DirectoryScanner\DirectoryScanner;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
     use RuntimeException;
@@ -242,8 +244,7 @@
             $banner_version = str_pad($version, 21);
             $banner_copyright = str_pad($copyright, 30);
 
-            $banner = str_ireplace('%A', $banner_version, $banner);
-            return str_ireplace('%B', $banner_copyright, $banner);
+            return str_ireplace(array('%A', '%B'), array($banner_version, $banner_copyright), $banner);
         }
 
         /**
@@ -263,7 +264,7 @@
 
             // Append the trailing slash if it's not already there
             // "/etc/foo" becomes "/etc/foo/"
-            if(substr($base_name, -1) !== DIRECTORY_SEPARATOR)
+            if(!str_ends_with($base_name, DIRECTORY_SEPARATOR))
             {
                 $base_name .= DIRECTORY_SEPARATOR;
             }
@@ -280,8 +281,7 @@
          */
         public static function correctDirectorySeparator($path): string
         {
-            $path = str_ireplace('/', DIRECTORY_SEPARATOR, $path);
-            return str_ireplace('\\', DIRECTORY_SEPARATOR, $path);
+            return str_ireplace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
         }
 
         /**
@@ -805,9 +805,9 @@
             // If the specified version is a release, download the source code
             if($release_results !== null)
             {
-                $results->setReleaseName($release_results->getReleaseName() ?? null);
-                $results->setReleaseDescription($release_results->getReleaseDescription() ?? null);
-                $results->setFiles(self::mergeFilesResults($release_results->getFiles(), ($results->getFiles() ?? null)));
+                $results->setReleaseName($release_results->getReleaseName());
+                $results->setReleaseDescription($release_results->getReleaseDescription());
+                $results->setFiles(self::mergeFilesResults($release_results->getFiles(), ($results->getFiles())));
 
                 if($release_results->getVersion() !== null)
                 {
@@ -829,7 +829,7 @@
             {
                 if($results->getReleaseName() === null)
                 {
-                    $results->setReleaseName($git_results->getReleaseName() ?? null);
+                    $results->setReleaseName($git_results->getReleaseName());
                 }
                 elseif($git_results->getReleaseName() !== null)
                 {
@@ -841,7 +841,7 @@
 
                 if($results->getReleaseDescription() === null)
                 {
-                    $results->setReleaseDescription($git_results->getReleaseDescription() ?? null);
+                    $results->setReleaseDescription($git_results->getReleaseDescription());
                 }
                 elseif($git_results->getReleaseDescription() !== null)
                 {
@@ -853,7 +853,7 @@
 
                 if($results->getVersion() === null)
                 {
-                    $results->setVersion($git_results->getVersion() ?? null);
+                    $results->setVersion($git_results->getVersion());
                 }
                 elseif($git_results->getVersion() !== null)
                 {
@@ -864,7 +864,7 @@
                     }
                 }
 
-                $results->setFiles(self::mergeFilesResults($git_results->getFiles(), ($results->getFiles() ?? null)));
+                $results->setFiles(self::mergeFilesResults($git_results->getFiles(), ($results->getFiles())));
             }
 
             try
@@ -881,7 +881,7 @@
             {
                 if($results->getReleaseName() === null)
                 {
-                    $results->setReleaseName($ncc_package_results->getReleaseName() ?? null);
+                    $results->setReleaseName($ncc_package_results->getReleaseName());
                 }
                 elseif($ncc_package_results->getReleaseName() !== null)
                 {
@@ -893,7 +893,7 @@
 
                 if($results->getReleaseDescription() === null)
                 {
-                    $results->setReleaseDescription($ncc_package_results->getReleaseDescription() ?? null);
+                    $results->setReleaseDescription($ncc_package_results->getReleaseDescription());
                 }
                 elseif($ncc_package_results->getReleaseDescription() !== null)
                 {
@@ -905,7 +905,7 @@
 
                 if($results->getVersion() === null)
                 {
-                    $results->setVersion($ncc_package_results->getVersion() ?? null);
+                    $results->setVersion($ncc_package_results->getVersion());
                 }
                 elseif($ncc_package_results->getVersion() !== null)
                 {
@@ -916,7 +916,7 @@
                     }
                 }
 
-                $results->setFiles(self::mergeFilesResults($ncc_package_results->getFiles(), ($results->getFiles() ?? null)));
+                $results->setFiles(self::mergeFilesResults($ncc_package_results->getFiles(), ($results->getFiles())));
             }
 
             return $results;
@@ -1050,7 +1050,7 @@
                 return RuntimeCache::get('posix_isatty');
             }
 
-            if(function_exists('posix_isatty') === false)
+            if(!function_exists('posix_isatty'))
             {
                 return false;
             }
@@ -1075,6 +1075,53 @@
                 }
             }
             return $input;
+        }
+
+        /**
+         * Scans the given directory for files and returns the found file with the given patterns
+         *
+         * @param string $path
+         * @param array $include
+         * @param array $exclude
+         * @return array
+         */
+        public static function scanDirectory(string $path, array $include=[], array $exclude=[]): array
+        {
+            $directory_scanner = new DirectoryScanner();
+
+            try
+            {
+                $directory_scanner->unsetFlag(FilesystemIterator::FOLLOW_SYMLINKS);
+            }
+            catch (\ncc\ThirdParty\theseer\DirectoryScanner\Exception $e)
+            {
+                throw new RuntimeException('Cannot scan directory, unable to remove the FOLLOW_SYMLINKS flag from the iterator: ' . $e->getMessage(), $e->getCode(), $e);
+            }
+
+            if(count($include) > 0)
+            {
+                $directory_scanner->setIncludes($include);
+            }
+
+            if(count($exclude) > 0)
+            {
+                $directory_scanner->setExcludes($exclude);
+            }
+
+            $results = [];
+            foreach($directory_scanner($path) as $item)
+            {
+                // Ignore directories, they're not important.
+                if(is_dir($item->getPathName()))
+                {
+                    continue;
+                }
+
+                $results[] = $item->getPathName();
+                Console::outVerbose(sprintf('Selected file %s', $item->getPathName()));
+            }
+
+            return $results;
         }
 
     }

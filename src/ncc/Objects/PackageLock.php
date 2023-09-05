@@ -90,14 +90,14 @@
                 $package_entry = new PackageEntry();
                 $package_entry->addVersion($package, $install_path, true);
                 $package_entry->setName($package->getAssembly()->getPackage());
-                $package_entry->setUpdateSource($package->getHeader()->getUpdateSource());
+                $package_entry->setUpdateSource($package->getMetadata()->getUpdateSource());
                 $this->packages[$package->getAssembly()->getPackage()] = $package_entry;
                 $this->update();
 
                 return;
             }
 
-            $this->packages[$package->getAssembly()->getPackage()]->setUpdateSource($package->getHeader()->getUpdateSource());
+            $this->packages[$package->getAssembly()->getPackage()]->setUpdateSource($package->getMetadata()->getUpdateSource());
             $this->packages[$package->getAssembly()->getPackage()]->addVersion($package, $install_path, true);
             $this->update();
         }

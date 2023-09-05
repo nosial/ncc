@@ -84,7 +84,7 @@
                 return null;
             }
 
-            if(!$component->validate_checksum())
+            if(!$component->validateChecksum())
             {
                 throw new IntegrityException(sprintf('Checksum validation failed for component: %s', $component->getName()));
             }

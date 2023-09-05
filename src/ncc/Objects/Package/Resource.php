@@ -24,7 +24,9 @@
 
     namespace ncc\Objects\Package;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Utilities\Base64;
     use ncc\Utilities\Functions;
 
     class Resource implements BytecodeObjectInterface
@@ -51,6 +53,13 @@
          */
         private $data;
 
+        public function __construct(string $name, mixed $data)
+        {
+            $this->name = $name;
+            $this->data = $data;
+            $this->checksum = hash('sha1', $this->data, true);
+        }
+
         /**
          * Validates the checksum of the resource, returns false if the checksum or data is invalid or if the checksum
          * failed.
@@ -59,32 +68,7 @@
          */
         public function validateChecksum(): bool
         {
-            if($this->checksum === null)
-            {
-                return false;
-            }
-
-            if($this->data === null)
-            {
-                return false;
-            }
-
             return hash_equals($this->checksum, hash('sha1', $this->data, true));
-        }
-
-        /**
-         * Updates the checksum of the resource
-         *
-         * @return void
-         */
-        public function updateChecksum(): void
-        {
-            $this->checksum = null;
-
-            if(is_string($this->data))
-            {
-                $this->checksum = hash('sha1', $this->data, true);
-            }
         }
 
         /**
@@ -112,14 +96,6 @@
         }
 
         /**
-         * @param string $checksum
-         */
-        public function setChecksum(string $checksum): void
-        {
-            $this->checksum = $checksum;
-        }
-
-        /**
          * @return string
          */
         public function getData(): string
@@ -132,7 +108,8 @@
          */
         public function setData(string $data): void
         {
-            $this->data = $data;
+            $this->data = Base64::encode($data);
+            $this->checksum = hash('sha1', $this->data, true);
         }
 
         /**
@@ -149,14 +126,25 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): self
         {
-            $object = new self();
+            $name = Functions::array_bc($data, 'name');
+            $resource_data = Functions::array_bc($data, 'data');
 
-            $object->name = Functions::array_bc($data, 'name');
+            if($name === null)
+            {
+                throw new ConfigurationException('Resource name is not defined');
+            }
+
+            if($resource_data === null)
+            {
+                throw new ConfigurationException('Resource data is not defined');
+            }
+
+            $object = new self($name, $resource_data);
             $object->checksum = Functions::array_bc($data, 'checksum');
-            $object->data = Functions::array_bc($data, 'data');
 
             return $object;
         }
