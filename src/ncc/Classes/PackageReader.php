@@ -25,14 +25,18 @@
 
     namespace ncc\Classes;
 
+    use ncc\Enums\Flags\PackageFlags;
+    use ncc\Enums\PackageDirectory;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Metadata;
+    use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Assembly;
+    use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Objects\ProjectConfiguration\Installer;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
     use RuntimeException;
     use ncc\Enums\PackageStructure;
 
@@ -54,6 +58,11 @@
         private $package_file;
 
         /**
+         * @var array
+         */
+        private $cache;
+
+        /**
          * PackageReader constructor.
          *
          * @param string $file_path
@@ -72,18 +81,26 @@
                 throw new IOException(sprintf('Failed to open file \'%s\'', $file_path));
             }
 
-            $magic_bytes = fread($this->package_file, 7);
-            $header = '';
+            $pre_header = '';
             $diameter_hit = false;
-            $this->header_length = 7;
 
-            // Check for the magic bytes "ncc_pkg"
-            if($magic_bytes !== 'ncc_pkg')
+            // Dynamically calculate header length until "ncc_pkg" is found
+            while (!feof($this->package_file))
             {
-                throw new IOException(sprintf('File \'%s\' is not a valid package file (invalid magic bytes)', $file_path));
+                $char = fread($this->package_file, 1);
+                $pre_header .= $char;
+
+                if (str_ends_with($pre_header, 'ncc_pkg'))
+                {
+                    break;
+                }
             }
 
+            // Calculate header length including "ncc_pkg"
+            $this->header_length = strlen($pre_header);
+
             // Read everything after "ncc_pkg" up until the delimiter (0x1F 0x1F)
+            $header = '';
             while(!feof($this->package_file))
             {
                 $this->header_length++;
@@ -109,6 +126,7 @@
             }
 
             $this->headers = ZiProto::decode($header);
+            $this->cache = [];
         }
 
         /**
@@ -163,7 +181,7 @@
         }
 
         /**
-         * Gets a resource from the package
+         * Returns a resource from the package by name
          *
          * @param string $name
          * @return string
@@ -177,7 +195,26 @@
 
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
             fseek($this->package_file, ($this->header_length + (int)$location[0]));
+
+            if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+            {
+                return gzuncompress(fread($this->package_file, (int)$location[1]));
+            }
+
             return fread($this->package_file, (int)$location[1]);
+        }
+
+        /**
+         * Returns a resource from the package by pointer
+         *
+         * @param int $pointer
+         * @param int $length
+         * @return string
+         */
+        public function getByPointer(int $pointer, int $length): string
+        {
+            fseek($this->package_file, ($this->header_length + $pointer));
+            return fread($this->package_file, $length);
         }
 
         /**
@@ -188,12 +225,21 @@
          */
         public function getAssembly(): Assembly
         {
-            if(!isset($this->headers[PackageStructure::DIRECTORY]['@assembly']))
+            $directory = sprintf('@%s', PackageDirectory::ASSEMBLY);
+
+            if(isset($this->cache[$directory]))
+            {
+                return $this->cache[$directory];
+            }
+
+            if(!isset($this->headers[PackageStructure::DIRECTORY][$directory]))
             {
                 throw new ConfigurationException('Package does not contain an assembly');
             }
 
-            return Assembly::fromArray(ZiProto::decode($this->get('@assembly')));
+            $assembly = Assembly::fromArray(ZiProto::decode($this->get($directory)));
+            $this->cache[$directory] = $assembly;
+            return $assembly;
         }
 
         /**
@@ -204,12 +250,21 @@
          */
         public function getMetadata(): Metadata
         {
-            if(!isset($this->headers[PackageStructure::DIRECTORY]['@metadata']))
+            $directory = sprintf('@%s', PackageDirectory::METADATA);
+
+            if(isset($this->cache[$directory]))
+            {
+                return $this->cache[$directory];
+            }
+
+            if(!isset($this->headers[PackageStructure::DIRECTORY][$directory]))
             {
                 throw new ConfigurationException('Package does not contain metadata');
             }
 
-            return Metadata::fromArray(ZiProto::decode($this->get('@metadata')));
+            $metadata = Metadata::fromArray(ZiProto::decode($this->get($directory)));
+            $this->cache[$directory] = $metadata;
+            return $metadata;
         }
 
         /**
@@ -219,12 +274,21 @@
          */
         public function getInstaller(): ?Installer
         {
-            if(!isset($this->headers[PackageStructure::DIRECTORY]['@installer']))
+            $directory = sprintf('@%s', PackageDirectory::INSTALLER);
+
+            if(isset($this->cache[$directory]))
+            {
+                return $this->cache[$directory];
+            }
+
+            if(!isset($this->headers[PackageStructure::DIRECTORY][$directory]))
             {
                 return null;
             }
 
-            return Installer::fromArray(ZiProto::decode($this->get('@installer')));
+            $installer = Installer::fromArray(ZiProto::decode($this->get($directory)));
+            $this->cache[$directory] = $installer;
+            return $installer;
         }
 
         /**
@@ -235,11 +299,13 @@
         public function getDependencies(): array
         {
             $dependencies = [];
+            $directory = sprintf('@%s:', PackageDirectory::DEPENDENCIES);
+
             foreach($this->headers[PackageStructure::DIRECTORY] as $name => $location)
             {
-                if(str_starts_with($name, '@dependencies:'))
+                if(str_starts_with($name, $directory))
                 {
-                    $dependencies[] = str_replace('@dependencies:', '', $name);
+                    $dependencies[] = str_replace($directory, '', $name);
                 }
             }
 
@@ -250,18 +316,31 @@
          * Returns a dependency from the package
          *
          * @param string $name
-         * @return array
+         * @return Dependency
          * @throws ConfigurationException
          */
-        public function getDependency(string $name): array
+        public function getDependency(string $name): Dependency
         {
-            $dependency_name = sprintf('@dependencies:%s', $name);
+            $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$dependency_name]))
             {
                 throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package', $name));
             }
 
-            return ZiProto::decode($this->get('@dependencies:' . $name));
+            return Dependency::fromArray(ZiProto::decode($this->get($dependency_name)));
+        }
+
+        /**
+         * Returns a dependency from the package by pointer
+         *
+         * @param int $pointer
+         * @param int $length
+         * @return Dependency
+         * @throws ConfigurationException
+         */
+        public function getDependencyByPointer(int $pointer, int $length): Dependency
+        {
+            return Dependency::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
         }
 
         /**
@@ -272,11 +351,13 @@
         public function getExecutionUnits(): array
         {
             $execution_units = [];
+            $directory = sprintf('@%s:', PackageDirectory::EXECUTION_UNITS);
+
             foreach($this->headers[PackageStructure::DIRECTORY] as $name => $location)
             {
-                if(str_starts_with($name, '@execution_units:'))
+                if(str_starts_with($name, $directory))
                 {
-                    $execution_units[] = str_replace('@execution_units:', '', $name);
+                    $execution_units[] = str_replace($directory, '', $name);
                 }
             }
 
@@ -292,7 +373,7 @@
          */
         public function getExecutionUnit(string $name): ExecutionUnit
         {
-            $execution_unit_name = sprintf('@execution_units:%s', $name);
+            $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$execution_unit_name]))
             {
                 throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package', $name));
@@ -302,22 +383,53 @@
         }
 
         /**
-         * Returns the package's components
+         * Returns an execution unit from the package by pointer
+         *
+         * @param int $pointer
+         * @param int $length
+         * @return ExecutionUnit
+         * @throws ConfigurationException
+         */
+        public function getExecutionUnitByPointer(int $pointer, int $length): ExecutionUnit
+        {
+            return ExecutionUnit::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+        }
+
+        /**
+         * Returns the package's component pointers
          *
          * @return array
          */
         public function getComponents(): array
         {
             $components = [];
+            $directory = sprintf('@%s:', PackageDirectory::COMPONENTS);
+
             foreach($this->headers[PackageStructure::DIRECTORY] as $name => $location)
             {
-                if(str_starts_with($name, '@components:'))
+                if(str_starts_with($name, $directory))
                 {
-                    $components[] = str_replace('@components:', '', $name);
+                    $components[] = str_replace($directory, '', $name);
                 }
             }
 
             return $components;
+        }
+
+        public function getClassMap(): array
+        {
+            $class_map = [];
+            $directory = sprintf('@%s:', PackageDirectory::CLASS_POINTER);
+
+            foreach($this->headers[PackageStructure::DIRECTORY] as $name => $location)
+            {
+                if(str_starts_with($name, $directory))
+                {
+                    $class_map[] = str_replace($directory, '', $name);
+                }
+            }
+
+            return $class_map;
         }
 
         /**
@@ -329,28 +441,61 @@
          */
         public function getComponent(string $name): Component
         {
-            $component_name = sprintf('@components:%s', $name);
+            $component_name = sprintf('@%s:%s', PackageDirectory::COMPONENTS, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$component_name]))
             {
                 throw new ConfigurationException(sprintf('Component \'%s\' not found in package', $name));
             }
 
-            return Component::fromArray(ZiProto::decode($this->get('@components:' . $name)));
+            return Component::fromArray(ZiProto::decode($this->get($component_name)));
         }
 
         /**
-         * Returns an array of resources from the package
+         * Returns a component from the package by pointer
+         *
+         * @param int $pointer
+         * @param int $length
+         * @return Component
+         * @throws ConfigurationException
+         */
+        public function getComponentByPointer(int $pointer, int $length): Component
+        {
+            return Component::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+        }
+
+        /**
+         * Returns a component from the package by a class pointer
+         *
+         * @param string $class
+         * @return Component
+         * @throws ConfigurationException
+         */
+        public function getComponentByClass(string $class): Component
+        {
+            $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class);
+            if(!isset($this->headers[PackageStructure::DIRECTORY][$class_name]))
+            {
+                throw new ConfigurationException(sprintf('Class map \'%s\' not found in package', $class));
+            }
+
+            return Component::fromArray(ZiProto::decode($this->get($class_name)));
+        }
+
+        /**
+         * Returns an array of resource pointers from the package
          *
          * @return array
          */
         public function getResources(): array
         {
             $resources = [];
+            $directory = sprintf('@%s:', PackageDirectory::RESOURCES);
+
             foreach($this->headers[PackageStructure::DIRECTORY] as $name => $location)
             {
-                if(str_starts_with($name, '@resources:'))
+                if(str_starts_with($name, $directory))
                 {
-                    $resources[] = str_replace('@resources:', '', $name);
+                    $resources[] = str_replace($directory, '', $name);
                 }
             }
 
@@ -361,18 +506,31 @@
          * Returns a resource from the package
          *
          * @param string $name
-         * @return string
+         * @return Resource
          * @throws ConfigurationException
          */
-        public function getResource(string $name): string
+        public function getResource(string $name): Resource
         {
-            $resource_name = sprintf('@resources:%s', $name);
+            $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$resource_name]))
             {
                 throw new ConfigurationException(sprintf('Resource \'%s\' not found in package', $name));
             }
 
-            return $this->get('@resources:' . $name);
+            return Resource::fromArray(ZiProto::decode($this->get($resource_name)));
+        }
+
+        /**
+         * Returns a resource from the package by pointer
+         *
+         * @param int $pointer
+         * @param int $length
+         * @return Resource
+         * @throws ConfigurationException
+         */
+        public function getResourceByPointer(int $pointer, int $length): Resource
+        {
+            return Resource::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
         }
 
         /**

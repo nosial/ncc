@@ -29,19 +29,12 @@
     interface RunnerInterface
     {
         /**
-         * Processes the ExecutionPolicy
+         * Executes the unit and returns the exit code of the process
          *
-         * @param string $path
-         * @param ExecutionPolicy $policy
-         * @return ExecutionUnit
-         * @throws IOException
+         * @param ExecutionUnit $unit The execution unit to execute
+         * @param array $args The arguments to pass to the execution unit
+         * @param bool $local Whether to execute the execution unit locally on disk or from a memory buffer
+         * @return int The exit code of the process
          */
-        public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit;
-
-        /**
-         * Returns the file extension to use for the target file
-         *
-         * @return string
-         */
-        public static function getFileExtension(): string;
+        public static function executeUnit(ExecutionUnit $unit, array $args=[], bool $local=true): int;
     }

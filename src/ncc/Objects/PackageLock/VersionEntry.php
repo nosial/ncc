@@ -24,11 +24,11 @@
 
     namespace ncc\Objects\PackageLock;
 
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
-    use ncc\Objects\InstallationPaths;
-    use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\ProjectConfiguration\Compiler;
+    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\PathFinder;
 
     class VersionEntry implements BytecodeObjectInterface
     {
@@ -40,13 +40,6 @@
         private $version;
 
         /**
-         * The compiler extension used for the package
-         *
-         * @var Compiler
-         */
-        private $compiler;
-
-        /**
          * An array of packages that this package depends on
          *
          * @var DependencyEntry[]
@@ -54,9 +47,9 @@
         private $dependencies;
 
         /**
-         * @var ExecutionUnit[]
+         * @var ExecutionPolicy[]
          */
-        public $execution_units;
+        public $execution_policies;
 
         /**
          * The main execution policy for this version entry if applicable
@@ -66,32 +59,19 @@
         public $main_execution_policy;
 
         /**
-         * The path where the package is located
-         *
-         * @var string
-         */
-        public $location;
-
-        /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(string $version)
         {
+            $this->version = $version;
             $this->dependencies = [];
-            $this->execution_units = [];
+            $this->execution_policies = [];
+            $this->main_execution_policy = null;
         }
 
         /**
-         * Returns installation paths
+         * Returns the version of the package that's installed
          *
-         * @return InstallationPaths
-         */
-        public function getInstallPaths(): InstallationPaths
-        {
-            return new InstallationPaths($this->location);
-        }
-
-        /**
          * @return string
          */
         public function getVersion(): string
@@ -100,71 +80,8 @@
         }
 
         /**
-         * @param string $version
-         */
-        public function setVersion(string $version): void
-        {
-            $this->version = $version;
-        }
-
-        /**
-         * @return Compiler
-         */
-        public function getCompiler(): Compiler
-        {
-            return $this->compiler;
-        }
-
-        /**
-         * @param Compiler $compiler
-         */
-        public function setCompiler(Compiler $compiler): void
-        {
-            $this->compiler = $compiler;
-        }
-
-        /**
-         * @return array|DependencyEntry[]
-         */
-        public function getDependencies(): array
-        {
-            return $this->dependencies;
-        }
-
-        /**
-         * @param array|DependencyEntry[] $dependencies
-         */
-        public function setDependencies(array $dependencies): void
-        {
-            $this->dependencies = $dependencies;
-        }
-
-        /**
-         * @param DependencyEntry $dependency
-         * @return void
-         */
-        public function addDependency(DependencyEntry $dependency): void
-        {
-            $this->dependencies[] = $dependency;
-        }
-
-        /**
-         * @return array|ExecutionUnit[]
-         */
-        public function getExecutionUnits(): array
-        {
-            return $this->execution_units;
-        }
-
-        /**
-         * @param array|ExecutionUnit[] $execution_units
-         */
-        public function setExecutionUnits(array $execution_units): void
-        {
-            $this->execution_units = $execution_units;
-        }
-
-        /**
+         * Returns the main execution policy for this version entry if applicable
+         *
          * @return string|null
          */
         public function getMainExecutionPolicy(): ?string
@@ -173,27 +90,115 @@
         }
 
         /**
-         * @param string|null $main_execution_policy
+         * Sets the main execution policy for this version entry if applicable
+         *
+         * @param string|null $policy
+         * @return void
          */
-        public function setMainExecutionPolicy(?string $main_execution_policy): void
+        public function setMainExecutionPolicy(?string $policy): void
         {
-            $this->main_execution_policy = $main_execution_policy;
+            $this->main_execution_policy = $policy;
         }
 
         /**
+         * Returns an array of packages that this package depends on
+         *
+         * @return DependencyEntry[]
+         */
+        public function getDependencies(): array
+        {
+            return $this->dependencies;
+        }
+
+        /**
+         * Returns a dependency by name if it exists
+         *
+         * @param string $name
+         * @return DependencyEntry|null
+         */
+        public function getDependency(string $name): ?DependencyEntry
+        {
+            foreach($this->dependencies as $dependency)
+            {
+                if($dependency->getPackageName() === $name)
+                {
+                    return $dependency;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Adds a dependency to the version entry
+         *
+         * @param DependencyEntry $dependency
+         * @return void
+         */
+        public function addDependency(DependencyEntry $dependency): void
+        {
+            if($this->getDependency($dependency->getPackageName()) !== null)
+            {
+                return;
+            }
+
+            $this->dependencies[] = $dependency;
+        }
+
+        /**
+         * Returns an array of execution policies for this version entry
+         *
+         * @return ExecutionPolicy[]
+         */
+        public function getExecutionPolicies(): array
+        {
+            return $this->execution_policies;
+        }
+
+        /**
+         * Returns the main execution policy for this version entry if it exists
+         *
+         * @param string $name
+         * @return ExecutionPolicy|null
+         */
+        public function getExecutionPolicy(string $name): ?ExecutionPolicy
+        {
+            foreach($this->execution_policies as $executionPolicy)
+            {
+                if($executionPolicy->getName() === $name)
+                {
+                    return $executionPolicy;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Adds an execution policy to the version entry
+         *
+         * @param ExecutionPolicy $executionPolicy
+         * @return void
+         */
+        public function addExecutionPolicy(ExecutionPolicy $executionPolicy): void
+        {
+            if($this->getExecutionPolicy($executionPolicy->getName()) !== null)
+            {
+                return;
+            }
+
+            $this->execution_policies[] = $executionPolicy;
+        }
+
+        /**
+         * Returns the path where the package is installed
+         *
+         * @param string $package_name
          * @return string
          */
-        public function getLocation(): string
+        public function getPath(string $package_name): string
         {
-            return $this->location;
-        }
-
-        /**
-         * @param string $location
-         */
-        public function setLocation(string $location): void
-        {
-            $this->location = $location;
+            return PathFinder::getPackagesPath() . DIRECTORY_SEPARATOR . sprintf('%s=%s', $package_name, $this->getVersion());
         }
 
         /**
@@ -210,19 +215,17 @@
                 $dependencies[] = $dependency->toArray($bytecode);
             }
 
-            $execution_units = [];
-            foreach($this->execution_units as $executionUnit)
+            $execution_policies = [];
+            foreach($this->execution_policies as $policy)
             {
-                $execution_units[] = $executionUnit->toArray($bytecode);
+                $execution_policies[] = $policy->toArray($bytecode);
             }
 
             return [
                 ($bytecode ? Functions::cbc('version')  : 'version')  => $this->version,
-                ($bytecode ? Functions::cbc('compiler')  : 'compiler')  => $this->compiler->toArray(),
                 ($bytecode ? Functions::cbc('dependencies')  : 'dependencies')  => $dependencies,
-                ($bytecode ? Functions::cbc('execution_units')  : 'execution_units')  => $execution_units,
+                ($bytecode ? Functions::cbc('execution_policies')  : 'execution_policies')  => $execution_policies,
                 ($bytecode ? Functions::cbc('main_execution_policy')  : 'main_execution_policy')  => $this->main_execution_policy,
-                ($bytecode ? Functions::cbc('location')  : 'location')  => $this->location,
             ];
         }
 
@@ -234,11 +237,15 @@
          */
         public static function fromArray(array $data): VersionEntry
         {
-            $object = new self();
-            $object->version = Functions::array_bc($data, 'version');
-            $object->compiler = Compiler::fromArray(Functions::array_bc($data, 'compiler'));
+            $version = Functions::array_bc($data, 'version');
+
+            if($version === null)
+            {
+                throw new ConfigurationException('VersionEntry is missing version');
+            }
+
+            $object = new self($version);
             $object->main_execution_policy = Functions::array_bc($data, 'main_execution_policy');
-            $object->location = Functions::array_bc($data, 'location');
 
             $dependencies = Functions::array_bc($data, 'dependencies');
             if($dependencies !== null)
@@ -249,12 +256,12 @@
                 }
             }
 
-            $execution_units = Functions::array_bc($data, 'execution_units');
-            if($execution_units !== null)
+            $execution_policies = Functions::array_bc($data, 'execution_policies');
+            if($execution_policies !== null)
             {
-                foreach($execution_units as $_datum)
+                foreach($execution_policies as $_datum)
                 {
-                    $object->execution_units[] = ExecutionUnit::fromArray($_datum);
+                    $object->execution_policies[] = ExecutionPolicy::fromArray($_datum);
                 }
             }
 

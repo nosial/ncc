@@ -28,22 +28,25 @@
     use ncc\Classes\PackageWriter;
     use ncc\CLI\Main;
     use ncc\Enums\ComponentDataType;
+    use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\LogLevel;
+    use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\Package;
-    use ncc\Objects\Package\Resource;
+    use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
     use ncc\Utilities\Resolver;
 
-    class NccCompiler
+    class NccCompiler implements CompilerInterface
     {
         /**
          * @var ProjectManager
@@ -59,18 +62,35 @@
         }
 
         /**
+         * Returns the project manager
+         *
+         * @return ProjectManager
+         */
+        public function getProjectManager(): ProjectManager
+        {
+            return $this->project_manager;
+        }
+
+        /**
+         * @inheritDoc
          * @param string $build_configuration
          * @return string
          * @throws ConfigurationException
          * @throws IOException
          * @throws NotSupportedException
          * @throws PathNotFoundException
+         * @noinspection UnusedFunctionResultInspection
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
         {
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
             $package_path = $configuration->getOutputPath() . DIRECTORY_SEPARATOR . $this->project_manager->getProjectConfiguration()->getAssembly()->getPackage() . '.ncc';
-            $package_writer = new PackageWriter($package_path);
+            $progress = 0;
+            $steps =
+                count($this->project_manager->getProjectConfiguration()->getExecutionPolicies()) +
+                count($this->project_manager->getComponents($build_configuration)) +
+                count($this->project_manager->getResources($build_configuration));
+            $package_writer = $this->createPackageWriter($package_path, $configuration);
 
             Console::out(sprintf('Building project \'%s\'', $this->project_manager->getProjectConfiguration()->getAssembly()->getName()));
 
@@ -89,7 +109,7 @@
             }
 
             Console::outVerbose('Building package header...');
-            $package_writer->setMetadata($this->buildMetadata($build_configuration));
+            $this->processMetadata($package_writer, $build_configuration);
 
             Console::outVerbose('Adding assembly information...');
             $package_writer->setAssembly($this->project_manager->getProjectConfiguration()->getAssembly());
@@ -104,16 +124,20 @@
             // Process execution policies
             if(count($this->project_manager->getProjectConfiguration()->getExecutionPolicies()) > 0)
             {
-                Console::out('Processing execution policies...');
+                Console::outVerbose('Processing execution policies...');
                 $execution_units = $this->project_manager->getExecutionUnits($build_configuration);
 
                 if(count($execution_units) === 0)
                 {
+                    $progress = count($this->project_manager->getProjectConfiguration()->getExecutionPolicies());
+                    Console::inlineProgressBar($progress, $steps);
                     Console::outWarning('The project contains execution policies but none of them are used');
                 }
 
                 foreach($execution_units as $unit)
                 {
+                    $progress++;
+                    Console::inlineProgressBar($progress, $steps);
                     $package_writer->addExecutionUnit($unit);
                 }
             }
@@ -121,15 +145,21 @@
             // Compile package components
             foreach($this->project_manager->getComponents($build_configuration) as $component)
             {
+                $progress++;
+                Console::inlineProgressBar($progress, $steps);
                 Console::outVerbose(sprintf('Compiling \'%s\'', $component));
-                $package_writer->addComponent($this->buildComponent($component));
+
+                $this->processComponent($package_writer, $component);
             }
 
             // Compile package resources
             foreach($this->project_manager->getResources($build_configuration) as $resource)
             {
+                $progress++;
+                Console::inlineProgressBar($progress, $steps);
                 Console::outVerbose(sprintf('Processing \'%s\'', $resource));
-                $package_writer->addResource($this->buildResource($resource));
+
+                $this->processResource($package_writer, $resource);
             }
 
             $package_writer->close();
@@ -137,52 +167,97 @@
         }
 
         /**
+         * Creates a package writer with the specified options
+         *
+         * @param string $path
+         * @param BuildConfiguration $build_configuration
+         * @return PackageWriter
+         * @throws IOException
+         * @throws NotSupportedException
+         */
+        private function createPackageWriter(string $path, BuildConfiguration $build_configuration): PackageWriter
+        {
+            $package_writer = new PackageWriter($path);
+
+            if(isset($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]))
+            {
+                $package_writer->addFlag(PackageFlags::COMPRESSION);
+                switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]))
+                {
+                    case BuildConfigurationOptions\CompressionOptions::HIGH:
+                        $package_writer->addFlag(PackageFlags::HIGH_COMPRESSION);
+                        break;
+
+                    case BuildConfigurationOptions\CompressionOptions::MEDIUM:
+                        $package_writer->addFlag(PackageFlags::MEDIUM_COMPRESSION);
+                        break;
+
+                    case BuildConfigurationOptions\CompressionOptions::LOW:
+                        $package_writer->addFlag(PackageFlags::LOW_COMPRESSION);
+                        break;
+
+                    default:
+                        throw new NotSupportedException(sprintf('The compression level \'%s\' is not supported', $build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]));
+                }
+            }
+
+            return $package_writer;
+        }
+
+        /**
          * Compiles a single component as a base64 encoded string
          *
+         * @param PackageWriter $package_writer
          * @param string $file_path
-         * @return Package\Component
          * @throws IOException
          * @throws PathNotFoundException
+         * @noinspection UnusedFunctionResultInspection
          */
-        public function buildComponent(string $file_path): Package\Component
+        public function processComponent(PackageWriter $package_writer, string $file_path): void
         {
-            return new Package\Component(
+            $package_writer->addComponent(new Package\Component(
                 Functions::removeBasename($file_path),
                 Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED
-            );
+            ));
         }
 
         /**
+         * Packs a resource into the package
+         *
+         * @param PackageWriter $package_writer
          * @param string $file_path
-         * @return Resource
+         * @return void
          * @throws IOException
          * @throws PathNotFoundException
+         * @noinspection UnusedFunctionResultInspection
          */
-        public function buildResource(string $file_path): Package\Resource
+        public function processResource(PackageWriter $package_writer, string $file_path): void
         {
-            return new Package\Resource(
-                basename($file_path), IO::fread($file_path)
-            );
+            $package_writer->addResource(new Package\Resource(
+                Functions::removeBasename($file_path), IO::fread($file_path)
+            ));
         }
 
         /**
-         * Builds the package header
+         * Processes the package metadata
          *
-         * @param ProjectManager $project_manager
+         * @param PackageWriter $package_writer
          * @param string $build_configuration
-         * @return Package\Metadata
+         * @return void
          * @throws ConfigurationException
+         * @throws IOException
+         * @noinspection UnusedFunctionResultInspection
          */
-        public function buildMetadata(string $build_configuration=BuildConfigurationValues::DEFAULT): Package\Metadata
+        public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT): void
         {
-            $header = new Package\Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
+            $metadata = new Package\Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
 
-            $header->setRuntimeConstants($this->project_manager->getRuntimeConstants($build_configuration));
-            $header->setOptions($this->project_manager->getCompilerOptions($build_configuration));
-            $header->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
-            $header->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
-            $header->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
+            $metadata->setRuntimeConstants($this->project_manager->getRuntimeConstants($build_configuration));
+            $metadata->setOptions($this->project_manager->getCompilerOptions($build_configuration));
+            $metadata->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
+            $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
+            $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
 
-            return $header;
+            $package_writer->setMetadata($metadata);
         }
     }

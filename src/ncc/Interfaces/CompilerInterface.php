@@ -26,6 +26,7 @@
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Managers\ProjectManager;
     use ncc\Objects\Package;
     use ncc\Objects\ProjectConfiguration;
 
@@ -34,60 +35,15 @@
         /**
          * Public constructor
          *
-         * @param ProjectConfiguration $project
-         * @param string $path
+         * @param ProjectManager $project_manager
          */
-        public function __construct(ProjectConfiguration $project, string $path);
+        public function __construct(ProjectManager $project_manager);
 
         /**
-         * Prepares the package for the build process, this method is called before build()
+         * Builds the project and returns the path to the built package
          *
-         * @param string $build_configuration The build configuration to use to build the project
-         * @return void
+         * @param string $build_configuration
+         * @return string
          */
-        public function prepare(string $build_configuration=BuildConfigurationValues::DEFAULT): void;
-
-        /**
-         * Executes the compiler process in the correct order and returns the finalized Package object
-         *
-         * @return Package|null
-         * @throws BuildException
-         * @throws PathNotFoundException
-         * @throws IOException
-         */
-        public function build(): ?Package;
-
-        /**
-         * Compiles the components of the package
-         *
-         * @return void
-         * @throws PathNotFoundException
-         * @throws IOException
-         */
-        public function compileComponents(): void;
-
-        /**
-         * Compiles the resources of the package
-         *
-         * @return void
-         * @throws PathNotFoundException
-         * @throws IOException
-         */
-        public function compileResources(): void;
-
-        /**
-         * Compiles the execution policies of the package
-         *
-         * @return void
-         * @throws PathNotFoundException
-         * @throws IOException
-         */
-        public function compileExecutionPolicies(): void;
-
-        /**
-         * Returns the current state of the package
-         *
-         * @return Package|null
-         */
-        public function getPackage(): ?Package;
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string;
     }

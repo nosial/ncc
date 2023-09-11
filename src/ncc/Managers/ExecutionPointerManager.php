@@ -51,7 +51,7 @@
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
     use RuntimeException;
 
     class ExecutionPointerManager

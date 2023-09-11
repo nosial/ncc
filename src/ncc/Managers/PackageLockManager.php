@@ -34,7 +34,7 @@
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
     use ncc\Utilities\RuntimeCache;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
 
     class PackageLockManager
     {

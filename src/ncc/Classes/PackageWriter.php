@@ -25,6 +25,8 @@
 
     namespace ncc\Classes;
 
+    use ncc\Enums\Flags\PackageFlags;
+    use ncc\Enums\PackageDirectory;
     use ncc\Enums\PackageStructure;
     use ncc\Enums\PackageStructureVersions;
     use ncc\Exceptions\IOException;
@@ -35,7 +37,7 @@
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Objects\ProjectConfiguration\Installer;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
 
     class PackageWriter
     {
@@ -58,6 +60,11 @@
          * @var string;
          */
         private $temporary_path;
+
+        /**
+         * @var bool
+         */
+        private $data_written;
 
         /**
          * PackageWriter constructor.
@@ -94,6 +101,7 @@
             touch($file_path);
             touch($file_path . '.tmp');
 
+            $this->data_written = false;
             $this->temporary_path = $file_path . '.tmp';
             $this->temp_file = @fopen($this->temporary_path, 'wb'); // Create a temporary data file
             $this->package_file = @fopen($file_path, 'wb');
@@ -148,6 +156,11 @@
          */
         public function setFlags(array $flags): void
         {
+            if($this->data_written)
+            {
+                throw new IOException('Cannot set flags after data has been written to the package');
+            }
+
             $this->headers[PackageStructure::FLAGS] = $flags;
         }
 
@@ -156,9 +169,15 @@
          *
          * @param string $flag
          * @return void
+         * @throws IOException
          */
         public function addFlag(string $flag): void
         {
+            if($this->data_written)
+            {
+                throw new IOException('Cannot add a flag after data has been written to the package');
+            }
+
             if(!in_array($flag, $this->headers[PackageStructure::FLAGS], true))
             {
                 $this->headers[PackageStructure::FLAGS][] = $flag;
@@ -173,6 +192,11 @@
          */
         public function removeFlag(string $flag): void
         {
+            if($this->data_written)
+            {
+                throw new IOException('Cannot remove a flag after data has been written to the package');
+            }
+
             $this->headers[PackageStructure::FLAGS] = array_diff($this->headers[PackageStructure::FLAGS], [$flag]);
         }
 
@@ -181,102 +205,159 @@
          *
          * @param string $name
          * @param string $data
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function add(string $name, string $data): void
+        public function add(string $name, string $data): array
         {
             if(isset($this->headers[PackageStructure::DIRECTORY][$name]))
             {
                 throw new IOException(sprintf('Resource \'%s\' already exists in package', $name));
             }
 
-            $this->headers[PackageStructure::DIRECTORY][$name] = sprintf("%d:%d", ftell($this->temp_file), strlen($data));
+            if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+            {
+                if(in_array(PackageFlags::LOW_COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+                {
+                    $data = gzcompress($data, 1);
+                }
+                else if(in_array(PackageFlags::MEDIUM_COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+                {
+                    $data = gzcompress($data, 6);
+                }
+                else if(in_array(PackageFlags::HIGH_COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+                {
+                    $data = gzcompress($data, 9);
+                }
+                else
+                {
+                    $data = gzcompress($data);
+                }
+            }
+
+            $pointer = sprintf("%d:%d", ftell($this->temp_file), strlen($data));
+            $this->headers[PackageStructure::DIRECTORY][$name] = $pointer;
+            $this->data_written = true;
             fwrite($this->temp_file, $data);
+
+            return explode(':', $pointer);
+        }
+
+        /**
+         * Adds a pointer to the package
+         *
+         * @param string $name
+         * @param int $offset
+         * @param int $length
+         * @return void
+         * @throws IOException
+         */
+        public function addPointer(string $name, int $offset, int $length): void
+        {
+            if(isset($this->headers[PackageStructure::DIRECTORY][$name]))
+            {
+                throw new IOException(sprintf('Resource \'%s\' already exists in package', $name));
+            }
+
+            $this->headers[PackageStructure::DIRECTORY][$name] = sprintf("%d:%d", $offset, $length);
         }
 
         /**
          * Sets the assembly of the package
          *
          * @param Assembly $assembly
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function setAssembly(Assembly $assembly): void
+        public function setAssembly(Assembly $assembly): array
         {
-            $this->add('@assembly', ZiProto::encode($assembly->toArray()));
+            return $this->add(sprintf('@%s', PackageDirectory::ASSEMBLY), ZiProto::encode($assembly->toArray(true)));
         }
 
         /**
          * Adds the metadata to the package
          *
          * @param Metadata $metadata
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function setMetadata(Metadata $metadata): void
+        public function setMetadata(Metadata $metadata): array
         {
-            $this->add('@metadata', ZiProto::encode($metadata->toArray()));
+            return $this->add(sprintf('@%s', PackageDirectory::METADATA), ZiProto::encode($metadata->toArray(true)));
         }
 
         /**
          * Sets the installer information of the package
          *
          * @param Installer $installer
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function setInstaller(Installer $installer): void
+        public function setInstaller(Installer $installer): array
         {
-            $this->add('@installer', ZiProto::encode($installer->toArray()));
+            return $this->add(sprintf('@%s', PackageDirectory::INSTALLER), ZiProto::encode($installer->toArray(true)));
         }
 
         /**
          * Adds a dependency configuration to the package
          *
          * @param Dependency $dependency
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function addDependencyConfiguration(Dependency $dependency): void
+        public function addDependencyConfiguration(Dependency $dependency): array
         {
-            $this->add(sprintf('@dependencies:%s', $dependency->getName()), ZiProto::encode($dependency->toArray()));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::DEPENDENCIES, $dependency->getName()), ZiProto::encode($dependency->toArray(true)));
         }
 
         /**
          * Adds an execution unit to the package
          *
          * @param ExecutionUnit $unit
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function addExecutionUnit(ExecutionUnit $unit): void
+        public function addExecutionUnit(ExecutionUnit $unit): array
         {
-            $this->add(sprintf('@execution_units:%s', $unit->getExecutionPolicy()->getName()), ZiProto::encode($unit->toArray()));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS, $unit->getExecutionPolicy()->getName()), ZiProto::encode($unit->toArray(true)));
         }
 
         /**
          * Adds a component to the package
          *
          * @param Component $component
-         * @return void
+         * @return array
          * @throws IOException
          */
-        public function addComponent(Component $component): void
+        public function addComponent(Component $component): array
         {
-            $this->add(sprintf('@components:%s', $component->getName()), ZiProto::encode($component->toArray()));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::COMPONENTS, $component->getName()), ZiProto::encode($component->toArray(true)));
         }
 
         /**
          * Adds a resource to the package
          *
          * @param Resource $resource
+         * @return array
+         * @throws IOException
+         */
+        public function addResource(Resource $resource): array
+        {
+            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES, $resource->getName()), $resource->getData());
+        }
+
+        /**
+         * Maps a class to a component in the package
+         *
+         * @param string $class
+         * @param int $offset
+         * @param int $length
          * @return void
          * @throws IOException
          */
-        public function addResource(Resource $resource): void
+        public function mapClass(string $class, int $offset, int $length): void
         {
-            $this->add(sprintf('@resources:%s', $resource->getName()), $resource->getData());
+            $this->addPointer(sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class), $offset, $length);
         }
 
         /**
@@ -326,6 +407,18 @@
             catch(IOException $e)
             {
                 // Ignore
+            }
+            finally
+            {
+                if(is_resource($this->package_file))
+                {
+                    fclose($this->package_file);
+                }
+
+                if(is_resource($this->temp_file))
+                {
+                    fclose($this->temp_file);
+                }
             }
         }
     }

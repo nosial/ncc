@@ -28,6 +28,7 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Added new template PhpCliTemplate `phpcli`
  - Added new template PhpLibraryTemplate `phplib`
  - Added the ability to clean arrays in `\ncc\Utilities > Functions > cleanArray()`
+ - Added the ability to compile executable binaries for php using `gcc`
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -227,6 +228,12 @@ features and reduced the number of exceptions down to 15 exceptions.
    going to list them all here, but you can find them in the commit history.
  - Implemented a template engine and refactored the CLI menu for the Project Manager and added a new `template` command
  - Refactored the entire package structure to ncc package structure 2.0 for memory efficiency and performance
+ - Refactored execution unit system to use a new execution pointer system
+ - Refactored `PhpRunner` to use the new execution pointer system
+ - Refactored `BashRunner` to use the new execution pointer system
+ - Refactored `LuaRunner` to use the new execution pointer system
+ - Refactored `PerlRunner` to use the new execution pointer system
+ - Refactored `PythonRunner` to use the new execution pointer system
 
 
 ### Removed
@@ -290,6 +297,9 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Removed unused `\ncc\Objects > NccUpdateInformation`
  - Removed unused `\ncc\Objects > PhpConfiguration`
  - Removed parameter `$throw_exception` from `\ncc\Objects\ProjectConfiguration > Project > validate()`
+ - Removed dependency `theseer\Autoload` in favor of ncc's own autoloader (screw you Arne Blankerts)
+ - Refactored ZiProto
+ - Removed runners `Python2` & `Python3` in favor of `Python`
 
 
 

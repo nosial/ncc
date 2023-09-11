@@ -35,11 +35,6 @@
         public const PLAIN = 'plain';
 
         /**
-         * Indicates whether the component is represented as bytecode
-         */
-        public const BYTECODE = 'bytecode';
-
-        /**
          * Indicates whether the component is represented as binary or executable
          */
         public const BINARY = 'binary';

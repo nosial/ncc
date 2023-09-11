@@ -1,24 +1,24 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
@@ -27,6 +27,7 @@
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Compiler;
+    use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\Utilities\Functions;
 
@@ -238,6 +239,8 @@
                 ($bytecode ? Functions::cbc('runtime_constants') : 'runtime_constants') => $this->runtime_constants,
                 ($bytecode ? Functions::cbc('compiler_version') : 'compiler_version') => $this->compiler_version,
                 ($bytecode ? Functions::cbc('update_source') : 'update_source') => ($this->update_source?->toArray($bytecode)),
+                ($bytecode ? Functions::cbc('installer') : 'installer') => ($this->installer?->toArray($bytecode)),
+                ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this->main_execution_policy,
                 ($bytecode ? Functions::cbc('options') : 'options') => $this->options,
             ];
         }
@@ -259,10 +262,18 @@
             $object->compiler_version = Functions::array_bc($data, 'compiler_version');
             $object->update_source = Functions::array_bc($data, 'update_source');
             $object->options = Functions::array_bc($data, 'options');
+            $object->update_source = Functions::array_bc($data, 'update_source');
+            $object->main_execution_policy = Functions::array_bc($data, 'main_execution_policy');
+            $object->installer = Functions::array_bc($data, 'installer');
 
             if($object->update_source !== null)
             {
                 $object->update_source = UpdateSource::fromArray($object->update_source);
+            }
+
+            if($object->installer !== null)
+            {
+                $object->installer = Installer::fromArray($object->installer);
             }
 
             return $object;

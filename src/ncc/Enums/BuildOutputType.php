@@ -25,4 +25,5 @@
     final class BuildOutputType
     {
         public const NCC_PACKAGE = 'ncc';
+        public const EXECUTABLE = 'executable';
     }

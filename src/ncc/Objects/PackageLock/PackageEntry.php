@@ -24,18 +24,23 @@
 
     namespace ncc\Objects\PackageLock;
 
-    use ncc\Enums\Scopes;
+    use InvalidArgumentException;
+    use ncc\Classes\PackageReader;
+    use ncc\Enums\FileDescriptor;
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PathNotFoundException;
+    use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\BytecodeObjectInterface;
-    use ncc\Objects\Package;
+    use ncc\Objects\Package\Metadata;
+    use ncc\Objects\ProjectConfiguration\Assembly;
+    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
+    use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
-    use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\Utilities\Functions;
-    use ncc\Utilities\PathFinder;
-    use ncc\Utilities\Resolver;
+    use ncc\Utilities\IO;
 
     class PackageEntry implements BytecodeObjectInterface
     {
@@ -45,13 +50,6 @@
          * @var string
          */
         private $name;
-
-        /**
-         * The latest version of the package entry, this is updated automatically
-         *
-         * @var string|null
-         */
-        private $latest_version;
 
         /**
          * An array of installed versions for this package
@@ -70,25 +68,114 @@
         /**
          * Public Constructor
          */
-        public function __construct()
+        public function __construct(string $name, array $versions=[])
         {
-            $this->versions = [];
+            $this->name = $name;
+            $this->versions = $versions;
         }
 
         /**
-         * Searches and returns a version of the package
+         * Returns the name of the package entry
+         *
+         * @return string
+         */
+        public function getName(): string
+        {
+            return $this->name;
+        }
+
+        /**
+         * Optional. Returns the update source of the package entry
+         *
+         * @return UpdateSource|null
+         */
+        public function getUpdateSource(): ?UpdateSource
+        {
+            return $this->update_source;
+        }
+
+        /**
+         * Returns the path to where the package is installed
          *
          * @param string $version
-         * @param bool $throw_exception
-         * @return VersionEntry|null
-         * @throws IOException
+         * @return string
          */
-        public function getVersion(string $version, bool $throw_exception=false): ?VersionEntry
+        public function getPath(string $version): string
         {
-            if($version === Versions::LATEST && $this->latest_version !== null)
+            return $this->getVersion($version)->getPath($this->name);
+        }
+
+        /**
+         * Adds a new version entry to the package, if overwrite is true then
+         * the entry will be overwritten if it exists, otherwise it will return
+         * false.
+         *
+         * @param PackageReader $package_reader
+         * @param bool $overwrite
+         * @return bool
+         * @throws ConfigurationException
+         */
+        public function addVersion(PackageReader $package_reader, bool $overwrite=false): bool
+        {
+            if($this->versionExists($package_reader->getAssembly()->getVersion()))
             {
-                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $version = $this->latest_version;
+                if(!$overwrite)
+                {
+                    return false;
+                }
+
+                $this->removeVersion($package_reader->getAssembly()->getVersion());
+            }
+
+            $version_entry = new VersionEntry($package_reader->getAssembly()->getVersion());
+            $version_entry->setMainExecutionPolicy($package_reader->getMetadata()->getMainExecutionPolicy());
+
+            //foreach($package_reader->getDependencies() as $dependency)
+            //{
+                // TODO: Implement this functionality
+            //}
+
+            foreach($package_reader->getExecutionUnits() as $unit)
+            {
+                $version_entry->addExecutionPolicy($package_reader->getExecutionUnit($unit)->getExecutionPolicy());
+            }
+
+            $this->versions[] = $version_entry;
+            $this->update_source =$package_reader->getMetadata()->getUpdateSource();
+
+            return true;
+        }
+
+        /**
+         * Returns True if the given version exists in the entry
+         *
+         * @param string $version
+         * @return bool
+         */
+        public function versionExists(string $version): bool
+        {
+            foreach($this->versions as $versionEntry)
+            {
+                if($versionEntry->getVersion() === $version)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * Returns a version entry by version
+         *
+         * @param string $version
+         * @return VersionEntry
+         */
+        public function getVersion(string $version): VersionEntry
+        {
+            if($version === Versions::LATEST)
+            {
+                $version = $this->getLatestVersion();
             }
 
             foreach($this->versions as $versionEntry)
@@ -99,20 +186,54 @@
                 }
             }
 
-            if($throw_exception)
-            {
-                throw new IOException(sprintf('Version %s of %s is not installed', $version, $this->name));
-            }
-
-            return null;
+            throw new InvalidArgumentException(sprintf('Version %s does not exist in package %s', $version, $this->name));
         }
 
         /**
-         * Removes version entry from the package
+         * Updates and returns the latest version of this package entry
+         *
+         * @return string
+         */
+        private function getLatestVersion(): string
+        {
+            $latest_version = null;
+
+            foreach($this->versions as $version)
+            {
+                $version = $version->getVersion();
+
+                if($latest_version === null)
+                {
+                    $latest_version = $version;
+                    continue;
+                }
+
+                if(VersionComparator::compareVersion($version, $latest_version))
+                {
+                    $latest_version = $version;
+                }
+            }
+
+            return $latest_version;
+        }
+
+        /**
+         * Returns an array of all versions installed
+         *
+         * @return array
+         */
+        public function getVersions(): array
+        {
+            return array_map(static function(VersionEntry $versionEntry) {
+                return $versionEntry->getVersion();
+            }, $this->versions);
+        }
+
+        /**
+         * Removes version entry from the package entry
          *
          * @param string $version
          * @return bool
-         * @noinspection PhpUnused
          */
         public function removeVersion(string $version): bool
         {
@@ -133,7 +254,6 @@
             if($found_node)
             {
                 unset($this->versions[$count]);
-                $this->updateLatestVersion();
                 return true;
             }
 
@@ -141,157 +261,121 @@
         }
 
         /**
-         * Adds a new version entry to the package, if overwrite is true then
-         * the entry will be overwritten if it exists, otherwise it will return
-         * false.
+         * Returns the assembly of the package entry
          *
-         * @param Package $package
-         * @param string $install_path
-         * @param bool $overwrite
-         * @return bool
-         */
-        public function addVersion(Package $package, string $install_path, bool $overwrite=false): bool
-        {
-            try
-            {
-                if ($this->getVersion($package->getAssembly()->getVersion()) !== null)
-                {
-                    if(!$overwrite)
-                    {
-                        return false;
-                    }
-
-                    $this->removeVersion($package->getAssembly()->getVersion());
-                }
-            }
-            catch (IOException $e)
-            {
-                unset($e);
-            }
-
-            $version = new VersionEntry();
-            $version->setVersion($package->getAssembly()->getVersion());
-            $version->setCompiler($package->getMetadata()->getCompilerExtension());
-            $version->setExecutionUnits($package->getExecutionUnits());
-            $version->main_execution_policy = $package->getMainExecutionPolicy();
-            $version->location = $install_path;
-
-            foreach($version->getExecutionUnits() as $unit)
-            {
-                $unit->setData(null);
-            }
-
-            foreach($package->getDependencies() as $dependency)
-            {
-                $version->addDependency(new DependencyEntry($dependency));
-            }
-
-            $this->versions[] = $version;
-            $this->updateLatestVersion();
-            return true;
-        }
-
-        /**
-         * Updates and returns the latest version of this package entry
-         *
-         * @return void
-         */
-        private function updateLatestVersion(): void
-        {
-            $latest_version = null;
-
-            foreach($this->versions as $version)
-            {
-                $version = $version->getVersion();
-
-                if($latest_version === null)
-                {
-                    $latest_version = $version;
-                    continue;
-                }
-
-                if(VersionComparator::compareVersion($version, $latest_version))
-                {
-                    $latest_version = $version;
-                }
-            }
-
-            $this->latest_version = $latest_version;
-        }
-
-        /**
-         * @return string|null
-         */
-        public function getLatestVersion(): ?string
-        {
-            return $this->latest_version;
-        }
-
-        /**
-         * Returns an array of all versions installed
-         *
-         * @return array
-         */
-        public function getVersions(): array
-        {
-            $r = [];
-
-            foreach($this->versions as $version)
-            {
-                $r[] = $version->getVersion();
-            }
-
-            return $r;
-
-        }
-
-        /**
-         * @return string
+         * @param string $version
+         * @return Assembly
          * @throws ConfigurationException
+         * @throws IOException
+         * @throws PathNotFoundException
          */
-        public function getDataPath(): string
+        public function getAssembly(string $version=Versions::LATEST): Assembly
         {
-            $path = PathFinder::getPackageDataPath($this->name);
-
-            if(!file_exists($path) && Resolver::resolveScope() === Scopes::SYSTEM)
+            $assembly_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY;
+            if(!is_file($assembly_path))
             {
-                $filesystem = new Filesystem();
-                $filesystem->mkdir($path);
+                throw new IOException(sprintf('Assembly file for package %s version %s does not exist (Expected %s)', $this->name, $version, $assembly_path));
             }
 
-            return $path;
+            return Assembly::fromArray(ZiProto::decode(IO::fread($assembly_path)));
         }
 
         /**
+         * Returns the metadata of the package entry
+         *
+         * @param string $version
+         * @return Metadata
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws PathNotFoundException
+         */
+        public function getMetadata(string $version=Versions::LATEST): Metadata
+        {
+            $metadata_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA;
+            if(!is_file($metadata_path))
+            {
+                throw new IOException(sprintf('Metadata file for package %s version %s does not exist (Expected %s)', $this->name, $version, $metadata_path));
+            }
+
+            return Metadata::fromArray(ZiProto::decode(IO::fread($metadata_path)));
+        }
+
+        /**
+         * Optional. Returns the installer details of the package entry
+         *
+         * @param string $version
+         * @return Installer|null
+         * @throws IOException
+         * @throws PathNotFoundException
+         */
+        public function getInstaller(string $version=Versions::LATEST): ?Installer
+        {
+            $installer_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER;
+            if(!is_file($installer_path))
+            {
+                return null;
+            }
+
+            return Installer::fromArray(ZiProto::decode(IO::fread($installer_path)));
+        }
+
+        /**
+         * Returns the class map of the package entry
+         *
+         * @param string $version
+         * @return array
+         * @throws IOException
+         * @throws PathNotFoundException
+         */
+        public function getClassMap(string $version=Versions::LATEST): array
+        {
+            $class_map_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP;
+            if(!is_file($class_map_path))
+            {
+                return [];
+            }
+
+            return ZiProto::decode(IO::fread($class_map_path));
+        }
+
+        /**
+         * Returns the execution policy of the package entry
+         *
+         * @param string $policy_name
+         * @param string $version
+         * @return ExecutionPolicy
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws PathNotFoundException
+         */
+        public function getExecutionPolicy(string $policy_name, string $version=Versions::LATEST): ExecutionPolicy
+        {
+            $execution_policy_path = $this->getPath($version) . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $policy_name . '.policy';
+            if(!is_file($execution_policy_path))
+            {
+                throw new IOException(sprintf('Execution policy %s for package %s version %s does not exist (Expected %s)', $policy_name, $this->name, $version, $execution_policy_path));
+            }
+
+            return ExecutionPolicy::fromArray(ZiProto::decode(IO::fread($execution_policy_path)));
+        }
+
+        /**
+         * Returns the path to the execution binary of the package entry of a given policy name
+         *
+         * @param string $policy_name
+         * @param string $version
          * @return string
+         * @throws IOException
          */
-        public function getName(): string
+        public function getExecutionBinaryPath(string $policy_name, string $version=Versions::LATEST): string
         {
-            return $this->name;
-        }
+            $execution_binary_path = $this->getPath($version) . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $policy_name;
+            if(!is_file($execution_binary_path))
+            {
+                throw new IOException(sprintf('Execution binary %s for package %s version %s does not exist (Expected %s)', $policy_name, $this->name, $version, $execution_binary_path));
+            }
 
-        /**
-         * @param string $name
-         */
-        public function setName(string $name): void
-        {
-            $this->name = $name;
-        }
-
-        /**
-         * @return UpdateSource|null
-         */
-        public function getUpdateSource(): ?UpdateSource
-        {
-            return $this->update_source;
-        }
-
-        /**
-         * @param UpdateSource|null $update_source
-         */
-        public function setUpdateSource(?UpdateSource $update_source): void
-        {
-            $this->update_source = $update_source;
+            return $execution_binary_path;
         }
 
         /**
@@ -311,7 +395,6 @@
 
             return [
                 ($bytecode ? Functions::cbc('name')  : 'name')  => $this->name,
-                ($bytecode ? Functions::cbc('latest_version')  : 'latest_version')  => $this->latest_version,
                 ($bytecode ? Functions::cbc('versions')  : 'versions')  => $versions,
                 ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->update_source?->toArray($bytecode)),
             ];
@@ -322,28 +405,26 @@
          *
          * @param array $data
          * @return PackageEntry
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): PackageEntry
         {
-            $object = new self();
+            $name = Functions::array_bc($data, 'name');
+            $raw_versions = Functions::array_bc($data, 'versions') ?? [];
+            $versions = [];
 
-            $object->name = Functions::array_bc($data, 'name');
-            $object->latest_version = Functions::array_bc($data, 'latest_version');
+            if($name === null)
+            {
+                throw new ConfigurationException('PackageEntry is missing name');
+            }
+
+            foreach($raw_versions as $raw_version)
+            {
+                $versions[] = VersionEntry::fromArray($raw_version);
+            }
+
+            $object = new self($name, $versions);
             $object->update_source = Functions::array_bc($data, 'update_source');
-            $versions = Functions::array_bc($data, 'versions');
-
-            if($object->update_source !== null)
-            {
-                $object->update_source = UpdateSource::fromArray($object->update_source);
-            }
-
-            if($versions !== null)
-            {
-                foreach($versions as $_datum)
-                {
-                    $object->versions[] = VersionEntry::fromArray($_datum);
-                }
-            }
 
             return $object;
         }

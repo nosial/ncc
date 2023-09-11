@@ -45,10 +45,6 @@
     },
     {
       "vendor": "theseer",
-      "package_name": "Autoload"
-    },
-    {
-      "vendor": "theseer",
       "package_name": "DirectoryScanner"
     }
   ],

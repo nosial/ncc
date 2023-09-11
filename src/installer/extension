@@ -1,15 +1,11 @@
 <?php
 
-    use ncc\Abstracts\Versions;
-    use ncc\Exceptions\ConstantReadonlyException;
-    use ncc\Exceptions\ImportException;
-    use ncc\Exceptions\InvalidConstantNameException;
-    use ncc\Exceptions\InvalidPackageNameException;
-    use ncc\Exceptions\InvalidScopeException;
-    use ncc\Exceptions\PackageLockException;
-    use ncc\Exceptions\PackageNotFoundException;
+    use ncc\Classes\Runtime;
+    use ncc\Enums\Versions;
+use ncc\Exceptions\ConfigurationException;
+use ncc\Exceptions\ImportException;
+    use ncc\Exceptions\IOException;
     use ncc\ncc;
-    use ncc\Runtime;
 
     if(!defined('NCC_INIT'))
     {
@@ -17,26 +13,45 @@
         {
             throw new RuntimeException('Cannot locate file \'%ncc_install' . DIRECTORY_SEPARATOR . 'autoload.php\'');
         }
-        else
-        {
-            require('%ncc_install' . DIRECTORY_SEPARATOR . 'autoload.php');
-        }
 
+        require('%ncc_install' . DIRECTORY_SEPARATOR . 'autoload.php');
 
         if(!function_exists('import'))
         {
             /**
-             * Attempts to import a package into the current runtime
+             * Attempts to import a package into the current runtime, returns the imported package name
              *
              * @param string $package
              * @param string $version
              * @param array $options
-             * @return void
-             * @throws ImportException
+             * @return string
              */
-            function import(string $package, string $version= Versions::Latest, array $options=[]): void
+            function import(string $package, string $version=Versions::LATEST, array $options=[]): string
             {
-                Runtime::import($package, $version, $options);
+                try
+                {
+                    return Runtime::import($package, $version, $options);
+                }
+                catch(Exception $e)
+                {
+                    throw new RuntimeException(sprintf('Unable to import package \'%s\': %s', $package, $e->getMessage()), $e->getCode(), $e);
+                }
+            }
+        }
+
+        if(!function_exists('execute'))
+        {
+            /**
+             * Executes the main execution point of an imported package and returns the evaluated result
+             * This method may exit the program without returning a value
+             *
+             * @param string $package
+             * @return mixed
+             * @throws ConfigurationException
+             */
+            function execute(string $package): mixed
+            {
+                return Runtime::execute($package);
             }
         }
 
@@ -59,112 +74,10 @@
              * Returns an array of constants defined by NCC
              *
              * @return array
-             * @throws \ncc\Exceptions\RuntimeException
              */
             function ncc_constants(): array
             {
                 return ncc::getConstants();
-            }
-        }
-
-        if(!function_exists('consts_get'))
-        {
-            /**
-             * Returns the value of a constant defined in NCC's runtime environment
-             *
-             * @param string $package
-             * @param string $name
-             * @return string|null
-             */
-            function consts_get(string $package, string $name): ?string
-            {
-                return Runtime\Constants::get($package, $name);
-            }
-        }
-
-        if(!function_exists('consts_set'))
-        {
-            /**
-             * Sets the value of a constant defined in NCC's runtime environment
-             *
-             * @param string $package
-             * @param string $name
-             * @param string $value
-             * @param bool $readonly
-             * @return void
-             * @throws ConstantReadonlyException
-             * @throws InvalidConstantNameException
-             */
-            function consts_set(string $package, string $name, string $value, bool $readonly=false): void
-            {
-                Runtime\Constants::register($package, $name, $value, $readonly);
-            }
-        }
-
-        if(!function_exists('consts_delete'))
-        {
-            /**
-             * Deletes a constant defined in NCC's runtime environment
-             *
-             * @param string $package
-             * @param string $name
-             * @return void
-             * @throws ConstantReadonlyException
-             */
-            function consts_delete(string $package, string $name): void
-            {
-                Runtime\Constants::delete($package, $name);
-            }
-        }
-
-        if(!function_exists('get_data_path'))
-        {
-            /**
-             * Returns the data path of the package
-             *
-             * @param string $package
-             * @return string
-             * @throws InvalidPackageNameException
-             * @throws InvalidScopeException
-             * @throws PackageLockException
-             * @throws PackageNotFoundException
-             */
-            function get_data_path(string $package): string
-            {
-                return Runtime::getDataPath($package);
-            }
-        }
-
-        if(!function_exists('get_constant'))
-        {
-            /**
-             * Returns the value of a constant defined in NCC's runtime environment
-             *
-             * @param string $package
-             * @param string $name
-             * @return string|null
-             */
-            function get_constant(string $package, string $name): ?string
-            {
-                return Runtime::getConstant($package, $name);
-            }
-        }
-
-        if(!function_exists('set_constant'))
-        {
-            /**
-             * Sets the value of a constant defined in NCC's runtime environment
-             *
-             * @param string $package
-             * @param string $name
-             * @param string $value
-             * @return void
-             * @throws ConstantReadonlyException
-             * @throws InvalidConstantNameException
-             */
-            function set_constant(string $package, string $name, string $value): void
-            {
-                Runtime::setConstant($package, $name, $value);
             }
         }
     }

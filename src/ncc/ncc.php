@@ -25,6 +25,7 @@
 
     namespace ncc;
     
+    use ncc\Classes\Runtime;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\NccVersionInformation;
@@ -104,12 +105,16 @@
             define('NCC_EXEC_IWD', getcwd()); // The initial working directory when ncc was first invoked
 
             // Set version information about the current build
-            $VersionInformation = self::getVersionInformation(true);
-            define('NCC_VERSION_NUMBER', $VersionInformation->getVersion());
-            define('NCC_VERSION_BRANCH', $VersionInformation->getBranch());
-            define('NCC_VERSION_UPDATE_SOURCE', $VersionInformation->getUpdateSource());
-            define('NCC_VERSION_FLAGS', $VersionInformation->getFlags());
+            $version_information = self::getVersionInformation(true);
+            define('NCC_VERSION_NUMBER', $version_information->getVersion());
+            define('NCC_VERSION_BRANCH', $version_information->getBranch());
+            define('NCC_VERSION_UPDATE_SOURCE', $version_information->getUpdateSource());
+            define('NCC_VERSION_FLAGS', $version_information->getFlags());
 
+            // Register the autoloader
+            spl_autoload_register([Runtime::class, 'autoloadHandler'], true, true);
+
+            // Finish initialization
             define('NCC_INIT', 1);
             return true;
         }

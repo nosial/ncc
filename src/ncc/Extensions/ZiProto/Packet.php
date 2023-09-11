@@ -1,27 +1,31 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
 
-namespace ncc\ZiProto;
+    /** @noinspection PhpMissingFieldTypeInspection */
 
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
+
+    namespace ncc\Extensions\ZiProto;
+
+    use JsonSerializable;
     use function array_values;
     use function chr;
     use function count;
@@ -33,10 +37,10 @@ namespace ncc\ZiProto;
     use function pack;
     use function preg_match;
     use function strlen;
-    use ncc\ZiProto\Abstracts\Regex;
-    use ncc\ZiProto\Exception\InvalidOptionException;
-    use ncc\ZiProto\Exception\EncodingFailedException;
-    use ncc\ncc\ZiProto\TypeTransformer\Validator;
+    use ncc\Extensions\ZiProto\Abstracts\Regex;
+    use ncc\Extensions\ZiProto\Exception\InvalidOptionException;
+    use ncc\Extensions\ZiProto\Exception\EncodingFailedException;
+    use ncc\Extensions\ZiProto\TypeTransformer\Validator;
 
     /**
      * Class Packet
@@ -47,41 +51,43 @@ namespace ncc\ZiProto;
         /**
          * @var bool
          */
-        private $isDetectStrBin;
+        private $bin_mode;
 
         /**
          * @var bool
          */
-        private $isForceStr;
+        private $force_string;
 
         /**
          * @var bool
          */
-        private $isDetectArrMap;
+        private $detect_array_map;
 
         /**
          * @var bool
          */
-        private $isForceArr;
+        private $force_array;
 
         /**
          * @var bool
          */
-        private $isForceFloat32;
+        private $force_float32;
 
         /**
-         * @var Validator[]|null
+         * @var Validator[]
          */
         private $transformers;
 
         /**
-         * @param EncodingOptions|int|null $options
+         * Packet constructor.
          *
+         * @param int|EncodingOptions|null $options
+         * @see EncodingOptions
          * @throws InvalidOptionException
          */
-        public function __construct($options = null)
+        public function __construct(int|EncodingOptions|null $options=null)
         {
-            if (null === $options)
+            if ($options === null)
             {
                 $options = EncodingOptions::fromDefaults();
             }
@@ -90,21 +96,23 @@ namespace ncc\ZiProto;
                 $options = EncodingOptions::fromBitmask($options);
             }
 
-            $this->isDetectStrBin = $options->isDetectStrBinMode();
-            $this->isForceStr = $options->isForceStrMode();
-            $this->isDetectArrMap = $options->isDetectArrMapMode();
-            $this->isForceArr = $options->isForceArrMode();
-            $this->isForceFloat32 = $options->isForceFloat32Mode();
+            $this->bin_mode = $options->isDetectStrBinMode();
+            $this->force_string = $options->isForceStrMode();
+            $this->detect_array_map = $options->isDetectArrMapMode();
+            $this->force_array = $options->isForceArrMode();
+            $this->force_float32 = $options->isForceFloat32Mode();
+            $this->transformers = [];
         }
 
         /**
+         * Registers a transformer.
+         *
          * @param Validator $transformer
          * @return Packet
          */
-        public function registerTransformer(Validator $transformer) : self
+        public function registerTransformer(Validator $transformer): self
         {
             $this->transformers[] = $transformer;
-
             return $this;
         }
 
@@ -121,12 +129,12 @@ namespace ncc\ZiProto;
 
             if (is_string($value))
             {
-                if ($this->isForceStr)
+                if ($this->force_string)
                 {
                     return $this->encodeStr($value);
                 }
 
-                if ($this->isDetectStrBin)
+                if ($this->bin_mode)
                 {
                     return preg_match(Regex::UTF8_REGEX, $value)
                         ? $this->encodeStr($value)
@@ -138,14 +146,14 @@ namespace ncc\ZiProto;
 
             if (is_array($value))
             {
-                if ($this->isDetectArrMap)
+                if ($this->detect_array_map)
                 {
                     return array_values($value) === $value
                         ? $this->encodeArray($value)
                         : $this->encodeMap($value);
                 }
 
-                return $this->isForceArr ? $this->encodeArray($value) : $this->encodeMap($value);
+                return $this->force_array ? $this->encodeArray($value) : $this->encodeMap($value);
             }
 
             if (null === $value)
@@ -165,7 +173,12 @@ namespace ncc\ZiProto;
 
             if ($value instanceof Ext)
             {
-                return $this->encodeExt($value->type, $value->data);
+                return $this->encodeExt($value->getType(), $value->getData());
+            }
+
+            if($value instanceof JsonSerializable)
+            {
+                return $this->encode($value->jsonSerialize());
             }
 
             if ($this->transformers)
@@ -259,7 +272,7 @@ namespace ncc\ZiProto;
          */
         public function encodeFloat($float): string
         {
-            return $this->isForceFloat32
+            return $this->force_float32
                 ? "\xca". pack('G', $float)
                 : "\xcb". pack('E', $float);
         }
@@ -354,7 +367,7 @@ namespace ncc\ZiProto;
         {
             $data = $this->encodeMapHeader(count($map));
 
-            if ($this->isForceStr)
+            if ($this->force_string)
             {
                 foreach ($map as $key => $val)
                 {
@@ -365,7 +378,7 @@ namespace ncc\ZiProto;
                 return $data;
             }
 
-            if ($this->isDetectStrBin)
+            if ($this->bin_mode)
             {
                 foreach ($map as $key => $val)
                 {

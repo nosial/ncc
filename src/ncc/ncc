@@ -20,7 +20,7 @@
      *
      */
 
-use ncc\CLI\Main;
+	use ncc\CLI\Main;
 
-require('autoload.php');
+	require('autoload.php');
     Main::start($argv);

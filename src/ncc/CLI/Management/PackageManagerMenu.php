@@ -29,7 +29,7 @@
     use ncc\Enums\Scopes;
     use ncc\Exceptions\IOException;
     use ncc\Managers\CredentialManager;
-    use ncc\Managers\PackageManager;
+    use ncc\Managers\PackageManagerOld;
     use ncc\Objects\CliHelpSection;
     use ncc\Objects\Package;
     use ncc\Objects\RemotePackageInput;
@@ -277,7 +277,7 @@
          */
         private static function getInstallPackages($args): void
         {
-            $package_manager = new PackageManager();
+            $package_manager = new PackageManagerOld();
 
             try
             {
@@ -339,7 +339,7 @@
         private static function installPackage($args): void
         {
             $package = ($args['package'] ?? $args['p']);
-            $package_manager = new PackageManager();
+            $package_manager = new PackageManagerOld();
 
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
@@ -618,7 +618,7 @@
                 Console::outError('Missing argument \'package\'', true, 1);
             }
 
-            $package_manager = new PackageManager();
+            $package_manager = new PackageManagerOld();
 
             try
             {
@@ -707,7 +707,7 @@
                 return;
             }
 
-            $package_manager = new PackageManager();
+            $package_manager = new PackageManagerOld();
 
             foreach($package_manager->getInstalledPackages() as $package => $versions)
             {

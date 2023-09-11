@@ -30,7 +30,7 @@
     use ncc\Objects\DefinedRemoteSource;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
 
     class RemoteSourcesManager
     {

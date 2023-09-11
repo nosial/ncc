@@ -24,10 +24,17 @@
 
     namespace ncc\Objects\Package;
 
+    use Exception;
+    use ncc\Classes\PhpExtension\AstWalker;
     use ncc\Enums\ComponentDataType;
+    use ncc\Enums\Flags\ComponentFlags;
+    use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\ThirdParty\nikic\PhpParser\PrettyPrinter\Standard;
     use ncc\Utilities\Functions;
+    use RuntimeException;
 
     class Component implements BytecodeObjectInterface
     {
@@ -162,11 +169,63 @@
         }
 
         /**
+         * Returns the decoded data of the component, this will decode the data based on the data type and flags of the
+         * component.
+         *
+         * @param array $options
          * @return string
          */
-        public function getData(): string
+        public function getData(array $options=[]): string
         {
-            return $this->data;
+            switch($this->data_type)
+            {
+                case ComponentDataType::PLAIN:
+                case ComponentDataType::BINARY:
+                    return $this->data;
+
+                case ComponentDataType::BASE64_ENCODED:
+                    if(in_array(ComponentFlags::PHP_B64, $this->flags, true))
+                    {
+                        try
+                        {
+                            if(in_array(ComponentDecodeOptions::AS_FILE, $options, true))
+                            {
+                                return (new Standard())->prettyPrintFile(AstWalker::decodeRecursive(base64_decode($this->data)));
+                            }
+
+                            return (new Standard())->prettyPrint(AstWalker::decodeRecursive(base64_decode($this->data)));
+                        }
+                        catch(Exception $e)
+                        {
+                            throw new RuntimeException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_B64, $e->getMessage()), $e->getCode(), $e);
+                        }
+                    }
+
+                    return base64_decode($this->data);
+
+                case ComponentDataType::AST:
+                    if(in_array(ComponentFlags::PHP_AST, $this->flags, true))
+                    {
+                        try
+                        {
+                            if(in_array(ComponentDecodeOptions::AS_FILE, $options, true))
+                            {
+                                return (new Standard())->prettyPrintFile(AstWalker::decodeRecursive(ZiProto::decode($this->data)));
+                            }
+
+                            return (new Standard())->prettyPrint(AstWalker::decodeRecursive(ZiProto::decode($this->data)));
+                        }
+                        catch(Exception $e)
+                        {
+                            throw new RuntimeException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_AST, $e->getMessage()), $e->getCode(), $e);
+                        }
+                    }
+
+                    throw new RuntimeException(sprintf('Cannot decode component %s with data type %s because the component does not have a flag to decode it properly', $this->name, 'AST'));
+
+                default:
+                    throw new RuntimeException(sprintf('Unknown component data type "%s"', $this->data_type));
+            }
         }
 
         /**

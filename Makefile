@@ -19,7 +19,6 @@ AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
     Symfony/Uid \
     Symfony/Filesystem \
     Symfony/Yaml \
-    theseer/Autoload \
     theseer/DirectoryScanner \
 )
 

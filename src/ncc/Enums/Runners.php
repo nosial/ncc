@@ -30,10 +30,6 @@ namespace ncc\Enums;
 
         public const PYTHON = 'python';
 
-        public const PYTHON_3 = 'python3';
-
-        public const PYTHON_2 = 'python2';
-
         public const PERL = 'perl';
 
         public const LUA = 'lua';

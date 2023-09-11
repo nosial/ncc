@@ -31,7 +31,7 @@
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
     use ncc\Utilities\Validate;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
 
     # Global Variables
     $NCC_INSTALL_PATH=DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'ncc';

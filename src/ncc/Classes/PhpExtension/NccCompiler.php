@@ -23,7 +23,9 @@
     namespace ncc\Classes\PhpExtension;
 
     use Exception;
+    use ncc\Classes\PackageWriter;
     use ncc\Enums\ComponentDataType;
+    use ncc\Enums\Flags\ComponentFlags;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\Package\Component;
@@ -32,34 +34,44 @@
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
 
     class NccCompiler extends \ncc\Classes\NccExtension\NccCompiler
     {
         /**
+         * @param PackageWriter $package_writer
          * @param string $file_path
-         * @return Component
+         * @return void
          * @throws IOException
          * @throws PathNotFoundException
+         * @noinspection UnusedFunctionResultInspection
          */
-        public function buildComponent(string $file_path): Component
+        public function processComponent(PackageWriter $package_writer, string $file_path): void
         {
-            $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
+            $component_name = Functions::removeBasename($file_path);
 
             try
             {
-                $encoded = json_encode($parser->parse(IO::fread($file_path)), JSON_THROW_ON_ERROR);
-                return new Component(Functions::removeBasename($file_path), ZiProto::encode(json_decode($encoded, true, 512, JSON_THROW_ON_ERROR)), ComponentDataType::AST);
+                $stmts = (new ParserFactory())->create(ParserFactory::PREFER_PHP7)->parse(IO::fread($file_path));
+
+                $component = new Component($component_name, ZiProto::encode($stmts), ComponentDataType::AST);
+                $component->addFlag(ComponentFlags::PHP_AST);
+                $pointer = $package_writer->addComponent($component);
+
+                foreach(AstWalker::extractClasses($stmts) as $class)
+                {
+                    $package_writer->mapClass($class, (int)$pointer[0], (int)$pointer[1]);
+                }
+
+                return;
             }
             catch(Exception $e)
             {
                 Console::outWarning(sprintf('Failed to compile file "%s" with error "%s"', $file_path, $e->getMessage()));
             }
 
-            return new Component(
-                Functions::removeBasename($file_path),
-                Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED
-            );
+            $component = new Component($component_name, Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED);
+            $component->addFlag(ComponentFlags::PHP_B64);
+            $package_writer->addComponent($component);
         }
-
     }

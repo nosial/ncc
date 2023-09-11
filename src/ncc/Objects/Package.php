@@ -35,7 +35,6 @@
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Metadata;
-    use ncc\Objects\Package\Installer;
     use ncc\Objects\Package\MagicBytes;
     use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Assembly;
@@ -43,7 +42,7 @@
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
 
     class Package implements BytecodeObjectInterface
     {
@@ -74,13 +73,6 @@
          * @var Dependency[]
          */
         private $dependencies;
-
-        /**
-         * The installer object that is used to install the package if the package is install-able
-         *
-         * @var Installer|null
-         */
-        private $installer;
 
         /**
          * An array of execution units defined in the package

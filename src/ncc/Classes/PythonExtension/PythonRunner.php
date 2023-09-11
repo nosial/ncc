@@ -22,44 +22,47 @@
 
     namespace ncc\Classes\PythonExtension;
 
+    use Exception;
+    use ncc\Classes\ExecutionUnitRunner;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PathNotFoundException;
+    use ncc\Exceptions\OperationException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Utilities\IO;
+    use ncc\Utilities\PathFinder;
 
     class PythonRunner implements RunnerInterface
     {
-
         /**
          * @inheritDoc
-         * @param string $path
-         * @param ExecutionPolicy $policy
-         * @return ExecutionUnit
          * @throws IOException
-         * @throws PathNotFoundException
+         * @throws OperationException
          */
-        public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
+        public static function executeUnit(ExecutionUnit $unit, array $args=[], bool $local=true): int
         {
-            $execution_unit = new ExecutionUnit();
+            $tmp = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $unit->getData()) . '.py';
+            IO::fwrite($tmp, $unit->getData(), 0777);
 
-            if(!file_exists($path) && !is_file($path))
+            try
             {
-                throw new PathNotFoundException($path);
+                $process = ExecutionUnitRunner::constructProcess($unit, array_merge([$tmp], $args));
+                $process->run(static function($type, $buffer) use ($unit)
+                {
+                    if(!$unit->getExecutionPolicy()->getExecute()->isSilent())
+                    {
+                        print($buffer);
+                    }
+                });
+            }
+            catch(Exception $e)
+            {
+                throw new OperationException(sprintf('There was an error executing the python execution unit %s: %s', $unit->getExecutionPolicy()->getName(), $e->getMessage()), $e);
+            }
+            finally
+            {
+                unlink($tmp);
             }
 
-            $execution_unit->setExecutionPolicy($policy);
-            $execution_unit->setData(IO::fread($path));
-
-            return $execution_unit;
-        }
-
-        /**
-         * @inheritDoc
-         */
-        public static function getFileExtension(): string
-        {
-            return '.py';
+            return $process->getExitCode();
         }
 }

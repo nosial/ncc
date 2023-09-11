@@ -71,91 +71,67 @@
         /**
          * Returns the path where all NCC installation data is stored
          *
-         * @param string $scope
          * @return string
          */
-        public static function getDataPath(string $scope=Scopes::AUTO): string
+        public static function getDataPath(): string
         {
-            $scope = Resolver::resolveScope($scope);
-
-            if(!Validate::scope($scope, false))
-            {
-                throw new InvalidArgumentException(sprintf('Invalid scope "%s"', $scope));
-            }
-            
-            switch($scope)
-            {
-                case Scopes::USER:
-                    $uid = posix_getuid();
-                    return posix_getpwuid($uid)['dir'] . DIRECTORY_SEPARATOR . '.ncc' . DIRECTORY_SEPARATOR . 'data';
-
-                case Scopes::SYSTEM:
-                    return self::getRootPath() . 'var' . DIRECTORY_SEPARATOR . 'ncc';
-            }
-
-            throw new InvalidArgumentException(sprintf('Invalid scope "%s"', $scope));
+            return self::getRootPath() . 'var' . DIRECTORY_SEPARATOR . 'ncc';
         }
 
         /**
          * Returns the path where packages are installed
          *
-         * @param string $scope
          * @return string
          */
-        public static function getPackagesPath(string $scope=Scopes::AUTO): string
+        public static function getPackagesPath(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'packages';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'packages';
         }
 
         /**
          * Returns the path where cache files are stored
          *
-         * @param string $scope
          * @return string
          */
-        public static function getCachePath(string $scope=Scopes::AUTO): string
+        public static function getCachePath(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'cache';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'cache';
         }
 
         /**
          * Returns the path where Runner bin files are located and installed
          *
-         * @param string $scope
          * @return string
          */
-        public static function getRunnerPath(string $scope=Scopes::AUTO): string
+        public static function getRunnerPath(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'runners';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'runners';
         }
 
         /**
          * Returns the package lock file
          *
-         * @param string $scope
          * @return string
          */
-        public static function getPackageLock(string $scope=Scopes::AUTO): string
+        public static function getPackageLock(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'package.lck';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'package.lck';
         }
 
         /**
-         * @param string $scope
          * @return string
          */
-        public static function getRemoteSources(string $scope=Scopes::AUTO): string
+        public static function getRemoteSources(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'sources';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'sources';
         }
 
         /**
-         * @param string $scope
          * @return string
          */
-        public static function getSymlinkDictionary(string $scope=Scopes::AUTO): string
+        public static function getSymlinkDictionary(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'symlinks';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'symlinks';
         }
 
         /**
@@ -166,11 +142,11 @@
         public static function getPackageLockFiles(): array
         {
             $results = [];
-            $results[] = self::getPackageLock(Scopes::SYSTEM);
+            $results[] = self::getPackageLock();
 
-            if(!in_array(self::getPackageLock(Scopes::USER), $results, true))
+            if(!in_array(self::getPackageLock(), $results, true))
             {
-                $results[] = self::getPackageLock(Scopes::USER);
+                $results[] = self::getPackageLock();
             }
 
             return $results;
@@ -190,18 +166,17 @@
                 throw new ConfigurationException($package);
             }
 
-            return self::getDataPath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $package;
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $package;
         }
 
         /**
          * Returns the file path where files for the given extension is stored
          *
-         * @param string $scope
          * @return string
          */
-        public static function getExtensionPath(string $scope=Scopes::AUTO): string
+        public static function getExtensionPath(): string
         {
-            return self::getDataPath($scope) . DIRECTORY_SEPARATOR . 'ext';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'ext';
         }
 
         /**
@@ -211,7 +186,7 @@
          */
         public static function getConfigurationFile(): string
         {
-            return self::getDataPath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . 'ncc.yaml';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'ncc.yaml';
         }
 
         /**

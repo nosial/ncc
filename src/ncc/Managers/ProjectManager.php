@@ -25,9 +25,10 @@
 
     namespace ncc\Managers;
 
+    use ncc\Classes\PhpExtension\ExecutableCompiler;
     use ncc\Classes\PhpExtension\NccCompiler;
-    use ncc\Classes\PhpExtension\PhpCliTemplate;
-    use ncc\Classes\PhpExtension\PhpLibraryTemplate;
+    use ncc\Classes\PhpExtension\Templates\CliTemplate;
+    use ncc\Classes\PhpExtension\Templates\LibraryTemplate;
     use ncc\Enums\BuildOutputType;
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\ComponentFileExtensions;
@@ -155,8 +156,10 @@
 
             return match (strtolower($this->project_configuration->getProject()->getCompiler()->getExtension()))
             {
-                CompilerExtensions::PHP => match (strtolower($configuration->getBuildType())) {
+                CompilerExtensions::PHP => match (strtolower($configuration->getBuildType()))
+                {
                     BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration),
+                    BuildOutputType::EXECUTABLE => (new ExecutableCompiler($this))->build($build_configuration),
                     default => throw new BuildException(sprintf('php cannot produce the build type \'%s\'', $configuration->getBuildType())),
                 },
                 default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension())),
@@ -178,11 +181,11 @@
             switch(strtolower($template_name))
             {
                 case ProjectTemplates::PHP_CLI:
-                    PhpCliTemplate::applyTemplate($this);
+                    CliTemplate::applyTemplate($this);
                     break;
 
                 case ProjectTemplates::PHP_LIBRARY:
-                    PhpLibraryTemplate::applyTemplate($this);
+                    LibraryTemplate::applyTemplate($this);
                     break;
 
                 default:
@@ -283,7 +286,6 @@
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
-            /** @noinspection ArrayMergeMissUseInspection */
             return array_merge(
                 $configuration->getDefineConstants(),
                 $this->project_configuration->getBuild()->getDefineConstants()
@@ -301,7 +303,6 @@
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
-            /** @noinspection ArrayMergeMissUseInspection */
             return array_merge(
                 $configuration->getOptions(),
                 $this->project_configuration->getBuild()->getOptions()
@@ -314,7 +315,7 @@
          * @param string $project_path The directory for the project to be initialized in
          * @param string $name The name of the project eg; ProjectLib
          * @param string $package The standard package name eg; com.example.project
-         * @param Compiler $compiler The compiler to use for this project
+         * @param string $compiler The compiler to use for this project
          * @param array $options An array of options to use when initializing the project
          * @return ProjectManager
          * @throws ConfigurationException

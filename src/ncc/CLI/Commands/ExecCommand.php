@@ -1,30 +1,29 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\CLI\Commands;
+    namespace ncc\CLI\Commands;
 
     use Exception;
-    use ncc\Managers\ExecutionPointerManager;
-    use ncc\Managers\PackageLockManager;
+    use ncc\Classes\Runtime;
     use ncc\Objects\CliHelpSection;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -41,8 +40,6 @@ namespace ncc\CLI\Commands;
         {
             $package = $args['package'] ?? null;
             $version = $args['exec-version'] ?? 'latest';
-            $unit_name = $args['exec-unit'] ?? 'main';
-            $set_args = $args['exec-args'] ?? null;
 
             if($package == null)
             {
@@ -50,67 +47,23 @@ namespace ncc\CLI\Commands;
                 exit(0);
             }
 
-            $package_lock_manager = new PackageLockManager();
-            $execution_pointer_manager = new ExecutionPointerManager();
-
             try
             {
-                $package_entry = $package_lock_manager->getPackageLock()->getPackage($package);
+                $package_name = Runtime::import($package, $version);
             }
             catch(Exception $e)
             {
-                Console::outException('Package ' . $package . ' is not installed', $e, 1);
-                return;
-            }
-
-            if($package_entry === null)
-            {
-                Console::outError('Package ' . $package . ' is not installed', true, 1);
+                Console::outException('Cannot import package ' . $package, $e, 1);
                 return;
             }
 
             try
             {
-                $version_entry = $package_entry->getVersion($version, true);
+                exit(Runtime::execute($package_name));
             }
             catch(Exception $e)
             {
-                Console::outException('Version ' . $version . ' is not installed', $e, 1);
-                return;
-            }
-
-            try
-            {
-                $units = $execution_pointer_manager->getUnits($package_entry->getName(), $version_entry->getVersion());
-            }
-            catch(Exception $e)
-            {
-                Console::outException(sprintf('Cannot load execution units for package \'%s\'', $package), $e, 1);
-                return;
-            }
-
-            if(!in_array($unit_name, $units))
-            {
-                Console::outError(sprintf('Unit \'%s\' is not configured for package \'%s\'', $unit_name, $package), true, 1);
-                return;
-            }
-
-            $options = [];
-
-            if($set_args != null)
-            {
-                global $argv;
-                $args_index = array_search('--exec-args', $argv);
-                $options = array_slice($argv, $args_index + 1);
-            }
-
-            try
-            {
-                exit($execution_pointer_manager->executeUnit($package_entry->getName(), $version_entry->getVersion(), $unit_name, $options));
-            }
-            catch(Exception $e)
-            {
-                Console::outException(sprintf('Cannot execute execution point \'%s\' in package \'%s\'', $unit_name, $package), $e, 1);
+                Console::outException($e->getMessage(), $e, 1);
                 return;
             }
         }
@@ -126,7 +79,6 @@ namespace ncc\CLI\Commands;
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
                 new CliHelpSection(['exec', '--package'], '(Required) The package to execute'),
                 new CliHelpSection(['--exec-version'], '(default: latest) The version of the package to execute'),
-                new CliHelpSection(['--exec-unit'], '(default: main) The unit point of the package to execute'),
                 new CliHelpSection(['--exec-args'], '(optional) Anything past this point will be passed to the execution unit'),
             ];
 
@@ -144,7 +96,6 @@ namespace ncc\CLI\Commands;
             Console::out(PHP_EOL . 'Example Usage:' . PHP_EOL);
             Console::out('   ncc exec --package com.example.program');
             Console::out('   ncc exec --package com.example.program --exec-version 1.0.0');
-            Console::out('   ncc exec --package com.example.program --exec-version 1.0.0 --exec-unit setup');
             Console::out('   ncc exec --package com.example.program --exec-args --foo --bar --extra=test');
         }
     }

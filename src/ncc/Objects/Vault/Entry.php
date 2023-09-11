@@ -33,7 +33,7 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Functions;
-    use ncc\ZiProto\ZiProto;
+    use ncc\Extensions\ZiProto\ZiProto;
     use RuntimeException;
 
     class Entry implements BytecodeObjectInterface

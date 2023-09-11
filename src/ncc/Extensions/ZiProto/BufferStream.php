@@ -1,37 +1,40 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
 
-namespace ncc\ZiProto;
+    /** @noinspection PhpMissingFieldTypeInspection */
+
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
+
+    namespace ncc\Extensions\ZiProto;
 
     use function gmp_init;
     use function ord;
     use function sprintf;
     use function substr;
     use function unpack;
-    use ncc\ZiProto\Exception\InsufficientDataException;
-    use ncc\ZiProto\Exception\IntegerOverflowException;
-    use ncc\ZiProto\Exception\DecodingFailedException;
-    use ncc\ZiProto\Exception\InvalidOptionException;
-    use ncc\ncc\ZiProto\TypeTransformer\Extension;
+    use ncc\Extensions\ZiProto\Exception\InsufficientDataException;
+    use ncc\Extensions\ZiProto\Exception\IntegerOverflowException;
+    use ncc\Extensions\ZiProto\Exception\DecodingFailedException;
+    use ncc\Extensions\ZiProto\Exception\InvalidOptionException;
+    use ncc\Extensions\ZiProto\TypeTransformer\Extension;
 
     /**
      * Class BufferStream
@@ -52,12 +55,12 @@ namespace ncc\ZiProto;
         /**
          * @var bool
          */
-        private $isBigIntAsStr;
+        private $big_int_as_str;
 
         /**
          * @var bool
          */
-        private $isBigIntAsGmp;
+        private $big_int_as_gmp;
 
         /**
          * @var Extension[]|null
@@ -66,11 +69,10 @@ namespace ncc\ZiProto;
 
         /**
          * @param string $buffer
-         * @param DecodingOptions|int|null $options
-         *
+         * @param int|DecodingOptions|null $options
          * @throws InvalidOptionException
          */
-        public function __construct(string $buffer = '', $options = null)
+        public function __construct(string $buffer = '', DecodingOptions|int|null $options=null)
         {
             if (null === $options)
             {
@@ -85,8 +87,8 @@ namespace ncc\ZiProto;
                 $options = DecodingOptions::fromBitmask($options);
             }
 
-            $this->isBigIntAsStr = $options->isBigIntAsStrMode();
-            $this->isBigIntAsGmp = $options->isBigIntAsGmpMode();
+            $this->big_int_as_str = $options->isBigIntAsStrMode();
+            $this->big_int_as_gmp = $options->isBigIntAsGmpMode();
             $this->buffer = $buffer;
         }
 
@@ -94,7 +96,7 @@ namespace ncc\ZiProto;
          * @param Extension $transformer
          * @return BufferStream
          */
-        public function registerTransformer(Extension $transformer) : self
+        public function registerTransformer(Extension $transformer): self
         {
             $this->transformers[$transformer->getType()] = $transformer;
             return $this;
@@ -114,7 +116,7 @@ namespace ncc\ZiProto;
          * @param string $buffer
          * @return BufferStream
          */
-        public function reset(string $buffer = '') : self
+        public function reset(string $buffer='') : self
         {
             $this->buffer = $buffer;
             $this->offset = 0;
@@ -203,64 +205,61 @@ namespace ncc\ZiProto;
                 return $c - 0x100;
             }
 
-            switch ($c)
+            return match ($c)
             {
-                case 0xc0: return null;
-                case 0xc2: return false;
-                case 0xc3: return true;
+                0xc0 => null,
+                0xc2 => false,
+                0xc3 => true,
 
                 // bin
-                case 0xd9:
-                case 0xc4: return $this->decodeStrData($this->decodeUint8());
-                case 0xda:
-                case 0xc5: return $this->decodeStrData($this->decodeUint16());
-                case 0xdb:
-                case 0xc6: return $this->decodeStrData($this->decodeUint32());
+                0xd9, 0xc4 => $this->decodeStrData($this->decodeUint8()),
+                0xda, 0xc5 => $this->decodeStrData($this->decodeUint16()),
+                0xdb, 0xc6 => $this->decodeStrData($this->decodeUint32()),
 
                 // float
-                case 0xca: return $this->decodeFloat32();
-                case 0xcb: return $this->decodeFloat64();
+                0xca => $this->decodeFloat32(),
+                0xcb => $this->decodeFloat64(),
 
                 // uint
-                case 0xcc: return $this->decodeUint8();
-                case 0xcd: return $this->decodeUint16();
-                case 0xce: return $this->decodeUint32();
-                case 0xcf: return $this->decodeUint64();
+                0xcc => $this->decodeUint8(),
+                0xcd => $this->decodeUint16(),
+                0xce => $this->decodeUint32(),
+                0xcf => $this->decodeUint64(),
 
                 // int
-                case 0xd0: return $this->decodeInt8();
-                case 0xd1: return $this->decodeInt16();
-                case 0xd2: return $this->decodeInt32();
-                case 0xd3: return $this->decodeInt64();
+                0xd0 => $this->decodeInt8(),
+                0xd1 => $this->decodeInt16(),
+                0xd2 => $this->decodeInt32(),
+                0xd3 => $this->decodeInt64(),
 
                 // str
 
                 // array
-                case 0xdc: return $this->decodeArrayData($this->decodeUint16());
-                case 0xdd: return $this->decodeArrayData($this->decodeUint32());
+                0xdc => $this->decodeArrayData($this->decodeUint16()),
+                0xdd => $this->decodeArrayData($this->decodeUint32()),
 
                 // map
-                case 0xde: return $this->decodeMapData($this->decodeUint16());
-                case 0xdf: return $this->decodeMapData($this->decodeUint32());
+                0xde => $this->decodeMapData($this->decodeUint16()),
+                0xdf => $this->decodeMapData($this->decodeUint32()),
 
                 // ext
-                case 0xd4: return $this->decodeExtData(1);
-                case 0xd5: return $this->decodeExtData(2);
-                case 0xd6: return $this->decodeExtData(4);
-                case 0xd7: return $this->decodeExtData(8);
-                case 0xd8: return $this->decodeExtData(16);
-                case 0xc7: return $this->decodeExtData($this->decodeUint8());
-                case 0xc8: return $this->decodeExtData($this->decodeUint16());
-                case 0xc9: return $this->decodeExtData($this->decodeUint32());
-            }
+                0xd4 => $this->decodeExtData(1),
+                0xd5 => $this->decodeExtData(2),
+                0xd6 => $this->decodeExtData(4),
+                0xd7 => $this->decodeExtData(8),
+                0xd8 => $this->decodeExtData(16),
+                0xc7 => $this->decodeExtData($this->decodeUint8()),
+                0xc8 => $this->decodeExtData($this->decodeUint16()),
+                0xc9 => $this->decodeExtData($this->decodeUint32()),
 
-            throw DecodingFailedException::unknownCode($c);
+                default => throw DecodingFailedException::unknownCode($c), // Default case
+            };
         }
 
         /**
-         * @return null
+         * @return void
          */
-        public function decodeNil()
+        public function decodeNil(): void
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -270,7 +269,7 @@ namespace ncc\ZiProto;
             if ("\xc0" === $this->buffer[$this->offset])
             {
                 ++$this->offset;
-                return null;
+                return;
             }
 
             throw DecodingFailedException::unexpectedCode(ord($this->buffer[$this->offset++]), 'nil');
@@ -279,7 +278,7 @@ namespace ncc\ZiProto;
         /**
          * @return bool
          */
-        public function decodeBool()
+        public function decodeBool(): bool
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -348,7 +347,7 @@ namespace ncc\ZiProto;
         /**
          * @return mixed
          */
-        public function decodeFloat()
+        public function decodeFloat(): mixed
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -374,7 +373,7 @@ namespace ncc\ZiProto;
         /**
          * @return string
          */
-        public function decodeStr()
+        public function decodeStr(): string
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -410,7 +409,7 @@ namespace ncc\ZiProto;
         /**
          * @return string
          */
-        public function decodeBin()
+        public function decodeBin(): string
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -441,7 +440,7 @@ namespace ncc\ZiProto;
         /**
          * @return array
          */
-        public function decodeArray()
+        public function decodeArray(): array
         {
             $size = $this->decodeArrayHeader();
             $array = [];
@@ -457,7 +456,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        public function decodeArrayHeader()
+        public function decodeArrayHeader(): int
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -488,7 +487,7 @@ namespace ncc\ZiProto;
         /**
          * @return array
          */
-        public function decodeMap()
+        public function decodeMap(): array
         {
             $size = $this->decodeMapHeader();
             $map = [];
@@ -504,7 +503,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        public function decodeMapHeader()
+        public function decodeMapHeader(): int
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -535,7 +534,7 @@ namespace ncc\ZiProto;
         /**
          * @return mixed|Ext
          */
-        public function decodeExt()
+        public function decodeExt(): mixed
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -563,7 +562,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        private function decodeUint8()
+        private function decodeUint8(): int
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -576,7 +575,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        private function decodeUint16()
+        private function decodeUint16(): int
         {
             if (!isset($this->buffer[$this->offset + 1]))
             {
@@ -593,7 +592,7 @@ namespace ncc\ZiProto;
         /**
          * @return mixed
          */
-        private function decodeUint32()
+        private function decodeUint32(): mixed
         {
             if (!isset($this->buffer[$this->offset + 3]))
             {
@@ -625,7 +624,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        private function decodeInt8()
+        private function decodeInt8(): int
         {
             if (!isset($this->buffer[$this->offset]))
             {
@@ -641,7 +640,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        private function decodeInt16()
+        private function decodeInt16(): int
         {
             if (!isset($this->buffer[$this->offset + 1]))
             {
@@ -658,7 +657,7 @@ namespace ncc\ZiProto;
         /**
          * @return int
          */
-        private function decodeInt32()
+        private function decodeInt32(): int
         {
             if (!isset($this->buffer[$this->offset + 3]))
             {
@@ -674,7 +673,7 @@ namespace ncc\ZiProto;
         /**
          * @return mixed
          */
-        private function decodeInt64()
+        private function decodeInt64(): mixed
         {
             if (!isset($this->buffer[$this->offset + 7]))
             {
@@ -690,7 +689,7 @@ namespace ncc\ZiProto;
         /**
          * @return mixed
          */
-        private function decodeFloat32()
+        private function decodeFloat32(): mixed
         {
             if (!isset($this->buffer[$this->offset + 3]))
             {
@@ -706,7 +705,7 @@ namespace ncc\ZiProto;
         /**
          * @return mixed
          */
-        private function decodeFloat64()
+        private function decodeFloat64(): mixed
         {
             if (!isset($this->buffer[$this->offset + 7]))
             {
@@ -723,7 +722,7 @@ namespace ncc\ZiProto;
          * @param $length
          * @return string
          */
-        private function decodeStrData($length)
+        private function decodeStrData($length): string
         {
             if (!isset($this->buffer[$this->offset + $length - 1]))
             {
@@ -740,7 +739,7 @@ namespace ncc\ZiProto;
          * @param $size
          * @return array
          */
-        private function decodeArrayData($size)
+        private function decodeArrayData($size): array
         {
             $array = [];
 
@@ -756,7 +755,7 @@ namespace ncc\ZiProto;
          * @param $size
          * @return array
          */
-        private function decodeMapData($size)
+        private function decodeMapData($size): array
         {
             $map = [];
 
@@ -772,7 +771,7 @@ namespace ncc\ZiProto;
          * @param $length
          * @return mixed|Ext
          */
-        private function decodeExtData($length)
+        private function decodeExtData($length): mixed
         {
             if (!isset($this->buffer[$this->offset + $length - 1]))
             {
@@ -801,12 +800,12 @@ namespace ncc\ZiProto;
          */
         private function handleIntOverflow($value)
         {
-            if ($this->isBigIntAsStr)
+            if ($this->big_int_as_str)
             {
                 return sprintf('%u', $value);
             }
 
-            if ($this->isBigIntAsGmp)
+            if ($this->big_int_as_gmp)
             {
                 return gmp_init(sprintf('%u', $value));
             }

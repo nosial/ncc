@@ -1124,4 +1124,15 @@
             return $results;
         }
 
+        /**
+         * Returns a snake case representation of the given input
+         *
+         * @param string $input
+         * @return string
+         */
+        public static function toSnakeCase(string $input): string
+        {
+            $input = str_replace('.', '_', $input);
+            return strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', preg_replace('/([a-z])([A-Z])/', '$1_$2', $input)), '_'));
+        }
     }

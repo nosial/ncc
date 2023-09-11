@@ -12,9 +12,7 @@
     // Start script
     function scanContents($dir, &$results = array())
     {
-        $files = scandir($dir);
-
-        foreach ($files as $key => $value)
+        foreach (scandir($dir, SCANDIR_SORT_NONE) as $key => $value)
         {
             $path = realpath($dir . DIRECTORY_SEPARATOR . $value);
             if (!is_dir($path))
@@ -49,6 +47,6 @@
         }
     }
 
-    file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin', \ncc\ZiProto\ZiProto::encode($hash_values));
+    file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'checksum.bin', \ncc\Extensions\ZiProto\ZiProto::encode($hash_values));
     ncc\Utilities\Console::out('Created checksum.bin');
     exit(0);
