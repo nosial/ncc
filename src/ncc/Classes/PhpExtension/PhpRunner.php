@@ -22,43 +22,98 @@
 
     namespace ncc\Classes\PhpExtension;
 
+    use Exception;
+    use InvalidArgumentException;
+    use ncc\Classes\ExecutionUnitRunner;
+    use ncc\Enums\Runners;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PathNotFoundException;
+    use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
+    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
     use ncc\Utilities\IO;
+    use ncc\Utilities\PathFinder;
 
     class PhpRunner implements RunnerInterface
     {
         /**
-         * @param string $path
-         * @param ExecutionPolicy $policy
-         * @return ExecutionUnit
+         * @inheritDoc
          * @throws IOException
-         * @throws PathNotFoundException
+         * @throws NotSupportedException
+         * @throws OperationException
          */
-        public static function processUnit(string $path, ExecutionPolicy $policy): ExecutionUnit
+        public static function executeUnit(ExecutionUnit $unit, array $args=[], bool $local=true): int
         {
-            $execution_unit = new ExecutionUnit();
-            if(!file_exists($path) && !is_file($path))
+            if($unit->getExecutionPolicy()->getRunner() !== Runners::PHP)
             {
-                throw new PathNotFoundException($path);
+                throw new InvalidArgumentException(sprintf('The execution unit %s is not a php execution unit', $unit->getExecutionPolicy()->getName()));
             }
 
-            $execution_unit->setExecutionPolicy($policy);
-            $execution_unit->setData(IO::fread($path));
+            if($local)
+            {
+                return self::executeLocally($unit, $args);
+            }
 
-            return $execution_unit;
+            return self::executeInMemory($unit);
         }
 
         /**
-         * Returns the file extension to use for the target file
+         * Executes the php unit from a memory buffer
          *
-         * @return string
+         * @param ExecutionUnit $unit
+         * @return int
+         * @throws OperationException
          */
-        public static function getFileExtension(): string
+        private static function executeInMemory(ExecutionUnit $unit): int
         {
-            return '.php';
+            try
+            {
+                $return_code = eval(preg_replace('/^<\?(php)?|\?>$/i', '', $unit->getData()));
+            }
+            catch(Exception $e)
+            {
+                throw new OperationException(sprintf('There was an error executing the PHP execution unit %s: %s', $unit->getExecutionPolicy()->getName(), $e->getMessage()), $e);
+            }
+
+            return is_int($return_code) ? $return_code : 0;
+        }
+
+        /**
+         * Executes the php unit locally from disk
+         *
+         * @param ExecutionUnit $unit
+         * @param array $args
+         * @return int
+         * @throws IOException
+         * @throws OperationException
+         * @throws NotSupportedException
+         */
+        private static function executeLocally(ExecutionUnit $unit, array $args=[]): int
+        {
+            $tmp = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $unit->getData()) . '.php';
+            IO::fwrite($tmp, $unit->getData(), 0777);
+
+            try
+            {
+                $process = ExecutionUnitRunner::constructProcess($unit, array_merge([$tmp], $args));
+                $process->run(static function($type, $buffer) use ($unit)
+                {
+                    if(!$unit->getExecutionPolicy()->getExecute()->isSilent())
+                    {
+                        print($buffer);
+                    }
+                });
+            }
+            catch(Exception $e)
+            {
+                throw new OperationException(sprintf('There was an error executing the PHP execution unit %s: %s', $unit->getExecutionPolicy()->getName(), $e->getMessage()), $e);
+            }
+            finally
+            {
+                unlink($tmp);
+            }
+
+            return $process->getExitCode();
         }
     }
