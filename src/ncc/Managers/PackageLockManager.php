@@ -24,173 +24,92 @@
 
     namespace ncc\Managers;
 
-    use Exception;
     use ncc\Enums\Scopes;
-    use ncc\Exceptions\AuthenticationException;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
+    use ncc\Exceptions\PathNotFoundException;
     use ncc\Objects\PackageLock;
     use ncc\Utilities\Console;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
-    use ncc\Utilities\RuntimeCache;
     use ncc\Extensions\ZiProto\ZiProto;
 
     class PackageLockManager
     {
         /**
-         * @var PackageLock|null
+         * @var PackageLock
          */
-        private $PackageLock;
-
-        /**
-         * @var string
-         */
-        private $PackageLockPath;
+        private $package_lock;
 
         /**
          * Public Constructor
+         *
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws PathNotFoundException
          */
         public function __construct()
         {
-            /** @noinspection PhpUnhandledExceptionInspection */
-            $this->PackageLockPath = PathFinder::getPackageLock(Scopes::SYSTEM);
-
-            try
+            if(!is_file(PathFinder::getPackageLock()))
             {
-                $this->load();
-            }
-            catch (IOException $e)
-            {
-                unset($e);
-            }
-        }
-
-        /**
-         * Loads the PackageLock from the disk
-         *
-         * @return void
-         * @throws IOException
-         */
-        public function load(): void
-        {
-            Console::outDebug(sprintf('loading PackageLock from \'%s\'', $this->PackageLockPath));
-            if(RuntimeCache::get($this->PackageLockPath) !== null)
-            {
-                Console::outDebug('package lock is cached, loading from cache');
-                $this->PackageLock = RuntimeCache::get($this->PackageLockPath);
+                $this->package_lock = new PackageLock();
                 return;
             }
 
-            if(file_exists($this->PackageLockPath) && is_file($this->PackageLockPath))
-            {
-                try
-                {
-                    Console::outDebug('package lock exists, loading from disk');
-                    $data = IO::fread($this->PackageLockPath);
-                    if($data !== '')
-                    {
-                        $this->PackageLock = PackageLock::fromArray(ZiProto::decode($data));
-                    }
-                    else
-                    {
-                        $this->PackageLock = new PackageLock();
-                    }
-                }
-                catch(Exception $e)
-                {
-                    throw new IOException('The PackageLock file cannot be parsed', $e);
-                }
-            }
-            else
-            {
-                Console::outDebug('package lock file does not exist, creating new package lock');
-                $this->PackageLock = new PackageLock();
-            }
+            $this->package_lock = PackageLock::fromArray(ZiProto::decode(IO::fread(PathFinder::getPackageLock())));
+        }
 
-            Console::outDebug('caching PackageLock');
-            RuntimeCache::set($this->PackageLockPath, $this->PackageLock);
+        /**
+         * Returns the PackageLock object
+         *
+         * @return PackageLock
+         */
+        public function getPackageLock(): PackageLock
+        {
+            return $this->package_lock;
         }
 
         /**
          * Saves the PackageLock to disk
          *
          * @return void
-         * @throws AuthenticationException
          * @throws IOException
+         * @throws OperationException
          */
         public function save(): void
         {
-            Console::outDebug(sprintf('saving package lock to \'%s\'', $this->PackageLockPath));
-
-            // Don't save something that isn't loaded lol
-            if($this->PackageLock === null)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                Console::outDebug('warning: PackageLock is null, not saving to disk');
+                throw new OperationException('You must be running as root to update the system package lock');
+            }
+
+            Console::outDebug(sprintf('Saving package lock to \'%s\'', PathFinder::getPackageLock()));
+            IO::fwrite(PathFinder::getPackageLock(), ZiProto::encode($this->package_lock->toArray(true)), 0644);
+        }
+
+        /**
+         * Initializes the package lock file if it doesn't exist
+         *
+         * @return void
+         * @throws IOException
+         * @throws OperationException
+         */
+        public static function initializePackageLock(): void
+        {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                throw new OperationException('You must be running as root to update the system package lock');
+            }
+
+            if(is_file(PathFinder::getPackageLock()))
+            {
+                Console::outVerbose('Skipping package lock initialization, package lock already exists');
                 return;
             }
 
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
-            {
-                throw new AuthenticationException('Cannot write to PackageLock, insufficient permissions');
-            }
-
-            try
-            {
-                Console::outDebug(sprintf('saving PackageLock to \'%s\' & caching', $this->PackageLockPath));
-                IO::fwrite($this->PackageLockPath, ZiProto::encode($this->PackageLock->toArray(true)), 0755);
-                RuntimeCache::set($this->PackageLockPath, $this->PackageLock);
-            }
-            catch(IOException $e)
-            {
-                throw new IOException('Cannot save the package lock file to disk', $e);
-            }
-
-            try
-            {
-                Console::outDebug('synchronizing symlinks');
-                $symlink_manager = new SymlinkManager();
-                $symlink_manager->sync();
-            }
-            catch(Exception $e)
-            {
-                throw new IOException('Failed to synchronize symlinks', $e);
-            }
-        }
-
-        /**
-         * Constructs the package lock file if it doesn't exist
-         *
-         * @return void
-         * @throws AuthenticationException
-         * @throws IOException
-         */
-        public function constructLockFile(): void
-        {
-            try
-            {
-                $this->load();
-            }
-            catch (IOException $e)
-            {
-                unset($e);
-                $this->PackageLock = new PackageLock();
-            }
-
-            $this->save();
-        }
-
-        /**
-         * @return PackageLock|null
-         * @throws IOException
-         */
-        public function getPackageLock(): ?PackageLock
-        {
-            if($this->PackageLock === null)
-            {
-                $this->load();
-            }
-
-            return $this->PackageLock;
+            Console::outVerbose(sprintf('Initializing package lock at \'%s\'', PathFinder::getPackageLock()));
+            IO::fwrite(PathFinder::getPackageLock(), ZiProto::encode((new PackageLock())->toArray(true)), 0644);
         }
     }

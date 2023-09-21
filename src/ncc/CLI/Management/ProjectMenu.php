@@ -35,32 +35,30 @@
          * Displays the main help menu
          *
          * @param array $args
-         * @return void
+         * @return int
          */
-        public static function start(array $args): void
+        public static function start(array $args): int
         {
             if(isset($args['create']))
             {
-                self::initializeProject($args);
-                return;
+                return self::initializeProject($args);
             }
 
             if(isset($args['template']))
             {
-                self::applyTemplate($args);
-                return;
+                return self::applyTemplate($args);
             }
 
-            self::displayOptions();
+            return self::displayOptions();
         }
 
         /**
          * Initializes a new project
          *
          * @param array $args
-         * @return void
+         * @return int
          */
-        private static function initializeProject(array $args): void
+        private static function initializeProject(array $args): int
         {
             if(isset($args['path']) || isset($args['p']))
             {
@@ -69,7 +67,7 @@
             else
             {
                 Console::outError('Missing required option: --path|-p, please specify the path to the project', true, 1);
-                return;
+                return 1;
             }
 
             if(isset($args['name']) || isset($args['n']))
@@ -79,7 +77,7 @@
             else
             {
                 Console::outError('Missing required option: --name|-n, please specify the name of the project', true, 1);
-                return;
+                return 1;
             }
 
             if(isset($args['package']) || isset($args['pkg']))
@@ -89,7 +87,7 @@
             else
             {
                 Console::outError('Missing required option: --package|--pkg, please specify the package name of the project', true, 1);
-                return;
+                return 1;
             }
 
             if(isset($args['ext']))
@@ -99,7 +97,7 @@
             else
             {
                 Console::outError('Missing required option: --ext, please specify the compiler extension of the project', true, 1);
-                return;
+                return 1;
             }
 
             try
@@ -109,20 +107,21 @@
             catch(Exception $e)
             {
                 Console::outException('There was an error while trying to initialize the project', $e, 1);
-                return;
+                return 1;
             }
 
             Console::out(sprintf('Project successfully created in \'%s\'', $project_manager->getProjectPath()));
             Console::out(sprintf('Modify the project configuration in \'%s\'', $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'project.json'));
+            return 0;
         }
 
         /**
          * Applies a template to the project
          *
          * @param array $args
-         * @return void
+         * @return int
          */
-        private static function applyTemplate(array $args): void
+        private static function applyTemplate(array $args): int
         {
             if(isset($args['path']) || isset($args['p']))
             {
@@ -135,7 +134,7 @@
             else
             {
                 Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
-                return;
+                return 1;
             }
 
             if(isset($args['name']) || isset($args['n']))
@@ -145,7 +144,7 @@
             else
             {
                 Console::outError('Missing required option: --name|-n, please specify the name of the template', true, 1);
-                return;
+                return 1;
             }
 
             try
@@ -155,7 +154,7 @@
             catch(Exception $e)
             {
                 Console::outException('There was an error while trying to load the project', $e, 1);
-                return;
+                return 1;
             }
 
             try
@@ -165,18 +164,19 @@
             catch(Exception $e)
             {
                 Console::outException('There was an error while trying to apply the template', $e, 1);
-                return;
+                return 1;
             }
 
             Console::out(sprintf('Template successfully applied to project in \'%s\'', $project_manager->getProjectPath()));
+            return 0;
         }
 
         /**
          * Displays the main options section
          *
-         * @return void
+         * @return int
          */
-        private static function displayOptions(): void
+        private static function displayOptions(): int
         {
             $options = [
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
@@ -198,5 +198,7 @@
             {
                 Console::out('   ' . $template);
             }
+
+            return 0;
         }
     }

@@ -1,6 +1,0 @@
-{
-  "name": "gitlab",
-  "type": "gitlab",
-  "host": "gitlab.com",
-  "ssl": true
-}

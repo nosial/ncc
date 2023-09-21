@@ -22,12 +22,6 @@
 
     namespace ncc\Utilities;
 
-    use InvalidArgumentException;
-    use ncc\Enums\Scopes;
-    use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\OperationException;
-    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
-
     class PathFinder
     {
         /**
@@ -38,34 +32,6 @@
         public static function getRootPath(): string
         {
             return realpath(DIRECTORY_SEPARATOR);
-        }
-
-        /**
-         * Returns the home directory of the user
-         *
-         * @param string $scope
-         * @return string
-         */
-        public static function getHomePath(string $scope=Scopes::AUTO): string
-        {
-            $scope = Resolver::resolveScope($scope);
-
-            if(!Validate::scope($scope, false))
-            {
-                throw new InvalidArgumentException(sprintf('Invalid access scope "%s"', $scope));
-            }
-
-            switch($scope)
-            {
-                case Scopes::USER:
-                    $uid = posix_getuid();
-                    return posix_getpwuid($uid)['dir'] . DIRECTORY_SEPARATOR . '.ncc';
-
-                case Scopes::SYSTEM:
-                    return posix_getpwuid(0)['dir'] . DIRECTORY_SEPARATOR . '.ncc';
-            }
-
-            throw new InvalidArgumentException(sprintf('Invalid access scope "%s"', $scope));
         }
 
         /**
@@ -99,17 +65,7 @@
         }
 
         /**
-         * Returns the path where Runner bin files are located and installed
-         *
-         * @return string
-         */
-        public static function getRunnerPath(): string
-        {
-            return self::getDataPath() . DIRECTORY_SEPARATOR . 'runners';
-        }
-
-        /**
-         * Returns the package lock file
+         * Returns the package lock file path
          *
          * @return string
          */
@@ -119,64 +75,23 @@
         }
 
         /**
-         * @return string
-         */
-        public static function getRemoteSources(): string
-        {
-            return self::getDataPath() . DIRECTORY_SEPARATOR . 'sources';
-        }
-
-        /**
-         * @return string
-         */
-        public static function getSymlinkDictionary(): string
-        {
-            return self::getDataPath() . DIRECTORY_SEPARATOR . 'symlinks';
-        }
-
-        /**
-         * Returns an array of all the package lock files the current user can access (For global-cross referencing)
-         *
-         * @return array
-         */
-        public static function getPackageLockFiles(): array
-        {
-            $results = [];
-            $results[] = self::getPackageLock();
-
-            if(!in_array(self::getPackageLock(), $results, true))
-            {
-                $results[] = self::getPackageLock();
-            }
-
-            return $results;
-        }
-
-        /**
-         * Returns the path where package data is located
-         *
-         * @param string $package
-         * @return string
-         * @throws ConfigurationException
-         */
-        public static function getPackageDataPath(string $package): string
-        {
-            if(!Validate::packageName($package))
-            {
-                throw new ConfigurationException($package);
-            }
-
-            return self::getDataPath() . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $package;
-        }
-
-        /**
-         * Returns the file path where files for the given extension is stored
+         * Returns the repository database file
          *
          * @return string
          */
-        public static function getExtensionPath(): string
+        public static function getRepositoryDatabase(): string
         {
-            return self::getDataPath() . DIRECTORY_SEPARATOR . 'ext';
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'repository.db';
+        }
+
+        /**
+         * Returns the credential storage file
+         *
+         * @return string
+         */
+        public static function getCredentialStorage(): string
+        {
+            return self::getDataPath() . DIRECTORY_SEPARATOR . 'credentials.store';
         }
 
         /**
@@ -187,36 +102,5 @@
         public static function getConfigurationFile(): string
         {
             return self::getDataPath() . DIRECTORY_SEPARATOR . 'ncc.yaml';
-        }
-
-        /**
-         * Attempts to locate the executable path of the given program name
-         *
-         * @param string $runner
-         * @return string
-         * @throws OperationException
-         */
-        public static function findRunner(string $runner): string
-        {
-            $executable_finder = new ExecutableFinder();
-
-            $config_value = Functions::getConfigurationProperty(sprintf('runners.%s', $runner));
-            if($config_value !== null)
-            {
-                if(file_exists($config_value) && is_executable($config_value))
-                {
-                    return $config_value;
-                }
-                Console::outWarning(sprintf('The configured \'%s\' executable path is invalid, trying to find it automatically...', $runner));
-            }
-
-            $exec_path = $executable_finder->find($runner);
-
-            if($exec_path !== null)
-            {
-                return $exec_path;
-            }
-
-            throw new OperationException(sprintf('Unable to find \'%s\' executable', $runner));
         }
     }

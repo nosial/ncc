@@ -24,11 +24,10 @@
 
     namespace ncc\Objects;
 
-    use ncc\Enums\AuthenticationType;
+    use ncc\Enums\Types\AuthenticationType;
     use ncc\Enums\Versions;
-    use ncc\Exceptions\RuntimeException;
+    use ncc\Interfaces\AuthenticationInterface;
     use ncc\Interfaces\BytecodeObjectInterface;
-    use ncc\Interfaces\PasswordInterface;
     use ncc\Objects\Vault\Entry;
     use ncc\Utilities\Functions;
 
@@ -77,12 +76,12 @@
          * Adds a new entry to the vault
          *
          * @param string $name
-         * @param PasswordInterface $password
+         * @param AuthenticationInterface $password
          * @param bool $encrypt
          * @return bool
          * @noinspection PhpUnused
          */
-        public function addEntry(string $name, PasswordInterface $password, bool $encrypt=true): bool
+        public function addEntry(string $name, AuthenticationInterface $password, bool $encrypt=true): bool
         {
             // Check if the entry already exists
             foreach($this->entries as $entry)

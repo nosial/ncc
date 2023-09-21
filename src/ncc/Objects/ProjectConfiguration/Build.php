@@ -216,7 +216,7 @@
          * @param string $value
          * @return void
          */
-        public function setOption(string $name, string $value): void
+        public function setOption(string $name, mixed $value): void
         {
             $this->options[$name] = $value;
         }

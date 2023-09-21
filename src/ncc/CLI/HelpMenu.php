@@ -34,11 +34,11 @@
          * Displays the main help menu
          *
          * @param $args
-         * @return void
+         * @return int
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public static function start($args): void
+        public static function start($args): int
         {
             $basic_ascii = false;
 
@@ -59,6 +59,8 @@
             self::displayMainOptions();
             self::displayManagementCommands();
             self::displayMainCommands();
+
+            return 0;
         }
 
         /**
@@ -89,10 +91,10 @@
             Console::out('Management Commands:');
             Console::outHelpSections([
                 new CliHelpSection(['project'], 'Manages the current project'),
-                new CliHelpSection(['package'], 'Manages the package system'),
+                new CliHelpSection(['package', 'pkg'], 'Manages the package system'),
                 new CliHelpSection(['cred'], 'Manages credentials'),
                 new CliHelpSection(['config'], 'Changes ncc configuration values'),
-                new CliHelpSection(['source'], 'Manages remote sources'),
+                new CliHelpSection(['repo'], 'Manages/Configure repositories'),
             ]);
         }
 

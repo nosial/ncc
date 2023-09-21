@@ -24,7 +24,6 @@
 
     namespace ncc\Objects\ProjectConfiguration\UpdateSource;
 
-    use ncc\Enums\RemoteSourceType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;

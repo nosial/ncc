@@ -25,24 +25,24 @@
     namespace ncc\Objects;
 
     use Exception;
-    use ncc\Enums\EncoderType;
     use ncc\Enums\PackageStructureVersions;
+    use ncc\Enums\Types\EncoderType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\Package\Metadata;
     use ncc\Objects\Package\MagicBytes;
+    use ncc\Objects\Package\Metadata;
     use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Assembly;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
-    use ncc\Extensions\ZiProto\ZiProto;
 
     class Package implements BytecodeObjectInterface
     {

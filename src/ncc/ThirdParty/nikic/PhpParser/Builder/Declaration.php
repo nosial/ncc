@@ -3,7 +3,7 @@
 namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
-use ncc\ThirdParty\nikic\PhpParser\BuilderHelpers;
+use PhpParser\BuilderHelpers;
 
 abstract class Declaration implements PhpParser\Builder
 {

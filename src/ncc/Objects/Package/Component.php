@@ -26,9 +26,9 @@
 
     use Exception;
     use ncc\Classes\PhpExtension\AstWalker;
-    use ncc\Enums\ComponentDataType;
     use ncc\Enums\Flags\ComponentFlags;
     use ncc\Enums\Options\ComponentDecodeOptions;
+    use ncc\Enums\Types\ComponentDataType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\BytecodeObjectInterface;

@@ -27,7 +27,6 @@
     use ncc\Enums\SpecialConstants\InstallConstants;
     use ncc\Enums\SpecialConstants\AssemblyConstants;
     use ncc\Enums\SpecialConstants\RuntimeConstants;
-    use ncc\Managers\ProjectManager;
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Assembly;

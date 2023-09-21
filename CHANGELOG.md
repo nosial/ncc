@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - Unreleased
 
 This update introduces major changes in the codebase, including the removal of Win32 support, and the addition of new
-features and reduced the number of exceptions down to 15 exceptions.
+features. This is the Mk II of ncc, and it is a major update, so please read the changelog carefully.
 
 
 ### Added
@@ -29,6 +29,13 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Added new template PhpLibraryTemplate `phplib`
  - Added the ability to clean arrays in `\ncc\Utilities > Functions > cleanArray()`
  - Added the ability to compile executable binaries for php using `gcc`
+ - Added support for Gitea repositories
+ - Added support for Packagist repositories
+ - Added a new default gitea repository `nocturn9x` git.nocturn9x.space
+ - Added a new default gitea repository `martinvlba` git.martinvlba.eu
+ - Added a new default gitea repository `kuny` git.it-kuny.ch
+ - Added dependency `composer/semver` version 3.4.0 for composer version comparison compatibility
+ - Added new class `\ncc\Classes > ArchiveExtractor` to extract multiple archive types
 
 ### Fixed
  - Fixed MITM attack vector in `\ncc\Classes > HttpClient > prepareCurl()`
@@ -234,6 +241,27 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Refactored `LuaRunner` to use the new execution pointer system
  - Refactored `PerlRunner` to use the new execution pointer system
  - Refactored `PythonRunner` to use the new execution pointer system
+ - Refactored `\ncc\Objects > RemoteRepository`
+ - Refactored the repository system
+ - Refactored Github's repository interface
+ - Refactored Gitlab's repository interface
+ - Refactored SourcesMenu in the CLI to use the new repository system
+ - Updated dependency `nikic/php-parser` to version 4.17.1
+ - Added a simple security measure in `\ncc\Objects\Value > Entry > unlock()` to delay returns randomly when the password
+   is incorrect
+ - Refactored the CLI menu system to use a return exit code system
+ - Updated the installer to remove unused components and installation steps
+ - Updated dependency `Symfony/Filesystem` to 6.3.1
+ - Updated dependency `Symfony/polyfill-ctype` to 1.28.0
+ - Enforced credential storage security by applying `600` permissions to the storage file so that only the owner can
+   read/write to the file, this will require root to do anything with the credential file. A password will still be
+   needed to decrypt entries in the file if any entries are encrypted.
+ - Updated dependency `Symfony/polyfill-mbstring` to 1.28.0
+ - Updated dependency `Symfony/polyfill-uuid` to 1.28.0
+ - Updated dependency `Symfony/Process` to 6.3.4
+ - Updated dependency `Symfony/Uid` to 6.3.0
+ - Updated dependency `Symfony/Yaml` to 6.3.3
+ - Refactored ZiProto
 
 
 ### Removed
@@ -298,8 +326,9 @@ features and reduced the number of exceptions down to 15 exceptions.
  - Removed unused `\ncc\Objects > PhpConfiguration`
  - Removed parameter `$throw_exception` from `\ncc\Objects\ProjectConfiguration > Project > validate()`
  - Removed dependency `theseer\Autoload` in favor of ncc's own autoloader (screw you Arne Blankerts)
- - Refactored ZiProto
  - Removed runners `Python2` & `Python3` in favor of `Python`
+ - Removed `\ncc\Classes\NccExtension > Runner` in favor of the new Execution Unit system
+ - Removed `\ncc\Managers > ExecutionPointerManager` in favor of the new Execution Unit system
 
 
 

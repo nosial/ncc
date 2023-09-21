@@ -3,11 +3,11 @@
 namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
-use ncc\ThirdParty\nikic\PhpParser\BuilderHelpers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
-use ncc\ThirdParty\nikic\PhpParser\Node\Name;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\BuilderHelpers;
+use PhpParser\Node;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\Stmt;
 
 class Enum_ extends Declaration
 {

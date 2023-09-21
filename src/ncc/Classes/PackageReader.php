@@ -25,6 +25,7 @@
 
     namespace ncc\Classes;
 
+    use Exception;
     use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\PackageDirectory;
     use ncc\Exceptions\ConfigurationException;
@@ -43,14 +44,39 @@
     class PackageReader
     {
         /**
-         * @var array
+         * @var int
          */
-        private $headers;
+        private $package_offset;
+
+        /**
+         * @var int
+         */
+        private $package_length;
+
+        /**
+         * @var int
+         */
+        private $header_offset;
 
         /**
          * @var int
          */
         private $header_length;
+
+        /**
+         * @var int
+         */
+        private $data_offset;
+
+        /**
+         * @var int
+         */
+        private $data_length;
+
+        /**
+         * @var array
+         */
+        private $headers;
 
         /**
          * @var resource
@@ -81,51 +107,91 @@
                 throw new IOException(sprintf('Failed to open file \'%s\'', $file_path));
             }
 
-            $pre_header = '';
-            $diameter_hit = false;
+            // Package begin: ncc_pkg
+            // Start of header: after ncc_pkg
+            // End of header: \x1F\x1F
+            // Start of data: after \x1F\x1F
+            // End of data: \xFF\xAA\x55\xF0
 
-            // Dynamically calculate header length until "ncc_pkg" is found
-            while (!feof($this->package_file))
+            // First find the offset of the package by searching for the magic bytes "ncc_pkg"
+            $this->package_offset = 0;
+            while(!feof($this->package_file))
             {
-                $char = fread($this->package_file, 1);
-                $pre_header .= $char;
+                $buffer = fread($this->package_file, 1024);
+                $buffer_length = strlen($buffer);
+                $this->package_offset += $buffer_length;
 
-                if (str_ends_with($pre_header, 'ncc_pkg'))
+                if (($position = strpos($buffer, "ncc_pkg")) !== false)
                 {
+                    $this->package_offset -= $buffer_length - $position;
+                    $this->package_length = 7; // ncc_pkg
+                    $this->header_offset = $this->package_offset + 7;
                     break;
                 }
             }
 
-            // Calculate header length including "ncc_pkg"
-            $this->header_length = strlen($pre_header);
-
-            // Read everything after "ncc_pkg" up until the delimiter (0x1F 0x1F)
-            $header = '';
-            while(!feof($this->package_file))
+            // Check for sanity reasons
+            if($this->package_offset === null || $this->package_length === null)
             {
-                $this->header_length++;
-                $header .= fread($this->package_file, 1);
+                throw new IOException(sprintf('File \'%s\' is not a valid package file (missing magic bytes)', $file_path));
+            }
 
-                if(str_ends_with($header, "\x1F\x1F"))
+            // Seek the header until the end of headers byte sequence (1F 1F 1F 1F)
+            fseek($this->package_file, $this->header_offset);
+            while (!feof($this->package_file))
+            {
+                $this->headers .= fread($this->package_file, 1024);
+
+                // Search for the position of "1F 1F 1F 1F" within the buffer
+                if (($position = strpos($this->headers, "\x1F\x1F\x1F\x1F")) !== false)
                 {
-                    $diameter_hit = true;
-                    $header = substr($header, 0, -2);
+                    $this->headers = substr($this->headers, 0, $position);
+                    $this->header_length = strlen($this->headers);
+                    $this->package_length += $this->header_length + 4;
+                    $this->data_offset = $this->header_offset + $this->header_length + 4;
                     break;
                 }
 
-                // Stop at 100MB
-                if($this->header_length >= 100000000)
+                if (strlen($this->headers) >= 100000000)
                 {
                     throw new IOException(sprintf('File \'%s\' is not a valid package file (header is too large)', $file_path));
                 }
             }
 
-            if(!$diameter_hit)
+            try
+            {
+                $this->headers = ZiProto::decode($this->headers);
+            }
+            catch(Exception $e)
+            {
+                throw new IOException(sprintf('File \'%s\' is not a valid package file (corrupted header)', $file_path), $e);
+            }
+
+            if(!isset($this->headers[PackageStructure::FILE_VERSION]))
             {
                 throw new IOException(sprintf('File \'%s\' is not a valid package file (invalid header)', $file_path));
             }
 
-            $this->headers = ZiProto::decode($header);
+            // Seek the data until the end of the package (FF AA 55 F0)
+            fseek($this->package_file, $this->data_offset);
+            while(!feof($this->package_file))
+            {
+                $buffer = fread($this->package_file, 1024);
+                $this->data_length += strlen($buffer);
+
+                if (($position = strpos($buffer, "\xFF\xAA\x55\xF0")) !== false)
+                {
+                    $this->data_length -= strlen($buffer) - $position;
+                    $this->package_length += $this->data_length + 4;
+                    break;
+                }
+            }
+
+            if($this->data_length === null)
+            {
+                throw new IOException(sprintf('File \'%s\' is not a valid package file (missing end of package)', $file_path));
+            }
+
             $this->cache = [];
         }
 
@@ -194,7 +260,7 @@
             }
 
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
-            fseek($this->package_file, ($this->header_length + (int)$location[0]));
+            fseek($this->package_file, ($this->data_offset + (int)$location[0]));
 
             if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
             {
@@ -531,6 +597,76 @@
         public function getResourceByPointer(int $pointer, int $length): Resource
         {
             return Resource::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+        }
+
+        /**
+         * Returns the offset of the package
+         *
+         * @return int
+         */
+        public function getPackageOffset(): int
+        {
+            return $this->package_offset;
+        }
+
+        /**
+         * @return int
+         */
+        public function getPackageLength(): int
+        {
+            return $this->package_length;
+        }
+
+        /**
+         * @return int
+         */
+        public function getHeaderOffset(): int
+        {
+            return $this->header_offset;
+        }
+
+        /**
+         * @return false|int
+         */
+        public function getHeaderLength(): false|int
+        {
+            return $this->header_length;
+        }
+
+        /**
+         * @return int
+         */
+        public function getDataOffset(): int
+        {
+            return $this->data_offset;
+        }
+
+        /**
+         * @return int
+         */
+        public function getDataLength(): int
+        {
+            return $this->data_length;
+        }
+
+        /**
+         * @param string $path
+         * @return void
+         * @throws IOException
+         */
+        public function saveCopy(string $path): void
+        {
+            $destination = fopen($path, 'wb');
+            if($destination === false)
+            {
+                throw new IOException(sprintf('Failed to open file \'%s\'', $path));
+            }
+
+            // Copy the package file to the destination
+            stream_copy_to_stream($this->package_file, $destination, $this->package_length, $this->package_offset);
+
+            // Done!
+            fclose($destination);
         }
 
         /**

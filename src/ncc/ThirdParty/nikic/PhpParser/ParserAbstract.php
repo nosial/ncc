@@ -16,9 +16,12 @@ use ncc\ThirdParty\nikic\PhpParser\Node\Scalar\String_;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Class_;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\ClassConst;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\ClassMethod;
+use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Else_;
+use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\ElseIf_;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Enum_;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Interface_;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Namespace_;
+use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Nop;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Property;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TryCatch;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt\UseUse;
@@ -874,6 +877,24 @@ abstract class ParserAbstract implements Parser
             $attributes['endTokenPos'] = $commentEndTokenPos;
         }
         return $attributes;
+    }
+
+    /** @param ElseIf_|Else_ $node */
+    protected function fixupAlternativeElse($node) {
+        // Make sure a trailing nop statement carrying comments is part of the node.
+        $numStmts = \count($node->stmts);
+        if ($numStmts !== 0 && $node->stmts[$numStmts - 1] instanceof Nop) {
+            $nopAttrs = $node->stmts[$numStmts - 1]->getAttributes();
+            if (isset($nopAttrs['endLine'])) {
+                $node->setAttribute('endLine', $nopAttrs['endLine']);
+            }
+            if (isset($nopAttrs['endFilePos'])) {
+                $node->setAttribute('endFilePos', $nopAttrs['endFilePos']);
+            }
+            if (isset($nopAttrs['endTokenPos'])) {
+                $node->setAttribute('endTokenPos', $nopAttrs['endTokenPos']);
+            }
+        }
     }
 
     protected function checkClassModifier($a, $b, $modifierPos) {

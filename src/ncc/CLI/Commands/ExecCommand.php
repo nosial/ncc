@@ -33,18 +33,17 @@
         /**
          * Displays the main help menu
          *
-         * @param $args
-         * @return void
+         * @param array $args
+         * @return int
          */
-        public static function start($args): void
+        public static function start(array $args): int
         {
             $package = $args['package'] ?? null;
             $version = $args['exec-version'] ?? 'latest';
 
-            if($package == null)
+            if($package === null)
             {
-                self::displayOptions();
-                exit(0);
+                return self::displayOptions();
             }
 
             try
@@ -54,26 +53,26 @@
             catch(Exception $e)
             {
                 Console::outException('Cannot import package ' . $package, $e, 1);
-                return;
+                return 1;
             }
 
             try
             {
-                exit(Runtime::execute($package_name));
+                return Runtime::execute($package_name);
             }
             catch(Exception $e)
             {
                 Console::outException($e->getMessage(), $e, 1);
-                return;
+                return 1;
             }
         }
 
         /**
          * Displays the main options section
          *
-         * @return void
+         * @return int
          */
-        private static function displayOptions(): void
+        private static function displayOptions(): int
         {
             $options = [
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
@@ -97,5 +96,7 @@
             Console::out('   ncc exec --package com.example.program');
             Console::out('   ncc exec --package com.example.program --exec-version 1.0.0');
             Console::out('   ncc exec --package com.example.program --exec-args --foo --bar --extra=test');
+
+            return 0;
         }
     }

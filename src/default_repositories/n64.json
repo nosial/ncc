@@ -1,6 +1,0 @@
-{
-  "name": "n64",
-  "type": "gitlab",
-  "host": "git.n64.cc",
-  "ssl": true
-}

@@ -9,12 +9,13 @@ TIMESTAMP := $(shell date +%Y%m%d%H%M%S)
 
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
+    composer/semver \
     defuse/php-encryption \
     jelix/version \
     nikic/PhpParser \
-    Symfony/polyfill-ctype \
-    Symfony/polyfill-mbstring \
-    Symfony/polyfill-uuid \
+    Symfony/polyfill_ctype \
+    Symfony/polyfill_mbstring \
+    Symfony/polyfill_uuid \
     Symfony/Process \
     Symfony/Uid \
     Symfony/Filesystem \
@@ -63,6 +64,8 @@ redist: autoload
 	cp -f $(INSTALLER_PATH)/ncc.sh $(BUILD_PATH)/src/ncc.sh
 	cp -f $(CONFIG_PATH)/ncc.yaml $(BUILD_PATH)/src/default_config.yaml
 	cp -f $(CONFIG_PATH)/ncc.yaml $(BUILD_PATH)/src/CLI/template_config.yaml
+	cp -f $(CONFIG_PATH)/default_repositories.json $(BUILD_PATH)/src/default_repositories.json
+	cp -f $(CONFIG_PATH)/ncc-package.xml $(BUILD_PATH)/src/ncc-package.xml
 	cp -f $(INSTALLER_PATH)/extension $(BUILD_PATH)/src/extension
 	chmod +x $(BUILD_PATH)/src/INSTALL
 	cp -f LICENSE $(BUILD_PATH)/src/LICENSE
@@ -73,8 +76,6 @@ redist: autoload
 	cp -f $(INSTALLER_PATH)/generate_build_files.php $(BUILD_PATH)/src/generate_build_files.php
 	$(PHPCC) $(BUILD_PATH)/src/generate_build_files.php
 	rm $(BUILD_PATH)/src/generate_build_files.php
-	mkdir -p $(BUILD_PATH)/src/repositories
-	cp -rf $(SRC_PATH)/default_repositories/*.json $(BUILD_PATH)/src/repositories
 
 $(BUILD_PATH)/build_$(TIMESTAMP).tar.gz: redist
 	cd $(BUILD_PATH)/src; tar -czvf ../build_$(TIMESTAMP).tar.gz *

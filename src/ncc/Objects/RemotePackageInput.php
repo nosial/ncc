@@ -26,13 +26,10 @@
 
     use InvalidArgumentException;
     use ncc\Enums\RegexPatterns;
+    use ncc\Enums\Versions;
 
     class RemotePackageInput
     {
-        /**
-         * @var string
-         */
-        private $vendor;
 
         /**
          * @var string
@@ -40,7 +37,12 @@
         private $package;
 
         /**
-         * @var string|null
+         * @var string
+         */
+        private $vendor;
+
+        /**
+         * @var string
          */
         private $version;
 
@@ -50,53 +52,26 @@
         private $branch;
 
         /**
-         * @var string
+         * @var string|null
          */
-        private $source;
+        private $repository;
 
         /**
          * Public Constructor & String Parser
          *
-         * @param string|null $input
+         * @param string $package The package name (eg; "ncc")
+         * @param string $vendor The vendor name (eg; "Nosial")
          */
-        public function __construct(?string $input = null)
+        public function __construct(string $package, string $vendor)
         {
-            if ($input !== null && preg_match(RegexPatterns::REMOTE_PACKAGE, $input, $matches))
-            {
-                if ($matches['source'] === null || $matches['package'] === null || $matches['vendor'] === null)
-                {
-                    throw new InvalidArgumentException('Package, version, and source are required.');
-                }
-
-                $this->vendor = $matches['vendor'];
-                $this->package = $matches['package'];
-                $this->source = $matches['source'];
-                $this->version = empty($matches['version']) ? null : $matches['version'];
-                $this->branch = empty($matches['branch']) ? null : $matches['branch'];
-            }
-            else
-            {
-                throw new InvalidArgumentException(sprintf('Invalid remote package input: %s', $input));
-            }
-        }
-
-        /**
-         * @return string
-         */
-        public function getVendor(): string
-        {
-            return $this->vendor;
-        }
-
-        /**
-         * @param string $vendor
-         */
-        public function setVendor(string $vendor): void
-        {
+            $this->package = $package;
             $this->vendor = $vendor;
+            $this->version = Versions::LATEST;
         }
 
         /**
+         * Returns the package name to use for the package
+         *
          * @return string
          */
         public function getPackage(): string
@@ -105,6 +80,8 @@
         }
 
         /**
+         * Sets the package name to use for the package
+         *
          * @param string $package
          */
         public function setPackage(string $package): void
@@ -113,22 +90,48 @@
         }
 
         /**
-         * @return string|null
+         * Returns the vendor to use for the package
+         *
+         * @return string
          */
-        public function getVersion(): ?string
+        public function getVendor(): string
+        {
+            return $this->vendor;
+        }
+
+        /**
+         * Sets the vendor to use it for the package
+         *
+         * @param string $vendor
+         */
+        public function setVendor(string $vendor): void
+        {
+            $this->vendor = $vendor;
+        }
+
+        /**
+         * Returns the version to use for the package
+         *
+         * @return string
+         */
+        public function getVersion(): string
         {
             return $this->version;
         }
 
         /**
+         * Sets the version to use for the package, if null, it will use the latest version
+         *
          * @param string|null $version
          */
         public function setVersion(?string $version): void
         {
-            $this->version = $version;
+            $this->version = $version ?? Versions::LATEST;
         }
 
         /**
+         * Returns the branch to use for the package
+         *
          * @return string|null
          */
         public function getBranch(): ?string
@@ -137,6 +140,8 @@
         }
 
         /**
+         * Sets the branch to use it for the package
+         *
          * @param string|null $branch
          */
         public function setBranch(?string $branch): void
@@ -145,51 +150,23 @@
         }
 
         /**
-         * @return string
-         */
-        public function getSource(): string
-        {
-            return $this->source;
-        }
-
-        /**
-         * @param string $source
-         */
-        public function setSource(string $source): void
-        {
-            $this->source = $source;
-        }
-
-        /**
-         * Returns a string representation of the input
+         * Optional. Returns the repository to use for the package
          *
-         * @return string
+         * @return string|null
          */
-        public function toString(): string
+        public function getRepository(): ?string
         {
-            if($this->vendor === null || $this->package === null)
-            {
-                return '';
-            }
+            return $this->repository;
+        }
 
-            $results = $this->vendor . '/' . $this->package;
-
-            if($this->version !== null)
-            {
-                $results .= '=' . $this->version;
-            }
-
-            if($this->branch !== null)
-            {
-                $results .= ':' . $this->branch;
-            }
-
-            if($this->source !== null)
-            {
-                $results .= '@' . $this->source;
-            }
-
-            return $results;
+        /**
+         * Sets the repository to use it for the package
+         *
+         * @param string|null $repository
+         */
+        public function setRepository(?string $repository): void
+        {
+            $this->repository = $repository;
         }
 
         /**
@@ -206,5 +183,68 @@
             }
 
             return str_replace('-', '_', sprintf('com.%s.%s', $this->vendor, $this->package));
+        }
+
+        /**
+         * Returns a string representation of the input
+         *
+         * @return string
+         */
+        public function toString()
+        {
+            return $this->__toString();
+        }
+
+        /**
+         * Returns a string representation of the input
+         *
+         * @return string
+         */
+        public function __toString(): string
+        {
+            $results = $this->vendor . '/' . $this->package;
+
+            if($this->version !== null)
+            {
+                $results .= '=' . $this->version;
+            }
+
+            if($this->branch !== null)
+            {
+                $results .= ':' . $this->branch;
+            }
+
+            if($this->repository !== null)
+            {
+                $results .= '@' . $this->repository;
+            }
+
+            return $results;
+        }
+
+        /**
+         * Parses the input string and returns a RemotePackageInput object
+         *
+         * @param string $input
+         * @return RemotePackageInput
+         */
+        public static function fromString(string $input): RemotePackageInput
+        {
+            if (preg_match(RegexPatterns::REMOTE_PACKAGE, $input, $matches))
+            {
+                if ($matches['package'] === null || $matches['vendor'] === null)
+                {
+                    throw new InvalidArgumentException('package and vendor are required');
+                }
+
+                $object = new RemotePackageInput($matches['package'], $matches['vendor']);
+                $object->version = empty($matches['version']) ? Versions::LATEST : $matches['version'];
+                $object->branch = empty($matches['branch']) ? null : $matches['branch'];
+                $object->repository = empty($matches['source']) ? null : $matches['source'];
+
+                return $object;
+            }
+
+            throw new InvalidArgumentException(sprintf('Invalid remote package input: %s', $input));
         }
     }

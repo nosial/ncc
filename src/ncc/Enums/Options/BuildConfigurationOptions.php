@@ -25,4 +25,8 @@
     final class BuildConfigurationOptions
     {
         public const COMPRESSION = 'compression';
+
+        public const REQUIRE_FILES = 'require_files';
+
+        public const NCC_CONFIGURATION = 'ncc_configuration';
     }

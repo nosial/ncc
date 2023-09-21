@@ -30,7 +30,6 @@
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\PackageLock\PackageEntry;
-    use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
 
     class PackageLock implements BytecodeObjectInterface
@@ -106,8 +105,6 @@
          */
         public function addPackage(PackageReader $package_reader): void
         {
-            Console::outVerbose("Adding package {$package_reader->getAssembly()->getPackage()} to package lock file");
-
             if(!$this->entryExists($package_reader->getAssembly()->getPackage()))
             {
                 $package_entry = new PackageEntry($package_reader->getAssembly()->getPackage());
@@ -126,13 +123,27 @@
          * Returns True if the package entry exists
          *
          * @param string $package_name
+         * @param string|null $version
          * @return bool
          */
-        public function entryExists(string $package_name): bool
+        public function entryExists(string $package_name, ?string $version=null): bool
         {
+            if($version === null)
+            {
+                foreach($this->entries as $entry)
+                {
+                    if($entry->getName() === $package_name)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             foreach($this->entries as $entry)
             {
-                if($entry->getName() === $package_name)
+                if($entry->getName() === $package_name && $entry->versionExists($version))
                 {
                     return true;
                 }
@@ -205,7 +216,7 @@
         /**
          * Returns an array of package entries
          *
-         * @return array
+         * @return string[]
          */
         public function getEntries(): array
         {

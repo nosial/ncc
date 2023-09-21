@@ -39,19 +39,19 @@
          * Displays the main help menu
          *
          * @param $args
-         * @return void
+         * @return int
          * @throws IOException
          * @throws AuthenticationException
          */
-        public static function start($args): void
+        public static function start($args): int
         {
             if(isset($args['sample']))
             {
                 $sample_file = __DIR__ . DIRECTORY_SEPARATOR . 'template_config.yaml';
-                if(!file_exists($sample_file))
+                if(!is_file($sample_file))
                 {
                     Console::outError('Cannot display sample, file template_config.yaml was not found', true, 1);
-                    return;
+                    return 1;
                 }
 
                 $handle = fopen($sample_file, 'rb');
@@ -59,7 +59,7 @@
                 if (!$handle)
                 {
                     Console::outError('Cannot display sample, error reading template_config.yaml', true, 1);
-                    return;
+                    return 1;
                 }
 
                 while (($line = fgets($handle)) !== false)
@@ -68,22 +68,22 @@
                 }
 
                 fclose($handle);
-                exit(0);
+                return 0;
             }
 
             if(isset($args['read']))
             {
-                if(!file_exists(PathFinder::getConfigurationFile()))
+                if(!is_file(PathFinder::getConfigurationFile()))
                 {
                     Console::outError('Cannot read configuration file, path not found', true, 1);
-                    return;
+                    return 1;
                 }
 
                 $handle = fopen(PathFinder::getConfigurationFile(), 'rb');
                 if (!$handle)
                 {
                     Console::outError('Cannot display configuration file, error reading file', true, 1);
-                    return;
+                    return 1;
                 }
 
                 while (($line = fgets($handle)) !== false)
@@ -92,7 +92,7 @@
                 }
 
                 fclose($handle);
-                exit(0);
+                return 0;
             }
 
             if(isset($args['p']))
@@ -104,7 +104,7 @@
                     if(Resolver::resolveScope() !== Scopes::SYSTEM)
                     {
                         Console::outError('Insufficient permissions, cannot modify configuration values', true, 1);
-                        return;
+                        return 1;
                     }
 
                     if(strtolower($args['v']) === 'null')
@@ -115,11 +115,11 @@
                     if($configuration_manager->updateProperty($args['p'], $args['v']))
                     {
                         $configuration_manager->save();
-                        exit(0);
+                        return 0;
                     }
 
                     Console::outError(sprintf('Unknown property %s', $args['p']), true, 1);
-                    return;
+                    return 1;
                 }
 
                 $value = $configuration_manager->getProperty($args['p']);
@@ -144,20 +144,19 @@
 
                     Console::out((string)$value);
                 }
-                exit(0);
+
+                return 0;
             }
 
-            self::displayOptions();
-            exit(0);
-
+            return self::displayOptions();
         }
 
         /**
          * Displays the main options section
          *
-         * @return void
+         * @return int
          */
-        private static function displayOptions(): void
+        private static function displayOptions(): int
         {
             $options = [
                 new CliHelpSection(['sample'], 'Displays a sample configuration file with documentation'),
@@ -178,5 +177,6 @@
             Console::out('If `v` is not specified the property will be displayed');
             Console::out('If `v` is specified but `null` is set, the default value or null will be used');
             Console::out('For documentation run `ncc config sample`');
+            return 0;
         }
     }

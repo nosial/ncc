@@ -24,16 +24,16 @@
 
     namespace ncc\Objects\Vault;
 
-    use ncc\Enums\AuthenticationType;
     use ncc\Defuse\Crypto\Crypto;
     use ncc\Defuse\Crypto\Exception\EnvironmentIsBrokenException;
     use ncc\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
+    use ncc\Enums\Types\AuthenticationType;
+    use ncc\Extensions\ZiProto\ZiProto;
+    use ncc\Interfaces\AuthenticationInterface;
     use ncc\Interfaces\BytecodeObjectInterface;
-    use ncc\Interfaces\PasswordInterface;
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Functions;
-    use ncc\Extensions\ZiProto\ZiProto;
     use RuntimeException;
 
     class Entry implements BytecodeObjectInterface
@@ -55,7 +55,7 @@
         /**
          * The entry's password
          *
-         * @var PasswordInterface|string|null
+         * @var AuthenticationInterface|string|null
          */
         private $password;
 
@@ -149,10 +149,10 @@
         }
 
         /**
-         * @param PasswordInterface $password
+         * @param AuthenticationInterface $password
          * @return void
          */
-        public function setAuthentication(PasswordInterface $password): void
+        public function setAuthentication(AuthenticationInterface $password): void
         {
             $this->password = $password;
         }
@@ -188,7 +188,7 @@
                 return false;
             }
 
-            if(!($this->password instanceof PasswordInterface))
+            if(!($this->password instanceof AuthenticationInterface))
             {
                 return false;
             }
@@ -202,27 +202,31 @@
          *
          * @param string $password
          * @return bool
-         * @noinspection PhpUnused
+         * @noinspection PhpUnhandledExceptionInspection
          */
         public function unlock(string $password): bool
         {
             if($this->password === null)
             {
+                sleep(random_int(2, 3));
                 return false;
             }
 
             if(!$this->encrypted)
             {
+                sleep(random_int(2, 3));
                 return false;
             }
 
             if($this->currently_decrypted)
             {
+                sleep(random_int(2, 3));
                 return false;
             }
 
             if(!is_string($this->password))
             {
+                sleep(random_int(2, 3));
                 return false;
             }
 
@@ -237,6 +241,7 @@
             catch (WrongKeyOrModifiedCiphertextException $e)
             {
                 unset($e);
+                sleep(random_int(2, 3));
                 return false;
             }
 
@@ -263,7 +268,7 @@
                 return false;
             }
 
-            if(!($this->password instanceof PasswordInterface))
+            if(!($this->password instanceof AuthenticationInterface))
             {
                 return null;
             }
@@ -322,9 +327,9 @@
         }
 
         /**
-         * @return PasswordInterface|null
+         * @return AuthenticationInterface|null
          */
-        public function getPassword(): ?PasswordInterface
+        public function getPassword(): ?AuthenticationInterface
         {
             if(!$this->currently_decrypted)
             {

@@ -25,27 +25,32 @@
 
     namespace ncc\Managers;
 
+    use JsonException;
     use ncc\Classes\PhpExtension\ExecutableCompiler;
     use ncc\Classes\PhpExtension\NccCompiler;
     use ncc\Classes\PhpExtension\Templates\CliTemplate;
     use ncc\Classes\PhpExtension\Templates\LibraryTemplate;
-    use ncc\Enums\BuildOutputType;
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\ComponentFileExtensions;
+    use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Enums\ProjectTemplates;
+    use ncc\Enums\Types\BuildOutputType;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Objects\ComposerJson;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration;
-    use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
+    use ncc\Utilities\Resolver;
+    use RuntimeException;
 
     class ProjectManager
     {
@@ -93,20 +98,14 @@
                 throw new PathNotFoundException($path);
             }
 
+            if(str_ends_with($path, 'project.json'))
+            {
+                $path = dirname($path);
+            }
+
             $this->project_path = $path;
             $this->project_file_path = $this->project_path . DIRECTORY_SEPARATOR . 'project.json';
             $this->project_configuration = ProjectConfiguration::fromFile($this->project_file_path);
-        }
-
-        /**
-         * Saves the project configuration
-         *
-         * @return void
-         * @throws IOException
-         */
-        public function save(): void
-        {
-            $this->project_configuration->toFile($this->project_file_path);
         }
 
         /**
@@ -140,7 +139,7 @@
         }
 
         /**
-         * Compiles the project into a package
+         * Compiles the project into a package, returns the path to the build
          *
          * @param string $build_configuration
          * @return string
@@ -310,6 +309,17 @@
         }
 
         /**
+         * Saves the project configuration
+         *
+         * @return void
+         * @throws IOException
+         */
+        public function save(): void
+        {
+            $this->project_configuration->toFile($this->project_file_path);
+        }
+
+        /**
          * Initializes the project structure
          *
          * @param string $project_path The directory for the project to be initialized in
@@ -347,11 +357,6 @@
                 $project_src = substr($project_src, 0, -1);
             }
 
-            if(!mkdir($project_path, 0777, true) && !is_dir($project_path))
-            {
-                throw new IOException(sprintf('Project directory "%s" was not created', $project_path));
-            }
-
             if(!mkdir($project_path . DIRECTORY_SEPARATOR . $project_src, 0777, true) && !is_dir($project_path . DIRECTORY_SEPARATOR . $project_src))
             {
                 throw new IOException(sprintf('Project source directory "%s" was not created', $project_path . DIRECTORY_SEPARATOR . $project_src));
@@ -379,5 +384,280 @@
             // Finally, create project.json and return a new ProjectManager
             $project_configuration->toFile($project_path . DIRECTORY_SEPARATOR . 'project.json');
             return new ProjectManager($project_path);
+        }
+
+        /**
+         * Initializes the project structure from a composer-based project
+         *
+         * @param string $project_path
+         * @param array $options
+         * @return ProjectManager
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws NotSupportedException
+         * @throws OperationException
+         * @throws PathNotFoundException
+         */
+        public static function initializeFromComposer(string $project_path, array $options=[]): ProjectManager
+        {
+            if(str_ends_with($project_path, DIRECTORY_SEPARATOR))
+            {
+                $project_path = substr($project_path, 0, -1);
+            }
+
+            $project_file = $project_path . DIRECTORY_SEPARATOR . 'project.json';
+            $composer_file = $project_path . DIRECTORY_SEPARATOR . 'composer.json';
+
+            if(!is_file($composer_file))
+            {
+                throw new IOException('Unable to find composer.json in \'' . $project_path . '\'');
+            }
+
+            if(is_file($project_file))
+            {
+                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE]))
+                {
+                    throw new IOException('A project has already been initialized in \'' . $project_file . '\'');
+                }
+
+                Console::out(sprintf('Overwriting project.json in \'%s\'', $project_path));
+                unlink($project_file);
+            }
+
+            if(!isset($options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION]))
+            {
+                throw new OperationException('Unable to initialize project from composer.json without a version option');
+            }
+
+            try
+            {
+                $composer_json = ComposerJson::fromArray(json_decode(IO::fread($composer_file), true, 512, JSON_THROW_ON_ERROR));
+            }
+            catch(JsonException $e)
+            {
+                throw new OperationException(sprintf('Unable to parse composer.json in \'%s\'', $project_path), $e);
+            }
+
+            // Create an auto-source directory
+            $project_src = $project_path . DIRECTORY_SEPARATOR . 'auto_src';
+            if(!is_dir($project_src) && !mkdir($project_src, 0777, true) && !is_dir($project_src))
+            {
+                throw new IOException(sprintf('Project source directory "%s" was not created', $project_src));
+            }
+
+            $project = new ProjectConfiguration\Project(new ProjectConfiguration\Compiler(CompilerExtensions::PHP));
+            $assembly = new ProjectConfiguration\Assembly(
+                Resolver::composerName($composer_json->getName()),
+                Resolver::composerNameToPackage($composer_json->getName()),
+                $options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION]
+            );
+            $assembly->setDescription($composer_json->getDescription());
+
+            // Create the build configuration
+            $build = new ProjectConfiguration\Build('auto_src');
+            $build->setDefaultConfiguration('release_ncc');
+
+            // Process dependencies
+            if($composer_json->getRequire() !== null)
+            {
+                /** @var ComposerJson\PackageLink $package_link */
+                foreach($composer_json->getRequire() as $package_link)
+                {
+                    if(!preg_match('/^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+$/', $package_link->getPackageName()))
+                    {
+                        continue;
+                    }
+
+                    $source = sprintf('%s=%s@packagist', $package_link->getPackageName(), $package_link->getVersion());
+                    $build->addDependency(new ProjectConfiguration\Dependency(
+                        Resolver::composerNameToPackage($package_link->getPackageName()), $source, $package_link->getVersion()
+                    ));
+                }
+            }
+
+            // Process developer dependencies
+            $require_dev = [];
+            if($composer_json->getRequireDev() !== null)
+            {
+                /** @var ComposerJson\PackageLink $package_link */
+                foreach($composer_json->getRequireDev() as $package_link)
+                {
+                    if(!preg_match('/^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+$/', $package_link->getPackageName()))
+                    {
+                        continue;
+                    }
+
+                    $source = sprintf('%s=%s@packagist', $package_link->getPackageName(), $package_link->getVersion());
+                    $build->addDependency(new ProjectConfiguration\Dependency(
+                        Resolver::composerNameToPackage($package_link->getPackageName()), $source, $package_link->getVersion()
+                    ));
+                    $require_dev[] = $package_link->getPackageName();
+                }
+            }
+
+            // Process classmap
+            if($composer_json->getAutoload()?->getClassMap() !== null)
+            {
+                foreach($composer_json->getAutoload()?->getClassMap() as $path)
+                {
+                    /** @noinspection UnusedFunctionResultInspection */
+                    self::copyContents($project_path, $project_src, $path);
+                }
+            }
+
+            // Process PSR-4 namespaces
+            if($composer_json->getAutoload()?->getPsr4() !== null)
+            {
+                foreach($composer_json->getAutoload()?->getPsr4() as $namespace_pointer)
+                {
+                    if(is_string($namespace_pointer->getPath()))
+                    {
+                        /** @noinspection UnusedFunctionResultInspection */
+                        self::copyContents($project_path, $project_src, $namespace_pointer->getPath());
+                    }
+                    elseif(is_array($namespace_pointer->getPath()))
+                    {
+                        foreach($namespace_pointer->getPath() as $path)
+                        {
+                            /** @noinspection UnusedFunctionResultInspection */
+                            self::copyContents($project_path, $project_src, $path);
+                        }
+                    }
+                    else
+                    {
+                        throw new RuntimeException('Invalid namespace pointer path');
+                    }
+                }
+            }
+
+            // Process PSR-0 namespaces
+            if($composer_json->getAutoload()?->getPsr0() !== null)
+            {
+                foreach($composer_json->getAutoload()?->getPsr0() as $namespace_pointer)
+                {
+                    if(is_string($namespace_pointer->getPath()))
+                    {
+                        /** @noinspection UnusedFunctionResultInspection */
+                        self::copyContents($project_path, $project_src, $namespace_pointer->getPath());
+                    }
+                    elseif(is_array($namespace_pointer->getPath()))
+                    {
+                        foreach($namespace_pointer->getPath() as $path)
+                        {
+                            /** @noinspection UnusedFunctionResultInspection */
+                            self::copyContents($project_path, $project_src, $path);
+                        }
+                    }
+                    else
+                    {
+                        throw new RuntimeException('Invalid namespace pointer path');
+                    }
+                }
+            }
+
+            // Process files
+            if($composer_json->getAutoload()?->getFiles() !== null)
+            {
+                $required_files = [];
+                foreach($composer_json->getAutoload()?->getFiles() as $path)
+                {
+                    $required_files = array_merge($required_files, self::copyContents($project_path, $project_src, $path));
+                }
+
+                foreach($required_files as $index => $file)
+                {
+                    $required_files[$index] = Functions::removeBasename($file, $project_path);
+                }
+
+                $build->setOption(BuildConfigurationOptions::REQUIRE_FILES, $required_files);
+            }
+
+            // Generate debug build configuration
+            $ncc_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_ncc', 'build' . DIRECTORY_SEPARATOR . 'debug');
+            $ncc_debug_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
+            $ncc_debug_configuration->setDependencies($require_dev);
+            $build->addBuildConfiguration($ncc_debug_configuration);
+            $executable_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_executable', 'build' . DIRECTORY_SEPARATOR . 'debug');
+            $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE);
+            $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug_ncc');
+            $executable_debug_configuration->setDependencies($require_dev);
+            $build->addBuildConfiguration($executable_debug_configuration);
+
+            // Generate release build configuration
+            $ncc_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_ncc', 'build' . DIRECTORY_SEPARATOR . 'release');
+            $ncc_release_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
+            $build->addBuildConfiguration($ncc_release_configuration);
+            $executable_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_executable', 'build' . DIRECTORY_SEPARATOR . 'release');
+            $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release_ncc');
+            $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE);
+            $build->addBuildConfiguration($executable_release_configuration);
+
+            // Create an update source for the project
+            if(isset($options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE]))
+            {
+                $project->setUpdateSource(new ProjectConfiguration\UpdateSource(
+                    $options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE],
+                    (new RepositoryManager())->getRepository('packagist')->getProjectRepository()
+                ));
+            }
+            else
+            {
+                Console::outWarning(sprintf('No update source was specified (COMPOSER_REMOTE_SOURCE), the project %s=%s will not be able to preform updates', $assembly->getName(), $assembly->getVersion()));
+            }
+
+            // Finally, create project.json and return a new ProjectManager
+            $project_configuration = new ProjectConfiguration($project, $assembly, $build);
+            $project_configuration->toFile($project_file);
+
+            return new ProjectManager($project_path);
+        }
+
+        /**
+         * Copies the contents of a directory to a destination recursively
+         *
+         * @param string $project_path The path to the project
+         * @param string $destination_path The path to copy the contents to
+         * @param string $path The path to copy
+         * @return array Returns the array of copied files
+         * @throws IOException
+         */
+        private static function copyContents(string $project_path, string $destination_path, string $path): array
+        {
+            $source_path = $project_path . DIRECTORY_SEPARATOR . $path;
+            if(str_ends_with($path, DIRECTORY_SEPARATOR))
+            {
+                $path = substr($path, 0, -1);
+            }
+
+            $destination_path .= DIRECTORY_SEPARATOR . hash('crc32', $path);
+
+            if(is_file($source_path))
+            {
+                $parent_directory = dirname($destination_path . DIRECTORY_SEPARATOR . $path);
+                if(!is_dir($parent_directory) && !mkdir($parent_directory, 0777, true) && !is_dir($parent_directory))
+                {
+                    throw new IOException(sprintf('Directory "%s" was not created', $parent_directory));
+                }
+
+                copy($source_path, $destination_path . DIRECTORY_SEPARATOR . $path);
+                return [$destination_path . DIRECTORY_SEPARATOR . $path];
+            }
+
+            $results = [];
+            foreach(Functions::scanDirectory($source_path) as $file)
+            {
+                $destination = $destination_path . DIRECTORY_SEPARATOR . Functions::removeBasename($file, $source_path);
+                $parent_directory = dirname($destination);
+
+                if(!is_dir($parent_directory) && !mkdir($parent_directory, 0777, true) && !is_dir($parent_directory))
+                {
+                    throw new IOException(sprintf('Directory "%s" was not created', $parent_directory));
+                }
+
+                copy($file, $destination);
+                $results[] = $destination;
+            }
+
+            return $results;
         }
     }

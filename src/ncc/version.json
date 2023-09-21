@@ -4,6 +4,10 @@
   "flags": [],
   "components": [
     {
+      "vendor": "composer",
+      "package_name": "semver"
+    },
+    {
       "vendor": "defuse",
       "package_name": "php-encryption"
     },
@@ -17,15 +21,15 @@
     },
     {
       "vendor": "Symfony",
-      "package_name": "polyfill-ctype"
+      "package_name": "polyfill_ctype"
     },
     {
       "vendor": "Symfony",
-      "package_name": "polyfill-mbstring"
+      "package_name": "polyfill_mbstring"
     },
     {
       "vendor": "Symfony",
-      "package_name": "polyfill-uuid"
+      "package_name": "polyfill_uuid"
     },
     {
       "vendor": "Symfony",

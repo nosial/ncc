@@ -27,11 +27,11 @@
 
     use ncc\Classes\PackageWriter;
     use ncc\CLI\Main;
-    use ncc\Enums\ComponentDataType;
     use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\LogLevel;
     use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\BuildConfigurationValues;
+    use ncc\Enums\Types\ComponentDataType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
@@ -162,6 +162,18 @@
                 $this->processResource($package_writer, $resource);
             }
 
+            // Add the project dependencies
+            foreach($this->project_manager->getProjectConfiguration()->getBuild()->getDependencies() as $dependency)
+            {
+                $package_writer->addDependencyConfiguration($dependency);
+            }
+
+            // Add the build dependencies
+            foreach($configuration->getDependencies() as $dependency)
+            {
+                $package_writer->addDependencyConfiguration($dependency);
+            }
+
             $package_writer->close();
             return $package_path;
         }
@@ -216,7 +228,7 @@
         public function processComponent(PackageWriter $package_writer, string $file_path): void
         {
             $package_writer->addComponent(new Package\Component(
-                Functions::removeBasename($file_path),
+                Functions::removeBasename($file_path, $this->project_manager->getProjectPath()),
                 Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED
             ));
         }
@@ -234,7 +246,7 @@
         public function processResource(PackageWriter $package_writer, string $file_path): void
         {
             $package_writer->addResource(new Package\Resource(
-                Functions::removeBasename($file_path), IO::fread($file_path)
+                Functions::removeBasename($file_path, $this->project_manager->getProjectPath()), IO::fread($file_path)
             ));
         }
 

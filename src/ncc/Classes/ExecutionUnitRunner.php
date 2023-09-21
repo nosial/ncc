@@ -121,7 +121,7 @@
         }
 
         /**
-         * Executes the execution policy directly from a package (if supported)
+         * Executes the execution policy directly from a package (if supported) and returns the exit code
          *
          * @param PackageReader $package_reader
          * @param string $policy_name

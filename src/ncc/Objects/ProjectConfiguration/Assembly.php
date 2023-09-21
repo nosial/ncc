@@ -29,7 +29,6 @@
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\ThirdParty\Symfony\Uid\Uuid;
-    use ncc\ThirdParty\Symfony\Uid\UuidV4;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
 
@@ -39,6 +38,13 @@
      */
     class Assembly implements BytecodeObjectInterface, ValidatableObjectInterface
     {
+        /**
+         * Universally Unique Identifier
+         *
+         * @var string
+         */
+        private $uuid;
+
         /**
          * The software name
          *
@@ -52,6 +58,13 @@
          * @var string
          */
         private $package;
+
+        /**
+         * Software version
+         *
+         * @var string
+         */
+        private $version;
 
         /**
          * The software description
@@ -85,20 +98,6 @@
          * @var string|null
          */
         private $trademark;
-
-        /**
-         * Software version
-         *
-         * @var string
-         */
-        private $version;
-
-        /**
-         * Universally Unique Identifier
-         *
-         * @var string
-         */
-        private $uuid;
 
         /**
          * Assembly constructor.

@@ -24,7 +24,6 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
-    use ncc\Enums\RemoteSourceType;
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
@@ -46,11 +45,6 @@
         /**
          * @var string
          */
-        private $source_type;
-
-        /**
-         * @var string
-         */
         private $version;
 
         /**
@@ -62,16 +56,14 @@
          * Dependency constructor.
          *
          * @param string $name
-         * @param string|null $source_type
          * @param string|null $source
          * @param string|null $version
          */
-        public function __construct(string $name, ?string $source_type=null, ?string $source=null, ?string $version=null)
+        public function __construct(string $name, ?string $source=null, ?string $version=null)
         {
             $this->name = $name;
-            $this->source_type = $source_type ?? RemoteSourceType::NONE;
-            $this->version = $version ?? Versions::LATEST;
             $this->source = $source;
+            $this->version = $version ?? Versions::LATEST;
         }
 
         /**
@@ -93,28 +85,6 @@
         public function setName(string $name): void
         {
             $this->name = $name;
-        }
-
-        /**
-         * Optional. Returns the type of source from where ncc can fetch the dependency from
-         *
-         * @return string
-         */
-        public function getSourceType(): string
-        {
-            return $this->source_type;
-        }
-
-        /**
-         * Sets the type of source from where ncc can fetch the dependency from,
-         * if the source type is not defined, it will be set to RemoteSourceType::NONE
-         *
-         * @param string|null $source_type
-         * @return void
-         */
-        public function setSourceType(?string $source_type): void
-        {
-            $this->source_type = ($source_type ?? RemoteSourceType::NONE);
         }
 
         /**
@@ -184,7 +154,6 @@
             $results = [];
 
             $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
-            $results[($bytecode ? Functions::cbc('source_type') : 'source_type')] = $this->source_type;
             $results[($bytecode ? Functions::cbc('version') : 'version')] = $this->version;
 
             if($this->source !== null && $this->source !== '')
@@ -208,10 +177,6 @@
                 throw new ConfigurationException('Dependency name is required');
             }
 
-            return new self($name,
-                Functions::array_bc($data, 'source_type'),
-                Functions::array_bc($data, 'source'),
-                Functions::array_bc($data, 'version')
-            );
+            return new self($name, Functions::array_bc($data, 'source'), Functions::array_bc($data, 'version'));
         }
     }

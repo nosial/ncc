@@ -31,4 +31,8 @@
         public const INSTALLER = 'INSTALLER';
 
         public const CLASS_MAP = 'CLASS_MAP';
+
+        public const UPDATE = 'UPDATE';
+
+        public const SHADOW_PACKAGE = 'SHADOW_PKG';
     }

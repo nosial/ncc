@@ -6,29 +6,33 @@
         print('Could not find \'autoload.php\', this script is intended to be executed during the redistribution process');
         exit(1);
     }
+
+    /** @noinspection PhpIncludeInspection */
     require(__DIR__ . DIRECTORY_SEPARATOR . 'autoload.php');
 
     // Start script
-    function scanContents($dir, &$results = array())
+    function scanContents($dir)
     {
-        $files = scandir($dir);
+        $results = [];
 
-        foreach ($files as $key => $value)
+        foreach (scandir($dir, SCANDIR_SORT_NONE) as $key => $value)
         {
             $path = realpath($dir . DIRECTORY_SEPARATOR . $value);
+
             if (!is_dir($path))
             {
-                $results[] = str_ireplace(__DIR__ . DIRECTORY_SEPARATOR, (string)null, $path);
+                $results[] = str_ireplace(__DIR__ . DIRECTORY_SEPARATOR, '', $path);
             }
-            else if ($value != '.' && $value != '..')
+            elseif ($value !== '.' && $value !== '..')
             {
-                $results[] = str_ireplace(__DIR__ . DIRECTORY_SEPARATOR, (string)null, $path);
-                scanContents($path, $results);
+                /** @noinspection SlowArrayOperationsInLoopInspection */
+                $results = array_merge($results, scanContents($path));
             }
         }
 
         return $results;
     }
+
 
     $excluded_files = [
         'hash_check.php',
@@ -56,8 +60,10 @@
             $build_files_content[] = $path;
         }
     }
-    $build_files = fopen(__DIR__ . DIRECTORY_SEPARATOR . 'build_files', 'a+');
+
+    $build_files = fopen(__DIR__ . DIRECTORY_SEPARATOR . 'build_files', 'ab+');
+
     fwrite($build_files, implode("\n", $build_files_content));
     fclose($build_files);
-    ncc\Utilities\Console::out('Created build_files');
+
     exit(0);

@@ -24,17 +24,17 @@
 
     use Exception;
     use ncc\Classes\PackageWriter;
-    use ncc\Enums\ComponentDataType;
     use ncc\Enums\Flags\ComponentFlags;
+    use ncc\Enums\Types\ComponentDataType;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Objects\Package\Component;
     use ncc\ThirdParty\nikic\PhpParser\ParserFactory;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
-    use ncc\Extensions\ZiProto\ZiProto;
 
     class NccCompiler extends \ncc\Classes\NccExtension\NccCompiler
     {
@@ -48,7 +48,7 @@
          */
         public function processComponent(PackageWriter $package_writer, string $file_path): void
         {
-            $component_name = Functions::removeBasename($file_path);
+            $component_name = Functions::removeBasename($file_path, $this->getProjectManager()->getProjectPath());
 
             try
             {

@@ -24,8 +24,8 @@
 
     namespace ncc\Objects;
 
-    use ncc\Enums\ComposerPackageTypes;
-    use ncc\Enums\ComposerStabilityTypes;
+    use ncc\Enums\Types\ComposerPackageTypes;
+    use ncc\Enums\Types\ComposerStabilityTypes;
     use ncc\Objects\ComposerJson\Author;
     use ncc\Objects\ComposerJson\Autoloader;
     use ncc\Objects\ComposerJson\PackageLink;
@@ -46,7 +46,7 @@
          * A short description of the package. Usually
          * this is one line long
          *
-         * @var string
+         * @var string|null
          */
         private $description;
 
@@ -295,6 +295,9 @@
         }
 
         /**
+         * Returns the name of the package, it consists of
+         * the vendor name and project name, seperated by `/`
+         *
          * @return string
          */
         public function getName(): string
@@ -303,43 +306,24 @@
         }
 
         /**
-         * @param string $name
+         * Returns the description of the package
+         *
+         * @return ?string
          */
-        public function setName(string $name): void
-        {
-            $this->name = $name;
-        }
-
-        /**
-         * @return string
-         */
-        public function getDescription(): string
+        public function getDescription(): ?string
         {
             return $this->description;
         }
 
         /**
-         * @param string $description
-         */
-        public function setDescription(string $description): void
-        {
-            $this->description = $description;
-        }
-
-        /**
+         * Optional. Returns the version of the package, in most cases this is not
+         * required and should be omitted.
+         *
          * @return string|null
          */
         public function getVersion(): ?string
         {
             return $this->version;
-        }
-
-        /**
-         * @param string|null $version
-         */
-        public function setVersion(?string $version): void
-        {
-            $this->version = $version;
         }
 
         /**
@@ -351,27 +335,11 @@
         }
 
         /**
-         * @param string $type
-         */
-        public function setType(string $type): void
-        {
-            $this->type = $type;
-        }
-
-        /**
          * @return string[]
          */
         public function getKeywords(): array
         {
             return $this->keywords;
-        }
-
-        /**
-         * @param string[] $keywords
-         */
-        public function setKeywords(array $keywords): void
-        {
-            $this->keywords = $keywords;
         }
 
         /**
@@ -383,27 +351,11 @@
         }
 
         /**
-         * @param string|null $homepage
-         */
-        public function setHomepage(?string $homepage): void
-        {
-            $this->homepage = $homepage;
-        }
-
-        /**
          * @return string|null
          */
         public function getReadme(): ?string
         {
             return $this->readme;
-        }
-
-        /**
-         * @param string|null $readme
-         */
-        public function setReadme(?string $readme): void
-        {
-            $this->readme = $readme;
         }
 
         /**
@@ -415,27 +367,11 @@
         }
 
         /**
-         * @param string|null $time
-         */
-        public function setTime(?string $time): void
-        {
-            $this->time = $time;
-        }
-
-        /**
          * @return string|string[]|null
          */
         public function getLicense(): array|string|null
         {
             return $this->license;
-        }
-
-        /**
-         * @param string|string[]|null $license
-         */
-        public function setLicense(array|string|null $license): void
-        {
-            $this->license = $license;
         }
 
         /**
@@ -447,27 +383,11 @@
         }
 
         /**
-         * @param Author[]|null $authors
-         */
-        public function setAuthors(?array $authors): void
-        {
-            $this->authors = $authors;
-        }
-
-        /**
          * @return Support|null
          */
         public function getSupport(): ?Support
         {
             return $this->support;
-        }
-
-        /**
-         * @param Support|null $support
-         */
-        public function setSupport(?Support $support): void
-        {
-            $this->support = $support;
         }
 
         /**
@@ -479,27 +399,11 @@
         }
 
         /**
-         * @param PackageLink[]|null $require
-         */
-        public function setRequire(?array $require): void
-        {
-            $this->require = $require;
-        }
-
-        /**
          * @return PackageLink[]|null
          */
         public function getRequireDev(): ?array
         {
             return $this->require_dev;
-        }
-
-        /**
-         * @param PackageLink[]|null $require_dev
-         */
-        public function setRequireDev(?array $require_dev): void
-        {
-            $this->require_dev = $require_dev;
         }
 
         /**
@@ -511,27 +415,11 @@
         }
 
         /**
-         * @param PackageLink[]|null $conflict
-         */
-        public function setConflict(?array $conflict): void
-        {
-            $this->conflict = $conflict;
-        }
-
-        /**
          * @return PackageLink[]|null
          */
         public function getReplace(): ?array
         {
             return $this->replace;
-        }
-
-        /**
-         * @param PackageLink[]|null $replace
-         */
-        public function setReplace(?array $replace): void
-        {
-            $this->replace = $replace;
         }
 
         /**
@@ -543,27 +431,11 @@
         }
 
         /**
-         * @param PackageLink[]|null $provide
-         */
-        public function setProvide(?array $provide): void
-        {
-            $this->provide = $provide;
-        }
-
-        /**
          * @return Suggestion[]|null
          */
         public function getSuggest(): ?array
         {
             return $this->suggest;
-        }
-
-        /**
-         * @param Suggestion[]|null $suggest
-         */
-        public function setSuggest(?array $suggest): void
-        {
-            $this->suggest = $suggest;
         }
 
         /**
@@ -575,27 +447,11 @@
         }
 
         /**
-         * @param Autoloader|null $autoload
-         */
-        public function setAutoload(?Autoloader $autoload): void
-        {
-            $this->autoload = $autoload;
-        }
-
-        /**
          * @return Autoloader|null
          */
         public function getAutoloadDev(): ?Autoloader
         {
             return $this->autoload_dev;
-        }
-
-        /**
-         * @param Autoloader|null $autoload_dev
-         */
-        public function setAutoloadDev(?Autoloader $autoload_dev): void
-        {
-            $this->autoload_dev = $autoload_dev;
         }
 
         /**
@@ -607,27 +463,11 @@
         }
 
         /**
-         * @param string[]|null $include_path
-         */
-        public function setIncludePath(?array $include_path): void
-        {
-            $this->include_path = $include_path;
-        }
-
-        /**
          * @return string|null
          */
         public function getTargetDirectory(): ?string
         {
             return $this->target_directory;
-        }
-
-        /**
-         * @param string|null $target_directory
-         */
-        public function setTargetDirectory(?string $target_directory): void
-        {
-            $this->target_directory = $target_directory;
         }
 
         /**
@@ -639,27 +479,11 @@
         }
 
         /**
-         * @param ComposerPackageTypes|string|null $minimum_stability
-         */
-        public function setMinimumStability(ComposerPackageTypes|string|null $minimum_stability): void
-        {
-            $this->minimum_stability = $minimum_stability;
-        }
-
-        /**
          * @return array|null
          */
         public function getRepositories(): ?array
         {
             return $this->repositories;
-        }
-
-        /**
-         * @param array|null $repositories
-         */
-        public function setRepositories(?array $repositories): void
-        {
-            $this->repositories = $repositories;
         }
 
         /**
@@ -671,27 +495,11 @@
         }
 
         /**
-         * @param array|null $configuration
-         */
-        public function setConfiguration(?array $configuration): void
-        {
-            $this->configuration = $configuration;
-        }
-
-        /**
          * @return array|null
          */
         public function getScripts(): ?array
         {
             return $this->scripts;
-        }
-
-        /**
-         * @param array|null $scripts
-         */
-        public function setScripts(?array $scripts): void
-        {
-            $this->scripts = $scripts;
         }
 
         /**
@@ -703,27 +511,11 @@
         }
 
         /**
-         * @param array|null $extra
-         */
-        public function setExtra(?array $extra): void
-        {
-            $this->extra = $extra;
-        }
-
-        /**
          * @return array|null
          */
         public function getBin(): ?array
         {
             return $this->bin;
-        }
-
-        /**
-         * @param array|null $bin
-         */
-        public function setBin(?array $bin): void
-        {
-            $this->bin = $bin;
         }
 
         /**
@@ -735,14 +527,6 @@
         }
 
         /**
-         * @param array|null $archive
-         */
-        public function setArchive(?array $archive): void
-        {
-            $this->archive = $archive;
-        }
-
-        /**
          * @return bool
          */
         public function isAbandoned(): bool
@@ -751,27 +535,11 @@
         }
 
         /**
-         * @param bool $abandoned
-         */
-        public function setAbandoned(bool $abandoned): void
-        {
-            $this->abandoned = $abandoned;
-        }
-
-        /**
          * @return array|null
          */
         public function getNonFeatureBranches(): ?array
         {
             return $this->non_feature_branches;
-        }
-
-        /**
-         * @param array|null $non_feature_branches
-         */
-        public function setNonFeatureBranches(?array $non_feature_branches): void
-        {
-            $this->non_feature_branches = $non_feature_branches;
         }
 
         /**

@@ -34,29 +34,26 @@
         /**
          * Displays the main help menu
          *
-         * @param $args
-         * @return void
-         * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+         * @param array $args
+         * @return int
          */
-        public static function start($args): void
+        public static function start(array $args): int
         {
             if(isset($args['help']))
             {
-                self::displayOptions();
-                exit(0);
+                return self::displayOptions();
             }
 
-            self::build($args);
-            exit(0);
+            return self::build($args);
         }
 
         /**
          * Builds the current project
          *
-         * @param $args
-         * @return void
+         * @param array $args
+         * @return int
          */
-        private static function build($args): void
+        private static function build(array $args): int
         {
             if(isset($args['path']) || isset($args['p']))
             {
@@ -69,7 +66,7 @@
             else
             {
                 Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
-                return;
+                return 1;
             }
 
             // Load the project
@@ -80,35 +77,31 @@
             catch (Exception $e)
             {
                 Console::outException('There was an error loading the project', $e, 1);
-                return;
+                return 1;
             }
 
             // Build the project
             try
             {
-                $build_configuration = BuildConfigurationValues::DEFAULT;
-                if(isset($args['config']))
-                {
-                    $build_configuration = $args['config'];
-                }
-
+                $build_configuration = $args['config'] ?? BuildConfigurationValues::DEFAULT;
                 $output = $project_manager->build($build_configuration);
             }
             catch (Exception $e)
             {
                 Console::outException('Failed to build project', $e, 1);
-                return;
+                return 1;
             }
 
             Console::out($output);
+            return 0;
         }
 
         /**
          * Displays the main options section
          *
-         * @return void
+         * @return int
          */
-        private static function displayOptions(): void
+        private static function displayOptions(): int
         {
             $options = [
                 new CliHelpSection(['help'], 'Displays this help menu about the value command'),
@@ -125,5 +118,7 @@
             {
                 Console::out('   ' . $option->toString($options_padding));
             }
+
+            return 0;
         }
     }

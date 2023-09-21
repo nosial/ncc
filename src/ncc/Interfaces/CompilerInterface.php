@@ -23,12 +23,7 @@
     namespace ncc\Interfaces;
 
     use ncc\Enums\Options\BuildConfigurationValues;
-    use ncc\Exceptions\BuildException;
-    use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PathNotFoundException;
     use ncc\Managers\ProjectManager;
-    use ncc\Objects\Package;
-    use ncc\Objects\ProjectConfiguration;
 
     interface CompilerInterface
     {

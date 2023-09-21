@@ -69,7 +69,6 @@
         /**
          * PackageWriter constructor.
          *
-         * @param string $file_path
          * @throws IOException
          */
         public function __construct(string $file_path, bool $overwrite=true)
@@ -153,6 +152,7 @@
          *
          * @param array $flags
          * @return void
+         * @throws IOException
          */
         public function setFlags(array $flags): void
         {
@@ -189,6 +189,7 @@
          *
          * @param string $flag
          * @return void
+         * @throws IOException
          */
         public function removeFlag(string $flag): void
         {
@@ -206,13 +207,12 @@
          * @param string $name
          * @param string $data
          * @return array
-         * @throws IOException
          */
         public function add(string $name, string $data): array
         {
             if(isset($this->headers[PackageStructure::DIRECTORY][$name]))
             {
-                throw new IOException(sprintf('Resource \'%s\' already exists in package', $name));
+                return explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
             }
 
             if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
@@ -250,13 +250,12 @@
          * @param int $offset
          * @param int $length
          * @return void
-         * @throws IOException
          */
         public function addPointer(string $name, int $offset, int $length): void
         {
             if(isset($this->headers[PackageStructure::DIRECTORY][$name]))
             {
-                throw new IOException(sprintf('Resource \'%s\' already exists in package', $name));
+                return;
             }
 
             $this->headers[PackageStructure::DIRECTORY][$name] = sprintf("%d:%d", $offset, $length);
@@ -267,7 +266,6 @@
          *
          * @param Assembly $assembly
          * @return array
-         * @throws IOException
          */
         public function setAssembly(Assembly $assembly): array
         {
@@ -279,7 +277,6 @@
          *
          * @param Metadata $metadata
          * @return array
-         * @throws IOException
          */
         public function setMetadata(Metadata $metadata): array
         {
@@ -291,7 +288,6 @@
          *
          * @param Installer $installer
          * @return array
-         * @throws IOException
          */
         public function setInstaller(Installer $installer): array
         {
@@ -303,7 +299,6 @@
          *
          * @param Dependency $dependency
          * @return array
-         * @throws IOException
          */
         public function addDependencyConfiguration(Dependency $dependency): array
         {
@@ -315,7 +310,6 @@
          *
          * @param ExecutionUnit $unit
          * @return array
-         * @throws IOException
          */
         public function addExecutionUnit(ExecutionUnit $unit): array
         {
@@ -327,7 +321,6 @@
          *
          * @param Component $component
          * @return array
-         * @throws IOException
          */
         public function addComponent(Component $component): array
         {
@@ -339,11 +332,10 @@
          *
          * @param Resource $resource
          * @return array
-         * @throws IOException
          */
         public function addResource(Resource $resource): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES, $resource->getName()), $resource->getData());
+            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES, $resource->getName()), ZiProto::encode($resource->toArray(true)));
         }
 
         /**
@@ -353,7 +345,6 @@
          * @param int $offset
          * @param int $length
          * @return void
-         * @throws IOException
          */
         public function mapClass(string $class, int $offset, int $length): void
         {
@@ -379,11 +370,14 @@
             // Write the magic bytes "ncc_pkg" to the package and the header
             fwrite($this->package_file,  'ncc_pkg');
             fwrite($this->package_file, ZiProto::encode($this->headers));
-            fwrite($this->package_file, chr(0x1F) . chr(0x1F));
+            fwrite($this->package_file, "\x1F\x1F\x1F\x1F");
 
             // Copy the temporary data file to the package
             $temp_file = fopen($this->temporary_path, 'rb');
             stream_copy_to_stream($temp_file, $this->package_file);
+
+            // End the package by writing the end-of-package delimiter (0xFFAA55F0)
+            fwrite($this->package_file, "\xFF\xAA\x55\xF0");
 
             // Close the file handles
             fclose($this->package_file);

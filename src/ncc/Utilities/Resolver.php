@@ -1,35 +1,33 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2023, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
     /** @noinspection PhpMissingFieldTypeInspection */
 
     namespace ncc\Utilities;
 
-    use ncc\Enums\BuiltinRemoteSourceType;
     use ncc\Enums\LogLevel;
-    use ncc\Enums\ProjectType;
-    use ncc\Enums\RemoteSourceType;
     use ncc\Enums\Scopes;
-    use ncc\Managers\RemoteSourcesManager;
+    use ncc\Enums\Types\ProjectType;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Objects\ProjectDetectionResults;
 
     class Resolver
@@ -39,45 +37,27 @@
          *
          * @var string|null
          */
-        private static $UserIdCache;
+        private static $user_id_cache;
 
         /**
-         * @param string|null $input
-         * @return string
+         * Returns the current scope of the application
+         *
+         * @return string Scopes::SYSTEM if the user is root, Scopes::USER otherwise
+         * @see Scopes
          */
-        public static function resolveScope(?string $input=null): string
+        public static function resolveScope(): string
         {
-            // Set the scope to automatic if it's null
-            if($input == null)
+            if(self::$user_id_cache === null)
             {
-                $input = Scopes::AUTO;
+                self::$user_id_cache = posix_getuid();
             }
 
-            $input = strtoupper($input);
-
-            if(self::$UserIdCache == null)
-                self::$UserIdCache = posix_getuid();
-
-            // Resolve the scope if it's set to automatic
-            if($input == Scopes::AUTO)
+            if(self::$user_id_cache === 0)
             {
-                if(self::$UserIdCache == 0)
-                {
-                    $input = Scopes::SYSTEM;
-                }
-                else
-                {
-                    $input = Scopes::USER;
-                }
+                return Scopes::SYSTEM;
             }
 
-            // Auto-Correct the scope if the current user ID is 0
-            if($input == Scopes::USER && self::$UserIdCache == 0)
-            {
-                $input = Scopes::SYSTEM;
-            }
-
-            return $input;
+            return Scopes::USER;
         }
 
         /**
@@ -111,7 +91,7 @@
             }
 
             $configs = array();
-                $regex = "/(?(?=-)-(?(?=-)-(?'bigflag'[^\\s=]+)|(?'smallflag'\\S))(?:\\s*=\\s*|\\s+)(?(?!-)(?(?=[\\\"\\'])((?<![\\\\])['\"])(?'string'(?:.(?!(?<![\\\\])\\3))*.?)\\3|(?'value'\\S+)))(?:\\s+)?|(?'unmatched'\\S+))/";
+            $regex = "/(?(?=-)-(?(?=-)-(?'big'[^\\s=]+)|(?'small'\\S))(?:\\s*=\\s*|\\s+)(?(?!-)(?(?=[\\\"\\'])((?<![\\\\])['\"])(?'string'(?:.(?!(?<![\\\\])\\3))*.?)\\3|(?'value'\\S+)))(?:\\s+)?|(?'unmatched'\\S+))/";
             preg_match_all($regex, $flags, $matches, PREG_SET_ORDER);
 
             foreach ($matches as $index => $match)
@@ -123,31 +103,32 @@
                 else if (isset($match['string']) && $match['string'] !== '')
                 {
                     // fix escaped quotes
-                    $value = str_replace("\\\"", "\"", $match['string']);
-                    $value = str_replace("\\'", "'", $value);
+                    $value = str_replace(["\\\"", "\\'"], ["\"", "'"], $match['string']);
                 }
                 else
                 {
                     $value = true;
                 }
 
-                if (isset($match['bigflag']) && $match['bigflag'] !== '')
+                if(isset($match['big']) && $match['big'] !== '')
                 {
-                    $configs[$match['bigflag']] = $value;
+                    $configs[$match['big']] = $value;
                 }
 
-                if (isset($match['smallflag']) && $match['smallflag'] !== '')
+                if(isset($match['small']) && $match['small'] !== '')
                 {
-                    $configs[$match['smallflag']] = $value;
+                    $configs[$match['small']] = $value;
                 }
 
-                if (isset($match['unmatched']) && $match['unmatched'] !== '')
+                if(isset($match['unmatched']) && $match['unmatched'] !== '')
                 {
                     $configs[$match['unmatched']] = true;
                 }
 
-                if ($index >= $max_arguments)
+                if($index >= $max_arguments)
+                {
                     break;
+                }
             }
 
             return $configs;
@@ -186,144 +167,93 @@
          */
         public static function checkLogLevel(?string $input, ?string $current_level): bool
         {
-            if($input == null)
+            if($input === null || $current_level === null)
+            {
                 return false;
-            if($current_level == null)
-                return false;
+            }
 
             $input = strtolower($input);
             if(!Validate::checkLogLevel($input))
+            {
                 return false;
+            }
 
             $current_level = strtolower($current_level);
             if(!Validate::checkLogLevel($current_level))
+            {
                 return false;
-
-            switch($current_level)
-            {
-                case LogLevel::DEBUG:
-                    $levels = [
-                        LogLevel::DEBUG,
-                        LogLevel::VERBOSE,
-                        LogLevel::INFO,
-                        LogLevel::WARNING,
-                        LogLevel::FATAL,
-                        LogLevel::ERROR
-                    ];
-                    if(in_array($input, $levels))
-                        return true;
-                    return false;
-
-                case LogLevel::VERBOSE:
-                    $levels = [
-                        LogLevel::VERBOSE,
-                        LogLevel::INFO,
-                        LogLevel::WARNING,
-                        LogLevel::FATAL,
-                        LogLevel::ERROR
-                    ];
-                    if(in_array($input, $levels))
-                        return true;
-                    return false;
-
-                case LogLevel::INFO:
-                    $levels = [
-                        LogLevel::INFO,
-                        LogLevel::WARNING,
-                        LogLevel::FATAL,
-                        LogLevel::ERROR
-                    ];
-                    if(in_array($input, $levels))
-                        return true;
-                    return false;
-
-                case LogLevel::WARNING:
-                    $levels = [
-                        LogLevel::WARNING,
-                        LogLevel::FATAL,
-                        LogLevel::ERROR
-                    ];
-                    if(in_array($input, $levels))
-                        return true;
-                    return false;
-
-                case LogLevel::ERROR:
-                    $levels = [
-                        LogLevel::FATAL,
-                        LogLevel::ERROR
-                    ];
-                    if(in_array($input, $levels))
-                        return true;
-                    return false;
-
-                case LogLevel::FATAL:
-                    if($input == LogLevel::FATAL)
-                        return true;
-                    return false;
-
-                default:
-                case LogLevel::SILENT:
-                    return false;
             }
+
+            return match ($current_level)
+            {
+                LogLevel::DEBUG => in_array($input, [LogLevel::DEBUG, LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::VERBOSE => in_array($input, [LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::INFO => in_array($input, [LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::WARNING => in_array($input, [LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::ERROR => in_array($input, [LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::FATAL => $input === LogLevel::FATAL,
+                default => false,
+            };
         }
 
         /**
-         * Detects the remote source type, can also accept defined remote
-         * sources as the input, the function will look for the source
-         * type and return it
+         * Returns the ProjectDetectionResults of the project in the specified directory
          *
-         * @param string $input
-         * @return string
-         */
-        public static function detectRemoteSourceType(string $input): string
-        {
-            if(in_array($input, BuiltinRemoteSourceType::ALL))
-                return RemoteSourceType::BUILTIN;
-
-            $source_manager = new RemoteSourcesManager();
-            $defined_source = $source_manager->getRemoteSource($input);
-            if($defined_source == null)
-                return RemoteSourceType::UNKNOWN;
-
-            return RemoteSourceType::DEFINED;
-        }
-
-        /**
-         * Detects the project type from the specified path
-         *
-         * @param string $path
+         * @param string $directory
          * @return ProjectDetectionResults
+         * @throws NotSupportedException
          */
-        public static function detectProjectType(string $path): ProjectDetectionResults
+        public static function detectProject(string $directory): ProjectDetectionResults
         {
-            $project_files = [
-                'project.json',
-                'composer.json'
-            ];
-
-            $project_file = Functions::searchDirectory($path, $project_files);
-
-            $project_detection_results = new ProjectDetectionResults();
-            $project_detection_results->setProjectType(ProjectType::UNKNOWN);
-
-            if($project_file == null)
+            foreach(Functions::scanDirectory($directory, ['*project.json', '*composer.json']) as $file)
             {
-                return $project_detection_results;
+                if(str_ends_with($file, 'project.json'))
+                {
+                    return new ProjectDetectionResults($file, ProjectType::NCC);
+                }
+
+                if(str_ends_with($file, 'composer.json'))
+                {
+                    return new ProjectDetectionResults($file, ProjectType::COMPOSER);
+                }
             }
 
-            // Get filename of the project file
-            switch(basename($project_file))
-            {
-                case 'project.json':
-                    $project_detection_results->setProjectType(ProjectType::NCC);
-                    break;
+            throw new NotSupportedException(sprintf('Unable to detect project type in directory "%s"', $directory));
+        }
 
-                case 'composer.json':
-                    $project_detection_results->setProjectType(ProjectType::COMPOSER);
-                    break;
+        /**
+         * Converts a composer package name to a java standard package name, returns false if the input is invalid
+         *
+         * @param string $name
+         * @return string|false
+         */
+        public static function composerNameToPackage(string $name): string|false
+        {
+            $parts = explode("/", $name, 2);
+
+            if (count($parts) === 2)
+            {
+                return "com." . str_replace('-', '_', str_replace("/", ".", $name));
             }
 
-            $project_detection_results->setProjectPath(dirname($project_file));
-            return $project_detection_results;
+            return false;
+        }
+
+        /**
+         * Returns the name of a composer package name, returns false if the input is invalid
+         *
+         * @param string $name
+         * @return string|false
+         */
+        public static function composerName(string $name): string|false
+        {
+            $parts = explode("/", $name, 2);
+
+            if (count($parts) === 2)
+            {
+                return $parts[1];
+            }
+
+            return false;
         }
     }

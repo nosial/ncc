@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
-use ncc\ThirdParty\nikic\PhpParser\BuilderHelpers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\BuilderHelpers;
+use PhpParser\Node;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Stmt;
 
 class EnumCase implements PhpParser\Builder
 {
@@ -78,8 +78,8 @@ class EnumCase implements PhpParser\Builder
         return new Stmt\EnumCase(
             $this->name,
             $this->value,
-            $this->attributes,
-            $this->attributeGroups
+            $this->attributeGroups,
+            $this->attributes
         );
     }
 }

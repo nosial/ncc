@@ -1,4 +1,5 @@
 <?php
+
     /*
      * Copyright (c) Nosial 2022-2023, all rights reserved.
      *
@@ -24,7 +25,6 @@
 
     use Exception;
     use InvalidArgumentException;
-    use JsonSerializable;
 
     /**
      * ZiProto Class

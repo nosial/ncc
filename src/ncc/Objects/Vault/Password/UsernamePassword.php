@@ -24,11 +24,12 @@
 
     namespace ncc\Objects\Vault\Password;
 
-    use ncc\Enums\AuthenticationType;
-    use ncc\Interfaces\PasswordInterface;
+    use ncc\Enums\Types\AuthenticationType;
+    use ncc\Exceptions\ConfigurationException;
+    use ncc\Interfaces\AuthenticationInterface;
     use ncc\Utilities\Functions;
 
-    class UsernamePassword implements PasswordInterface
+    class UsernamePassword implements AuthenticationInterface
     {
         /**
          * The entry's username
@@ -45,6 +46,18 @@
         private $password;
 
         /**
+         * Public constructor
+         *
+         * @param string $username
+         * @param string $password
+         */
+        public function __construct(string $username, string $password)
+        {
+            $this->username = $username;
+            $this->password = $password;
+        }
+
+        /**
          * @return string
          * @noinspection PhpUnused
          */
@@ -54,12 +67,28 @@
         }
 
         /**
+         * @param string $username
+         */
+        public function setUsername(string $username): void
+        {
+            $this->username = $username;
+        }
+
+        /**
          * @return string
          * @noinspection PhpUnused
          */
         public function getPassword(): string
         {
             return $this->password;
+        }
+
+        /**
+         * @param string $password
+         */
+        public function setPassword(string $password): void
+        {
+            $this->password = $password;
         }
 
         /**
@@ -77,23 +106,7 @@
          */
         public function __toString(): string
         {
-            return $this->password;
-        }
-
-        /**
-         * @param string $username
-         */
-        public function setUsername(string $username): void
-        {
-            $this->username = $username;
-        }
-
-        /**
-         * @param string $password
-         */
-        public function setPassword(string $password): void
-        {
-            $this->password = $password;
+            return sprintf('%s:%s', $this->username, $this->password);
         }
 
         /**
@@ -110,14 +123,23 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): self
         {
-            $instance = new self();
+            $username = Functions::array_bc($data, 'username');
+            $password = Functions::array_bc($data, 'password');
 
-            $instance->username = Functions::array_bc($data, 'username');
-            $instance->password = Functions::array_bc($data, 'password');
+            if($username === null)
+            {
+                throw new ConfigurationException('Missing username');
+            }
 
-            return $instance;
+            if($password === null)
+            {
+                throw new ConfigurationException('Missing password');
+            }
+
+            return new self($username, $password);
         }
     }

@@ -23,15 +23,11 @@
     namespace ncc\Classes\BashExtension;
 
     use Exception;
-    use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
-    use ncc\Enums\Runners;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
 

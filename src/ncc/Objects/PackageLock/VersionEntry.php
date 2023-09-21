@@ -24,8 +24,10 @@
 
     namespace ncc\Objects\PackageLock;
 
+    use InvalidArgumentException;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Utilities\Functions;
     use ncc\Utilities\PathFinder;
@@ -42,7 +44,7 @@
         /**
          * An array of packages that this package depends on
          *
-         * @var DependencyEntry[]
+         * @var Dependency[]
          */
         private $dependencies;
 
@@ -103,7 +105,7 @@
         /**
          * Returns an array of packages that this package depends on
          *
-         * @return DependencyEntry[]
+         * @return Dependency[]
          */
         public function getDependencies(): array
         {
@@ -114,30 +116,49 @@
          * Returns a dependency by name if it exists
          *
          * @param string $name
-         * @return DependencyEntry|null
+         * @return Dependency
          */
-        public function getDependency(string $name): ?DependencyEntry
+        public function getDependency(string $name): Dependency
         {
             foreach($this->dependencies as $dependency)
             {
-                if($dependency->getPackageName() === $name)
+                if($dependency->getName() === $name)
                 {
                     return $dependency;
                 }
             }
 
-            return null;
+            throw new InvalidArgumentException(sprintf('Dependency "%s" does not exist in the version entry', $name));
+        }
+
+        /**
+         * Returns True if the dependency exists, false otherwise
+         *
+         * @param string $name
+         * @return bool
+         */
+        public function dependencyExists(string $name): bool
+        {
+            foreach($this->dependencies as $dependency)
+            {
+                if($dependency->getName() === $name)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /**
          * Adds a dependency to the version entry
          *
-         * @param DependencyEntry $dependency
+         * @param Dependency $dependency
          * @return void
          */
-        public function addDependency(DependencyEntry $dependency): void
+        public function addDependency(Dependency $dependency): void
         {
-            if($this->getDependency($dependency->getPackageName()) !== null)
+            if($this->dependencyExists($dependency->getName()))
             {
                 return;
             }
@@ -252,7 +273,7 @@
             {
                 foreach($dependencies as $_datum)
                 {
-                    $object->dependencies[] = DependencyEntry::fromArray($_datum);
+                    $object->dependencies[] = Dependency::fromArray($_datum);
                 }
             }
 

@@ -24,7 +24,7 @@
 
     namespace ncc\Objects\Package;
 
-    use ncc\Enums\EncoderType;
+    use ncc\Enums\Types\EncoderType;
     use ncc\Enums\Versions;
     use ncc\Interfaces\SerializableObjectInterface;
 

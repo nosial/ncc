@@ -38,6 +38,7 @@
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
+    use ncc\ThirdParty\composer\Semver\Semver;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
@@ -130,18 +131,18 @@
             $version_entry = new VersionEntry($package_reader->getAssembly()->getVersion());
             $version_entry->setMainExecutionPolicy($package_reader->getMetadata()->getMainExecutionPolicy());
 
-            //foreach($package_reader->getDependencies() as $dependency)
-            //{
-                // TODO: Implement this functionality
-            //}
-
             foreach($package_reader->getExecutionUnits() as $unit)
             {
                 $version_entry->addExecutionPolicy($package_reader->getExecutionUnit($unit)->getExecutionPolicy());
             }
 
+            foreach($package_reader->getDependencies() as $dependency)
+            {
+                $version_entry->addDependency($package_reader->getDependency($dependency));
+            }
+
             $this->versions[] = $version_entry;
-            $this->update_source =$package_reader->getMetadata()->getUpdateSource();
+            $this->update_source = $package_reader->getMetadata()->getUpdateSource();
 
             return true;
         }
@@ -154,15 +155,54 @@
          */
         public function versionExists(string $version): bool
         {
-            foreach($this->versions as $versionEntry)
+            if($version === Versions::LATEST)
             {
-                if($versionEntry->getVersion() === $version)
+                $version = $this->getLatestVersion();
+            }
+
+            foreach($this->versions as $version_entry)
+            {
+                if(false === stripos($version, "-dev") && false !== stripos($version_entry->getVersion(), "-dev"))
+                {
+                    continue;
+                }
+
+                if(Semver::satisfies($version_entry->getVersion(), $version))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /**
+         * Returns the version that satisfies the given version constraint
+         *
+         * @param string $version
+         * @return string
+         */
+        public function getSatisfyingVersion(string $version): string
+        {
+            if($version === Versions::LATEST)
+            {
+                $version = $this->getLatestVersion();
+            }
+
+            foreach($this->versions as $version_entry)
+            {
+                if(false === stripos($version, "-dev") && false !== stripos($version_entry->getVersion(), "-dev"))
+                {
+                    continue;
+                }
+
+                if(Semver::satisfies($version_entry->getVersion(), $version))
+                {
+                    return $version_entry->getVersion();
+                }
+            }
+
+            throw new InvalidArgumentException(sprintf('Version %s does not exist in package %s', $version, $this->name));
         }
 
         /**
@@ -178,11 +218,11 @@
                 $version = $this->getLatestVersion();
             }
 
-            foreach($this->versions as $versionEntry)
+            foreach($this->versions as $version_entry)
             {
-                if($versionEntry->getVersion() === $version)
+                if($version_entry->getVersion() === $version)
                 {
-                    return $versionEntry;
+                    return $version_entry;
                 }
             }
 
@@ -220,12 +260,12 @@
         /**
          * Returns an array of all versions installed
          *
-         * @return array
+         * @return string[]
          */
         public function getVersions(): array
         {
-            return array_map(static function(VersionEntry $versionEntry) {
-                return $versionEntry->getVersion();
+            return array_map(static function(VersionEntry $version_entry) {
+                return $version_entry->getVersion();
             }, $this->versions);
         }
 
@@ -240,9 +280,9 @@
             $count = 0;
             $found_node = false;
 
-            foreach($this->versions as $versionEntry)
+            foreach($this->versions as $version_entry)
             {
-                if($versionEntry->getVersion() === $version)
+                if($version_entry->getVersion() === $version)
                 {
                     $found_node = true;
                     break;
@@ -424,7 +464,12 @@
             }
 
             $object = new self($name, $versions);
-            $object->update_source = Functions::array_bc($data, 'update_source');
+            $update_source = Functions::array_bc($data, 'update_source');
+
+            if($update_source !== null)
+            {
+                $object->update_source = UpdateSource::fromArray($update_source);
+            }
 
             return $object;
         }

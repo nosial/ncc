@@ -26,6 +26,7 @@
     namespace ncc\Objects\ComposerJson;
 
     use ncc\Interfaces\SerializableObjectInterface;
+    use ncc\ThirdParty\composer\Semver\VersionParser;
 
     class PackageLink implements SerializableObjectInterface
     {
@@ -64,8 +65,13 @@
         /**
          * @return string|null
          */
-        public function getVersion(): ?string
+        public function getVersion(bool $normalized=false): ?string
         {
+            if($normalized)
+            {
+               return (new VersionParser())->parseConstraints($this->version)->getPrettyString();
+            }
+
             return $this->version;
         }
 

@@ -24,6 +24,7 @@
 
     use ncc\CLI\Main;
     use ncc\Enums\LogLevel;
+    use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\BuildException;
     use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
@@ -42,14 +43,14 @@
         {
             $configuration = $this->getProjectManager()->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
 
-            if(!isset($configuration->getOptions()['ncc_configuration']))
+            if(!isset($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION]))
             {
                 throw new BuildException(sprintf("Unable to compile the binary, the build configuration '%s' does not have a ncc_configuration.", $build_configuration));
             }
 
             // Build the ncc package first
             Console::outVerbose('Building ncc package.');
-            $ncc_package = parent::build($configuration->getOptions()['ncc_configuration']);
+            $ncc_package = parent::build($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION]);
 
             // Prepare the ncc package for compilation
             $hex_dump_file = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . parent::getProjectManager()->getProjectConfiguration()->getAssembly()->getName() . '.c';
@@ -134,19 +135,23 @@
          */
         private function hexDump(string $input_path, string $output_path, string $variable_name): void
         {
+            Console::out(sprintf('Processing %s to hex dump', $input_path));
+
             $input = fopen($input_path, 'rb');
             $output = fopen($output_path, 'wb');
-
-            fwrite($output, sprintf("unsigned char %s[] = {\n", Functions::toSnakeCase($variable_name)));
             $byte_count = 0;
+            $total_bytes = filesize($input_path);
+            fwrite($output, sprintf("unsigned char %s[] = {\n", Functions::toSnakeCase($variable_name)));
 
             // Convert the binary data to hex and write it to the output file
             while (!feof($input))
             {
+                Console::inlineProgressBar(ftell($input), $total_bytes);
+
                 $byte = fread($input, 1);
                 if (strlen($byte) === 1)
                 {
-                    fwrite($output, sprintf("  0x%02x,", ord($byte)));
+                    fwrite($output, sprintf(" 0x%02x,", ord($byte)));
                     $byte_count++;
                 }
 

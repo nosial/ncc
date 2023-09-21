@@ -22,9 +22,7 @@
 
     namespace ncc\Interfaces;
 
-    use ncc\Exceptions\IOException;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
 
     interface RunnerInterface
     {

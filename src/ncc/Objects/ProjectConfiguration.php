@@ -24,7 +24,6 @@
 
     namespace ncc\Objects;
 
-    use Exception;
     use InvalidArgumentException;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\ConfigurationException;

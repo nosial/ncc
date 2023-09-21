@@ -24,13 +24,10 @@
 
     namespace ncc\Managers;
 
-    use Exception;
     use ncc\Enums\Scopes;
-    use ncc\Enums\Versions;
-    use ncc\Exceptions\AuthenticationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
-    use ncc\Exceptions\RuntimeException;
     use ncc\Objects\Vault;
     use ncc\Utilities\Console;
     use ncc\Utilities\IO;
@@ -41,124 +38,83 @@
     class CredentialManager
     {
         /**
-         * @var string
-         */
-        private $store_path;
-
-
-        /**
          * @var Vault
          */
         private $vault;
 
         /**
          * Public Constructor
+         *
+         * @throws IOException
+         * @throws OperationException
+         * @throws PathNotFoundException
          */
         public function __construct()
         {
-            $this->store_path = PathFinder::getDataPath(Scopes::SYSTEM) . DIRECTORY_SEPARATOR . 'credentials.store';
-
-            try
-            {
-                $this->loadVault();
-            }
-            catch(Exception $e)
-            {
-                unset($e);
-            }
-
-            if($this->vault === null)
-            {
-                $this->vault = new Vault();
-            }
-        }
-
-        /**
-         * Constructs the store file if it doesn't exist on the system (First initialization)
-         *
-         * @return void
-         * @throws AuthenticationException
-         * @throws IOException
-         */
-        public function constructStore(): void
-        {
-            Console::outDebug(sprintf('constructing credentials store at %s', $this->store_path));
-
-            // Do not continue the function if the file already exists, if the file is damaged a separate function
-            // is to be executed to fix the damaged file.
-            if(file_exists($this->store_path))
-            {
-                return;
-            }
-
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AuthenticationException('Cannot construct credentials store without system permissions');
+                throw new OperationException('You must have root privileges to access the credentials storage file');
             }
 
-            $VaultObject = new Vault();
-            $VaultObject->setVersion(Versions::CREDENTIALS_STORE_VERSION);
-
-            IO::fwrite($this->store_path, ZiProto::encode($VaultObject->toArray()), 0744);
-        }
-
-        /**
-         * Loads the vault from the disk
-         *
-         * @return void
-         * @throws IOException
-         * @throws PathNotFoundException
-         * @throws RuntimeException
-         */
-        private function loadVault(): void
-        {
-            Console::outDebug(sprintf('loading credentials store from %s', $this->store_path));
-
-            if($this->vault !== null)
-            {
-                return;
-            }
-
-            if(!file_exists($this->store_path))
+            if(!is_file(PathFinder::getCredentialStorage()))
             {
                 $this->vault = new Vault();
                 return;
             }
 
-            $vault_object = Vault::fromArray(ZiProto::decode(IO::fread($this->store_path)));
+            $this->vault = Vault::fromArray(ZiProto::decode(IO::fread(PathFinder::getCredentialStorage())));
+        }
 
-            if($vault_object->getVersion() !== Versions::CREDENTIALS_STORE_VERSION)
-            {
-                throw new RuntimeException('Credentials store version mismatch');
-            }
-
-            $this->vault = $vault_object;
+        /**
+         * Returns the Vault object
+         *
+         * @return Vault
+         */
+        public function getVault(): Vault
+        {
+            return $this->vault;
         }
 
         /**
          * Saves the vault to the disk
          *
          * @return void
-         * @throws AuthenticationException
          * @throws IOException
+         * @throws OperationException
          */
-        public function saveVault(): void
+        public function save(): void
         {
-            Console::outDebug(sprintf('saving credentials store to %s', $this->store_path));
+            Console::outVerbose(sprintf('Saving credentials store to %s', PathFinder::getCredentialStorage()));
 
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
-                throw new AuthenticationException('Cannot save credentials store without system permissions');
+                throw new OperationException('You must have root privileges to modify the credentials storage file');
             }
 
-            IO::fwrite($this->store_path, ZiProto::encode($this->vault->toArray()), 0744);
+            IO::fwrite(PathFinder::getCredentialStorage(), ZiProto::encode($this->vault->toArray(true)), 0600);
         }
 
         /**
-         * @return Vault|null
+         * Initializes the credential storage file if it doesn't exist
+         *
+         * @return void
+         * @throws IOException
+         * @throws OperationException
          */
-        public function getVault(): ?Vault
+        public static function initializeCredentialStorage(): void
         {
-            return $this->vault;
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                throw new OperationException('You must have root privileges to initialize the credentials storage file');
+            }
+
+            if(is_file(PathFinder::getCredentialStorage()))
+            {
+                Console::outVerbose('Skipping credentials store initialization, store already exists');
+                return;
+            }
+
+            Console::outVerbose(sprintf('Initializing credentials store at %s', PathFinder::getCredentialStorage()));
+            IO::fwrite(PathFinder::getCredentialStorage(), ZiProto::encode((new Vault())->toArray(true)), 0600);
         }
     }

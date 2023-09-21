@@ -37,7 +37,7 @@
          *
          * @var Constant[]
          */
-        private static $Constants;
+        private static $constants;
 
         /**
          * Registers a new constant
@@ -58,13 +58,13 @@
 
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
-            if(isset(self::$Constants[$constant_hash]))
+            if(isset(self::$constants[$constant_hash]))
             {
-                self::$Constants[$constant_hash]->setValue($value, $readonly);
+                self::$constants[$constant_hash]->setValue($value, $readonly);
                 return;
             }
 
-            self::$Constants[$constant_hash] = new Constant($scope, $name, $value, $readonly);
+            self::$constants[$constant_hash] = new Constant($scope, $name, $value, $readonly);
         }
 
         /**
@@ -84,12 +84,12 @@
 
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
-            if(isset(self::$Constants[$constant_hash]) && self::$Constants[$constant_hash]->isReadonly())
+            if(isset(self::$constants[$constant_hash]) && self::$constants[$constant_hash]->isReadonly())
             {
-                throw new IntegrityException('Cannot delete the constant \'' .  self::$Constants[$constant_hash]->getFullName() .  '\', constant is readonly');
+                throw new IntegrityException('Cannot delete the constant \'' .  self::$constants[$constant_hash]->getFullName() .  '\', constant is readonly');
             }
 
-            unset(self::$Constants[$constant_hash]);
+            unset(self::$constants[$constant_hash]);
         }
 
         /**
@@ -108,9 +108,9 @@
 
             $constant_hash = Resolver::resolveConstantHash($scope, $name);
 
-            if(isset(self::$Constants[$constant_hash]))
+            if(isset(self::$constants[$constant_hash]))
             {
-                return self::$Constants[$constant_hash]->getValue();
+                return self::$constants[$constant_hash]->getValue();
             }
 
             return null;

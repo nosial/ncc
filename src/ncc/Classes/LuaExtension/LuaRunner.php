@@ -23,17 +23,11 @@
     namespace ncc\Classes\LuaExtension;
 
     use Exception;
-    use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
-    use ncc\Enums\Runners;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
-    use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
-    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
 
@@ -52,13 +46,21 @@
             try
             {
                 $process = ExecutionUnitRunner::constructProcess($unit, array_merge([$tmp], $args));
-                $process->run(static function($type, $buffer) use ($unit)
+
+                if($unit->getExecutionPolicy()->getExecute()->isTty())
                 {
-                    if(!$unit->getExecutionPolicy()->getExecute()->isSilent())
+                    $process->run();
+                }
+                else
+                {
+                    $process->run(static function($type, $buffer) use ($unit)
                     {
-                        print($buffer);
-                    }
-                });
+                        if(!$unit->getExecutionPolicy()->getExecute()->isSilent())
+                        {
+                            print($buffer);
+                        }
+                    });
+                }
             }
             catch(Exception $e)
             {

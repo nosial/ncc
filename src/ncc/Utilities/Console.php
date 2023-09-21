@@ -56,6 +56,11 @@
          */
         public static function inlineProgressBar(int $value, int $total, int $size = 10, array $options = []): void
         {
+            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            {
+                return;
+            }
+
             static $start_time;
 
             // Start time initialization
@@ -78,7 +83,7 @@
                 . ($barLength < $size ? ">" : "=")
                 . str_repeat(" ", $size - $barLength)
                 . " ] "
-                . number_format($percentage * 100) . " % $value/$total";
+                . number_format($percentage * 100) . "% $value/$total";
 
             // ETA and elapsed time calculation
             $rate = (time() - $start_time) / $value;
@@ -164,12 +169,12 @@
                 return;
             }
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::INFO, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::INFO, Main::getLogLevel()))
             {
                 return;
             }
 
-            if(!$no_prefix && Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(!$no_prefix && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 $message = self::setPrefix(LogLevel::INFO, $message);
             }
@@ -197,7 +202,7 @@
                 return;
             }
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
                 return;
             }
@@ -234,7 +239,7 @@
                 return;
             }
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 return;
             }
@@ -253,7 +258,7 @@
          */
         public static function formatColor(string $input, string $color_code, bool $persist=true): string
         {
-            if(Main::getArgs() !== null && isset(Main::getArgs()['no-color']))
+            if(isset(Main::getArgs()['no-color']))
             {
                 return $input;
             }
@@ -280,12 +285,12 @@
                 return;
             }
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::WARNING, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::WARNING, Main::getLogLevel()))
             {
                 return;
             }
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 self::out(self::setPrefix(LogLevel::WARNING, $message), $newline, true);
                 return;
@@ -309,12 +314,12 @@
                 return;
             }
 
-            if(Main::getLogLevel() !== null && !Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
             {
                 return;
             }
 
-            if(Main::getLogLevel() !== null && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 self::out(self::setPrefix(LogLevel::ERROR, $message), $newline, true);
             }
@@ -394,7 +399,7 @@
                 self::outExceptionDetails($e->getPrevious(), true);
             }
 
-            if(!$sub && Main::getArgs() !== null)
+            if(!$sub)
             {
                 if(isset(Main::getArgs()['dbg-ex']))
                 {
@@ -457,7 +462,7 @@
             {
                 if($display_options)
                 {
-                    $r = self::getInput($prompt . ' (Y/N): ');
+                    $r = self::getInput($prompt . ' [Y/n]: ');
                 }
                 else
                 {

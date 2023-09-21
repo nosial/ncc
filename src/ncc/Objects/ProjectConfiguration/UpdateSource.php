@@ -100,6 +100,7 @@
 
         /**
          * @inheritDoc
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): UpdateSource
         {
@@ -109,6 +110,13 @@
                 throw new ConfigurationException('The UpdateSource requires the "source" property');
             }
 
-            return new self($source, Functions::array_bc($data, 'repository'));
+            $repository = Functions::array_bc($data, 'repository');
+            if($repository !== null)
+            {
+                $repository = Repository::fromArray($repository);
+            }
+
+
+            return new self($source, $repository);
         }
     }

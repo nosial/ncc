@@ -3,9 +3,9 @@
 namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
-use ncc\ThirdParty\nikic\PhpParser\BuilderHelpers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\BuilderHelpers;
+use PhpParser\Node;
+use PhpParser\Node\Stmt;
 
 class Function_ extends FunctionLike
 {

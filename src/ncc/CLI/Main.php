@@ -25,21 +25,20 @@
     namespace ncc\CLI;
 
     use Exception;
-    use ncc\Enums\LogLevel;
-    use ncc\Enums\NccBuildFlags;
+    use ncc\Classes\ShutdownHandler;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecCommand;
     use ncc\CLI\Management\ConfigMenu;
     use ncc\CLI\Management\CredentialMenu;
     use ncc\CLI\Management\PackageManagerMenu;
     use ncc\CLI\Management\ProjectMenu;
-    use ncc\CLI\Management\SourcesMenu;
+    use ncc\CLI\Management\RepositoryMenu;
+    use ncc\Enums\Flags\NccBuildFlags;
+    use ncc\Enums\LogLevel;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\ncc;
     use ncc\Utilities\Console;
-    use ncc\Utilities\Functions;
     use ncc\Utilities\Resolver;
-    use ncc\Utilities\RuntimeCache;
 
     class Main
     {
@@ -56,141 +55,141 @@
         /**
          * Executes the main CLI process
          *
-         * @param $argv
-         * @return void
+         * @param array $argv
+         * @return int
          */
-        public static function start($argv): void
+        public static function start(array $argv): int
         {
             self::$args = Resolver::parseArguments(implode(' ', $argv));
 
-            if(isset(self::$args['ncc-cli']))
+            if(!isset(self::$args['ncc-cli']))
             {
-                // Initialize ncc
-                try
-                {
-                    ncc::initialize();
-                }
-                catch (PathNotFoundException $e)
-                {
-                    Console::outException('Cannot initialize ncc, one or more files were not found.', $e, 1);
-                }
-                catch (Exception $e)
-                {
-                    Console::outException('Cannot initialize ncc due to an unexpected error.', $e, 1);
-                }
-
-                define('NCC_CLI_MODE', 1);
-                register_shutdown_function('ncc\CLI\Main::shutdown');
-
-                if(isset(self::$args['l']) || isset(self::$args['log-level']))
-                {
-                    switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
-                    {
-                        case LogLevel::SILENT:
-                        case LogLevel::FATAL:
-                        case LogLevel::ERROR:
-                        case LogLevel::WARNING:
-                        case LogLevel::INFO:
-                        case LogLevel::DEBUG:
-                        case LogLevel::VERBOSE:
-                            self::$log_level = strtolower(self::$args['l'] ?? self::$args['log-level']);
-                            break;
-
-                        default:
-                            Console::outWarning('Unknown log level: ' . (self::$args['l'] ?? self::$args['log-level']) . ', using \'info\'');
-                            self::$log_level = LogLevel::INFO;
-                            break;
-                    }
-                }
-                else
-                {
-                    self::$log_level = LogLevel::INFO;
-                }
-
-                if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
-                {
-                    Console::outDebug('Debug logging enabled');
-                    /** @noinspection JsonEncodingApiUsageInspection */
-                    Console::outDebug(sprintf('const: %s', json_encode(ncc::getConstants(), JSON_UNESCAPED_SLASHES)));
-                    /** @noinspection JsonEncodingApiUsageInspection */
-                    Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
-                }
-
-                if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS, true))
-                {
-                    Console::outWarning('This is an unstable build of ncc, expect some features to not work as expected');
-                }
-
-                if(isset(self::$args['version']))
-                {
-                    self::displayVersion();
-                    exit(0);
-                }
-
-                try
-                {
-                    switch(strtolower(self::$args['ncc-cli']))
-                    {
-                        default:
-                            Console::out('Unknown command ' . strtolower(self::$args['ncc-cli']));
-                            break;
-
-                        case 'project':
-                            ProjectMenu::start(self::$args);
-                            break;
-
-                        case 'build':
-                            BuildCommand::start(self::$args);
-                            break;
-
-                        case 'exec':
-                            ExecCommand::start(self::$args);
-                            break;
-
-                        case 'cred':
-                            CredentialMenu::start(self::$args);
-                            break;
-
-                        case 'package':
-                            PackageManagerMenu::start(self::$args);
-                            break;
-
-                        case 'config':
-                            ConfigMenu::start(self::$args);
-                            break;
-
-                        case 'source':
-                            SourcesMenu::start(self::$args);
-                            break;
-
-                        case 'version':
-                            self::displayVersion();
-                            break;
-
-                        case '1':
-                        case 'help':
-                            HelpMenu::start(self::$args);
-                            break;
-                    }
-                }
-                catch(Exception $e)
-                {
-                    Console::outException($e->getMessage(), $e, 1);
-                    exit(1);
-                }
-
-                exit(0);
+                Console::outError('No command specified, please verify your command and try again.', true, 1);
+                return 1;
             }
+
+            // Initialize ncc
+            try
+            {
+                ncc::initialize();
+            }
+            catch (PathNotFoundException $e)
+            {
+                Console::outException('Cannot initialize ncc, one or more files were not found.', $e, 1);
+                return 1;
+            }
+            catch (Exception $e)
+            {
+                Console::outException('Cannot initialize ncc due to an unexpected error.', $e, 1);
+                return 1;
+            }
+
+            define('NCC_CLI_MODE', 1);
+            register_shutdown_function([ShutdownHandler::class, 'shutdown']);
+
+            if(isset(self::$args['l']) || isset(self::$args['log-level']))
+            {
+                switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
+                {
+                    case LogLevel::SILENT:
+                    case LogLevel::FATAL:
+                    case LogLevel::ERROR:
+                    case LogLevel::WARNING:
+                    case LogLevel::INFO:
+                    case LogLevel::DEBUG:
+                    case LogLevel::VERBOSE:
+                        self::$log_level = strtolower(self::$args['l'] ?? self::$args['log-level']);
+                        break;
+
+                    default:
+                        Console::outWarning('Unknown log level: ' . (self::$args['l'] ?? self::$args['log-level']) . ', using \'info\'');
+                        self::$log_level = LogLevel::INFO;
+                        break;
+                }
+            }
+            else
+            {
+                self::$log_level = LogLevel::INFO;
+            }
+
+            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
+            {
+                Console::outDebug('Debug logging enabled');
+
+                /** @noinspection JsonEncodingApiUsageInspection */
+                Console::outDebug(sprintf('const: %s', json_encode(ncc::getConstants(), JSON_UNESCAPED_SLASHES)));
+
+                /** @noinspection JsonEncodingApiUsageInspection */
+                Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
+            }
+
+            if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS, true))
+            {
+                Console::outWarning('This is an unstable build of ncc, expect some features to not work as expected');
+            }
+
+            if(isset(self::$args['version']))
+            {
+                self::displayVersion();
+                return 0;
+            }
+
+            try
+            {
+                switch(strtolower(self::$args['ncc-cli']))
+                {
+                    default:
+                        Console::out('Unknown command ' . strtolower(self::$args['ncc-cli']));
+                        break;
+
+                    case 'project':
+                        return ProjectMenu::start(self::$args);
+
+                    case 'build':
+                        return BuildCommand::start(self::$args);
+
+                    case 'exec':
+                        return ExecCommand::start(self::$args);
+
+                    case 'cred':
+                        return CredentialMenu::start(self::$args);
+
+                    case 'pkg':
+                    case 'package':
+                        return PackageManagerMenu::start(self::$args);
+
+                    case 'config':
+                        return ConfigMenu::start(self::$args);
+
+                    case 'repo':
+                        return RepositoryMenu::start(self::$args);
+
+                    case 'version':
+                        return self::displayVersion();
+
+                    case '1':
+                    case 'help':
+                        return HelpMenu::start(self::$args);
+                }
+            }
+            catch(Exception $e)
+            {
+                Console::outException($e->getMessage(), $e, 1);
+                return 1;
+            }
+
+            return 0;
         }
 
         /**
          * Displays the current version of ncc
          *
-         * @return void
+         * @return int
          */
-        private static function displayVersion(): void
+        private static function displayVersion(): int
         {
             Console::out(sprintf('ncc version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
+            return 0;
         }
 
         /**
@@ -228,21 +227,4 @@
 
             return self::$log_level;
         }
-
-        /**
-         * @return void
-         */
-        public static function shutdown(): void
-        {
-            try
-            {
-                RuntimeCache::clearCache();
-                Functions::finalizePermissions();
-            }
-            catch (Exception $e)
-            {
-                Console::outWarning('An error occurred while shutting down ncc, ' . $e->getMessage());
-            }
-        }
-
     }

@@ -31,7 +31,6 @@
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\RunnerInterface;
     use ncc\Objects\Package\ExecutionUnit;
-    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
 

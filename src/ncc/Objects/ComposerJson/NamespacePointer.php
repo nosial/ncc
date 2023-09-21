@@ -39,25 +39,9 @@
         /**
          * The relative path to the source code to index
          *
-         * @var string
+         * @var string|string[]
          */
         private $path;
-
-        /**
-         * @return string|null
-         */
-        public function getNamespace(): ?string
-        {
-            return $this->namespace;
-        }
-
-        /**
-         * @return string|null
-         */
-        public function getPath(): ?string
-        {
-            return $this->path;
-        }
 
         /**
          * Public constructor
@@ -69,6 +53,22 @@
         {
             $this->namespace = $name;
             $this->path = $path;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getNamespace(): ?string
+        {
+            return $this->namespace;
+        }
+
+        /**
+         * @return string|string[]|null
+         */
+        public function getPath(): string|array|null
+        {
+            return $this->path;
         }
 
         /**
@@ -85,20 +85,8 @@
         /**
          * @inheritDoc
          */
-        public static function fromArray(array $array): NamespacePointer
+        public static function fromArray(array $data): NamespacePointer
         {
-            $object = new self();
-
-            if(isset($array['namespace']))
-            {
-                $object->namespace = $array['namespace'];
-            }
-
-            if(isset($array['path']))
-            {
-                $object->path = $array['path'];
-            }
-
-            return $object;
+            return new self($data['namespace'], $data['path']);
         }
     }

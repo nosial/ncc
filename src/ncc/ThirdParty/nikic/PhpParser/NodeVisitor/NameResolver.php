@@ -150,7 +150,7 @@ class NameResolver extends NodeVisitorAbstract
                     $adaptation->trait = $this->resolveClassName($adaptation->trait);
                 }
 
-                if ($adaptation instanceof \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Precedence) {
+                if ($adaptation instanceof Stmt\TraitUseAdaptation\Precedence) {
                     foreach ($adaptation->insteadof as &$insteadof) {
                         $insteadof = $this->resolveClassName($insteadof);
                     }
@@ -161,7 +161,7 @@ class NameResolver extends NodeVisitorAbstract
         return null;
     }
 
-    private function addAlias(Stmt\UseUse $use, $type, Name $prefix = null) {
+    private function addAlias(Stmt\UseUse $use, int $type, Name $prefix = null) {
         // Add prefix for group uses
         $name = $prefix ? Name::concat($prefix, $use->name) : $use->name;
         // Type is determined either by individual element or whole use declaration

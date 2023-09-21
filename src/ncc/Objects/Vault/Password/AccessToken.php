@@ -24,11 +24,12 @@
 
     namespace ncc\Objects\Vault\Password;
 
-    use ncc\Enums\AuthenticationType;
-    use ncc\Interfaces\PasswordInterface;
+    use ncc\Enums\Types\AuthenticationType;
+    use ncc\Exceptions\ConfigurationException;
+    use ncc\Interfaces\AuthenticationInterface;
     use ncc\Utilities\Functions;
 
-    class AccessToken implements PasswordInterface
+    class AccessToken implements AuthenticationInterface
     {
         /**
          * The entry's access token
@@ -38,11 +39,13 @@
         private $access_token;
 
         /**
-         * @inheritDoc
+         * Public constructor
+         *
+         * @param string $access_token
          */
-        public function getAuthenticationType(): string
+        public function __construct(string $access_token)
         {
-            return AuthenticationType::ACCESS_TOKEN;
+            $this->access_token = $access_token;
         }
 
         /**
@@ -57,6 +60,24 @@
          * @return string
          */
         public function getAccessToken(): string
+        {
+            return $this->access_token;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getAuthenticationType(): string
+        {
+            return AuthenticationType::ACCESS_TOKEN;
+        }
+
+        /**
+         * Returns a string representation of the object
+         *
+         * @return string
+         */
+        public function __toString(): string
         {
             return $this->access_token;
         }
@@ -83,18 +104,13 @@
          */
         public static function fromArray(array $data): AccessToken
         {
-            $object = new self();
-            $object->access_token = Functions::array_bc($data, 'access_token');
-            return $object;
-        }
+            $access_token = Functions::array_bc($data, 'access_token');
 
-        /**
-         * Returns a string representation of the object
-         *
-         * @return string
-         */
-        public function __toString(): string
-        {
-            return $this->access_token;
+            if($access_token === null)
+            {
+                throw new ConfigurationException('Missing access token');
+            }
+
+            return new self($access_token);
         }
     }

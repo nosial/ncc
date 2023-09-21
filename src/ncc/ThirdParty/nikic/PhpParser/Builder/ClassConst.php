@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
-use ncc\ThirdParty\nikic\PhpParser\BuilderHelpers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Const_;
-use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\BuilderHelpers;
+use PhpParser\Node;
+use PhpParser\Node\Const_;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Stmt;
 
 class ClassConst implements PhpParser\Builder
 {
@@ -19,6 +19,8 @@ class ClassConst implements PhpParser\Builder
 
     /** @var Node\AttributeGroup[] */
     protected $attributeGroups = [];
+    /** @var Identifier|Node\Name|Node\ComplexType */
+    protected $type;
 
     /**
      * Creates a class constant builder
@@ -117,6 +119,19 @@ class ClassConst implements PhpParser\Builder
     }
 
     /**
+     * Sets the constant type.
+     *
+     * @param string|Node\Name|Identifier|Node\ComplexType $type
+     *
+     * @return $this
+     */
+    public function setType($type) {
+        $this->type = BuilderHelpers::normalizeType($type);
+
+        return $this;
+    }
+
+    /**
      * Returns the built class node.
      *
      * @return Stmt\ClassConst The built constant node
@@ -126,7 +141,8 @@ class ClassConst implements PhpParser\Builder
             $this->constants,
             $this->flags,
             $this->attributes,
-            $this->attributeGroups
+            $this->attributeGroups,
+            $this->type
         );
     }
 }

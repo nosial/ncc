@@ -24,7 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\Build;
 
-    use ncc\Enums\BuildOutputType;
+    use ncc\Enums\Types\BuildOutputType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Dependency;
@@ -214,6 +214,18 @@
         public function setOptions(array $options): void
         {
             $this->options = $options;
+        }
+
+        /**
+         * Sets an option for the build configuration
+         *
+         * @param string $name
+         * @param mixed $value
+         * @return void
+         */
+        public function setOption(string $name, mixed $value): void
+        {
+            $this->options[$name] = $value;
         }
 
         /**
