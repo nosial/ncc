@@ -33,4 +33,12 @@
          * Indicates that the component is a PHP file encoded with base64.
          */
         public const PHP_B64 = 'php_b64';
+
+        /**
+         * All the possible flags of a component
+         */
+        public const ALL = [
+            self::PHP_AST,
+            self::PHP_B64
+        ];
     }

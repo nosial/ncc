@@ -30,6 +30,7 @@
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\BytecodeObjectInterface;
@@ -46,22 +47,16 @@
     class PackageEntry implements BytecodeObjectInterface
     {
         /**
-         * The name of the package that's installed
-         *
          * @var string
          */
         private $name;
 
         /**
-         * An array of installed versions for this package
-         *
          * @var VersionEntry[]
          */
         private $versions;
 
         /**
-         * The update source of the package entry
-         *
          * @var UpdateSource|null
          */
         private $update_source;
@@ -328,6 +323,7 @@
          * @throws ConfigurationException
          * @throws IOException
          * @throws PathNotFoundException
+         * @throws NotSupportedException
          */
         public function getMetadata(string $version=Versions::LATEST): Metadata
         {

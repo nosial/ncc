@@ -33,36 +33,37 @@
     class ExecutionUnit implements BytecodeObjectInterface
     {
         /**
-         * @var string|null
+         * @var string
          */
         private $id;
 
         /**
-         * The execution policy for this execution unit
-         *
          * @var ExecutionPolicy
          */
         private $execution_policy;
 
         /**
-         * The data of the unit to execute
-         *
          * @var string
          */
         private $data;
 
         /**
+         * ExecutionUnit constructor.
+         *
          * @param ExecutionPolicy $execution_policy
          * @param string $data
+         * @noinspection InterfacesAsConstructorDependenciesInspection
          */
         public function __construct(ExecutionPolicy $execution_policy, string $data)
         {
             $this->execution_policy = $execution_policy;
-            $this->id = hash('sha1', $this->execution_policy->getName());
             $this->data = $data;
+            $this->id = hash('sha1', $this->execution_policy->getName());
         }
 
         /**
+         * Returns the ID of the execution unit (sha1)
+         *
          * @return string
          */
         public function getId(): string
@@ -71,6 +72,8 @@
         }
 
         /**
+         * Returns the execution policy of the execution unit
+         *
          * @return ExecutionPolicy
          */
         public function getExecutionPolicy(): ExecutionPolicy
@@ -79,6 +82,8 @@
         }
 
         /**
+         * Returns the executable data of the execution unit
+         *
          * @return string
          */
         public function getData(): string

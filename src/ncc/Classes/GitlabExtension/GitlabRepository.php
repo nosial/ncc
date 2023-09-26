@@ -37,6 +37,7 @@
     use ncc\Objects\RepositoryResult;
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
+    use ncc\Utilities\Console;
     use RuntimeException;
 
     class GitlabRepository implements RepositoryInterface
@@ -93,10 +94,14 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+
+            Console::outDebug(sprintf('Fetching tags for %s/%s from %s', $group, $project, $endpoint));
 
             $results = [];
             foreach(self::processHttpResponse($curl, $group, $project) as $tag)
@@ -165,13 +170,16 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_NOBODY, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_NOBODY => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_FOLLOWLOCATION => true
+            ]);
 
+            Console::outDebug(sprintf('Fetching tag archive for %s/%s/%s from %s', $group, $project, $tag, $endpoint));
             $response = curl_exec($curl);
 
             if ($response === false)

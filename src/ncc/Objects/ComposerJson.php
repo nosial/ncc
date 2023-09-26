@@ -26,91 +26,56 @@
 
     use ncc\Enums\Types\ComposerPackageTypes;
     use ncc\Enums\Types\ComposerStabilityTypes;
+    use ncc\Interfaces\SerializableObjectInterface;
     use ncc\Objects\ComposerJson\Author;
     use ncc\Objects\ComposerJson\Autoloader;
     use ncc\Objects\ComposerJson\PackageLink;
     use ncc\Objects\ComposerJson\Suggestion;
     use ncc\Objects\ComposerJson\Support;
 
-    class ComposerJson
+    class ComposerJson implements SerializableObjectInterface
     {
         /**
-         * The name of the package, it consists of
-         * the vendor name and project name, seperated by `/`
-         *
          * @var string
          */
         private $name;
 
         /**
-         * A short description of the package. Usually
-         * this is one line long
-         *
          * @var string|null
          */
         private $description;
 
         /**
-         * The version of the package, in most cases this is not
-         * required and should be omitted.
-         *
-         * If the package repository can infer the version from
-         * somewhere. such as the VCS tag name in the VCS repository.
-         * In the case it is also recommended to omit it
-         *
          * @var string|null
          */
         private $version;
 
         /**
-         * The type of package, it defaults to library
-         *
          * @var string
          */
         private $type;
 
         /**
-         * An array of keywords that the package is related to.
-         * These can be used for searching and filtering
-         *
-         * Examples
-         *  - logging
-         *  - events
-         *  - database
-         *  - redis
-         *  - templating
-         *
          * @var string[]
          */
         private $keywords;
 
         /**
-         * A URL to the website of the project
-         *
          * @var string|null
          */
         private $homepage;
 
         /**
-         * A relative path to the readme document
-         *
          * @var string|null
          */
         private $readme;
 
         /**
-         * Release date of the version
-         *
-         * YYY-MM-DD format or YYY-MM-DD HH:MM:SS
-         *
          * @var string|null
          */
         private $time;
 
         /**
-         * The license of the package. This can either be a string or
-         * an array of strings
-         *
          * @var string|string[]|null
          */
         private $license;
@@ -126,160 +91,97 @@
         private $support;
 
         /**
-         * Map of packages required by this package. The package
-         * will not be installed unless those requirements can be met
-         *
          * @var PackageLink[]|null
          */
         private $require;
 
         /**
-         * Map of packages required for developing this package, or running tests,
-         * etc. The dev requirements of the root package are installed by default.
-         * Both install or update support the --no-dev option that prevents dev
-         * dependencies from being installed.
-         *
          * @var PackageLink[]|null
          */
         private $require_dev;
 
         /**
-         * Map of packages that conflict with this version of this package. They will
-         * not be allowed to be installed together with your package.
-         *
          * @var PackageLink[]|null
          */
         private $conflict;
 
         /**
-         * Map of packages that are replaced by this package. This allows you to fork a
-         * package, publish it under a different name with its own version numbers,
-         * while packages requiring the original package continue to work with your fork
-         * because it replaces the original package.
-         *
          * @var PackageLink[]|null
          */
         private $replace;
 
         /**
-         * Map of packages that are provided by this package. This is mostly useful for
-         * implementations of common interfaces. A package could depend on some virtual
-         * package e.g. psr/logger-implementation, any library that implements this logger
-         * interface would list it in provide. Implementors can then be found on Packagist.org.
-         *
          * @var PackageLink[]|null
          */
         private $provide;
 
         /**
-         * Suggested packages that can enhance or work well with this package. These are
-         * informational and are displayed after the package is installed, to give your
-         * users a hint that they could add more packages, even though they are not strictly
-         * required.
-         *
          * @var Suggestion[]|null
          */
         private $suggest;
 
         /**
-         * Autoload mapping for a PHP autoloader.
-         *
          * @var Autoloader|null
          */
         private $autoload;
 
         /**
-         * This section allows defining autoload rules for development purposes.
-         *
          * @var Autoloader|null
          */
         private $autoload_dev;
 
         /**
-         * A list of paths which should get appended to PHP's include_path.
-         *
          * @var string[]|null
          */
         private $include_path;
 
         /**
-         * Defines the installation target.
-         *
          * @var string|null
          */
         private $target_directory;
 
         /**
-         * This defines the default behavior for filtering packages by
-         * stability. This defaults to stable, so if you rely on a dev package,
-         * you should specify it in your file to avoid surprises.
-         *
-         * All versions of each package are checked for stability, and those that
-         * are less stable than the minimum-stability setting will be ignored when
-         * resolving your project dependencies. (Note that you can also specify
-         * stability requirements on a per-package basis using stability flags
-         * in the version constraints that you specify in a require block
-         *
-         * @var ComposerPackageTypes|null
+         * @var string|null
+         * @see ComposerStabilityTypes
          */
         private $minimum_stability;
 
         /**
-         * Custom package repositories to use.
-         *
          * @var array|null
          */
         private $repositories;
 
         /**
-         * A set of configuration options. It is only used for projects.
-         *
          * @var array|null
          */
         private $configuration;
 
         /**
-         * Composer allows you to hook into various parts of the installation
-         * process through the use of scripts.
-         *
          * @var array|null
          */
         private $scripts;
 
         /**
-         * Arbitrary extra data for consumption by scripts.
-         *
          * @var array|null
          */
         private $extra;
 
         /**
-         * A set of files that should be treated as binaries and made available into the bin-dir (from config).
-         *
          * @var array|null
          */
         private $bin;
 
         /**
-         * A set of options for creating package archives.
-         *
          * @var array|null
          */
         private $archive;
 
         /**
-         * Indicates whether this package has been abandoned.
-         *
          * @var bool
          */
         private $abandoned;
 
         /**
-         * A list of regex patterns of branch names that are
-         * non-numeric (e.g. "latest" or something), that will
-         * NOT be handled as feature branches. This is an array
-         * of strings.
-         *
          * @var array|null
          */
         private $non_feature_branches;
@@ -295,7 +197,7 @@
         }
 
         /**
-         * Returns the name of the package, it consists of
+         * Returns the name of the package; it consists of
          * the vendor name and project name, seperated by `/`
          *
          * @return string
@@ -327,6 +229,8 @@
         }
 
         /**
+         * Returns the type of package, it defaults to library
+         *
          * @return string
          */
         public function getType(): string
@@ -335,6 +239,16 @@
         }
 
         /**
+         * Returns an array of keywords that the package is related to.
+         * These can be used for searching and filtering
+         *
+         * Examples
+         *  - logging
+         *  - events
+         *  - database
+         *  - redis
+         *  - templating
+         *
          * @return string[]
          */
         public function getKeywords(): array
@@ -343,6 +257,8 @@
         }
 
         /**
+         * Optional. Returns a URL to the website of the project
+         *
          * @return string|null
          */
         public function getHomepage(): ?string
@@ -351,6 +267,8 @@
         }
 
         /**
+         * Optional. Returns a relative path to the readme document
+         *
          * @return string|null
          */
         public function getReadme(): ?string
@@ -359,6 +277,9 @@
         }
 
         /**
+         * Optional. Returns the release date of the version
+         * YYY-MM-DD format or YYY-MM-DD HH:MM:SS
+         *
          * @return string|null
          */
         public function getTime(): ?string
@@ -367,6 +288,9 @@
         }
 
         /**
+         * The license of the package. This can either be a string or
+         * an array of strings
+         *
          * @return string|string[]|null
          */
         public function getLicense(): array|string|null
@@ -375,6 +299,8 @@
         }
 
         /**
+         * Optional. Returns the authors of the package
+         *
          * @return Author[]|null
          */
         public function getAuthors(): ?array
@@ -383,6 +309,8 @@
         }
 
         /**
+         * Optional. Returns the support information of the package
+         *
          * @return Support|null
          */
         public function getSupport(): ?Support
@@ -391,6 +319,8 @@
         }
 
         /**
+         * Optional. Returns the required packages of the package
+         *
          * @return PackageLink[]|null
          */
         public function getRequire(): ?array
@@ -399,6 +329,8 @@
         }
 
         /**
+         * Optional. Returns the required development packages of the package
+         *
          * @return PackageLink[]|null
          */
         public function getRequireDev(): ?array
@@ -407,6 +339,8 @@
         }
 
         /**
+         * Optional. Returns the conflicting packages of the package
+         *
          * @return PackageLink[]|null
          */
         public function getConflict(): ?array
@@ -415,6 +349,8 @@
         }
 
         /**
+         * Optional. Returns the replaced packages of the package
+         *
          * @return PackageLink[]|null
          */
         public function getReplace(): ?array
@@ -423,6 +359,8 @@
         }
 
         /**
+         * Optional. Returns the provided packages of the package
+         *
          * @return PackageLink[]|null
          */
         public function getProvide(): ?array
@@ -431,6 +369,8 @@
         }
 
         /**
+         * Optional. Returns the suggested packages of the package
+         *
          * @return Suggestion[]|null
          */
         public function getSuggest(): ?array
@@ -439,6 +379,8 @@
         }
 
         /**
+         * Optional. Returns the autoload mapping for a PHP autoloader.
+         *
          * @return Autoloader|null
          */
         public function getAutoload(): ?Autoloader
@@ -447,6 +389,8 @@
         }
 
         /**
+         * Optional. Returns the autoload mapping for a PHP autoloader.
+         *
          * @return Autoloader|null
          */
         public function getAutoloadDev(): ?Autoloader
@@ -455,6 +399,8 @@
         }
 
         /**
+         * Optional. Returns a list of paths which should get appended to PHP's include_path.
+         *
          * @return string[]|null
          */
         public function getIncludePath(): ?array
@@ -463,6 +409,8 @@
         }
 
         /**
+         * Optional. Returns the installation target.
+         *
          * @return string|null
          */
         public function getTargetDirectory(): ?string
@@ -471,14 +419,27 @@
         }
 
         /**
-         * @return ComposerPackageTypes|string|null
+         * This defines the default behavior for filtering packages by
+         * stability. This defaults to stable, so if you rely on a dev package,
+         * you should specify it in your file to avoid surprises.
+         *
+         * All versions of each package are checked for stability, and those that
+         * are less stable than the minimum-stability setting will be ignored when
+         * resolving your project dependencies. (Note that you can also specify
+         * stability requirements on a per-package basis using stability flags
+         * in the version constraints that you specify in a require block
+         *
+         * @return string|null
+         * @see ComposerStabilityTypes
          */
-        public function getMinimumStability(): ComposerPackageTypes|string|null
+        public function getMinimumStability(): ?string
         {
             return $this->minimum_stability;
         }
 
         /**
+         * Optional. Returns custom package repositories to use.
+         *
          * @return array|null
          */
         public function getRepositories(): ?array
@@ -487,6 +448,8 @@
         }
 
         /**
+         * Optional. Returns a set of configuration options. It is only used for projects.
+         *
          * @return array|null
          */
         public function getConfiguration(): ?array
@@ -495,6 +458,8 @@
         }
 
         /**
+         * Optional. Returns composer allows you to hook into various parts of the installation
+         *
          * @return array|null
          */
         public function getScripts(): ?array
@@ -503,6 +468,8 @@
         }
 
         /**
+         * Optional. Returns arbitrary extra data for consumption by scripts.
+         *
          * @return array|null
          */
         public function getExtra(): ?array
@@ -511,6 +478,8 @@
         }
 
         /**
+         * Optional. Returns a set of files that should be treated as binaries and made available into the bin-dir (from config).
+         *
          * @return array|null
          */
         public function getBin(): ?array
@@ -519,6 +488,8 @@
         }
 
         /**
+         * Optional. Returns a set of options for creating package archives.
+         *
          * @return array|null
          */
         public function getArchive(): ?array
@@ -527,6 +498,8 @@
         }
 
         /**
+         * Returns whether this package has been abandoned.
+         *
          * @return bool
          */
         public function isAbandoned(): bool
@@ -535,6 +508,8 @@
         }
 
         /**
+         * Optional. Returns a list of regex patterns of branch names that are
+         *
          * @return array|null
          */
         public function getNonFeatureBranches(): ?array
@@ -543,9 +518,7 @@
         }
 
         /**
-         * Returns an array representation of the object
-         *
-         * @return array
+         * @inheritDoc
          */
         public function toArray(): array
         {
@@ -653,6 +626,9 @@
             ];
         }
 
+        /**
+         * @inheritDoc
+         */
         public static function fromArray(array $data): self
         {
             $object = new self();

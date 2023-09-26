@@ -38,7 +38,9 @@
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\CompilerInterface;
     use ncc\Managers\ProjectManager;
-    use ncc\Objects\Package;
+    use ncc\Objects\Package\Component;
+    use ncc\Objects\Package\Metadata;
+    use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
@@ -81,16 +83,44 @@
          * @throws PathNotFoundException
          * @noinspection UnusedFunctionResultInspection
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
         {
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
-            $package_path = $configuration->getOutputPath() . DIRECTORY_SEPARATOR . $this->project_manager->getProjectConfiguration()->getAssembly()->getPackage() . '.ncc';
+            $configuration->setOptions(array_merge($configuration->getOptions(), $options));
+
+            if(count($options) > 0)
+            {
+                $configuration->setOptions(array_merge($configuration->getOptions(), $options));
+            }
+
+            if($configuration->getOutputName() !== null)
+            {
+                $package_path =
+                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputPath())
+                    . DIRECTORY_SEPARATOR .
+                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputName());
+            }
+            elseif(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            {
+                $package_path = ConstantCompiler::compileConstants(
+                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
+                );
+            }
+            else
+            {
+                $package_path =
+                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputPath())
+                    . DIRECTORY_SEPARATOR .
+                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $this->project_manager->getProjectConfiguration()->getAssembly()->getPackage() . '.ncc');
+            }
+
             $progress = 0;
             $steps =
                 count($this->project_manager->getProjectConfiguration()->getExecutionPolicies()) +
                 count($this->project_manager->getComponents($build_configuration)) +
                 count($this->project_manager->getResources($build_configuration));
             $package_writer = $this->createPackageWriter($package_path, $configuration);
+
 
             Console::out(sprintf('Building project \'%s\'', $this->project_manager->getProjectConfiguration()->getAssembly()->getName()));
 
@@ -227,7 +257,7 @@
          */
         public function processComponent(PackageWriter $package_writer, string $file_path): void
         {
-            $package_writer->addComponent(new Package\Component(
+            $package_writer->addComponent(new Component(
                 Functions::removeBasename($file_path, $this->project_manager->getProjectPath()),
                 Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED
             ));
@@ -245,7 +275,7 @@
          */
         public function processResource(PackageWriter $package_writer, string $file_path): void
         {
-            $package_writer->addResource(new Package\Resource(
+            $package_writer->addResource(new Resource(
                 Functions::removeBasename($file_path, $this->project_manager->getProjectPath()), IO::fread($file_path)
             ));
         }
@@ -257,19 +287,17 @@
          * @param string $build_configuration
          * @return void
          * @throws ConfigurationException
-         * @throws IOException
-         * @noinspection UnusedFunctionResultInspection
          */
         public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT): void
         {
-            $metadata = new Package\Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
+            $metadata = new Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
 
-            $metadata->setRuntimeConstants($this->project_manager->getRuntimeConstants($build_configuration));
             $metadata->setOptions($this->project_manager->getCompilerOptions($build_configuration));
             $metadata->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
             $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
 
+            /** @noinspection UnusedFunctionResultInspection */
             $package_writer->setMetadata($metadata);
         }
     }

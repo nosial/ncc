@@ -94,7 +94,7 @@
                 new CliHelpSection(['package', 'pkg'], 'Manages the package system'),
                 new CliHelpSection(['cred'], 'Manages credentials'),
                 new CliHelpSection(['config'], 'Changes ncc configuration values'),
-                new CliHelpSection(['repo'], 'Manages/Configure repositories'),
+                new CliHelpSection(['repository', 'repo'], 'Manages/Configure repositories'),
             ]);
         }
 
@@ -108,7 +108,8 @@
             Console::out('Commands:');
             Console::outHelpSections([
                 new CliHelpSection(['build'], 'Builds the current project'),
-                new CliHelpSection(['exec'], 'Executes the main entrypoint of a package')
+                new CliHelpSection(['exec'], 'Executes the main entrypoint of a package'),
+                new CliHelpSection(['ins'], 'Package inspector command, various options to inspect a package'),
             ]);
         }
     }

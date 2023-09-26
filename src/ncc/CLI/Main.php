@@ -28,6 +28,7 @@
     use ncc\Classes\ShutdownHandler;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecCommand;
+    use ncc\CLI\Commands\PackageInspectorCommand;
     use ncc\CLI\Management\ConfigMenu;
     use ncc\CLI\Management\CredentialMenu;
     use ncc\CLI\Management\PackageManagerMenu;
@@ -148,6 +149,9 @@
                     case 'build':
                         return BuildCommand::start(self::$args);
 
+                    case 'ins':
+                        return PackageInspectorCommand::start(self::$args);
+
                     case 'exec':
                         return ExecCommand::start(self::$args);
 
@@ -162,6 +166,7 @@
                         return ConfigMenu::start(self::$args);
 
                     case 'repo':
+                    case 'repository':
                         return RepositoryMenu::start(self::$args);
 
                     case 'version':

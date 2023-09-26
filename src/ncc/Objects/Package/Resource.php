@@ -26,7 +26,6 @@
 
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
-    use ncc\Utilities\Base64;
     use ncc\Utilities\Functions;
 
     class Resource implements BytecodeObjectInterface
@@ -39,39 +38,27 @@
         private $name;
 
         /**
-         * A sha1 hash checksum of the resource, this will be compared against the data to determine
-         * the integrity of the resource to ensure that the resource is not corrupted.
-         *
-         * @var string
-         */
-        private $checksum;
-
-        /**
          * The raw data of the resource
          *
          * @var string
          */
         private $data;
 
+        /**
+         * Resource constructor.
+         *
+         * @param string $name
+         * @param mixed $data
+         */
         public function __construct(string $name, mixed $data)
         {
             $this->name = $name;
             $this->data = $data;
-            $this->checksum = hash('sha1', $this->data, true);
         }
 
         /**
-         * Validates the checksum of the resource, returns false if the checksum or data is invalid or if the checksum
-         * failed.
+         * Returns the name of the resource
          *
-         * @return bool
-         */
-        public function validateChecksum(): bool
-        {
-            return hash_equals($this->checksum, hash('sha1', $this->data, true));
-        }
-
-        /**
          * @return string
          */
         public function getName(): string
@@ -80,6 +67,8 @@
         }
 
         /**
+         * Sets the name of the resource
+         *
          * @param string $name
          */
         public function setName(string $name): void
@@ -88,14 +77,8 @@
         }
 
         /**
-         * @return string
-         */
-        public function getChecksum(): string
-        {
-            return $this->checksum;
-        }
-
-        /**
+         * Returns the resource data
+         *
          * @return string
          */
         public function getData(): string
@@ -104,12 +87,13 @@
         }
 
         /**
+         * Sets the resource data
+         *
          * @param string $data
          */
         public function setData(string $data): void
         {
-            $this->data = Base64::encode($data);
-            $this->checksum = hash('sha1', $this->data, true);
+            $this->data = $data;
         }
 
         /**
@@ -119,7 +103,6 @@
         {
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
-                ($bytecode ? Functions::cbc('checksum') : 'checksum') => $this->checksum,
                 ($bytecode ? Functions::cbc('data') : 'data') => $this->data,
             ];
         }
@@ -143,9 +126,6 @@
                 throw new ConfigurationException('Resource data is not defined');
             }
 
-            $object = new self($name, $resource_data);
-            $object->checksum = Functions::array_bc($data, 'checksum');
-
-            return $object;
+            return new self($name, $resource_data);
         }
     }

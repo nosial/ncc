@@ -27,57 +27,42 @@
     use ncc\Enums\SpecialConstants\RuntimeConstants;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\Utilities\Functions;
 
     class Execute implements BytecodeObjectInterface
     {
         /**
-         * The target file to execute
-         *
          * @var string
          */
         private $target;
 
         /**
-         * The working directory to execute the policy in, if not specified the
-         * value "%CWD%" will be used as the default
-         *
          * @var string
          */
         private $working_directory;
 
         /**
-         * Options to pass to the process
-         *
          * @var array
          */
         private $options;
 
         /**
-         * An array of environment variables to pass on to the process
-         *
          * @var array
          */
         private $environment_variables;
 
         /**
-         * Indicates if the output should be displayed or suppressed
-         *
          * @var bool
          */
         private $silent;
 
         /**
-         * Indicates if the process should run in Tty mode (Overrides Silent & Pty mode)
-         *
          * @var bool
          */
         private $tty;
 
         /**
-         * The number of seconds to wait before giving up on the process, will automatically execute the error handler
-         * if one is set.
-         *
          * @var int|null
          */
         private $timeout;
@@ -146,6 +131,8 @@
         }
 
         /**
+         * Returns the options to pass to the process
+         *
          * @return array
          */
         public function getOptions(): array
@@ -154,6 +141,8 @@
         }
 
         /**
+         * Sets the options to pass to the process
+         *
          * @param array $options
          */
         public function setOptions(array $options): void
@@ -162,6 +151,8 @@
         }
 
         /**
+         * Returns an array of environment variables to pass on to the process
+         *
          * @return array
          */
         public function getEnvironmentVariables(): array
@@ -170,6 +161,8 @@
         }
 
         /**
+         * Sets an array of environment variables to pass on to the process
+         *
          * @param array $environment_variables
          */
         public function setEnvironmentVariables(array $environment_variables): void
@@ -178,6 +171,8 @@
         }
 
         /**
+         * Indicates if the output should be displayed or suppressed
+         *
          * @return bool
          */
         public function isSilent(): bool
@@ -186,6 +181,8 @@
         }
 
         /**
+         * Sets if the output should be displayed or suppressed
+         *
          * @param bool $silent
          */
         public function setSilent(bool $silent): void
@@ -194,6 +191,8 @@
         }
 
         /**
+         * Indicates if the process should run in Tty mode (Overrides Silent & Pty mode)
+         *
          * @return bool
          */
         public function isTty(): bool
@@ -202,6 +201,8 @@
         }
 
         /**
+         * Sets if the process should run in Tty mode (Overrides Silent & Pty mode)
+         *
          * @param bool $tty
          */
         public function setTty(bool $tty): void
@@ -210,6 +211,8 @@
         }
 
         /**
+         * Returns the number of seconds to wait before giving up on the process, will automatically execute the error
+         *
          * @return int|null
          */
         public function getTimeout(): ?int
@@ -218,6 +221,8 @@
         }
 
         /**
+         * Sets the number of seconds to wait before giving up on the process, will automatically execute the error
+         *
          * @param int|null $timeout
          */
         public function setTimeout(?int $timeout): void
@@ -226,6 +231,8 @@
         }
 
         /**
+         * Returns the number of seconds to wait before giving up on the process, will automatically execute the error
+         *
          * @return int|null
          */
         public function getIdleTimeout(): ?int
@@ -234,6 +241,8 @@
         }
 
         /**
+         * Sets the number of seconds to wait before giving up on the process, will automatically execute the error
+         *
          * @param int|null $idle_timeout
          */
         public function setIdleTimeout(?int $idle_timeout): void

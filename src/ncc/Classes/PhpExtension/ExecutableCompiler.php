@@ -22,6 +22,7 @@
 
     namespace ncc\Classes\PhpExtension;
 
+    use ncc\Classes\NccExtension\ConstantCompiler;
     use ncc\CLI\Main;
     use ncc\Enums\LogLevel;
     use ncc\Enums\Options\BuildConfigurationOptions;
@@ -39,9 +40,14 @@
          * @inheritDoc
          * @throws BuildException
          */
-        public function build(string $build_configuration = BuildConfigurationValues::DEFAULT): string
+        public function build(string $build_configuration = BuildConfigurationValues::DEFAULT, array $options=[]): string
         {
             $configuration = $this->getProjectManager()->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
+
+            if(count($options) > 0)
+            {
+                $configuration->setOptions(array_merge($configuration->getOptions(), $options));
+            }
 
             if(!isset($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION]))
             {
@@ -53,18 +59,39 @@
             $ncc_package = parent::build($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION]);
 
             // Prepare the ncc package for compilation
-            $hex_dump_file = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . parent::getProjectManager()->getProjectConfiguration()->getAssembly()->getName() . '.c';
+            $hex_dump_file = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getName() . '.c';
             if(is_file($hex_dump_file))
             {
                 unlink($hex_dump_file);
             }
 
             Console::outVerbose(sprintf('Converting ncc package %s to hex dump', $ncc_package));
-            $this->hexDump($ncc_package, $hex_dump_file, parent::getProjectManager()->getProjectConfiguration()->getAssembly()->getName());
+            $this->hexDump($ncc_package, $hex_dump_file, $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getName());
 
             // Prepare the gcc command
             $gcc_path = (new ExecutableFinder())->find('gcc');
-            $binary_path = $configuration->getOutputPath() . DIRECTORY_SEPARATOR . parent::getProjectManager()->getProjectConfiguration()->getAssembly()->getName();
+
+            if($configuration->getOutputName() !== null)
+            {
+                $binary_path =
+                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputPath())
+                    . DIRECTORY_SEPARATOR .
+                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputName());
+            }
+            elseif(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            {
+                $binary_path = ConstantCompiler::compileConstants(
+                    $this->getProjectManager()->getProjectConfiguration(),
+                    $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
+                );
+            }
+            else
+            {
+                $binary_path =
+                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputPath())
+                    . DIRECTORY_SEPARATOR .
+                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getName());
+            }
 
             if($gcc_path === null)
             {

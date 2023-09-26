@@ -37,6 +37,7 @@
     use ncc\Objects\RepositoryResult;
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
+    use ncc\Utilities\Console;
     use RuntimeException;
 
     class GithubRepository implements RepositoryInterface
@@ -44,7 +45,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
         {
             try
             {
@@ -99,6 +100,7 @@
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
             $results = [];
+            Console::outDebug(sprintf('Fetching tags for %s/%s from %s', $group, $project, $endpoint));
             foreach(self::processHttpResponse($curl, $group, $project) as $tag)
             {
                 if(isset($tag['name']))
@@ -172,6 +174,8 @@
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 
+            Console::outDebug(sprintf('Fetching tag archive for %s/%s/%s from %s', $group, $project, $tag, $endpoint));
+
             $response = curl_exec($curl);
 
             if ($response === false)
@@ -220,6 +224,8 @@
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+            Console::outDebug(sprintf('Fetching releases for %s/%s from %s', $group, $project, $endpoint));
 
             $results = [];
             foreach(self::processHttpResponse($curl, $group, $project) as $release)
@@ -295,6 +301,7 @@
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
+            Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
 
             if(!isset($response['assets']))
@@ -352,6 +359,8 @@
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+            Console::outDebug(sprintf('Fetching release archive for %s/%s/%s from %s', $group, $project, $release, $endpoint));
 
             $response = self::processHttpResponse($curl, $group, $project);
 

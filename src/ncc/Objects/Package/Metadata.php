@@ -25,6 +25,7 @@
     namespace ncc\Objects\Package;
 
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Compiler;
     use ncc\Objects\ProjectConfiguration\Installer;
@@ -34,36 +35,21 @@
     class Metadata implements BytecodeObjectInterface
     {
         /**
-         * The compiler extension information that was used to build the package
-         *
          * @var Compiler
          */
         private $compiler_extension;
 
         /**
-         * An array of constants that are set when the package is imported or executed during runtime.
-         *
-         * @var array
-         */
-        private $runtime_constants;
-
-        /**
-         * The version of NCC that was used to compile the package, can be used for backwards compatibility
-         *
          * @var string
          */
         private $compiler_version;
 
         /**
-         * An array of options to pass on to the extension
-         *
          * @var array|null
          */
         private $options;
 
         /**
-         * The optional update source to where the package can be updated from
-         *
          * @var UpdateSource|null
          */
         private $update_source;
@@ -79,17 +65,21 @@
         private $installer;
 
         /**
-         * Public Constructor
+         * Metadata constructor.
+         *
+         * @param Compiler $compiler
+         * @noinspection InterfacesAsConstructorDependenciesInspection
          */
         public function __construct(Compiler $compiler)
         {
             $this->compiler_extension = $compiler;
             $this->compiler_version = NCC_VERSION_NUMBER;
-            $this->runtime_constants = [];
             $this->options = [];
         }
 
         /**
+         * Returns the compiler extension information that was used to build the package
+         *
          * @return Compiler
          */
         public function getCompilerExtension(): Compiler
@@ -98,6 +88,8 @@
         }
 
         /**
+         * Sets the compiler extension information that was used to build the package
+         *
          * @param Compiler $compiler_extension
          */
         public function setCompilerExtension(Compiler $compiler_extension): void
@@ -106,22 +98,8 @@
         }
 
         /**
-         * @return array
-         */
-        public function getRuntimeConstants(): array
-        {
-            return $this->runtime_constants;
-        }
-
-        /**
-         * @param array $runtime_constants
-         */
-        public function setRuntimeConstants(array $runtime_constants): void
-        {
-            $this->runtime_constants = $runtime_constants;
-        }
-
-        /**
+         * Returns the version of ncc that was used to compile the package, can be used for backwards compatibility
+         *
          * @return string
          */
         public function getCompilerVersion(): string
@@ -130,6 +108,8 @@
         }
 
         /**
+         * Sets the version of ncc that was used to compile the package, can be used for backwards compatibility
+         *
          * @param string $compiler_version
          */
         public function setCompilerVersion(string $compiler_version): void
@@ -138,6 +118,8 @@
         }
 
         /**
+         * Returns an array of options associated with the package
+         *
          * @return array|null
          */
         public function getOptions(): ?array
@@ -146,6 +128,8 @@
         }
 
         /**
+         * Sets an array of options associated with the package
+         *
          * @param array|null $options
          */
         public function setOptions(?array $options): void
@@ -154,16 +138,20 @@
         }
 
         /**
+         * Sets an option associated with the package
+         *
          * @param string $key
-         * @param $value
+         * @param mixed $value
          * @return void
          */
-        public function setOption(string $key, $value): void
+        public function setOption(string $key, mixed $value): void
         {
             $this->options[$key] = $value;
         }
 
         /**
+         * Removes an option associated with the package
+         *
          * @param string $key
          * @return void
          */
@@ -173,6 +161,8 @@
         }
 
         /**
+         * Returns an option associated with the package
+         *
          * @param string $key
          * @return mixed|null
          */
@@ -182,6 +172,8 @@
         }
 
         /**
+         * Optional. Returns the update source to where the package can be updated from
+         *
          * @return UpdateSource|null
          */
         public function getUpdateSource(): ?UpdateSource
@@ -190,6 +182,8 @@
         }
 
         /**
+         * Sets the update source to where the package can be updated from
+         *
          * @param UpdateSource|null $update_source
          */
         public function setUpdateSource(?UpdateSource $update_source): void
@@ -198,6 +192,8 @@
         }
 
         /**
+         * Returns the main execution policy of the package
+         *
          * @return string|null
          */
         public function getMainExecutionPolicy(): ?string
@@ -206,6 +202,8 @@
         }
 
         /**
+         * Sets the main execution policy of the package
+         *
          * @param string|null $main_execution_policy
          */
         public function setMainExecutionPolicy(?string $main_execution_policy): void
@@ -214,6 +212,8 @@
         }
 
         /**
+         * Returns installation policies to execute when installing/managing the package
+         *
          * @return Installer|null
          */
         public function getInstaller(): ?Installer
@@ -222,6 +222,8 @@
         }
 
         /**
+         * Returns installation policies to execute when installing/managing the package
+         *
          * @param Installer|null $installer
          */
         public function setInstaller(?Installer $installer): void
@@ -236,7 +238,6 @@
         {
             return [
                 ($bytecode ? Functions::cbc('compiler_extension') : 'compiler_extension') => $this->compiler_extension->toArray(),
-                ($bytecode ? Functions::cbc('runtime_constants') : 'runtime_constants') => $this->runtime_constants,
                 ($bytecode ? Functions::cbc('compiler_version') : 'compiler_version') => $this->compiler_version,
                 ($bytecode ? Functions::cbc('update_source') : 'update_source') => ($this->update_source?->toArray($bytecode)),
                 ($bytecode ? Functions::cbc('installer') : 'installer') => ($this->installer?->toArray($bytecode)),
@@ -247,6 +248,10 @@
 
         /**
          * @inheritDoc
+         * @param array $data
+         * @return Metadata
+         * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         public static function fromArray(array $data): Metadata
         {
@@ -258,7 +263,6 @@
 
             $object = new self(Compiler::fromArray($compiler_extension));
 
-            $object->runtime_constants = Functions::array_bc($data, 'runtime_constants');
             $object->compiler_version = Functions::array_bc($data, 'compiler_version');
             $object->update_source = Functions::array_bc($data, 'update_source');
             $object->options = Functions::array_bc($data, 'options');

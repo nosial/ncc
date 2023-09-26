@@ -26,11 +26,12 @@
 
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy\Execute;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy\ExitHandlers;
     use ncc\Utilities\Functions;
 
-    class ExecutionPolicy implements BytecodeObjectInterface
+    class ExecutionPolicy implements BytecodeObjectInterface, ValidatableObjectInterface
     {
         /**
          * The unique name of the execution policy
@@ -82,6 +83,8 @@
         }
 
         /**
+         * Returns the name of the execution policy
+         *
          * @return string
          */
         public function getName(): string
@@ -90,6 +93,8 @@
         }
 
         /**
+         * Sets the name of the execution policy
+         *
          * @param string $name
          */
         public function setName(string $name): void
@@ -106,6 +111,8 @@
         }
 
         /**
+         * Sets the name of the runner to use
+         *
          * @param string $runner
          */
         public function setRunner(string $runner): void
@@ -114,6 +121,8 @@
         }
 
         /**
+         * Returns the message to display when the policy is invoked
+         *
          * @return string|null
          */
         public function getMessage(): ?string
@@ -122,6 +131,8 @@
         }
 
         /**
+         * Optional. Sets the message to display when the policy is invoked
+         *
          * @param string|null $message
          */
         public function setMessage(?string $message): void
@@ -130,6 +141,8 @@
         }
 
         /**
+         * Returns the execution process of the policy
+         *
          * @return Execute
          */
         public function getExecute(): Execute
@@ -138,6 +151,8 @@
         }
 
         /**
+         * Sets the execution process of the policy
+         *
          * @param Execute $execute
          */
         public function setExecute(Execute $execute): void
@@ -146,6 +161,8 @@
         }
 
         /**
+         * Optional. Returns the exit handlers for the policy
+         *
          * @return ?ExitHandlers
          */
         public function getExitHandlers(): ?ExitHandlers
@@ -154,6 +171,8 @@
         }
 
         /**
+         * Sets the exit handlers for the policy
+         *
          * @param ExitHandlers|null $exit_handlers
          */
         public function setExitHandlers(?ExitHandlers $exit_handlers): void
@@ -162,12 +181,45 @@
         }
 
         /**
-         * @return bool
+         * @inheritDoc
          */
-        public function validate(): bool
+        public function validate(): void
         {
-            // TODO: Implement validation method
-            return true;
+            if($this->name === null || $this->name === '')
+            {
+                throw new ConfigurationException('ExecutionPolicy name cannot be null or empty');
+            }
+
+            if($this->runner === null || $this->runner === '')
+            {
+                throw new ConfigurationException('ExecutionPolicy runner cannot be null or empty');
+            }
+
+            if($this->execute === null)
+            {
+                throw new ConfigurationException('ExecutionPolicy execute cannot be null');
+            }
+
+            try
+            {
+                $this->execute->validate();
+            }
+            catch(ConfigurationException $e)
+            {
+                throw new ConfigurationException(sprintf('Invalid execution configuration for execution policy %s, %s', $this->name, $e->getMessage()), $e);
+            }
+
+            if($this->exit_handlers !== null)
+            {
+                try
+                {
+                    $this->exit_handlers->validate();
+                }
+                catch(ConfigurationException $e)
+                {
+                    throw new ConfigurationException(sprintf('Invalid exit handlers for execution policy %s, %s', $this->name, $e->getMessage()), $e);
+                }
+            }
         }
 
         /**

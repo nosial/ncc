@@ -23,6 +23,7 @@
     namespace ncc\CLI\Commands;
 
     use Exception;
+    use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\CliHelpSection;
@@ -69,6 +70,15 @@
                 return 1;
             }
 
+            $output_path = $args['output'] ?? $args['o'] ?? null;
+            $options = [];
+
+            if($output_path !== null)
+            {
+                $options[BuildConfigurationOptions::OUTPUT_FILE] = $output_path;
+            }
+
+
             // Load the project
             try
             {
@@ -83,8 +93,8 @@
             // Build the project
             try
             {
-                $build_configuration = $args['config'] ?? BuildConfigurationValues::DEFAULT;
-                $output = $project_manager->build($build_configuration);
+                $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT;
+                $output = $project_manager->build($build_configuration, $options);
             }
             catch (Exception $e)
             {
@@ -104,10 +114,11 @@
         private static function displayOptions(): int
         {
             $options = [
-                new CliHelpSection(['help'], 'Displays this help menu about the value command'),
-                new CliHelpSection(['build'], 'Builds the current project using the default build configuration'),
-                new CliHelpSection(['build', '--path', '-p'], 'Builds the project in the specified path that contains project.json'),
-                new CliHelpSection(['build', '--config'], 'Builds the current project with a specified build configuration')
+                new CliHelpSection(['build'], 'Builds the current project'),
+                new CliHelpSection(['--help'], 'Displays this help menu about the value command'),
+                new CliHelpSection(['--path', '-p'], 'Specifies the path to the project where project.json is located (or the file itself), default: current working directory'),
+                new CliHelpSection(['--config', '-c'], 'Specifies the build configuration to use, default: default build configuration'),
+                new CliHelpSection(['--output', '-o'], 'Specifies the output path of the build, default: build configuration specified output path'),
             ];
 
             $options_padding = Functions::detectParametersPadding($options) + 4;

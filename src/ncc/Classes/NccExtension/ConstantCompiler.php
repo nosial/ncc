@@ -30,6 +30,7 @@
     use ncc\Objects\InstallationPaths;
     use ncc\Objects\ProjectConfiguration;
     use ncc\Objects\ProjectConfiguration\Assembly;
+    use ncc\Utilities\Console;
 
     class ConstantCompiler
     {
@@ -100,7 +101,7 @@
 
             if($assembly->getTrademark() !== null)
             {
-                $input =str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->getTrademark(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->getTrademark(), $input);
             }
             return $input;
         }
@@ -258,25 +259,45 @@
             {
                 $input = str_replace(RuntimeConstants::CWD, getcwd(), $input);
             }
+            else
+            {
+                Console::outWarning('Cannot compile RuntimeConstants::CWD, getcwd() is not available');
+            }
 
             if(function_exists('getmypid'))
             {
                 $input = str_replace(RuntimeConstants::PID, getmypid(), $input);
+            }
+            else
+            {
+                Console::outWarning('Cannot compile RuntimeConstants::PID, getmypid() is not available');
             }
 
             if(function_exists('getmyuid'))
             {
                 $input = str_replace(RuntimeConstants::UID, getmyuid(), $input);
             }
+            else
+            {
+                Console::outWarning('Cannot compile RuntimeConstants::UID, getmyuid() is not available');
+            }
 
             if(function_exists('getmygid'))
             {
                 $input = str_replace(RuntimeConstants::GID, getmygid(), $input);
             }
+            else
+            {
+                Console::outWarning('Cannot compile RuntimeConstants::GID, getmygid() is not available');
+            }
 
             if(function_exists('get_current_user'))
             {
                 $input = str_replace(RuntimeConstants::USER, get_current_user(), $input);
+            }
+            else
+            {
+                Console::outWarning('Cannot compile RuntimeConstants::USER, get_current_user() is not available');
             }
 
             return $input;

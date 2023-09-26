@@ -43,4 +43,14 @@
          * Indicates whether the component is represented as as a base64 encoded string (Raw bytes' representation)
          */
         public const BASE64_ENCODED = 'b64enc';
+
+        /**
+         * All the possible data types of a component
+         */
+        public const ALL = [
+            self::AST,
+            self::PLAIN,
+            self::BINARY,
+            self::BASE64_ENCODED
+        ];
     }

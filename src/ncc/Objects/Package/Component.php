@@ -25,56 +25,43 @@
     namespace ncc\Objects\Package;
 
     use Exception;
+    use InvalidArgumentException;
     use ncc\Classes\PhpExtension\AstWalker;
     use ncc\Enums\Flags\ComponentFlags;
     use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Enums\Types\ComponentDataType;
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\OperationException;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\ThirdParty\nikic\PhpParser\PrettyPrinter\Standard;
     use ncc\Utilities\Functions;
-    use RuntimeException;
 
     class Component implements BytecodeObjectInterface
     {
         /**
-         * The name of the component or the file name of the component
-         *
          * @var string
          */
         private $name;
 
         /**
-         * Flags associated with the component created by the compiler extension
-         *
          * @var array
          */
         private $flags;
 
         /**
-         * The data type of the component
-         *
          * @var string
          */
         private $data_type;
 
         /**
-         * A sha1 hash checksum of the component, this will be compared against the data to determine
-         * the integrity of the component to ensure that the component is not corrupted.
-         *
-         * @var string
-         */
-        private $checksum;
-
-        /**
-         * The raw data of the component, this is to be processed by the compiler extension
-         *
          * @var string
          */
         private $data;
 
         /**
+         * Component constructor.
+         *
          * @param string $name
          * @param string $data
          * @param string $data_type
@@ -85,21 +72,11 @@
             $this->flags = [];
             $this->data_type = $data_type;
             $this->data = $data;
-            $this->checksum = hash('sha1', $data, true);
         }
 
         /**
-         * Validates the checksum of the component, returns false if the checksum or data is invalid or if the checksum
-         * failed.
+         * Returns the name of the component
          *
-         * @return bool
-         */
-        public function validateChecksum(): bool
-        {
-            return hash_equals($this->checksum, hash('sha1', $this->data, true));
-        }
-
-        /**
          * @return string
          */
         public function getName(): string
@@ -108,6 +85,8 @@
         }
 
         /**
+         * Sets the name of the component
+         *
          * @param string $name
          */
         public function setName(string $name): void
@@ -116,6 +95,8 @@
         }
 
         /**
+         * Returns an array of flags associated with the component
+         *
          * @return array
          */
         public function getFlags(): array
@@ -124,6 +105,8 @@
         }
 
         /**
+         * Replaces the current array of flags with the new array of flags
+         *
          * @param array $flags
          */
         public function setFlags(array $flags): void
@@ -132,15 +115,24 @@
         }
 
         /**
+         * Appends a new flag to the component if it does not exist
+         *
          * @param string $flag
          * @return void
          */
         public function addFlag(string $flag): void
         {
+            if(in_array($flag, $this->flags, true))
+            {
+                return;
+            }
+
             $this->flags[] = $flag;
         }
 
         /**
+         * Removes a flag from the component if it exists
+         *
          * @param string $flag
          * @return void
          */
@@ -153,19 +145,14 @@
         }
 
         /**
+         * Returns the data type of the component
+         *
          * @return string
+         * @see ComponentDataType
          */
         public function getDataType(): string
         {
             return $this->data_type;
-        }
-
-        /**
-         * @return string
-         */
-        public function getChecksum(): string
-        {
-            return $this->checksum;
         }
 
         /**
@@ -174,6 +161,7 @@
          *
          * @param array $options
          * @return string
+         * @throws OperationException
          */
         public function getData(array $options=[]): string
         {
@@ -197,7 +185,7 @@
                         }
                         catch(Exception $e)
                         {
-                            throw new RuntimeException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_B64, $e->getMessage()), $e->getCode(), $e);
+                            throw new OperationException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_B64, $e->getMessage()), $e->getCode(), $e);
                         }
                     }
 
@@ -217,26 +205,34 @@
                         }
                         catch(Exception $e)
                         {
-                            throw new RuntimeException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_AST, $e->getMessage()), $e->getCode(), $e);
+                            throw new OperationException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_AST, $e->getMessage()), $e->getCode(), $e);
                         }
                     }
 
-                    throw new RuntimeException(sprintf('Cannot decode component %s with data type %s because the component does not have a flag to decode it properly', $this->name, 'AST'));
+                    throw new OperationException(sprintf('Cannot decode component %s with data type %s because the component does not have a flag to decode it properly. Got: %s', $this->name, implode(' ', $this->flags), 'AST'));
 
                 default:
-                    throw new RuntimeException(sprintf('Unknown component data type "%s"', $this->data_type));
+                    throw new InvalidArgumentException(sprintf('Unknown component data type "%s"', $this->data_type));
             }
         }
 
         /**
+         * Sets the data of the component
+         *
          * @param mixed $data
          * @param string $data_type
          */
         public function setData(mixed $data, string $data_type=ComponentDataType::PLAIN): void
         {
+            $data_type = strtolower($data_type);
+
+            if(!in_array($data_type, ComponentDataType::ALL, true))
+            {
+                throw new InvalidArgumentException(sprintf('Unknown component data type "%s"', $data_type));
+            }
+
             $this->data = $data;
             $this->data_type = $data_type;
-            $this->checksum = hash('sha1', $data, true);
         }
 
         /**
@@ -251,7 +247,6 @@
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
                 ($bytecode ? Functions::cbc('flags') : 'flags') => $this->flags,
                 ($bytecode ? Functions::cbc('data_type') : 'data_type') => $this->data_type,
-                ($bytecode ? Functions::cbc('checksum') : 'checksum') => $this->checksum,
                 ($bytecode ? Functions::cbc('data') : 'data') => $this->data,
             ];
         }
@@ -280,9 +275,7 @@
             }
 
             $object = new self($name, $component_data, $data_type);
-
             $object->flags = Functions::array_bc($data, 'flags');
-            $object->checksum = Functions::array_bc($data, 'checksum');
 
             return $object;
         }

@@ -33,6 +33,8 @@
     use ncc\CLI\Main;
     use ncc\Enums\FileDescriptor;
     use ncc\Enums\LogLevel;
+    use ncc\Enums\Options\BuildConfigurationOptions;
+    use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Enums\RegexPatterns;
@@ -606,9 +608,11 @@
                 case ProjectType::NCC:
                     try
                     {
-                        $package_path = (new ProjectManager($project_detection->getProjectFilePath()))->build();
+                        $package_path = (new ProjectManager($project_detection->getProjectFilePath()))->build(
+                            BuildConfigurationValues::DEFAULT,
+                            [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
+                        );
 
-                        copy($package_path, PathFinder::getCachePath() . DIRECTORY_SEPARATOR . basename($package_path));
                         unlink($package_path);
 
                         ShutdownHandler::declareTemporaryPath($source_directory);
@@ -628,7 +632,10 @@
                     try
                     {
                         $project_manager = ProjectManager::initializeFromComposer(dirname($project_detection->getProjectFilePath()), $options);
-                        $package_path = $project_manager->build();
+                        $package_path = $project_manager->build(
+                            BuildConfigurationValues::DEFAULT,
+                            [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
+                        );
 
                         copy($package_path, PathFinder::getCachePath() . DIRECTORY_SEPARATOR . basename($package_path));
                         unlink($package_path);

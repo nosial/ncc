@@ -25,7 +25,6 @@
     namespace ncc\Objects;
 
     use ncc\Interfaces\SerializableObjectInterface;
-    use ncc\Objects\NccVersionInformation\Component;
 
     class NccVersionInformation implements SerializableObjectInterface
     {
@@ -53,7 +52,7 @@
         /**
          * An array of components that ncc uses and comes pre-built with
          *
-         * @var Component[]
+         * @var InternalComponent[]
          */
         private $components;
 
@@ -114,7 +113,7 @@
         }
 
         /**
-         * @return Component[]
+         * @return InternalComponent[]
          */
         public function getComponents(): array
         {
@@ -122,7 +121,7 @@
         }
 
         /**
-         * @param Component[] $components
+         * @param InternalComponent[] $components
          */
         public function setComponents(array $components): void
         {
@@ -191,7 +190,7 @@
             {
                 foreach($data['components'] as $datum)
                 {
-                    $object->components[] = Component::fromArray($datum);
+                    $object->components[] = InternalComponent::fromArray($datum);
                 }
             }
 

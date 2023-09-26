@@ -142,6 +142,7 @@
          * Compiles the project into a package, returns the path to the build
          *
          * @param string $build_configuration
+         * @param array $options
          * @return string
          * @throws BuildException
          * @throws ConfigurationException
@@ -149,7 +150,7 @@
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -157,10 +158,11 @@
             {
                 CompilerExtensions::PHP => match (strtolower($configuration->getBuildType()))
                 {
-                    BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration),
-                    BuildOutputType::EXECUTABLE => (new ExecutableCompiler($this))->build($build_configuration),
+                    BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration, $options),
+                    BuildOutputType::EXECUTABLE => (new ExecutableCompiler($this))->build($build_configuration, $options),
                     default => throw new BuildException(sprintf('php cannot produce the build type \'%s\'', $configuration->getBuildType())),
                 },
+
                 default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension())),
             };
         }
@@ -301,11 +303,7 @@
         public function getCompilerOptions(string $build_configuration=BuildConfigurationValues::DEFAULT): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
-
-            return array_merge(
-                $configuration->getOptions(),
-                $this->project_configuration->getBuild()->getOptions()
-            );
+            return array_merge($configuration->getOptions(), $this->project_configuration->getBuild()->getOptions());
         }
 
         /**

@@ -26,6 +26,7 @@
     use finfo;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
+    use ncc\Utilities\Console;
     use PharData;
     use RuntimeException;
     use ZipArchive;
@@ -59,11 +60,13 @@
             switch($mime)
             {
                 case 'application/zip':
+                    Console::outDebug(sprintf('Extracting zip archive "%s" to "%s"', $archive_path, $directory_path));
                     self::extractZip($archive_path, $directory_path);
                     break;
 
                 case 'application/x-tar':
                 case 'application/x-gzip':
+                    Console::outDebug(sprintf('Extracting tar archive "%s" to "%s"', $archive_path, $directory_path));
                     $phar = new PharData($archive_path);
                     $phar->extractTo($directory_path);
                     break;
@@ -84,6 +87,7 @@
         private static function extractZip(string $archive_path, string $directory_path): void
         {
             $zip_archive = new ZipArchive();
+            Console::outDebug(sprintf('Opening zip archive "%s"', $archive_path));
 
             if(!$zip_archive->open($archive_path))
             {
@@ -102,6 +106,7 @@
                 if(str_ends_with($entry_name, '/'))
                 {
                     $concurrent_directory = $directory_path . DIRECTORY_SEPARATOR . $entry_name;
+                    Console::outDebug(sprintf('Creating directory "%s"', $concurrent_directory));
                     if(!is_dir($concurrent_directory) && !mkdir($concurrent_directory, 0777, true) && !is_dir($concurrent_directory))
                     {
                         throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrent_directory));
@@ -112,6 +117,7 @@
 
                 try
                 {
+                    Console::outDebug(sprintf('Extracting file "%s" from archive "%s"', $entry_name, $archive_path));
                     $zip_archive->extractTo($directory_path, $entry_name);
                 }
                 catch(Exception $e)

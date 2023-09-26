@@ -37,6 +37,7 @@
     use ncc\Objects\RepositoryResult;
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
+    use ncc\Utilities\Console;
     use RuntimeException;
 
     class GiteaRepository implements RepositoryInterface
@@ -44,7 +45,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
         {
             try
             {
@@ -61,7 +62,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
         {
             return self::getReleasePackage($repository, $vendor, $project, $version, $authentication);
         }
@@ -93,12 +94,15 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $results = [];
+            Console::outDebug(sprintf('Fetching tags for %s/%s from %s', $group, $project, $endpoint));
             foreach(self::processHttpResponse($curl, $group, $project) as $tag)
             {
                 if(isset($tag['name']))
@@ -167,11 +171,14 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
+            Console::outDebug(sprintf('Fetching tag archive for %s/%s/%s from %s', $group, $project, $tag, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
 
             if(isset($response['zipball_url']))
@@ -214,12 +221,15 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $results = [];
+            Console::outDebug(sprintf('Fetching releases for %s/%s from %s', $group, $project, $endpoint));
             foreach(self::processHttpResponse($curl, $group, $project) as $release)
             {
                 if(isset($release['tag_name']))
@@ -288,11 +298,14 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
+            Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
 
             if(!isset($response['assets']))
@@ -346,11 +359,14 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $endpoint,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
+            Console::outDebug(sprintf('Fetching release archive for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
 
             if(isset($response['zipball_url']))

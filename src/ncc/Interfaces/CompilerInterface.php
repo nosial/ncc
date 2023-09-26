@@ -37,8 +37,9 @@
         /**
          * Builds the project and returns the path to the built package
          *
-         * @param string $build_configuration
+         * @param string $build_configuration The build configuration to use
+         * @param array $options Optional. The options to use/override for this build
          * @return string
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT): string;
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string;
     }

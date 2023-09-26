@@ -29,4 +29,6 @@
         public const REQUIRE_FILES = 'require_files';
 
         public const NCC_CONFIGURATION = 'ncc_configuration';
+
+        public const OUTPUT_FILE = 'output_file';
     }

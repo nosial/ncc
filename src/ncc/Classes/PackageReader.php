@@ -482,6 +482,11 @@
             return $components;
         }
 
+        /**
+         * Returns the package's class map
+         *
+         * @return array
+         */
         public function getClassMap(): array
         {
             $class_map = [];

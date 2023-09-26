@@ -329,6 +329,7 @@ features. This is the Mk II of ncc, and it is a major update, so please read the
  - Removed runners `Python2` & `Python3` in favor of `Python`
  - Removed `\ncc\Classes\NccExtension > Runner` in favor of the new Execution Unit system
  - Removed `\ncc\Managers > ExecutionPointerManager` in favor of the new Execution Unit system
+ - Removed checksum properties from Component & Resource since they are unused
 
 
 
