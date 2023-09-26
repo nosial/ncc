@@ -26,7 +26,9 @@
 
     use ncc\Enums\Types\BuildOutputType;
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Interfaces\BytecodeObjectInterface;
+    use ncc\Interfaces\ValidatableObjectInterface;
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Functions;
     use ncc\Utilities\Validate;
@@ -35,7 +37,7 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
-    class BuildConfiguration implements BytecodeObjectInterface
+    class BuildConfiguration implements BytecodeObjectInterface, ValidatableObjectInterface
     {
         /**
          * The unique name of the build configuration
@@ -62,6 +64,13 @@
          * @var string
          */
         private $output_path;
+
+        /**
+         * Optional. The name of the output file, eg; %ASSEMBLY.PACKAGE%.ncc
+         *
+         * @var string|null
+         */
+        private $output_name;
 
         /**
          * An array of constants to define for the build when importing or executing.
@@ -118,11 +127,11 @@
         /**
          * Validates the BuildConfiguration object
          *
-         * @param bool $throw_exception
-         * @return bool
+         * @return void
          * @throws ConfigurationException
+         * @throws NotSupportedException
          */
-        public function validate(): bool
+        public function validate(): void
         {
             if(!Validate::nameFriendly($this->name))
             {
@@ -164,8 +173,6 @@
             {
                 $dependency->validate();
             }
-
-            return True;
         }
 
         /**
@@ -242,6 +249,22 @@
         public function setOutputPath(string $output_path): void
         {
             $this->output_path = $output_path;
+        }
+
+        /**
+         * @return string|null
+         */
+        public function getOutputName(): ?string
+        {
+            return $this->output_name;
+        }
+
+        /**
+         * @param string|null $output_name
+         */
+        public function setOutputName(?string $output_name): void
+        {
+            $this->output_name = $output_name;
         }
 
         /**
@@ -407,6 +430,7 @@
             $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
             $results[($bytecode ? Functions::cbc('build_type') : 'build_type')] = $this->build_type;
             $results[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->output_path;
+            $results[($bytecode ? Functions::cbc('output_name') : 'output_path')] = $this->output_name;
 
             if(count($this->options) > 0)
             {
@@ -462,6 +486,7 @@
 
             $object = new BuildConfiguration($name, $output_path);
 
+            $object->output_name = Functions::array_bc($data, 'output_name');
             $object->build_type = Functions::array_bc($data, 'build_type') ?? BuildOutputType::NCC_PACKAGE;
             $object->options = Functions::array_bc($data, 'options') ?? [];
             $object->define_constants = Functions::array_bc($data, 'define_constants') ?? [];
