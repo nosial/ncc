@@ -430,7 +430,7 @@
             $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
             $results[($bytecode ? Functions::cbc('build_type') : 'build_type')] = $this->build_type;
             $results[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->output_path;
-            $results[($bytecode ? Functions::cbc('output_name') : 'output_path')] = $this->output_name;
+            $results[($bytecode ? Functions::cbc('output_name') : 'output_name')] = $this->output_name;
 
             if(count($this->options) > 0)
             {

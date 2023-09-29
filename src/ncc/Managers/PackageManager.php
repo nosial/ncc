@@ -38,6 +38,7 @@
     use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Enums\RegexPatterns;
+    use ncc\Enums\Scopes;
     use ncc\Enums\Types\ProjectType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
@@ -144,6 +145,11 @@
          */
         public function install(string|PackageReader $input, ?AuthenticationInterface $authentication=null): array
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                throw new OperationException('You must have root privileges to install packages');
+            }
+
             // If the input is a PackageReader, we can install it directly
             if($input instanceof PackageReader)
             {
@@ -176,6 +182,11 @@
          */
         public function uninstall(string $package_name, ?string $version=null): array
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                throw new OperationException('You must have root privileges to uninstall packages');
+            }
+
             if(!$this->package_lock->entryExists($package_name, $version))
             {
                 throw new OperationException(sprintf('Cannot uninstall package %s, it is not installed', $package_name));
@@ -218,6 +229,11 @@
          */
         public function uninstallAll(): array
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                throw new OperationException('You must have root privileges to uninstall packages');
+            }
+
             $results = [];
             foreach($this->package_lock->getEntries() as $entry)
             {
@@ -385,7 +401,7 @@
                 throw new OperationException(sprintf('Cannot install remote package %s, the repository %s does not exist on this system', $input, $input->getRepository()));
             }
 
-            Console::out(sprintf('Fetching package %s=%s from %s', $input->getPackage(), $input->getVersion(), $input->getRepository()));
+            Console::out(sprintf('Fetching package %s/%s=%s from %s', $input->getVendor(), $input->getPackage(), $input->getVersion(), $input->getRepository()));
 
             try
             {
@@ -614,10 +630,10 @@
                             [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
                         );
 
-                        unlink($package_path);
-
                         ShutdownHandler::declareTemporaryPath($source_directory);
-                        return PathFinder::getCachePath() . DIRECTORY_SEPARATOR . basename($package_path);
+                        ShutdownHandler::declareTemporaryPath($package_path);
+
+                        return $package_path;
                     }
                     catch(Exception $e)
                     {
@@ -638,11 +654,10 @@
                             [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
                         );
 
-                        copy($package_path, PathFinder::getCachePath() . DIRECTORY_SEPARATOR . basename($package_path));
-                        unlink($package_path);
-
+                        ShutdownHandler::declareTemporaryPath($package_path);
                         ShutdownHandler::declareTemporaryPath($source_directory);
-                        return PathFinder::getCachePath() . DIRECTORY_SEPARATOR . basename($package_path);
+
+                        return $package_path;
                     }
                     catch(Exception $e)
                     {

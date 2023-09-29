@@ -32,6 +32,7 @@
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
+    use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Managers\PackageManager;
@@ -64,8 +65,9 @@
          * @return mixed
          * @throws ConfigurationException
          * @throws IOException
-         * @throws PathNotFoundException
          * @throws NotSupportedException
+         * @throws PathNotFoundException
+         * @throws OperationException
          */
         public static function execute(string $package): int
         {
@@ -133,7 +135,9 @@
          * @param string $package
          * @param string $version
          * @return string
+         * @throws ConfigurationException
          * @throws IOException
+         * @throws ImportException
          * @throws PathNotFoundException
          */
         private static function importFromSystem(string $package, string $version=Versions::LATEST): string
@@ -148,6 +152,13 @@
 
             self::$imported_packages[$package] = $entry->getPath($version);
 
+            // Import dependencies recursively
+            foreach($entry->getVersion($version)->getDependencies() as $dependency)
+            {
+                /** @noinspection UnusedFunctionResultInspection */
+                self::import($dependency->getName(), $dependency->getVersion());
+            }
+
             return $package;
         }
 
@@ -157,7 +168,9 @@
          * @param string $package_path
          * @return string
          * @throws ConfigurationException
+         * @throws IOException
          * @throws ImportException
+         * @throws PathNotFoundException
          */
         private static function importFromPackage(string $package_path): string
         {
@@ -189,6 +202,15 @@
                 {
                     return self::$imported_packages[$package_name]->getComponentByClass($value)->getData();
                 };
+            }
+
+            // Import dependencies recursively
+            foreach($package_reader->getDependencies() as $dependency)
+            {
+                $dependency = $package_reader->getDependency($dependency);
+
+                /** @noinspection UnusedFunctionResultInspection */
+                self::import($dependency->getName(), $dependency->getVersion());
             }
 
             return $package_reader->getAssembly()->getPackage();

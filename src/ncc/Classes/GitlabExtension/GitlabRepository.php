@@ -82,6 +82,7 @@
         private static function getTags(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
             $curl = curl_init();
+            $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/repository/tags?order_by=updated&sort=desc', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project));
             $headers = [
                 'Content-Type: application/json',
@@ -160,6 +161,7 @@
             }
 
             $curl = curl_init();
+            $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/repository/archive.zip?sha=%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($tag));
             $headers = [
                 'User-Agent: ncc'
@@ -212,6 +214,7 @@
         private static function getReleases(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
             $curl = curl_init();
+            $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases?order_by=released_at&sort=desc', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project));
             $headers = [
                 'Content-Type: application/json',
@@ -286,6 +289,7 @@
             }
 
             $curl = curl_init();
+            $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases/%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($release));
             $headers = [
                 'Content-Type: application/json',
@@ -349,6 +353,7 @@
             }
 
             $curl = curl_init();
+            $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases/%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($release));
             $headers = [
                 'Content-Type: application/json',

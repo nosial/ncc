@@ -26,6 +26,7 @@
     use ncc\Classes\PackageReader;
     use ncc\Enums\ConsoleColors;
     use ncc\Enums\RegexPatterns;
+    use ncc\Enums\Scopes;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
@@ -37,6 +38,7 @@
     use ncc\Objects\RemotePackageInput;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\Resolver;
 
     class PackageManagerMenu
     {
@@ -129,6 +131,12 @@
          */
         private static function installPackage(array $args): int
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                Console::outError('You cannot install packages in a user scope, please run this command as root', true, 1);
+                return 1;
+            }
+
             $package = $args['package'] ?? $args['p'] ?? null;
             $authentication = $args['authentication'] ?? $args['a'] ?? null;
             $authentication_entry = null;
@@ -348,6 +356,12 @@
          */
         private static function uninstallPackage($args): int
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                Console::outError('You cannot uninstall packages in a user scope, please run this command as root', true, 1);
+                return 1;
+            }
+
             $package = $args['package'] ?? $args['p'] ?? null;
             $version = $args['version'] ?? $args['v'] ?? null;
 
@@ -372,20 +386,26 @@
          */
         private static function uninstallAllPackages(): int
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                Console::outError('You cannot uninstall all packages in a user scope, please run this command as root', true, 1);
+                return 1;
+            }
+
+            $package_manager = new PackageManager();
+            if(count($package_manager->getInstalledPackages()) === 0)
+            {
+                Console::out('No packages installed');
+                return 0;
+            }
+
             if(!Console::getBooleanInput('Are you sure you want to uninstall all packages?'))
             {
                 Console::out('Uninstallation aborted');
                 return 0;
             }
 
-            $results = (new PackageManager())->uninstallAll();
-
-            foreach($results as $package)
-            {
-                Console::out(sprintf('   %s', $package));
-            }
-
-            Console::out(sprintf('Uninstalled %d packages', count($results)));
+            Console::out(sprintf('Uninstalled %d packages', count($package_manager->uninstallAll())));
             return 0;
         }
 
@@ -401,6 +421,12 @@
          */
         private static function fixBrokenPackages(array $args): int
         {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                Console::outError('You cannot fix broken packages in a user scope, please run this command as root', true, 1);
+                return 1;
+            }
+
             $package_manager = new PackageManager();
             $results = $package_manager->getMissingPackages();
             $auto_yes = isset($args['y']);

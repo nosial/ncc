@@ -151,6 +151,11 @@
                 return Comparator::lessThanOrEqualTo($a, $b) ? 1 : -1;
             });
 
+            if($versions[0] === null)
+            {
+                throw new NetworkException(sprintf('Failed to resolve latest version for %s/%s', $vendor, $project));
+            }
+
             return $versions[0];
         }
 
