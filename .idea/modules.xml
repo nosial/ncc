@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ncc.iml" filepath="$PROJECT_DIR$/.idea/ncc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Nosial Code Compiler.iml" filepath="$PROJECT_DIR$/.idea/Nosial Code Compiler.iml" />
     </modules>
   </component>
 </project>
