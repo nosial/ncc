@@ -117,6 +117,19 @@
                 }
             }
 
+            if(isset($args['copy']) || isset($args['o']))
+            {
+                try
+                {
+                    return self::copyPackage($args);
+                }
+                catch(Exception $e)
+                {
+                    Console::outException(sprintf('Failed to copy package: %s', $e->getMessage()), $e, 1);
+                    return 1;
+                }
+            }
+
             return self::displayOptions();
         }
 
@@ -264,6 +277,21 @@
         }
 
         /**
+         * Saves a shadow copy of the package to the specified path
+         *
+         * @param array $args
+         * @return int
+         * @throws IOException
+         */
+        private static function copyPackage(array $args): int
+        {
+            $package_reader = new PackageReader($args['path'] ?? $args['p']);
+            $package_reader->saveCopy($args['copy'] ?? $args['o']);
+
+            return 0;
+        }
+
+        /**
          * Displays the main options section
          *
          * @return int
@@ -280,6 +308,7 @@
                 new CliHelpSection(['assembly'], 'Prints out the assembly information of the package'),
                 new CliHelpSection(['dependencies'], 'Prints out the dependencies of the package'),
                 new CliHelpSection(['execution_units'], 'Prints out the execution units of the package'),
+                new CliHelpSection(['copy', '-o'], 'Writes a shadow copy of the package to the specified path'),
             ];
 
             $options_padding = Functions::detectParametersPadding($options) + 4;
