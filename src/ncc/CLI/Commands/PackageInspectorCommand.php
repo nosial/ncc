@@ -285,8 +285,16 @@
          */
         private static function copyPackage(array $args): int
         {
+            $copy_path = $args['o'];
+
+            if($copy_path === null)
+            {
+                Console::outError('Missing required option "-o"', true, 1);
+                return 1;
+            }
+
             $package_reader = new PackageReader($args['path'] ?? $args['p']);
-            $package_reader->saveCopy($args['copy'] ?? $args['o']);
+            $package_reader->saveCopy($copy_path);
 
             return 0;
         }

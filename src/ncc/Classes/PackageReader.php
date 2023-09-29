@@ -668,7 +668,10 @@
             }
 
             // Copy the package file to the destination
-            stream_copy_to_stream($this->package_file, $destination, $this->package_length, $this->package_offset);
+            if(stream_copy_to_stream($this->package_file, $destination, $this->package_length, $this->package_offset) === false)
+            {
+                throw new IOException(sprintf('Failed to copy package file to \'%s\'', $path));
+            }
 
             // Done!
             fclose($destination);
