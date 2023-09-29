@@ -30,6 +30,7 @@
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Managers\CredentialManager;
     use ncc\Managers\PackageManager;
     use ncc\Managers\RepositoryManager;
     use ncc\Objects\CliHelpSection;
@@ -116,20 +117,55 @@
         }
 
         /**
+         * Installs a package from a local file or from a remote repository
+         *
          * @param array $args
          * @return int
          * @throws ConfigurationException
          * @throws IOException
          * @throws OperationException
          * @throws PathNotFoundException
+         * @throws Exception
          */
         private static function installPackage(array $args): int
         {
             $package = $args['package'] ?? $args['p'] ?? null;
+            $authentication = $args['authentication'] ?? $args['a'] ?? null;
+            $authentication_entry = null;
             $auto_yes = isset($args['y']);
             $repository_manager = new RepositoryManager();
             $package_manager = new PackageManager();
 
+            if($authentication !== null)
+            {
+                $entry = (new CredentialManager())->getVault()?->getEntry($authentication);
+
+                if($entry->isEncrypted())
+                {
+                    $tries = 0;
+                    while(true)
+                    {
+                        if (!$entry->unlock(Console::passwordInput('Password/Secret: ')))
+                        {
+                            $tries++;
+                            if ($tries >= 3)
+                            {
+                                Console::outError('Too many failed attempts.', true, 1);
+                                return 1;
+                            }
+
+                            Console::outError(sprintf('Incorrect password/secret, %d attempts remaining', 3 - $tries));
+                        }
+                        else
+                        {
+                            Console::out('Authentication successful.');
+                            return 1;
+                        }
+                    }
+                }
+
+                $authentication_entry = $entry->getPassword();
+            }
 
             if(preg_match(RegexPatterns::REMOTE_PACKAGE, $package) === 1)
             {
@@ -147,7 +183,7 @@
                     return 0;
                 }
 
-                $results = $package_manager->install($package_input);
+                $results = $package_manager->install($package_input, $authentication_entry);
                 Console::out(sprintf('Installed %d packages', count($results)));
                 return 0;
             }
@@ -252,7 +288,7 @@
                 return 0;
             }
 
-            $package_manager->install($package_reader);
+            Console::out(sprintf('Installed %d packages', count($package_manager->install($package_reader, $authentication_entry))));
             return 0;
         }
 
@@ -415,7 +451,7 @@
                 }
 
                 Console::out(sprintf('Fixing missing dependency %s', $package));
-                $package_manager->install($source);
+                Console::out(sprintf('Installed %d packages', count($package_manager->install($source))));
             }
 
             return 0;

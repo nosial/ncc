@@ -128,8 +128,7 @@
 
                 while(true)
                 {
-                    $password = Console::passwordInput('Password/Secret: ');
-                    if (!$entry->unlock($password))
+                    if (!$entry->unlock(Console::passwordInput('Password/Secret: ')))
                     {
                         $tries++;
                         if ($tries >= 3)
@@ -138,7 +137,7 @@
                             return 1;
                         }
 
-                        Console::outError('Invalid password.', true, 1);
+                        Console::outError(sprintf('Invalid password, %d attempts remaining.', 3 - $tries));
                     }
                     else
                     {
@@ -173,7 +172,7 @@
             Console::out('Entries:');
             foreach($entries as $entry)
             {
-                Console::out(sprintf(' - %s (%s)', $entry->getName(), $entry->isEncrypted() ? ' (encrypted)' : ''));
+                Console::out(sprintf(' - %s %s', $entry->getName(), $entry->isEncrypted() ? ' (encrypted)' : ''));
             }
 
             Console::out('Total: ' . count($entries));

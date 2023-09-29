@@ -24,6 +24,7 @@
 
     namespace ncc\Objects;
 
+    use InvalidArgumentException;
     use ncc\Enums\Types\AuthenticationType;
     use ncc\Enums\Versions;
     use ncc\Interfaces\AuthenticationInterface;
@@ -142,9 +143,9 @@
          * Returns an existing entry from the vault
          *
          * @param string $name
-         * @return Entry|null
+         * @return Entry
          */
-        public function getEntry(string $name): ?Entry
+        public function getEntry(string $name): Entry
         {
             foreach($this->entries as $entry)
             {
@@ -154,7 +155,7 @@
                 }
             }
 
-            return null;
+            throw new InvalidArgumentException(sprintf('Entry "%s" does not exist in the vault', $name));
         }
 
         /**
@@ -167,10 +168,6 @@
         public function authenticate(string $name, string $password): bool
         {
             $entry = $this->getEntry($name);
-            if($entry === null)
-            {
-                return false;
-            }
 
             if(($entry->getPassword() === null) && $entry->isEncrypted() && !$entry->isCurrentlyDecrypted())
             {

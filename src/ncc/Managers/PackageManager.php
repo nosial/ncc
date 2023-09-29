@@ -170,7 +170,7 @@
          *
          * @param string $package_name
          * @param string|null $version
-         * @return void
+         * @return array
          * @throws IOException
          * @throws OperationException
          */
@@ -481,6 +481,7 @@
          * @return void
          * @throws ConfigurationException
          * @throws IOException
+         * @throws OperationException
          */
         private function extractPackageContents(PackageReader $package_reader, string $package_path): void
         {

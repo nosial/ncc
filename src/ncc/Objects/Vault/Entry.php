@@ -24,10 +24,12 @@
 
     namespace ncc\Objects\Vault;
 
+    use Exception;
     use ncc\Defuse\Crypto\Crypto;
     use ncc\Defuse\Crypto\Exception\EnvironmentIsBrokenException;
     use ncc\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
     use ncc\Enums\Types\AuthenticationType;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Interfaces\AuthenticationInterface;
     use ncc\Interfaces\BytecodeObjectInterface;
@@ -202,7 +204,7 @@
          *
          * @param string $password
          * @return bool
-         * @noinspection PhpUnhandledExceptionInspection
+         * @throws Exception
          */
         public function unlock(string $password): bool
         {
@@ -327,13 +329,13 @@
         }
 
         /**
-         * @return AuthenticationInterface|null
+         * @return AuthenticationInterface
          */
-        public function getPassword(): ?AuthenticationInterface
+        public function getPassword(): AuthenticationInterface
         {
             if(!$this->currently_decrypted)
             {
-                return null;
+                throw new RuntimeException(sprintf('Cannot get password for entry "%s" because it is currently encrypted', $this->name));
             }
 
             return $this->password;
@@ -379,6 +381,7 @@
          *
          * @param array $data
          * @return Entry
+         * @throws ConfigurationException
          */
         public static function fromArray(array $data): self
         {
