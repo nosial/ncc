@@ -37,6 +37,7 @@
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Enums\Options\InitializeProjectOptions;
+    use ncc\Enums\Options\InstallPackageOptions;
     use ncc\Enums\RegexPatterns;
     use ncc\Enums\Scopes;
     use ncc\Enums\Types\ProjectType;
@@ -137,13 +138,14 @@
          *
          * @param string|PackageReader $input
          * @param AuthenticationInterface|null $authentication
+         * @param array $options
          * @return array
          * @throws ConfigurationException
          * @throws IOException
          * @throws OperationException
          * @throws PathNotFoundException
          */
-        public function install(string|PackageReader $input, ?AuthenticationInterface $authentication=null): array
+        public function install(string|PackageReader $input, ?AuthenticationInterface $authentication=null, array $options=[]): array
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
@@ -153,19 +155,19 @@
             // If the input is a PackageReader, we can install it directly
             if($input instanceof PackageReader)
             {
-                return $this->installPackage($input, $authentication);
+                return $this->installPackage($input, $authentication, $options);
             }
 
             // If the input is a file, we can assume it's a local package file
             if(is_file($input))
             {
-                return $this->installPackage(new PackageReader($input), $authentication);
+                return $this->installPackage(new PackageReader($input), $authentication, $options);
             }
 
             // If the input is a remote package, we can assume it's a remote package input
             if(preg_match(RegexPatterns::REMOTE_PACKAGE, $input) === 1)
             {
-                return $this->installRemotePackage(RemotePackageInput::fromString($input), $authentication);
+                return $this->installRemotePackage(RemotePackageInput::fromString($input), $authentication, $options);
             }
 
             throw new InvalidArgumentException(sprintf('Invalid package input, expected a PackageReader stream, a file path, or a remote package input, got %s', gettype($input)));
@@ -310,21 +312,21 @@
          *
          * @param PackageReader $package_reader
          * @param AuthenticationInterface|null $authentication
+         * @param array $options
          * @return array
          * @throws ConfigurationException
          * @throws IOException
          * @throws OperationException
          * @throws PathNotFoundException
          */
-        private function installPackage(PackageReader $package_reader, ?AuthenticationInterface $authentication=null): array
+        private function installPackage(PackageReader $package_reader, ?AuthenticationInterface $authentication=null, array $options=[]): array
         {
             $installed_packages = [];
 
             Console::out(sprintf('Installing package %s=%s', $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()));
-            if($this->package_lock->entryExists($package_reader->getAssembly()->getPackage()))
+            if($this->package_lock->entryExists($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()))
             {
-                $package_entry = $this->package_lock->getEntry($package_reader->getAssembly()->getPackage());
-                if($package_entry->versionExists($package_reader->getAssembly()->getVersion()))
+                if(!isset($options[InstallPackageOptions::REINSTALL]))
                 {
                     Console::outVerbose(sprintf(
                         'Package %s=%s is already installed, skipping',
@@ -333,6 +335,13 @@
 
                     return $installed_packages;
                 }
+
+                Console::outVerbose(sprintf('Package %s=%s is already installed, reinstalling',
+                    $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()
+                ));
+
+                /** @noinspection UnusedFunctionResultInspection */
+                $this->uninstall($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion());
             }
 
             $filesystem = new Filesystem();
@@ -367,16 +376,26 @@
 
             $this->saveLock();
 
-            foreach($this->checkRequiredDependencies($package_reader) as $dependency)
+            if(!isset($options[InstallPackageOptions::SKIP_DEPENDENCIES]))
+            {
+                foreach($this->checkRequiredDependencies($package_reader) as $dependency)
+                {
+                    Console::outVerbose(sprintf(
+                        'Package %s=%s requires %s=%s, installing dependency',
+                        $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion(),
+                        $dependency->getName(), $dependency->getVersion()
+                    ));
+
+                    /** @noinspection SlowArrayOperationsInLoopInspection */
+                    $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication));
+                }
+            }
+            else
             {
                 Console::outVerbose(sprintf(
-                    'Package %s=%s requires %s=%s, installing dependency',
-                    $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion(),
-                    $dependency->getName(), $dependency->getVersion()
+                    'Skipping installation of dependencies for package %s=%s',
+                    $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()
                 ));
-
-                /** @noinspection SlowArrayOperationsInLoopInspection */
-                $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication));
             }
 
             return $installed_packages;
@@ -387,13 +406,14 @@
          *
          * @param RemotePackageInput $input
          * @param AuthenticationInterface|null $authentication
+         * @param array $options
          * @return array
          * @throws ConfigurationException
          * @throws IOException
          * @throws OperationException
          * @throws PathNotFoundException
          */
-        private function installRemotePackage(RemotePackageInput $input, ?AuthenticationInterface $authentication=null): array
+        private function installRemotePackage(RemotePackageInput $input, ?AuthenticationInterface $authentication=null, array $options=[]): array
         {
             // Check if the repository exists, so we can fetch the package
             if(!$this->repository_manager->repositoryExists($input->getRepository()))
@@ -483,7 +503,7 @@
                 ));
 
                 ShutdownHandler::declareTemporaryPath($package_path);
-                return $this->installPackage(new PackageReader($package_path));
+                return $this->installPackage(new PackageReader($package_path), $authentication, $options);
             }
 
             throw new OperationException(sprintf('Failed to install remote package %s, no package was found', $input));

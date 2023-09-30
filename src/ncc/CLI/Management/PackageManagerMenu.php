@@ -25,6 +25,7 @@
     use Exception;
     use ncc\Classes\PackageReader;
     use ncc\Enums\ConsoleColors;
+    use ncc\Enums\Options\InstallPackageOptions;
     use ncc\Enums\RegexPatterns;
     use ncc\Enums\Scopes;
     use ncc\Exceptions\ConfigurationException;
@@ -144,6 +145,18 @@
             $repository_manager = new RepositoryManager();
             $package_manager = new PackageManager();
 
+            $options = [];
+
+            if(isset($args['reinstall']))
+            {
+                $options[InstallPackageOptions::REINSTALL] = true;
+            }
+
+            if(isset($args['skip-dependencies']))
+            {
+                $options[InstallPackageOptions::SKIP_DEPENDENCIES] = true;
+            }
+
             if($authentication !== null)
             {
                 $entry = (new CredentialManager())->getVault()?->getEntry($authentication);
@@ -186,12 +199,14 @@
                 }
 
                 Console::out(sprintf('You are about to install a remote package from %s, this will require ncc to fetch and or build the package', $package_input->getRepository()));
+
                 if(!Console::getBooleanInput('Do you want to continue?'))
                 {
+                    Console::out('Installation aborted');
                     return 0;
                 }
 
-                $results = $package_manager->install($package_input, $authentication_entry);
+                $results = $package_manager->install($package_input, $authentication_entry, $options);
                 Console::out(sprintf('Installed %d packages', count($results)));
                 return 0;
             }
@@ -212,7 +227,7 @@
                 return 1;
             }
 
-            if($package_manager->getPackageLock()->entryExists($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()))
+            if(!isset($args['reinstall']) && $package_manager->getPackageLock()->entryExists($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()))
             {
                 Console::outError(sprintf("Package '%s=%s' is already installed",
                     $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()), true, 1
@@ -296,7 +311,7 @@
                 return 0;
             }
 
-            Console::out(sprintf('Installed %d packages', count($package_manager->install($package_reader, $authentication_entry))));
+            Console::out(sprintf('Installed %d packages', count($package_manager->install($package_reader, $authentication_entry, $options))));
             return 0;
         }
 
