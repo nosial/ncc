@@ -692,19 +692,41 @@
         public function saveCopy(string $path): void
         {
             $destination = fopen($path, 'wb');
-            if($destination === false)
+
+            if ($destination === false)
             {
                 throw new IOException(sprintf('Failed to open file \'%s\'', $path));
             }
 
-            // Copy the package file to the destination
-            if(stream_copy_to_stream($this->package_file, $destination, $this->package_length, $this->package_offset) === false)
+            fseek($this->package_file, $this->package_offset);
+            $remaining_bytes = $this->package_length;
+
+            while ($remaining_bytes > 0)
             {
-                throw new IOException(sprintf('Failed to copy package file to \'%s\'', $path));
+                $bytes_to_read = min($remaining_bytes, 4096);
+                $data = fread($this->package_file, $bytes_to_read);
+
+                if ($data === false)
+                {
+                    throw new IOException('Failed to read from package file');
+                }
+
+                $written_bytes = fwrite($destination, $data, $bytes_to_read);
+
+                if ($written_bytes === false)
+                {
+                    throw new IOException(sprintf('Failed to write to file \'%s\'', $path));
+                }
+
+                $remaining_bytes -= $written_bytes;
             }
 
-            // Done!
             fclose($destination);
+
+            if((new PackageReader($path))->getChecksum() !== $this->getChecksum())
+            {
+                throw new IOException(sprintf('Failed to save package copy to \'%s\', checksum mismatch', $path));
+            }
         }
 
         /**
