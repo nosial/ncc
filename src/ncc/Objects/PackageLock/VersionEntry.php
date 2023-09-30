@@ -25,6 +25,7 @@
     namespace ncc\Objects\PackageLock;
 
     use InvalidArgumentException;
+    use ncc\Enums\FileDescriptor;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\ProjectConfiguration\Dependency;
@@ -220,6 +221,17 @@
         public function getPath(string $package_name): string
         {
             return PathFinder::getPackagesPath() . DIRECTORY_SEPARATOR . sprintf('%s=%s', $package_name, $this->getVersion());
+        }
+
+        /**
+         * Returns the path where the shadow package is located
+         *
+         * @param string $package_name
+         * @return string
+         */
+        public function getShadowPackagePath(string $package_name): string
+        {
+            return $this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE;
         }
 
         /**

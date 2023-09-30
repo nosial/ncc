@@ -655,6 +655,36 @@
         }
 
         /**
+         * Returns the checksum of the package
+         *
+         * @param string $hash
+         * @param bool $binary
+         * @return string
+         */
+        public function getChecksum(string $hash='crc32b', bool $binary=false): string
+        {
+            $checksum = hash($hash, '', $binary);
+
+            fseek($this->package_file, $this->package_offset);
+            $bytes_left = $this->package_length;
+
+            while ($bytes_left > 0)
+            {
+                $buffer = fread($this->package_file, min(1024, $bytes_left));
+                $buffer_length = strlen($buffer);
+                $bytes_left -= $buffer_length;
+                $checksum = hash($hash, ($checksum . $buffer), $binary);
+
+                if ($buffer_length === 0)
+                {
+                    break;
+                }
+            }
+
+            return $checksum;
+        }
+
+        /**
          * @param string $path
          * @return void
          * @throws IOException

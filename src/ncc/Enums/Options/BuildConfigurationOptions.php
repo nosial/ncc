@@ -31,4 +31,6 @@
         public const NCC_CONFIGURATION = 'ncc_configuration';
 
         public const OUTPUT_FILE = 'output_file';
+
+        public const STATIC_DEPENDENCIES = 'static';
     }

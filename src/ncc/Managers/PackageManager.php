@@ -518,8 +518,6 @@
                     $package_reader->getComponent($component_name)->getData([ComponentDecodeOptions::AS_FILE]), 0755
                 );
 
-
-
                 Console::inlineProgressBar(++$current_step, $total_steps);
             }
 

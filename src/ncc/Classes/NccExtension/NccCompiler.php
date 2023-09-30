@@ -37,6 +37,7 @@
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\CompilerInterface;
+    use ncc\Managers\PackageManager;
     use ncc\Managers\ProjectManager;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\Metadata;
@@ -192,9 +193,18 @@
                 $this->processResource($package_writer, $resource);
             }
 
+            $package_manager = new PackageManager();
+
             // Add the project dependencies
             foreach($this->project_manager->getProjectConfiguration()->getBuild()->getDependencies() as $dependency)
             {
+                if(isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]))
+                {
+                    $package_entry = $package_manager->getPackageLock()->getEntry($dependency->getName());
+                    $shadow_package = $package_entry->getShadowPackagePath($dependency->getVersion());
+                    // TODO: Add support for static dependencies
+                }
+
                 $package_writer->addDependencyConfiguration($dependency);
             }
 

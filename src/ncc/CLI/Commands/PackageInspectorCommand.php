@@ -52,6 +52,19 @@
                 return 1;
             }
 
+            if(isset($args['info']))
+            {
+                try
+                {
+                    return self::displayInfo($args);
+                }
+                catch(Exception $e)
+                {
+                    Console::outException(sprintf('Failed to display info: %s', $e->getMessage()), $e, 1);
+                    return 1;
+                }
+            }
+
             if(isset($args['headers']))
             {
                 try
@@ -145,6 +158,31 @@
             self::printArray((new PackageReader($args['path'] ?? $args['p']))->getHeaders(),
                 isset($args['json']), isset($args['json-pretty'])
             );
+
+            return 0;
+        }
+
+        /**
+         * Prints out basic information about the package
+         *
+         * @param array $args
+         * @return int
+         */
+        private static function displayInfo(array $args): int
+        {
+            $package_reader = new PackageReader($args['path'] ?? $args['p']);
+
+            Console::out(sprintf('File Version: %s', $package_reader->getFileVersion()));
+            Console::out(sprintf('crc32: %s', $package_reader->getChecksum()));
+            Console::out(sprintf('sha256: %s', $package_reader->getChecksum('sha256')));
+            Console::out(sprintf('Flags: %s', implode(', ', $package_reader->getFlags())));
+            Console::out(sprintf('Package Offset: %s', $package_reader->getPackageOffset()));
+            Console::out(sprintf('Package Length: %s', $package_reader->getPackageLength()));
+            Console::out(sprintf('Header Offset: %s', $package_reader->getHeaderOffset()));
+            Console::out(sprintf('Header Length: %s', $package_reader->getHeaderLength()));
+            Console::out(sprintf('Data Offset: %s', $package_reader->getDataOffset()));
+            Console::out(sprintf('Data Length: %s', $package_reader->getDataLength()));
+            Console::out(sprintf('Directory Size: %d items', count($package_reader->getDirectory())));
 
             return 0;
         }
@@ -311,6 +349,7 @@
                 new CliHelpSection(['--path', '-p'], 'Required. Specifies the path to the binary package to inspect'),
                 new CliHelpSection(['--json'], 'Prints out the information of the package in JSON format'),
                 new CliHelpSection(['--pretty-json'], 'Prints out the information of the package in pretty JSON format'),
+                new CliHelpSection(['info'], 'Prints out basic information about the binary package'),
                 new CliHelpSection(['headers'], 'Prints out the headers of the package'),
                 new CliHelpSection(['metadata'], 'Prints out the metadata of the package'),
                 new CliHelpSection(['assembly'], 'Prints out the assembly information of the package'),

@@ -102,6 +102,17 @@
         }
 
         /**
+         * Returns the path to where the shadow package is located
+         *
+         * @param string $version
+         * @return string
+         */
+        public function getShadowPackagePath(string $version): string
+        {
+            return $this->getVersion($version)->getShadowPackagePath($this->name);
+        }
+
+        /**
          * Adds a new version entry to the package, if overwrite is true then
          * the entry will be overwritten if it exists, otherwise it will return
          * false.
