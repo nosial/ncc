@@ -11,6 +11,10 @@ This update introduces major changes in the codebase, including the removal of W
 features. This is the Mk II of ncc, and it is a major update, so please read the changelog carefully.
 
 
+### Known issues
+ - `require` and `include` statements are not supported; when running a program directly, this feature will be added in
+   a future update. Using these statements will result in files not being found.
+
 ### Added
  - `LICENSE.md` & `license.md` are now detected as license files in  `\ncc\Classes\ComposerExtension > ComposerSourceBuiltin > convertProject()`
  - Added new exception `PathNotFoundException` and implemented it in replacement for `DirectoryNotFoundException` and
