@@ -164,6 +164,11 @@
          */
         private static function importFromSystem(string $package, string $version=Versions::LATEST): string
         {
+            if(!self::getPackageManager()->getPackageLock()->entryExists($package))
+            {
+                throw new ImportException(sprintf('The package "%s" does not exist in the package lock', $package));
+            }
+
             $entry = self::getPackageManager()->getPackageLock()->getEntry($package);
 
             foreach($entry->getClassMap($version) as $class => $component_name)
@@ -247,18 +252,7 @@
                 };
             }
 
-            // Import dependencies recursively
-            if(!$package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
-            {
-                foreach($package_reader->getDependencies() as $dependency)
-                {
-                    $dependency = $package_reader->getDependency($dependency);
-
-                    /** @noinspection UnusedFunctionResultInspection */
-                    self::import($dependency->getName(), $dependency->getVersion());
-                }
-            }
-
+            // Import the required files
             if($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES) !== null)
             {
                 foreach($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES) as $item)
@@ -271,6 +265,18 @@
                     {
                         throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package_name, $e->getMessage()), $e);
                     }
+                }
+            }
+
+            // Import dependencies recursively
+            if(!$package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
+            {
+                foreach($package_reader->getDependencies() as $dependency)
+                {
+                    $dependency = $package_reader->getDependency($dependency);
+
+                    /** @noinspection UnusedFunctionResultInspection */
+                    self::import($dependency->getName(), $dependency->getVersion());
                 }
             }
 
