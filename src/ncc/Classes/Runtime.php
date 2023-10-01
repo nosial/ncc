@@ -27,6 +27,7 @@
     use Exception;
     use InvalidArgumentException;
     use ncc\Enums\FileDescriptor;
+    use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\ImportException;
@@ -205,12 +206,15 @@
             }
 
             // Import dependencies recursively
-            foreach($package_reader->getDependencies() as $dependency)
+            if(!$package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
             {
-                $dependency = $package_reader->getDependency($dependency);
+                foreach($package_reader->getDependencies() as $dependency)
+                {
+                    $dependency = $package_reader->getDependency($dependency);
 
-                /** @noinspection UnusedFunctionResultInspection */
-                self::import($dependency->getName(), $dependency->getVersion());
+                    /** @noinspection UnusedFunctionResultInspection */
+                    self::import($dependency->getName(), $dependency->getVersion());
+                }
             }
 
             return $package_reader->getAssembly()->getPackage();

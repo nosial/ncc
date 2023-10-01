@@ -271,6 +271,34 @@
         }
 
         /**
+         * Returns a resource pointer from the package by name
+         *
+         * @param string $name
+         * @return int[]
+         */
+        public function getPointer(string $name): array
+        {
+            if(!isset($this->headers[PackageStructure::DIRECTORY][$name]))
+            {
+                throw new RuntimeException(sprintf('Resource \'%s\' not found in package', $name));
+            }
+
+            $location = explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
+            return [(int)$location[0], (int)$location[1]];
+        }
+
+        /**
+         * Returns True if the package contains a resource by name
+         *
+         * @param string $name
+         * @return bool
+         */
+        public function exists(string $name): bool
+        {
+            return isset($this->headers[PackageStructure::DIRECTORY][$name]);
+        }
+
+        /**
          * Returns a resource from the package by pointer
          *
          * @param int $pointer
@@ -631,9 +659,9 @@
         }
 
         /**
-         * @return false|int
+         * @return int
          */
-        public function getHeaderLength(): false|int
+        public function getHeaderLength(): int
         {
             return $this->header_length;
         }

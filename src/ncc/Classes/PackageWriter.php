@@ -38,6 +38,7 @@
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Extensions\ZiProto\ZiProto;
+    use ncc\Utilities\Console;
 
     class PackageWriter
     {
@@ -349,6 +350,42 @@
         public function mapClass(string $class, int $offset, int $length): void
         {
             $this->addPointer(sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class), $offset, $length);
+        }
+
+        /**
+         * Merges the contents of a package reader into the package writer
+         *
+         * @param PackageReader $reader
+         * @return void
+         */
+        public function merge(PackageReader $reader): void
+        {
+            $processed_resources = [];
+
+            foreach($reader->getDirectory() as $name => $pointer)
+            {
+                switch((int)substr(explode(':', $name, 2)[0], 1))
+                {
+                    case PackageDirectory::METADATA:
+                    case PackageDirectory::ASSEMBLY:
+                    case PackageDirectory::INSTALLER:
+                    case PackageDirectory::EXECUTION_UNITS:
+                        Console::outDebug(sprintf('Skipping %s', $name));
+                        break;
+
+                    default:
+                        if(isset($processed_resources[$pointer]))
+                        {
+                            Console::outDebug(sprintf('Merging %s as a pointer', $name));
+                            $this->addPointer($name, (int)$processed_resources[$pointer][0], (int)$processed_resources[$pointer][1]);
+                            break;
+                        }
+
+                        Console::outDebug(sprintf('Merging %s', $name));
+                        $processed_resources[$pointer] = $this->add($name, $reader->get($name));
+
+                }
+            }
         }
 
         /**

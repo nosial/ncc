@@ -25,6 +25,7 @@
 
     namespace ncc\Classes\NccExtension;
 
+    use ncc\Classes\PackageReader;
     use ncc\Classes\PackageWriter;
     use ncc\CLI\Main;
     use ncc\Enums\Flags\PackageFlags;
@@ -43,6 +44,7 @@
     use ncc\Objects\Package\Metadata;
     use ncc\Objects\Package\Resource;
     use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
+    use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -88,24 +90,25 @@
         {
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
             $configuration->setOptions(array_merge($configuration->getOptions(), $options));
+            $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]);
 
             if(count($options) > 0)
             {
                 $configuration->setOptions(array_merge($configuration->getOptions(), $options));
             }
 
-            if($configuration->getOutputName() !== null)
+            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            {
+                $package_path = ConstantCompiler::compileConstants(
+                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
+                );
+            }
+            elseif($configuration->getOutputName() !== null)
             {
                 $package_path =
                     ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputPath())
                     . DIRECTORY_SEPARATOR .
                     ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputName());
-            }
-            elseif(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
-            {
-                $package_path = ConstantCompiler::compileConstants(
-                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
-                );
             }
             else
             {
@@ -120,10 +123,17 @@
                 count($this->project_manager->getProjectConfiguration()->getExecutionPolicies()) +
                 count($this->project_manager->getComponents($build_configuration)) +
                 count($this->project_manager->getResources($build_configuration));
+
             $package_writer = $this->createPackageWriter($package_path, $configuration);
 
-
             Console::out(sprintf('Building project \'%s\'', $this->project_manager->getProjectConfiguration()->getAssembly()->getName()));
+
+            if($static_dependencies)
+            {
+                // Add the static dependencies flag so that the package manager
+                // Won't try to resolve the dependencies from the system.
+                $package_writer->addFlag(PackageFlags::STATIC_DEPENDENCIES);
+            }
 
             // Debugging information
             if(Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
@@ -193,29 +203,50 @@
                 $this->processResource($package_writer, $resource);
             }
 
-            $package_manager = new PackageManager();
-
             // Add the project dependencies
             foreach($this->project_manager->getProjectConfiguration()->getBuild()->getDependencies() as $dependency)
             {
-                if(isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]))
-                {
-                    $package_entry = $package_manager->getPackageLock()->getEntry($dependency->getName());
-                    $shadow_package = $package_entry->getShadowPackagePath($dependency->getVersion());
-                    // TODO: Add support for static dependencies
-                }
-
-                $package_writer->addDependencyConfiguration($dependency);
+                $this->processDependency($package_writer, $dependency, $static_dependencies);
             }
 
             // Add the build dependencies
             foreach($configuration->getDependencies() as $dependency)
             {
-                $package_writer->addDependencyConfiguration($dependency);
+                $this->processDependency($package_writer, $dependency, $static_dependencies);
             }
 
             $package_writer->close();
             return $package_path;
+        }
+
+        /**
+         * Processes dependencies, optionally recursively
+         *
+         * @param PackageWriter $package_writer
+         * @param Dependency $dependency
+         * @param bool $static
+         * @return void
+         * @throws IOException
+         */
+        private function processDependency(PackageWriter $package_writer, Dependency $dependency, bool $static=false): void
+        {
+            Console::outVerbose(sprintf('Processing dependency \'%s=%s\'', $dependency->getName(), $dependency->getVersion()));
+
+            /** @noinspection UnusedFunctionResultInspection */
+            $package_writer->addDependencyConfiguration($dependency);
+
+            if(!$static)
+            {
+                return;
+            }
+
+            $entry = (new PackageManager())->getPackageLock()->getVersionEntry($dependency->getName(), $dependency->getVersion());
+            $package_writer->merge((new PackageReader($entry->getShadowPackagePath($dependency->getName()))));
+
+            foreach($entry->getDependencies() as $sub_dependency)
+            {
+                $this->processDependency($package_writer, $sub_dependency, $static);
+            }
         }
 
         /**

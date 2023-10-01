@@ -71,19 +71,19 @@
             // Prepare the gcc command
             $gcc_path = (new ExecutableFinder())->find('gcc');
 
-            if($configuration->getOutputName() !== null)
-            {
-                $binary_path =
-                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputPath())
-                    . DIRECTORY_SEPARATOR .
-                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputName());
-            }
-            elseif(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
             {
                 $binary_path = ConstantCompiler::compileConstants(
                     $this->getProjectManager()->getProjectConfiguration(),
                     $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
                 );
+            }
+            elseif($configuration->getOutputName() !== null)
+            {
+                $binary_path =
+                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputPath())
+                    . DIRECTORY_SEPARATOR .
+                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputName());
             }
             else
             {
@@ -137,6 +137,22 @@
             Console::outVerbose(sprintf('Compiling executable to %s: %s', $binary_path, implode(' ', $gcc_options)));
             $process->run(static function ($type, $buffer)
             {
+                // If $buffer contains multiple lines, split it and output each line separately
+                if(str_contains($buffer, "\n"))
+                {
+                    foreach(explode("\n", $buffer) as $line)
+                    {
+                        if($line === '')
+                        {
+                            continue;
+                        }
+
+                        Console::outVerbose(rtrim($line, "\n"));
+                    }
+
+                    return;
+                }
+
                 Console::outVerbose(rtrim($buffer, "\n"));
             });
 

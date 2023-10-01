@@ -31,4 +31,6 @@
         public const MEDIUM_COMPRESSION = 'medium_gz';
 
         public const HIGH_COMPRESSION = 'high_gz';
+
+        public const STATIC_DEPENDENCIES = 'static_dependencies';
     }

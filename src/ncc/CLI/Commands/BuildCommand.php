@@ -78,7 +78,6 @@
                 $options[BuildConfigurationOptions::OUTPUT_FILE] = $output_path;
             }
 
-
             // Load the project
             try
             {

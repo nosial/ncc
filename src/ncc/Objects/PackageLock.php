@@ -30,6 +30,7 @@
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Objects\PackageLock\PackageEntry;
+    use ncc\Objects\PackageLock\VersionEntry;
     use ncc\Utilities\Functions;
 
     class PackageLock implements BytecodeObjectInterface
@@ -169,6 +170,18 @@
             }
 
             throw new InvalidArgumentException(sprintf('Package entry %s does not exist', $package_name));
+        }
+
+        /**
+         * Returns a version entry from a package entry
+         *
+         * @param string $package_name
+         * @param string $version
+         * @return VersionEntry
+         */
+        public function getVersionEntry(string $package_name, string $version): VersionEntry
+        {
+            return $this->getEntry($package_name)->getVersion($version);
         }
 
         /**
