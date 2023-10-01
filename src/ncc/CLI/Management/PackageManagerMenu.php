@@ -200,7 +200,7 @@
 
                 Console::out(sprintf('You are about to install a remote package from %s, this will require ncc to fetch and or build the package', $package_input->getRepository()));
 
-                if(!Console::getBooleanInput('Do you want to continue?'))
+                if(!$auto_yes && !Console::getBooleanInput('Do you want to continue?'))
                 {
                     Console::out('Installation aborted');
                     return 0;
