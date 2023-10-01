@@ -94,7 +94,7 @@
             {
                 try
                 {
-                    return self::uninstallAllPackages();
+                    return self::uninstallAllPackages($args);
                 }
                 catch(Exception $e)
                 {
@@ -399,7 +399,7 @@
          * @throws IOException
          * @throws OperationException
          */
-        private static function uninstallAllPackages(): int
+        private static function uninstallAllPackages(array $args): int
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
@@ -407,16 +407,17 @@
                 return 1;
             }
 
+            $auto_yes = isset($args['y']);
             $package_manager = new PackageManager();
+
             if(count($package_manager->getInstalledPackages()) === 0)
             {
                 Console::out('No packages installed');
                 return 0;
             }
 
-            if(!Console::getBooleanInput('Are you sure you want to uninstall all packages?'))
+            if(!$auto_yes && !Console::getBooleanInput('Do you want to continue?'))
             {
-                Console::out('Uninstallation aborted');
                 return 0;
             }
 
