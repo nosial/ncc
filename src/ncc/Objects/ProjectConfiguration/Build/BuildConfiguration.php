@@ -59,18 +59,11 @@
         private $options;
 
         /**
-         * The build output path for the build configuration, eg; build/%BUILD.NAME%
+         * The build output for the build configuration, eg; build/%ASSEMBLY.PACKAGE%.ncc
          *
          * @var string
          */
-        private $output_path;
-
-        /**
-         * Optional. The name of the output file, eg; %ASSEMBLY.PACKAGE%.ncc
-         *
-         * @var string|null
-         */
-        private $output_name;
+        private $output;
 
         /**
          * An array of constants to define for the build when importing or executing.
@@ -111,11 +104,11 @@
         /**
          * Public Constructor
          */
-        public function __construct(string $name, string $output_path)
+        public function __construct(string $name, string $output)
         {
             $this->name = $name;
             $this->build_type = BuildOutputType::NCC_PACKAGE;
-            $this->output_path = $output_path;
+            $this->output = $output;
             $this->options = [];
             $this->define_constants = [];
             $this->exclude_files = [];
@@ -138,7 +131,7 @@
                 throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
 
-            if(!Validate::pathName($this->output_path))
+            if(!Validate::pathName($this->output))
             {
                 throw new ConfigurationException(sprintf('Invalid build configuration name "%s"', $this->name));
             }
@@ -238,33 +231,17 @@
         /**
          * @return string
          */
-        public function getOutputPath(): string
+        public function getOutput(): string
         {
-            return $this->output_path;
+            return $this->output;
         }
 
         /**
-         * @param string $output_path
+         * @param string $output
          */
-        public function setOutputPath(string $output_path): void
+        public function setOutput(string $output): void
         {
-            $this->output_path = $output_path;
-        }
-
-        /**
-         * @return string|null
-         */
-        public function getOutputName(): ?string
-        {
-            return $this->output_name;
-        }
-
-        /**
-         * @param string|null $output_name
-         */
-        public function setOutputName(?string $output_name): void
-        {
-            $this->output_name = $output_name;
+            $this->output = $output;
         }
 
         /**
@@ -419,7 +396,6 @@
                 return $item !== $dependency;
             });
         }
-        // TODO: Merge output_path & output_name into one single property similiar to -o|--output
 
         /**
          * @inheritDoc
@@ -430,8 +406,7 @@
 
             $results[($bytecode ? Functions::cbc('name') : 'name')] = $this->name;
             $results[($bytecode ? Functions::cbc('build_type') : 'build_type')] = $this->build_type;
-            $results[($bytecode ? Functions::cbc('output_path') : 'output_path')] = $this->output_path;
-            $results[($bytecode ? Functions::cbc('output_name') : 'output_name')] = $this->output_name;
+            $results[($bytecode ? Functions::cbc('output') : 'output')] = $this->output;
 
             if(count($this->options) > 0)
             {
@@ -473,21 +448,20 @@
         public static function fromArray(array $data): BuildConfiguration
         {
             $name = Functions::array_bc($data, 'name');
-            $output_path = Functions::array_bc($data, 'output_path');
+            $output = Functions::array_bc($data, 'output');
 
             if($name === null)
             {
                 throw new ConfigurationException('Build configuration "name" property is required');
             }
 
-            if($output_path === null)
+            if($output === null)
             {
                 throw new ConfigurationException('Build configuration "output_path" property is required');
             }
 
-            $object = new BuildConfiguration($name, $output_path);
+            $object = new BuildConfiguration($name, $output);
 
-            $object->output_name = Functions::array_bc($data, 'output_name');
             $object->build_type = Functions::array_bc($data, 'build_type') ?? BuildOutputType::NCC_PACKAGE;
             $object->options = Functions::array_bc($data, 'options') ?? [];
             $object->define_constants = Functions::array_bc($data, 'define_constants') ?? [];

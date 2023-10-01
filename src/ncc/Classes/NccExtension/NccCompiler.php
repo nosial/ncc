@@ -98,19 +98,9 @@
                     $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
                 );
             }
-            elseif($configuration->getOutputName() !== null)
-            {
-                $package_path =
-                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputPath())
-                    . DIRECTORY_SEPARATOR .
-                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputName());
-            }
             else
             {
-                $package_path =
-                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutputPath())
-                    . DIRECTORY_SEPARATOR .
-                    ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $this->project_manager->getProjectConfiguration()->getAssembly()->getPackage() . '.ncc');
+                $package_path = ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutput());
             }
 
             $progress = 0;

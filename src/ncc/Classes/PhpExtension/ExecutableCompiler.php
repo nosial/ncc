@@ -78,19 +78,9 @@
                     $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
                 );
             }
-            elseif($configuration->getOutputName() !== null)
-            {
-                $binary_path =
-                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputPath())
-                    . DIRECTORY_SEPARATOR .
-                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputName());
-            }
             else
             {
-                $binary_path =
-                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutputPath())
-                    . DIRECTORY_SEPARATOR .
-                    ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getName());
+                $binary_path = ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutput());
             }
 
             if($gcc_path === null)
