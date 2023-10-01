@@ -213,6 +213,18 @@
         }
 
         /**
+         * Returns the value of a build option property
+         *
+         * @param string $property
+         * @param string|null $build_configuration
+         * @return mixed
+         */
+        public function getOption(string $property, ?string $build_configuration=null): mixed
+        {
+            return $this->getOptions($build_configuration)[$property] ?? null;
+        }
+
+        /**
          * @param array $options
          */
         public function setOptions(array $options): void

@@ -92,11 +92,6 @@
             $configuration->setOptions(array_merge($configuration->getOptions(), $options));
             $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]);
 
-            if(count($options) > 0)
-            {
-                $configuration->setOptions(array_merge($configuration->getOptions(), $options));
-            }
-
             if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
             {
                 $package_path = ConstantCompiler::compileConstants(
