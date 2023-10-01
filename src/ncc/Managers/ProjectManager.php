@@ -557,6 +557,7 @@
             if($composer_json->getAutoload()?->getFiles() !== null)
             {
                 $required_files = [];
+
                 foreach($composer_json->getAutoload()?->getFiles() as $path)
                 {
                     $required_files = array_merge($required_files, self::copyContents($project_path, $project_src, $path));

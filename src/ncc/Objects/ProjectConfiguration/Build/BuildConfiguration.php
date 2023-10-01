@@ -419,6 +419,7 @@
                 return $item !== $dependency;
             });
         }
+        // TODO: Merge output_path & output_name into one single property similiar to -o|--output
 
         /**
          * @inheritDoc

@@ -380,6 +380,8 @@
             {
                 foreach($this->checkRequiredDependencies($package_reader) as $dependency)
                 {
+                    // TODO: Check if the dependency is satisfied on the system before trying to install it
+
                     Console::outVerbose(sprintf(
                         'Package %s=%s requires %s=%s, installing dependency',
                         $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion(),
@@ -389,13 +391,6 @@
                     /** @noinspection SlowArrayOperationsInLoopInspection */
                     $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication));
                 }
-            }
-            else
-            {
-                Console::outVerbose(sprintf(
-                    'Skipping installation of dependencies for package %s=%s',
-                    $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()
-                ));
             }
 
             return $installed_packages;

@@ -160,6 +160,8 @@
                 self::import($dependency->getName(), $dependency->getVersion());
             }
 
+            // TODO: Import required files if any (see options)
+
             return $package;
         }
 
@@ -216,6 +218,8 @@
                     self::import($dependency->getName(), $dependency->getVersion());
                 }
             }
+
+            // TODO: Import required files if any (see options)
 
             return $package_reader->getAssembly()->getPackage();
         }
