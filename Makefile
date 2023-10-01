@@ -45,7 +45,6 @@ $(SRC_PATH)/ncc/autoload_spl.php:
 		$(SRC_PATH)/ncc/Interfaces \
 		$(SRC_PATH)/ncc/Managers \
 		$(SRC_PATH)/ncc/Objects \
-		$(SRC_PATH)/ncc/Runtime \
 		$(SRC_PATH)/ncc/Utilities \
 	  	$(SRC_PATH)/ncc/ncc.php \
 	  	$(SRC_PATH)/ncc/Runtime.php
