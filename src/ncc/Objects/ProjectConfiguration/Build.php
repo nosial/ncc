@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use InvalidArgumentException;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
@@ -196,11 +197,19 @@
         }
 
         /**
+         * Returns the options for the build, optionally including the options for the given build configuration
+         *
+         * @param string|null $build_configuration
          * @return array
          */
-        public function getOptions(): array
+        public function getOptions(?string $build_configuration=null): array
         {
-            return $this->options;
+            if($build_configuration === null)
+            {
+                return $this->options;
+            }
+
+            return array_merge($this->options, $this->getBuildConfiguration($build_configuration)->getOptions());
         }
 
         /**
@@ -460,7 +469,6 @@
          *
          * @param string $name
          * @return BuildConfiguration
-         * @throws ConfigurationException
          */
         public function getBuildConfiguration(string $name): BuildConfiguration
         {
@@ -477,7 +485,7 @@
                 }
             }
 
-            throw new ConfigurationException(sprintf('The build configuration "%s" does not exist', $name));
+            throw new InvalidArgumentException(sprintf('The build configuration "%s" does not exist', $name));
         }
 
         /**

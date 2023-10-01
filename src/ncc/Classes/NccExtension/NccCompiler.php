@@ -327,13 +327,12 @@
          * @param PackageWriter $package_writer
          * @param string $build_configuration
          * @return void
-         * @throws ConfigurationException
          */
         public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT): void
         {
             $metadata = new Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
 
-            $metadata->setOptions($this->project_manager->getCompilerOptions($build_configuration));
+            $metadata->setOptions($this->project_manager->getProjectConfiguration()->getBuild()->getOptions($build_configuration));
             $metadata->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
             $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());

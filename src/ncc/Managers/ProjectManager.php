@@ -294,19 +294,6 @@
         }
 
         /**
-         * Returns an array of compiler options associated with the build configuration
-         *
-         * @param string $build_configuration
-         * @return array
-         * @throws ConfigurationException
-         */
-        public function getCompilerOptions(string $build_configuration=BuildConfigurationValues::DEFAULT): array
-        {
-            $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
-            return array_merge($configuration->getOptions(), $this->project_configuration->getBuild()->getOptions());
-        }
-
-        /**
          * Saves the project configuration
          *
          * @return void
