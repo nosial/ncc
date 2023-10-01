@@ -36,6 +36,7 @@
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Enums\ProjectTemplates;
+    use ncc\Enums\SpecialConstants\AssemblyConstants;
     use ncc\Enums\Types\BuildOutputType;
     use ncc\Exceptions\BuildException;
     use ncc\Exceptions\ConfigurationException;
@@ -245,7 +246,6 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws ConfigurationException
          * @throws NotSupportedException
          */
         public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT): array
@@ -262,7 +262,6 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws ConfigurationException
          * @throws NotSupportedException
          */
         public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT): array
@@ -281,7 +280,6 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws ConfigurationException
          */
         public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT): array
         {
@@ -559,21 +557,31 @@
             }
 
             // Generate debug build configuration
-            $ncc_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_ncc', 'build' . DIRECTORY_SEPARATOR . 'debug');
+            $ncc_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_ncc',
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
+            );
             $ncc_debug_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
             $ncc_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($ncc_debug_configuration);
-            $executable_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_executable', 'build' . DIRECTORY_SEPARATOR . 'debug');
+
+            $executable_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_executable',
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+            );
             $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE);
             $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug_ncc');
             $executable_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($executable_debug_configuration);
 
             // Generate release build configuration
-            $ncc_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_ncc', 'build' . DIRECTORY_SEPARATOR . 'release');
+            $ncc_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_ncc',
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . 'ncc'
+            );
             $ncc_release_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
             $build->addBuildConfiguration($ncc_release_configuration);
-            $executable_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_executable', 'build' . DIRECTORY_SEPARATOR . 'release');
+
+            $executable_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_executable',
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+            );
             $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release_ncc');
             $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE);
             $build->addBuildConfiguration($executable_release_configuration);
