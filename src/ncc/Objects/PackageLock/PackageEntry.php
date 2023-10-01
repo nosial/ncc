@@ -163,7 +163,14 @@
         {
             if($version === Versions::LATEST)
             {
-                $version = $this->getLatestVersion();
+                try
+                {
+                    $version = $this->getLatestVersion();
+                }
+                catch(InvalidArgumentException $e)
+                {
+                    return false;
+                }
             }
 
             foreach($this->versions as $version_entry)
@@ -258,6 +265,11 @@
                 {
                     $latest_version = $version;
                 }
+            }
+
+            if($latest_version === null)
+            {
+                throw new InvalidArgumentException(sprintf('Package %s does not have any versions', $this->name));
             }
 
             return $latest_version;

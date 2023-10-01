@@ -28,6 +28,7 @@
     use InvalidArgumentException;
     use ncc\Enums\FileDescriptor;
     use ncc\Enums\Flags\PackageFlags;
+    use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\ImportException;
@@ -107,10 +108,7 @@
          * @param string $package
          * @param string $version
          * @return string
-         * @throws ConfigurationException
-         * @throws IOException
          * @throws ImportException
-         * @throws PathNotFoundException
          */
         public static function import(string $package, string $version=Versions::LATEST): string
         {
@@ -121,12 +119,34 @@
 
             if(is_file($package))
             {
-                return self::importFromPackage(realpath($package));
+                try
+                {
+                    return self::importFromPackage(realpath($package));
+                }
+                catch(ImportException $e)
+                {
+                    throw $e;
+                }
+                catch(Exception $e)
+                {
+                    throw new ImportException(sprintf('Failed to import package from file "%s" due to an exception: %s', $package, $e->getMessage()), $e);
+                }
             }
 
             if(self::getPackageManager()->getPackageLock()->entryExists($package))
             {
-                return self::importFromSystem($package, $version);
+                try
+                {
+                    return self::importFromSystem($package, $version);
+                }
+                catch(ImportException $e)
+                {
+                    throw $e;
+                }
+                catch(Exception $e)
+                {
+                    throw new ImportException(sprintf('Failed to import package from system "%s" due to an exception: %s', $package, $e->getMessage()), $e);
+                }
             }
 
             throw new RuntimeException('Importing from a package name is not supported yet');
@@ -139,6 +159,7 @@
          * @throws ConfigurationException
          * @throws IOException
          * @throws ImportException
+         * @throws NotSupportedException
          * @throws PathNotFoundException
          */
         private static function importFromSystem(string $package, string $version=Versions::LATEST): string
@@ -160,7 +181,25 @@
                 self::import($dependency->getName(), $dependency->getVersion());
             }
 
-            // TODO: Import required files if any (see options)
+            if($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES) !== null)
+            {
+                foreach($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES) as $item)
+                {
+                    try
+                    {
+                        // Get the file contents and prepare it
+                        $required_file = IO::fread($entry->getPath($version) . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $item);
+                        $required_file = preg_replace('/^<\?php|<\?PHP/', '', $required_file, 1);
+
+                        eval($required_file);
+                        unset($required_file);
+                    }
+                    catch(ConfigurationException $e)
+                    {
+                        throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package, $e->getMessage()), $e);
+                    }
+                }
+            }
 
             return $package;
         }
@@ -173,6 +212,7 @@
          * @throws ConfigurationException
          * @throws IOException
          * @throws ImportException
+         * @throws OperationException
          * @throws PathNotFoundException
          */
         private static function importFromPackage(string $package_path): string
@@ -219,7 +259,20 @@
                 }
             }
 
-            // TODO: Import required files if any (see options)
+            if($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES) !== null)
+            {
+                foreach($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES) as $item)
+                {
+                    try
+                    {
+                        eval($package_reader->getComponent($item)->getData());
+                    }
+                    catch(ConfigurationException $e)
+                    {
+                        throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package_name, $e->getMessage()), $e);
+                    }
+                }
+            }
 
             return $package_reader->getAssembly()->getPackage();
         }
