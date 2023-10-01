@@ -43,12 +43,9 @@
         {
             $fileInfo = new SplFileInfo($uri);
 
-            if(!is_dir($fileInfo->getPath()))
+            if(!is_dir($fileInfo->getPath()) && !mkdir($concurrentDirectory = $fileInfo->getPath(), 0755, true) && !is_dir($concurrentDirectory))
             {
-                if(!mkdir($concurrentDirectory = $fileInfo->getPath(), 0755, true) && !is_dir($concurrentDirectory))
-                {
-                    throw new IOException(sprintf('Unable to create directory: (%s)', $fileInfo->getPath()));
-                }
+                throw new IOException(sprintf('Unable to create directory: (%s)', $fileInfo->getPath()));
             }
 
             Console::outDebug(sprintf('writing %s of data to %s', Functions::b2u(strlen($data)), $uri));
