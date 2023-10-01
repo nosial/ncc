@@ -380,7 +380,10 @@
             {
                 foreach($this->checkRequiredDependencies($package_reader) as $dependency)
                 {
-                    // TODO: Check if the dependency is satisfied on the system before trying to install it
+                    if($this->package_lock->entryExists($dependency->getName(), $dependency->getVersion()))
+                    {
+                        continue;
+                    }
 
                     Console::outVerbose(sprintf(
                         'Package %s=%s requires %s=%s, installing dependency',
