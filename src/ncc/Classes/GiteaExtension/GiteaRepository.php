@@ -38,6 +38,7 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Console;
+    use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
     class GiteaRepository implements RepositoryInterface
@@ -81,13 +82,20 @@
          */
         private static function getTags(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/tags', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($group), rawurlencode($project));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/json',
                 'Content-Type: application/json',
                 'User-Agent: ncc'
             ];
+
 
             if($authentication !== null)
             {
@@ -95,7 +103,6 @@
             }
 
             curl_setopt_array($curl, [
-                CURLOPT_URL => $endpoint,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
                 CURLOPT_HTTPHEADER => $headers
@@ -111,6 +118,7 @@
                 }
             }
 
+            RuntimeCache::set($endpoint, $results);
             return $results;
         }
 
@@ -158,8 +166,14 @@
                 $tag = self::getLatestTag($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($group), rawurlencode($project), rawurlencode($tag));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/json',
                 'Content-Type: application/json',
@@ -183,15 +197,19 @@
 
             if(isset($response['zipball_url']))
             {
-                return $response['zipball_url'];
+                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $tag);
             }
-
-            if(isset($response['tarball_url']))
+            elseif(isset($response['tarball_url']))
             {
-                return $response['tarball_url'];
+                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $tag);
+            }
+            else
+            {
+                throw new NetworkException(sprintf('Failed to get tag archive %s url for %s/%s', $tag, $group, $project));
             }
 
-            throw new NetworkException(sprintf('Failed to get tag archive %s url for %s/%s', $tag, $group, $project));
+            RuntimeCache::set($endpoint, $result);
+            return $result;
         }
 
         /**
@@ -208,8 +226,14 @@
          */
         private static function getReleases(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/releases', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($group), rawurlencode($project));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/json',
                 'Content-Type: application/json',
@@ -238,6 +262,7 @@
                 }
             }
 
+            RuntimeCache::set($endpoint, $results);
             return $results;
         }
 
@@ -285,8 +310,14 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/releases/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($group), rawurlencode($project), rawurlencode($release));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/json',
                 'Content-Type: application/json',
@@ -317,7 +348,10 @@
             {
                 if(isset($asset['name'], $asset['browser_download_url']) && preg_match('/\.ncc$/', $asset['name']))
                 {
-                    return new RepositoryResult($asset['browser_download_url'], RepositoryResultType::PACKAGE, $release);
+                    $result = new RepositoryResult($asset['browser_download_url'], RepositoryResultType::PACKAGE, $release);
+
+                    RuntimeCache::set($endpoint, $result);
+                    return $result;
                 }
             }
 
@@ -346,8 +380,14 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/releases/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($group), rawurlencode($project), rawurlencode($release));
+
+            if (RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/json',
                 'Content-Type: application/json',
@@ -371,15 +411,19 @@
 
             if(isset($response['zipball_url']))
             {
-                return new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
+                $results = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
             }
-
-            if(isset($response['tarball_url']))
+            elseif(isset($response['tarball_url']))
             {
-                return new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+                $results = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+            }
+            else
+            {
+                throw new NetworkException(sprintf('Failed to get release %s archive url for %s/%s', $release, $group, $project));
             }
 
-            throw new NetworkException(sprintf('Failed to get release %s archive url for %s/%s', $release, $group, $project));
+            RuntimeCache::set($endpoint, $results);
+            return $results;
         }
 
         /**
