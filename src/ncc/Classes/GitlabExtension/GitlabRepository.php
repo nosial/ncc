@@ -38,6 +38,7 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Console;
+    use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
     class GitlabRepository implements RepositoryInterface
@@ -81,9 +82,15 @@
          */
         private static function getTags(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
-            $curl = curl_init();
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/repository/tags?order_by=updated&sort=desc', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -113,6 +120,7 @@
                 }
             }
 
+            RuntimeCache::set($endpoint, $results);
             return $results;
         }
 
@@ -160,9 +168,15 @@
                 $tag = self::getLatestTag($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/repository/archive.zip?sha=%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($tag));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'User-Agent: ncc'
             ];
@@ -173,7 +187,6 @@
             }
 
             curl_setopt_array($curl, [
-                CURLOPT_URL => $endpoint,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_NOBODY => true,
                 CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
@@ -196,7 +209,10 @@
                 throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
-            return new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            $results = new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            RuntimeCache::set($endpoint, $results);
+
+            return $results;
         }
 
         /**
@@ -213,9 +229,15 @@
          */
         private static function getReleases(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
-            $curl = curl_init();
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases?order_by=released_at&sort=desc', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -227,10 +249,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $results = [];
             foreach(self::processHttpResponse($curl, $group, $project) as $item)
@@ -241,6 +264,7 @@
                 }
             }
 
+            RuntimeCache::set($endpoint, $results);
             return $results;
         }
 
@@ -288,9 +312,15 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases/%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($release));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -302,10 +332,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $response = self::processHttpResponse($curl, $group, $project);
 
@@ -315,15 +346,19 @@
                 {
                     if(isset($asset['direct_asset_url']))
                     {
-                        return new RepositoryResult($asset['direct_asset_url'], RepositoryResultType::PACKAGE, $release);
+                        $result = new RepositoryResult($asset['direct_asset_url'], RepositoryResultType::PACKAGE, $release);
                     }
-
-                    if(isset($asset['url']))
+                    elseif(isset($asset['url']))
                     {
-                        return new RepositoryResult($asset['url'], RepositoryResultType::PACKAGE, $release);
+                        $result = new RepositoryResult($asset['url'], RepositoryResultType::PACKAGE, $release);
+                    }
+                    else
+                    {
+                        throw new NetworkException(sprintf('No direct asset URL found for %s/%s/%s', $group, $project, $release));
                     }
 
-                    throw new NetworkException(sprintf('No direct asset URL found for %s/%s/%s', $group, $project, $release));
+                    RuntimeCache::set($endpoint, $result);
+                    return $result;
                 }
             }
 
@@ -352,9 +387,15 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases/%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($release));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -366,10 +407,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $response = self::processHttpResponse($curl, $group, $project);
 
@@ -387,13 +429,19 @@
 
                 if($asset['format'] === 'zip')
                 {
-                    return new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                }
+                elseif($asset['format'] === 'tar')
+                {
+                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                }
+                else
+                {
+                    throw new NetworkException(sprintf('Unknown source asset format "%s" for %s/%s/%s', $asset['format'], $group, $project, $release));
                 }
 
-                if($asset['format'] === 'tar')
-                {
-                    return new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
-                }
+                RuntimeCache::set($endpoint, $results);
+                return $results;
             }
 
             throw new NetworkException(sprintf('No archive found for %s/%s/%s', $group, $project, $release));
