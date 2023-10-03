@@ -38,6 +38,7 @@
     use ncc\ThirdParty\composer\Semver\Comparator;
     use ncc\ThirdParty\composer\Semver\Semver;
     use ncc\Utilities\Console;
+    use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
     class PackagistRepository implements RepositoryInterface
@@ -54,6 +55,12 @@
 
             $version = self::resolveVersion($repository, $vendor, $project, $version);
             $endpoint = sprintf('%s://%s/packages/%s/%s.json', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($vendor), rawurlencode($project));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
             Console::outDebug(sprintf('Fetching archive %s/%s version %s from %s', $vendor, $project, $version, $endpoint));
 
             $curl = curl_init($endpoint);
@@ -62,9 +69,11 @@
                 'User-Agent: ncc'
             ];
 
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $response = self::processHttpResponse($curl, $vendor, $project);
 
@@ -78,7 +87,10 @@
                 throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $vendor, $project, $version));
             }
 
-            return new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE, $version);
+            $result = new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE, $version);
+            RuntimeCache::set($endpoint, $result);
+
+            return $result;
         }
 
         /**
@@ -104,6 +116,12 @@
         private static function getVersions(RepositoryConfiguration $repository, string $vendor, string $project): array
         {
             $endpoint = sprintf('%s://%s/packages/%s/%s.json', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($vendor), rawurlencode($project));
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
             $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/json',
@@ -112,9 +130,11 @@
 
             Console::outDebug(sprintf('Fetching %s/%s versions from %s', $vendor, $project, $endpoint));
 
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $response = self::processHttpResponse($curl, $vendor, $project);
 
@@ -123,7 +143,10 @@
                 throw new NetworkException(sprintf('Invalid response from %s/%s, missing "package.versions" key', $vendor, $project));
             }
 
-            return array_keys($response['package']['versions']);
+            $result = array_keys($response['package']['versions']);
+            RuntimeCache::set($endpoint, $result);
+
+            return $result;
         }
 
         /**
