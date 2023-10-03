@@ -38,6 +38,7 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Console;
+    use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
     class GithubRepository implements RepositoryInterface
@@ -81,8 +82,14 @@
          */
         private static function getTags(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication = null): array
         {
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/repos/%s/%s/tags', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), $group, $project);
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/vnd.github+json',
                 'X-GitHub-Api-Version: 2022-11-28',
@@ -94,10 +101,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             $results = [];
             Console::outDebug(sprintf('Fetching tags for %s/%s from %s', $group, $project, $endpoint));
@@ -109,6 +117,7 @@
                 }
             }
 
+            RuntimeCache::set($endpoint, $results);
             return $results;
         }
 
@@ -156,8 +165,14 @@
                 $tag = self::getLatestTag($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/repos/%s/%s/zipball/refs/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), $group, $project, $tag);
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'User-Agent: ncc'
             ];
@@ -167,12 +182,13 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_NOBODY, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_NOBODY => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_FOLLOWLOCATION => true
+            ]);
 
             Console::outDebug(sprintf('Fetching tag archive for %s/%s/%s from %s', $group, $project, $tag, $endpoint));
 
@@ -190,7 +206,11 @@
                 throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
-            return new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            $result =  new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            curl_close($curl);
+            RuntimeCache::set($endpoint, $result);
+
+            return $result;
         }
 
         /**
@@ -207,8 +227,14 @@
          */
         private static function getReleases(RepositoryConfiguration $repository, string $group, string $project, ?AuthenticationInterface $authentication=null): array
         {
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/repos/%s/%s/releases', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), $group, $project);
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/vnd.github+json',
                 'X-GitHub-Api-Version: 2022-11-28',
@@ -220,10 +246,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             Console::outDebug(sprintf('Fetching releases for %s/%s from %s', $group, $project, $endpoint));
 
@@ -283,8 +310,14 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/repos/%s/%s/releases/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), $group, $project, $release);
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/vnd.github+json',
                 'X-GitHub-Api-Version: 2022-11-28',
@@ -296,10 +329,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
@@ -313,7 +347,10 @@
             {
                 if(preg_match('/\.ncc$/', $asset['name']) === 1)
                 {
-                    return new RepositoryResult($asset['browser_download_url'], RepositoryResultType::PACKAGE, $release);
+                    $result = new RepositoryResult($asset['browser_download_url'], RepositoryResultType::PACKAGE, $release);
+                    RuntimeCache::set($endpoint, $result);
+
+                    return $result;
                 }
             }
 
@@ -342,8 +379,14 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $curl = curl_init();
             $endpoint = sprintf('%s://%s/repos/%s/%s/releases/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), $group, $project, $release);
+
+            if(RuntimeCache::exists($endpoint))
+            {
+                return RuntimeCache::get($endpoint);
+            }
+
+            $curl = curl_init($endpoint);
             $headers = [
                 'Accept: application/vnd.github+json',
                 'X-GitHub-Api-Version: 2022-11-28',
@@ -355,10 +398,11 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, HttpRequestType::GET);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             Console::outDebug(sprintf('Fetching release archive for %s/%s/%s from %s', $group, $project, $release, $endpoint));
 
@@ -366,15 +410,19 @@
 
             if(isset($response['zipball_url']))
             {
-                return new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
+                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
             }
-
-            if(isset($response['tarball_url']))
+            elseif(isset($response['tarball_url']))
             {
-                return new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+            }
+            else
+            {
+                throw new NetworkException(sprintf('Failed to get release archive for %s/%s/%s: No archive found', $group, $project, $release));
             }
 
-            throw new NetworkException(sprintf('Failed to get release archive for %s/%s/%s: No archive found', $group, $project, $release));
+            RuntimeCache::set($endpoint, $result);
+            return $result;
         }
 
         /**
