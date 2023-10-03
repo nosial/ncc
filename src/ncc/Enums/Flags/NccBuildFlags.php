@@ -29,4 +29,9 @@
          * and can cause errors
          */
         public const UNSTABLE = 'unstable';
+
+        /**
+         * Indicates if the build is currently in beta testing phase
+         */
+        public const BETA = 'beta';
     }
