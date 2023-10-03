@@ -211,6 +211,12 @@
                 return 0;
             }
 
+            if($package === '')
+            {
+                Console::outError('No package specified, use --package or -p to specify a package', true, 1);
+                return 1;
+            }
+
             if(!is_file($package))
             {
                 Console::outError(sprintf("Unable to find package '%s'", $package), true, 1);
