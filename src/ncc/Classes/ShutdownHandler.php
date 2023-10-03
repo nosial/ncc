@@ -85,7 +85,6 @@
 
             try
             {
-                RuntimeCache::clearCache();
                 Functions::finalizePermissions();
             }
             catch (Exception $e)
