@@ -764,7 +764,7 @@
 
             if(curl_errno($curl))
             {
-                ShutdownHandler::declareTemporaryPath($file_handle);
+                ShutdownHandler::declareTemporaryPath($file_path);
                 throw new NetworkException(sprintf('Failed to download file from %s: %s', $url, curl_error($curl)));
             }
 
