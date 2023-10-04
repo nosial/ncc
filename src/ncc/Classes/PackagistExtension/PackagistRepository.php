@@ -231,7 +231,19 @@
          */
         private static function processHttpResponse(CurlHandle $curl, string $vendor, string $project): array
         {
-            $response = curl_exec($curl);
+            $retry_count = 0;
+            $response = false;
+
+            while($retry_count < 3 && $response === false)
+            {
+                $response = curl_exec($curl);
+
+                if($response === false)
+                {
+                    Console::outWarning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $vendor, $project, curl_error($curl), $retry_count + 1));
+                    $retry_count++;
+                }
+            }
 
             if($response === false)
             {
