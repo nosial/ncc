@@ -56,26 +56,30 @@
             $version = self::resolveVersion($repository, $vendor, $project, $version);
             $endpoint = sprintf('%s://%s/packages/%s/%s.json', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($vendor), rawurlencode($project));
 
-            if(RuntimeCache::exists($endpoint))
-            {
-                return RuntimeCache::get($endpoint);
-            }
-
             Console::outDebug(sprintf('Fetching archive %s/%s version %s from %s', $vendor, $project, $version, $endpoint));
 
-            $curl = curl_init($endpoint);
-            $headers = [
-                'Accept: application/json',
-                'User-Agent: ncc'
-            ];
+            if(RuntimeCache::exists($endpoint))
+            {
+                $response = RuntimeCache::get($endpoint);
+            }
+            else
+            {
+                $curl = curl_init($endpoint);
+                $headers = [
+                    'Accept: application/json',
+                    'User-Agent: ncc'
+                ];
 
-            curl_setopt_array($curl, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
-                CURLOPT_HTTPHEADER => $headers
-            ]);
+                curl_setopt_array($curl, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                    CURLOPT_HTTPHEADER => $headers
+                ]);
 
-            $response = self::processHttpResponse($curl, $vendor, $project);
+                $response = self::processHttpResponse($curl, $vendor, $project);
+                RuntimeCache::set($endpoint, $response);
+                unset($curl);
+            }
 
             if(!isset($response['package']['versions'][$version]))
             {
@@ -87,10 +91,7 @@
                 throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $vendor, $project, $version));
             }
 
-            $result = new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE, $version);
-            RuntimeCache::set($endpoint, $result);
-
-            return $result;
+            return new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE, $version);
         }
 
         /**
@@ -119,34 +120,33 @@
 
             if(RuntimeCache::exists($endpoint))
             {
-                return RuntimeCache::get($endpoint);
+                $response = RuntimeCache::get($endpoint);
             }
+            else
+            {
+                $curl = curl_init($endpoint);
+                $headers = [
+                    'Accept: application/json',
+                    'User-Agent: ncc'
+                ];
 
-            $curl = curl_init($endpoint);
-            $headers = [
-                'Accept: application/json',
-                'User-Agent: ncc'
-            ];
+                curl_setopt_array($curl, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                    CURLOPT_HTTPHEADER => $headers
+                ]);
 
-            Console::outDebug(sprintf('Fetching %s/%s versions from %s', $vendor, $project, $endpoint));
-
-            curl_setopt_array($curl, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
-                CURLOPT_HTTPHEADER => $headers
-            ]);
-
-            $response = self::processHttpResponse($curl, $vendor, $project);
+                $response = self::processHttpResponse($curl, $vendor, $project);
+                RuntimeCache::set($endpoint, $response);
+                unset($curl);
+            }
 
             if(!isset($response['package']['versions']))
             {
                 throw new NetworkException(sprintf('Invalid response from %s/%s, missing "package.versions" key', $vendor, $project));
             }
 
-            $result = array_keys($response['package']['versions']);
-            RuntimeCache::set($endpoint, $result);
-
-            return $result;
+            return array_keys($response['package']['versions']);
         }
 
         /**
