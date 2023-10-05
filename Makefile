@@ -1,11 +1,12 @@
 # Variables
 PHPCC := $(shell which php)
 PHPAB := $(shell which phpab)
-BUILD_PATH := build
 SRC_PATH := src
 INSTALLER_PATH := $(SRC_PATH)/installer
 CONFIG_PATH := $(SRC_PATH)/config
 TIMESTAMP := $(shell date +%Y%m%d%H%M%S)
+BUILD_VERSION := $(shell cat $(SRC_PATH)/ncc/VERSION)
+BUILD_PATH := build/ncc-$(BUILD_VERSION)
 
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
@@ -56,28 +57,28 @@ autoload: $(addsuffix /autoload_spl.php, $(AUTOLOAD_PATHS)) $(SRC_PATH)/ncc/auto
 
 .PHONY: redist
 redist: autoload
-	rm -rf $(BUILD_PATH)/src
-	mkdir -p $(BUILD_PATH)/src
-	cp -rf $(SRC_PATH)/ncc/* $(BUILD_PATH)/src
-	cp -f $(INSTALLER_PATH)/installer $(BUILD_PATH)/src/INSTALL
-	cp -f $(INSTALLER_PATH)/ncc.sh $(BUILD_PATH)/src/ncc.sh
-	cp -f $(CONFIG_PATH)/ncc.yaml $(BUILD_PATH)/src/default_config.yaml
-	cp -f $(CONFIG_PATH)/ncc.yaml $(BUILD_PATH)/src/CLI/template_config.yaml
-	cp -f $(CONFIG_PATH)/default_repositories.json $(BUILD_PATH)/src/default_repositories.json
-	cp -f $(CONFIG_PATH)/ncc-package.xml $(BUILD_PATH)/src/ncc-package.xml
-	cp -f $(INSTALLER_PATH)/extension $(BUILD_PATH)/src/extension
-	chmod +x $(BUILD_PATH)/src/INSTALL
-	cp -f LICENSE $(BUILD_PATH)/src/LICENSE
-	cp -f README.md $(BUILD_PATH)/src/README.md
-	cp -f $(INSTALLER_PATH)/hash_check.php $(BUILD_PATH)/src/hash_check.php
-	$(PHPCC) $(BUILD_PATH)/src/hash_check.php
-	rm $(BUILD_PATH)/src/hash_check.php
-	cp -f $(INSTALLER_PATH)/generate_build_files.php $(BUILD_PATH)/src/generate_build_files.php
-	$(PHPCC) $(BUILD_PATH)/src/generate_build_files.php
-	rm $(BUILD_PATH)/src/generate_build_files.php
+	rm -rf $(BUILD_PATH)
+	mkdir -p $(BUILD_PATH)
+	cp -rf $(SRC_PATH)/ncc/* $(BUILD_PATH)
+	cp -f $(INSTALLER_PATH)/installer $(BUILD_PATH)/INSTALL
+	cp -f $(INSTALLER_PATH)/ncc.sh $(BUILD_PATH)/ncc.sh
+	cp -f $(CONFIG_PATH)/ncc.yaml $(BUILD_PATH)/default_config.yaml
+	cp -f $(CONFIG_PATH)/ncc.yaml $(BUILD_PATH)/CLI/template_config.yaml
+	cp -f $(CONFIG_PATH)/default_repositories.json $(BUILD_PATH)/default_repositories.json
+	cp -f $(CONFIG_PATH)/ncc-package.xml $(BUILD_PATH)/ncc-package.xml
+	cp -f $(INSTALLER_PATH)/extension $(BUILD_PATH)/extension
+	chmod +x $(BUILD_PATH)/INSTALL
+	cp -f LICENSE $(BUILD_PATH)/LICENSE
+	cp -f README.md $(BUILD_PATH)/README.md
+	cp -f $(INSTALLER_PATH)/hash_check.php $(BUILD_PATH)/hash_check.php
+	$(PHPCC) $(BUILD_PATH)/hash_check.php
+	rm $(BUILD_PATH)/hash_check.php
+	cp -f $(INSTALLER_PATH)/generate_build_files.php $(BUILD_PATH)/generate_build_files.php
+	$(PHPCC) $(BUILD_PATH)/generate_build_files.php
+	rm $(BUILD_PATH)/generate_build_files.php
 
 $(BUILD_PATH)/build_$(TIMESTAMP).tar.gz: redist
-	cd $(BUILD_PATH)/src; tar -czvf ../build_$(TIMESTAMP).tar.gz *
+	cd $(BUILD_PATH); tar -czvf ../ncc_$(BUILD_VERSION).tar.gz *
 
 .PHONY: tar
 tar: $(BUILD_PATH)/build_$(TIMESTAMP).tar.gz

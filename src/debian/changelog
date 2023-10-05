@@ -1,0 +1,9 @@
+ncc (2.0.0) unstable; urgency=medium
+
+  * New major release.
+  * Various changes and improvements.
+  * Updated to be compatible with PHP 8.0+.
+  * Added support for package management.
+  * Enhancements to the compiler and toolkit.
+
+ -- netkas <netkas@nosial.net>  Tue, 04 Oct 2023 21:24:00 +0000

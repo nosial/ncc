@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ncc
+Upstream-Contact: netkas <netkas@nosial.net>
+Source: https://git.n64.cc/nosial/ncc
+
+Files: *
+Copyright: 2022-2023 Nosial - All Rights Reserved.
+License: MIT
