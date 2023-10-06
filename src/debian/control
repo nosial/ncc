@@ -1,8 +1,16 @@
-Package: ncc
+Source: ncc
+Section: devel
+Priority: optional
 Version: 2.0.0
-Architecture: any
 Maintainer: netkas <netkas@nosial.net>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.5.1
 Homepage: https://git.n64.cc/nosial/ncc
+Vcs-Git: https://git.n64.cc/nosial/ncc.git
+Vcs-Browser: https://git.n64.cc/nosial/ncc
+
+Package: ncc
+Architecture: any
 Depends: php (>= 8.0), php-mbstring, php-common, php-ctype, php-curl, zlib1g, php-zip
 Description: Nosial Code Compiler is a multi-purpose compiler, package manager, and toolkit written in PHP.
  NCC (Nosial Code Compiler) is a versatile tool designed for various tasks related to PHP development.
