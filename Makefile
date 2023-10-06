@@ -90,8 +90,6 @@ debian_prepare: autoload
 	mkdir -p $(DEBIAN_BUILD_PATH)/DEBIAN
 	mkdir -p $(DEBIAN_BUILD_PATH)/usr/share/ncc
 	cp -rf $(SRC_PATH)/ncc/* $(DEBIAN_BUILD_PATH)/usr/share/ncc
-	cp -rf $(INSTALLER_SRC_PATH)/ncc.sh $(DEBIAN_BUILD_PATH)/usr/share/ncc/ncc.sh
-	chmod +x $(DEBIAN_BUILD_PATH)/usr/share/ncc/ncc.sh
 	cp -rf $(CONFIG_PATH)/ncc.yaml $(DEBIAN_BUILD_PATH)/usr/share/ncc/default_config.yaml
 	cp -rf $(CONFIG_PATH)/ncc.yaml $(DEBIAN_BUILD_PATH)/usr/share/ncc/CLI/template_config.yaml
 	cp -rf $(CONFIG_PATH)/default_repositories.json $(DEBIAN_BUILD_PATH)/usr/share/ncc/default_repositories.json
@@ -106,6 +104,8 @@ debian_prepare: autoload
 	cp -rf $(DEBIAN_SRC_PATH)/control $(DEBIAN_BUILD_PATH)/DEBIAN/control
 	cp -rf $(DEBIAN_SRC_PATH)/postinst $(DEBIAN_BUILD_PATH)/DEBIAN/postinst
 	chmod +x $(DEBIAN_BUILD_PATH)/DEBIAN/postinst
+	cp -rf $(DEBIAN_SRC_PATH)/postrm $(DEBIAN_BUILD_PATH)/DEBIAN/postrm
+	chmod +x $(DEBIAN_BUILD_PATH)/DEBIAN/postrm
 	cp -rf $(DEBIAN_SRC_PATH)/copyright $(DEBIAN_BUILD_PATH)/DEBIAN/copyright
 
 

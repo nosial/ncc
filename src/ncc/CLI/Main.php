@@ -29,6 +29,7 @@
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecCommand;
     use ncc\CLI\Commands\PackageInspectorCommand;
+    use ncc\CLI\Commands\SetupCommand;
     use ncc\CLI\Management\ConfigMenu;
     use ncc\CLI\Management\CredentialMenu;
     use ncc\CLI\Management\PackageManagerMenu;
@@ -147,6 +148,9 @@
                     default:
                         Console::out('Unknown command ' . strtolower(self::$args['ncc-cli']));
                         break;
+
+                    case 'setup':
+                        return SetupCommand::start(self::$args);
 
                     case 'project':
                         return ProjectMenu::start(self::$args);

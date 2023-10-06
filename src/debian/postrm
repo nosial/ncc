@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+case "$1" in
+    remove|purge)
+        # Remove the entry point script
+        ENTRY_POINT="/usr/bin/ncc"
+
+        if [ -f "$ENTRY_POINT" ]; then
+            rm -f "$ENTRY_POINT"
+            echo "Removed $ENTRY_POINT"
+        else
+            echo "$ENTRY_POINT not found. Skipping removal."
+        fi
+        ;;
+    *)
+esac
+
+# End of the script
+exit 0
