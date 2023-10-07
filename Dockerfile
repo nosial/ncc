@@ -22,7 +22,7 @@
 ARG PHP_VERSION=8.2
 
 # Builder stage: downloads necessary files and serves them on a silver platter.
-FROM php:{PHP_VERSION}-fpm AS builder
+FROM php:${PHP_VERSION}-fpm AS builder
 ENV GENERIC_BUILD_PATH=/tmp/ncc_build
 WORKDIR /tmp
 
@@ -46,7 +46,7 @@ RUN cd /tmp/ncc && make redist
 
 
 # Main stage: Copies build files and installs all dependencies
-FROM php:{PHP_VERSION}-fpm-alpine AS production
+FROM php:${PHP_VERSION}-fpm-alpine AS production
 
 # OSI labels
 LABEL maintainer="Netkas <netkas@nosial.net>"
