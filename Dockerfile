@@ -18,14 +18,12 @@
 #   This image is intended to be used as a base for projects using ncc.
 #
 
-# Build-time args/envs
-ENV GENERIC_BUILD_PATH=/tmp/ncc_build
-
+# Build-time args
 ARG PHP_VERSION=8.2
-
 
 # Builder stage: downloads necessary files and serves them on a silver platter.
 FROM php:{PHP_VERSION}-fpm AS builder
+ENV GENERIC_BUILD_PATH=/tmp/ncc_build
 WORKDIR /tmp
 
 # Install some stuff the default image doesn't come with
@@ -57,7 +55,7 @@ LABEL description="ncc's official Docker image"
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
 # Copy downloaded files
-COPY --from=builder ${GENERIC_BUILD_PATH}/. .
+COPY --from=builder /tmp/ncc_build/. .
 
 # Install some stuff the default image doesn't come with
 RUN apk update && \
