@@ -129,6 +129,22 @@ deb: $(DEBIAN_PACKAGE_BUILD_PATH)
 install: redist
 	$(GENERIC_BUILD_PATH)/INSTALL --auto
 
+.PHONY: docker-debian
+docker-debian:
+	docker build -t ncc-debian -f Dockerfile.debian .
+
+.PHONY: docker-debian-run
+docker-debian-run:
+	docker run -it --rm -v $(PWD):/ncc ncc-debian /bin/bash
+
+.PHONY: docker-alpine
+docker-alpine:
+	docker build -t ncc-alpine -f Dockerfile.alpine .
+
+.PHONY: docker-alpine-run
+docker-alpine-run:
+	docker run -it --rm -v $(PWD):/ncc ncc-alpine /bin/sh
+
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_PATH)
@@ -140,6 +156,11 @@ help:
 	@echo "Available commands:"
 	@echo "  make autoload          - Generate autoload files"
 	@echo "  make redist            - Prepare the project for redistribution"
+	@echo "  make install           - Installs ncc on the system (requires root privileges & php)"
 	@echo "  make tar               - Package the project into a tarball (Generic installer, requires php)"
 	@echo "  make deb               - Package the project into a Debian package"
+	@echo "  make docker-debian     - Build a Debian Docker image"
+	@echo "  make docker-debian-run - Run the Debian Docker image"
+	@echo "  make docker-alpine     - Build an Alpine Docker image"
+	@echo "  make docker-alpine-run - Run the Alpine Docker image"
 	@echo "  make clean             - Clean the build artifacts"
