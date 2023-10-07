@@ -34,6 +34,22 @@ build:
     paths:
       - build/*.tar.gz
 
+# Build the debian package using the Makefile
+build-debian:
+  stage: build
+  script:
+    - wget -O phive.phar https://phar.io/releases/phive.phar
+    - wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
+    - chmod +x phive.phar
+    - mv phive.phar /usr/local/bin/phive
+    - phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+    - make autoload
+    - make redist
+    - make deb
+  artifacts:
+    paths:
+      - build/*.deb
+
 # Build the Alpine Docker image
 ncc-docker-build:
   image: docker:latest
@@ -79,29 +95,38 @@ ncc-docker-build-debian:
       exists:
         - Dockerfile.debian
 
-
-# Publish the package
+# Publish the tarball and Debian package to the GitLab Package Registry
 publish:
   stage: publish
   script:
     - |
       if [[ ! -z "$CI_COMMIT_TAG" ]]; then
         PACKAGE_NAME=$CI_COMMIT_TAG
-        FILE_NAME="ncc-$CI_COMMIT_TAG.tar.gz"
+        FILE_NAME_TAR="ncc-$CI_COMMIT_TAG.tar.gz"
+        FILE_NAME_DEB="ncc-$CI_COMMIT_TAG.deb"
       else
         BRANCH_NAME=$(echo $CI_COMMIT_REF_NAME | sed 's/\//-/g')
         COMMIT_ID=${CI_COMMIT_SHORT_SHA}
         PACKAGE_NAME="$BRANCH_NAME-$COMMIT_ID"
-        FILE_NAME="ncc-$PACKAGE_NAME.tar.gz"
+        FILE_NAME_TAR="ncc-$PACKAGE_NAME.tar.gz"
+        FILE_NAME_DEB="ncc-$PACKAGE_NAME.deb"
       fi
       
-      mv build/*.tar.gz build/$FILE_NAME
+      mv build/*.tar.gz build/$FILE_NAME_TAR
+      mv build/*.deb build/$FILE_NAME_DEB
       echo "Package Name: $PACKAGE_NAME"
-      echo "File Name: $FILE_NAME"
+      echo "Tarball File Name: $FILE_NAME_TAR"
+      echo "Debian Package File Name: $FILE_NAME_DEB"
       
+      # Upload the tarball
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-           --upload-file build/$FILE_NAME \
-           "https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$CI_PIPELINE_ID/$FILE_NAME"
+           --upload-file build/$FILE_NAME_TAR \
+           "https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$CI_PIPELINE_ID/$FILE_NAME_TAR"
+
+      # Upload the Debian package
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --upload-file build/$FILE_NAME_DEB \
+           "https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$CI_PIPELINE_ID/$FILE_NAME_DEB"
   only:
     - branches
     - tags
