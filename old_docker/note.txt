@@ -1,0 +1,2 @@
+These are the old dockerfiles for ncc, they are no longer used. The new dockerfiles are in the root of the repository.
+These files are kept for reference and may be removed in the future.

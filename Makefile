@@ -8,7 +8,9 @@ INSTALLER_SRC_PATH := $(SRC_PATH)/installer
 CONFIG_PATH := $(SRC_PATH)/config
 BUILD_VERSION := $(shell cat $(SRC_PATH)/ncc/VERSION)
 BUILD_PATH := build
-GENERIC_BUILD_PATH := $(BUILD_PATH)/ncc_$(BUILD_VERSION)
+ifndef GENERIC_BUILD_PATH
+	GENERIC_BUILD_PATH := $(BUILD_PATH)/ncc_$(BUILD_VERSION)
+endif
 TAR_BUILD:= ncc_$(BUILD_VERSION).tar.gz
 DEBIAN_SRC_PATH := $(SRC_PATH)/debian
 DEBIAN_BUILD_PATH := $(BUILD_PATH)/debian/ncc_$(BUILD_VERSION)_all
@@ -34,8 +36,10 @@ AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
 ifndef PHPCC
     $(error "PHP binary not found. Please install PHP or check your PATH")
 endif
+
+# Check if phpab is installed
 ifndef PHPAB
-    $(error "phpab (PHP Autoload Builder) binary not found. Please install phpab or check your PATH")
+	$(error "phpab (PHP Autoload Builder) not found. Please install phpab or check your PATH")
 endif
 
 # Build rules
@@ -120,6 +124,10 @@ $(DEBIAN_PACKAGE_BUILD_PATH): debian_prepare
 
 .PHONY: deb
 deb: $(DEBIAN_PACKAGE_BUILD_PATH)
+
+.PHONY: install
+install: redist
+	$(GENERIC_BUILD_PATH)/INSTALL --auto
 
 .PHONY: clean
 clean:
