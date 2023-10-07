@@ -18,9 +18,17 @@
 #   This image is intended to be used as a base for projects using ncc.
 #
 
-# Builder stage: downloads necessary files and serves them on a silver platter.
-FROM php:8.2-fpm AS builder
+# OSI labels and build-time args/envs
+LABEL maintainer="Netkas <netkas@nosial.net>"
+LABEL description="ncc's official Docker image"
+
 ENV GENERIC_BUILD_PATH=/tmp/ncc_build
+
+ARG PHP_VERSION=8.2
+
+
+# Builder stage: downloads necessary files and serves them on a silver platter.
+FROM php:{PHP_VERSION}-fpm AS builder
 WORKDIR /tmp
 
 # Install some stuff the default image doesn't come with
@@ -43,13 +51,11 @@ RUN cd /tmp/ncc && make redist
 
 
 # Main stage: Copies build files and installs all dependencies
-FROM php:8.2-fpm-alpine AS production
-LABEL maintainer="netkas <netkas@nosial.net>"
-LABEL description="ncc alpine docker image"
+FROM php:{PHP_VERSION}-fpm-alpine AS production
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
 # Copy downloaded files
-COPY --from=builder /tmp/ncc_build/. .
+COPY --from=builder ${GENERIC_BUILD_PATH}/. .
 
 # Install some stuff the default image doesn't come with
 RUN apk update && \
