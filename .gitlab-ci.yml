@@ -53,7 +53,7 @@ build-debian:
 # Build the Alpine Docker image
 ncc-docker-build-alpine:
   image: docker:latest
-  stage: build-docker-alpine
+  stage: build-docker
   services:
     - docker:dind
   before_script:
@@ -76,7 +76,7 @@ ncc-docker-build-alpine:
 # Build the Debian Docker image
 ncc-docker-build-debian:
   image: docker:latest
-  stage: build-docker-debian
+  stage: build-docker
   services:
     - docker:dind
   before_script:
