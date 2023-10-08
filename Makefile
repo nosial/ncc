@@ -139,7 +139,7 @@ docker-debian-run:
 
 .PHONY: docker-alpine
 docker-alpine:
-	docker build -t ncc-alpine -f Dockerfile.alpine .
+	docker build -t ncc-alpine -f Dockerfile .
 
 .PHONY: docker-alpine-run
 docker-alpine-run:
