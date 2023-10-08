@@ -45,7 +45,7 @@
         private $compiler_version;
 
         /**
-         * @var array|null
+         * @var array
          */
         private $options;
 
@@ -120,9 +120,9 @@
         /**
          * Returns an array of options associated with the package
          *
-         * @return array|null
+         * @return array
          */
-        public function getOptions(): ?array
+        public function getOptions(): array
         {
             return $this->options;
         }
@@ -130,11 +130,27 @@
         /**
          * Sets an array of options associated with the package
          *
-         * @param array|null $options
+         * @param array $options
          */
-        public function setOptions(?array $options): void
+        public function setOptions(array $options): void
         {
             $this->options = $options;
+        }
+
+        /**
+         * Adds an option associated with the package
+         *
+         * @param array $options
+         * @return void
+         */
+        public function addOptions(array $options): void
+        {
+            if($this->options === null)
+            {
+                $this->options = [];
+            }
+
+            $this->options = array_merge($this->options, $options);
         }
 
         /**

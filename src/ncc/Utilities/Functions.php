@@ -26,6 +26,7 @@
     use FilesystemIterator;
     use JsonException;
     use ncc\Enums\Scopes;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
@@ -626,5 +627,20 @@
         {
             $input = str_replace('.', '_', $input);
             return strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', preg_replace('/([a-z])([A-Z])/', '$1_$2', $input)), '_'));
+        }
+
+        /**
+         * Returns a shell script that can be used to execute the given package
+         *
+         * @param string $package_name
+         * @param string $version
+         * @return string
+         */
+        public static function createExecutionPointer(string $package_name, string $version=Versions::LATEST): string
+        {
+            $content = "#!/bin/sh\n";
+            $content .= sprintf('exec ncc exec --package "%s" --exec-version "%s" --exec-args "$@"', $package_name, $version);
+
+            return $content;
         }
     }

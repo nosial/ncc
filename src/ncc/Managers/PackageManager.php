@@ -38,6 +38,7 @@
     use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Enums\Options\InstallPackageOptions;
+    use ncc\Enums\Options\ProjectOptions;
     use ncc\Enums\RegexPatterns;
     use ncc\Enums\Scopes;
     use ncc\Enums\Types\ProjectType;
@@ -54,6 +55,7 @@
     use ncc\Objects\RemotePackageInput;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
     use ncc\Utilities\Resolver;
@@ -372,6 +374,56 @@
                 $filesystem->remove($package_path);
                 $this->loadLock();
                 throw new IOException(sprintf('Failed to add package to package lock file due to an exception: %s', $e->getMessage()), $e);
+            }
+
+            if($package_reader->getMetadata()->getOption(ProjectOptions::CREATE_SYMLINK) === null)
+            {
+                // Remove the symlink if it exists
+                if($this->package_lock->getEntry($package_reader->getAssembly()->getPackage())->isSymlinkRegistered())
+                {
+                    if(is_file(PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_reader->getAssembly()->getName())))
+                    {
+                        Console::outVerbose(sprintf(
+                            'Removing symlink for %s=%s at %s',
+                            $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion(),
+                            PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_reader->getAssembly()->getName())
+                        ));
+                        $filesystem->remove(PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_reader->getAssembly()->getName()));
+                    }
+                }
+
+                $this->package_lock->getEntry($package_reader->getAssembly()->getPackage())->setSymlinkRegistered(false);
+            }
+            else
+            {
+                // Register/Update the symlink
+                $symlink = PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_reader->getAssembly()->getName());
+
+                if(is_file($symlink) && !$this->package_lock->getEntry($package_reader->getAssembly()->getPackage())->isSymlinkRegistered())
+                {
+                    // Avoid overwriting already existing symlinks that are not handled by ncc
+                    Console::outWarning(sprintf(
+                        'A symlink already exists at %s, skipping symlink creation for %s=%s',
+                        $symlink, $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()
+                    ));
+                }
+                else
+                {
+                    Console::outVerbose(sprintf(
+                        'Creating symlink for %s=%s at %s',
+                        $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion(), $symlink
+                    ));
+
+                    if(is_file($symlink))
+                    {
+                        $filesystem->remove($symlink);
+                    }
+
+                    IO::fwrite($symlink, Functions::createExecutionPointer($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()));
+                    chmod($symlink, 0755); // Make it executable
+
+                    $this->package_lock->getEntry($package_reader->getAssembly()->getPackage())->setSymlinkRegistered(true);
+                }
             }
 
             $this->saveLock();

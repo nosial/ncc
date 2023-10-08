@@ -317,7 +317,8 @@
         {
             $metadata = new Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
 
-            $metadata->setOptions($this->project_manager->getProjectConfiguration()->getBuild()->getOptions($build_configuration));
+            $metadata->addOptions($this->project_manager->getProjectConfiguration()->getBuild()->getOptions($build_configuration));
+            $metadata->addOptions($this->project_manager->getProjectConfiguration()->getProject()->getOptions());
             $metadata->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
             $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());

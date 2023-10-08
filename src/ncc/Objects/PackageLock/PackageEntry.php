@@ -62,12 +62,18 @@
         private $update_source;
 
         /**
+         * @var bool
+         */
+        private $symlink_registered;
+
+        /**
          * Public Constructor
          */
         public function __construct(string $name, array $versions=[])
         {
             $this->name = $name;
             $this->versions = $versions;
+            $this->symlink_registered = false;
         }
 
         /**
@@ -88,6 +94,22 @@
         public function getUpdateSource(): ?UpdateSource
         {
             return $this->update_source;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isSymlinkRegistered(): bool
+        {
+            return $this->symlink_registered;
+        }
+
+        /**
+         * @param bool $symlink_registered
+         */
+        public function setSymlinkRegistered(bool $symlink_registered): void
+        {
+            $this->symlink_registered = $symlink_registered;
         }
 
         /**
@@ -456,6 +478,7 @@
                 ($bytecode ? Functions::cbc('name')  : 'name')  => $this->name,
                 ($bytecode ? Functions::cbc('versions')  : 'versions')  => $versions,
                 ($bytecode ? Functions::cbc('update_source')  : 'update_source')  => ($this->update_source?->toArray($bytecode)),
+                ($bytecode ? Functions::cbc('symlink_registered')  : 'symlink_registered')  => $this->symlink_registered,
             ];
         }
 
@@ -490,6 +513,7 @@
                 $object->update_source = UpdateSource::fromArray($update_source);
             }
 
+            $object->symlink_registered = Functions::array_bc($data, 'symlink_registered') ?? false;
             return $object;
         }
 

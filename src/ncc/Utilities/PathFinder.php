@@ -22,6 +22,8 @@
 
     namespace ncc\Utilities;
 
+    use RuntimeException;
+
     class PathFinder
     {
         /**
@@ -102,5 +104,34 @@
         public static function getConfigurationFile(): string
         {
             return self::getDataPath() . DIRECTORY_SEPARATOR . 'ncc.yaml';
+        }
+
+        /**
+         * Returns the path where binaries are stored
+         *
+         * @return string
+         */
+        public static function findBinPath(): string
+        {
+            $path_directories = explode(PATH_SEPARATOR, getenv('PATH'));
+
+            // Check if the bin directory is in the path
+            if(in_array(DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'bin', $path_directories))
+            {
+                return DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'bin';
+            }
+
+            Console::outWarning('The /usr/bin directory is not in the PATH environment variable, an alternative will be used');
+
+            // If not, find something appropriate
+            foreach($path_directories as $path_directory)
+            {
+                if(is_dir($path_directory) && is_writable($path_directory))
+                {
+                    return $path_directory;
+                }
+            }
+
+            throw new RuntimeException('Could not find a suitable bin directory in the PATH environment variable');
         }
     }
