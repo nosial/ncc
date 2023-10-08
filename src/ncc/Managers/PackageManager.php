@@ -42,6 +42,7 @@
     use ncc\Enums\RegexPatterns;
     use ncc\Enums\Scopes;
     use ncc\Enums\Types\ProjectType;
+    use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NetworkException;
@@ -200,6 +201,30 @@
 
             if($version === null)
             {
+                if($this->package_lock->getEntry($package_name)->isSymlinkRegistered())
+                {
+                    Console::outVerbose(sprintf(
+                        'Removing symlink for %s=%s at %s',
+                        $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST)->getVersion(),
+                        PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_name)
+                    ));
+
+                    try
+                    {
+                        $symlink_path = PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($this->package_lock->getEntry($package_name)->getAssembly()->getName());
+                    }
+                    catch(Exception $e)
+                    {
+                        throw new IOException(sprintf('Failed to resolve symlink for %s=%s: %s', $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST)->getVersion(), $e->getMessage()), $e);
+                    }
+
+                    if(is_file($symlink_path))
+                    {
+                        (new Filesystem())->remove($symlink_path);
+                        $this->package_lock->getEntry($package_name)->setSymlinkRegistered(false);
+                    }
+                }
+
                 foreach($this->package_lock->getEntry($package_name)->getVersions() as $iter_version)
                 {
                     Console::out(sprintf('Uninstalling package %s=%s', $package_name, $iter_version));
@@ -209,11 +234,37 @@
 
                     $removed_packages[] = sprintf('%s=%s', $package_name, $iter_version);
                 }
+
+                $this->package_lock->removeEntry($package_name);
             }
             else
             {
                 Console::out(sprintf('Uninstalling package %s=%s', $package_name, $version));
                 $package_path = $this->package_lock->getPath($package_name, $version);
+
+                if($this->package_lock->getEntry($package_name)->isSymlinkRegistered())
+                {
+                    Console::outVerbose(sprintf(
+                        'Removing symlink for %s=%s at %s',
+                        $package_name, $version, PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_name)
+                    ));
+
+                    try
+                    {
+                        $symlink_path = PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($this->package_lock->getEntry($package_name)->getAssembly($version)->getName());
+                    }
+                    catch(Exception $e)
+                    {
+                        Console::outWarning(sprintf('Failed to resolve symlink for %s=%s: %s', $package_name, $version, $e->getMessage()));
+                    }
+
+                    if(isset($symlink_path) && is_file($symlink_path))
+                    {
+                        (new Filesystem())->remove($symlink_path);
+                        $this->package_lock->getEntry($package_name)->setSymlinkRegistered(false);
+                    }
+                }
+
                 $this->package_lock->getEntry($package_name)->removeVersion($version);
                 (new Filesystem())->remove($package_path);
 
@@ -303,6 +354,31 @@
 
                         $results[$dependency_entry] = $dependency->getSource();
                     }
+                }
+            }
+
+            return $results;
+        }
+
+        /**
+         * Returns an array of broken packages detected on the system
+         *
+         * @return array
+         */
+        public function getBrokenPackages(): array
+        {
+            $results = [];
+
+            foreach($this->package_lock->getEntries() as $entry)
+            {
+                foreach($this->package_lock->getEntry($entry)->getBrokenVersions() as $version)
+                {
+                    if(in_array(sprintf('%s=%s', $entry, $version), $results, true))
+                    {
+                        continue;
+                    }
+
+                    $results[] = sprintf('%s=%s', $entry, $version);
                 }
             }
 

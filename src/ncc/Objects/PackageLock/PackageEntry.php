@@ -460,6 +460,26 @@
         }
 
         /**
+         * Returns an array of all broken versions
+         *
+         * @return array
+         */
+        public function getBrokenVersions(): array
+        {
+            $broken_versions = [];
+
+            foreach($this->versions as $version)
+            {
+                if($version->isBroken($this->name))
+                {
+                    $broken_versions[] = $version->getVersion();
+                }
+            }
+
+            return $broken_versions;
+        }
+
+        /**
          * Returns an array representation of the object
          *
          * @param bool $bytecode

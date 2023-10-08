@@ -111,7 +111,7 @@
                 }
                 catch(Exception $e)
                 {
-                    Console::outException(sprintf('Unable to fix missing packages: %s', $e->getMessage()), $e, 1);
+                    Console::outException(sprintf('Unable to fix broken packages: %s', $e->getMessage()), $e, 1);
                     return 1;
                 }
             }
@@ -401,6 +401,7 @@
         /**
          * Uninstall all packages from the system
          *
+         * @param array $args
          * @return int
          * @throws IOException
          * @throws OperationException
@@ -450,48 +451,76 @@
             }
 
             $package_manager = new PackageManager();
-            $results = $package_manager->getMissingPackages();
+            $missing_dependencies = $package_manager->getMissingPackages();
+            $broken_packages = $package_manager->getBrokenPackages();
             $auto_yes = isset($args['y']);
 
-            if(count($results) === 0)
+            if(count($missing_dependencies) === 0 && count($broken_packages) === 0)
             {
-                Console::out('No missing packages found');
+                Console::out('No broken packages found');
                 return 0;
             }
 
-            Console::out('The following packages that are required by other packages are missing:');
-            $unfixable_count = 0;
-            foreach($results as $package => $source)
+            if(count($missing_dependencies) > 0)
             {
-                if($source === null)
+                Console::out('The following packages that are required by other packages are missing:');
+                $unfixable_count = 0;
+                foreach($missing_dependencies as $package => $source)
                 {
-                    ++$unfixable_count;
-                    continue;
-                }
-
-                Console::out(sprintf('   %s', $package));
-            }
-
-            if($unfixable_count > 0)
-            {
-                Console::out('The following packages packages cannot be fixed because they are missing and no source was specified:');
-                foreach($results as $package => $source)
-                {
-                    if($source !== null)
+                    if($source === null)
                     {
+                        ++$unfixable_count;
                         continue;
                     }
 
                     Console::out(sprintf('   %s', $package));
                 }
+
+                if($unfixable_count > 0)
+                {
+                    Console::out('The following packages packages cannot be fixed because they are missing and no source was specified:');
+                    foreach($missing_dependencies as $package => $source)
+                    {
+                        if($source !== null)
+                        {
+                            continue;
+                        }
+
+                        Console::out(sprintf('   %s', $package));
+                    }
+                }
             }
 
-            if(!$auto_yes && !Console::getBooleanInput('Do you want attempt to fix these missing packages?'))
+            if(count($broken_packages) > 0)
+            {
+                Console::out('The following packages are broken and should be removed:');
+                foreach($broken_packages as $package)
+                {
+                    Console::out(sprintf('   %s', $package));
+                }
+            }
+
+            if(!$auto_yes && !Console::getBooleanInput('Do you want attempt to fix these packages?'))
             {
                 return 0;
             }
 
-            foreach($results as $package => $source)
+            foreach($broken_packages as $package)
+            {
+                Console::out(sprintf('Removing broken package %s', $package));
+                $parsed = explode('=', $package, 2);
+
+                if(count($parsed) === 1)
+                {
+                    Console::out(sprintf('Uninstalling all versions of %s, removed %s packages', $package, count($package_manager->uninstall($parsed[0]))));
+                }
+                else
+                {
+                    Console::out(sprintf('Uninstalling %s, removed %s packages', $package, count($package_manager->uninstall($parsed[0], $parsed[1]))));
+                }
+            }
+
+            foreach($missing_dependencies as $package => $source)
             {
                 if($source === null)
                 {

@@ -235,6 +235,31 @@
         }
 
         /**
+         * Returns True if the package is broken, false otherwise
+         *
+         * @return bool
+         */
+        public function isBroken(string $package_name): bool
+        {
+            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE))
+            {
+                return true;
+            }
+
+            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY))
+            {
+                return true;
+            }
+
+            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
          * Returns an array representation of the object
          *
          * @param bool $bytecode
