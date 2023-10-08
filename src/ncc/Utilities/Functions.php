@@ -532,27 +532,6 @@
         }
 
         /**
-         * Determines if the current process is running in TTY mode
-         *
-         * @return bool
-         */
-        public static function isTtyMode(): bool
-        {
-            if(!is_null(RuntimeCache::get('posix_isatty')))
-            {
-                return RuntimeCache::get('posix_isatty');
-            }
-
-            if(!function_exists('posix_isatty'))
-            {
-                return false;
-            }
-
-            RuntimeCache::set('posix_isatty', posix_isatty(STDOUT));
-            return (bool)RuntimeCache::get('posix_isatty');
-        }
-
-        /**
          * Cleans an array by removing empty values
          *
          * @param array $input
