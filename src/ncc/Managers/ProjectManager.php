@@ -352,9 +352,13 @@
             $build->addDefineConstant('ASSEMBLY_UID', '%ASSEMBLY.UID%');
 
             // Generate the Debug & Release build configurations
-            $debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug', 'build' . DIRECTORY_SEPARATOR . 'debug');
+            $debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug',
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
+            );
             $debug_configuration->setDefinedConstant('DEBUG', '1');
-            $build->addBuildConfiguration(new ProjectConfiguration\Build\BuildConfiguration('release', 'build' . DIRECTORY_SEPARATOR . 'release'));
+            $build->addBuildConfiguration(new ProjectConfiguration\Build\BuildConfiguration('release',
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
+            ));
             $build->addBuildConfiguration($debug_configuration);
             $build->setDefaultConfiguration('release');
 
