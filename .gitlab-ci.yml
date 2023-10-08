@@ -3,9 +3,8 @@ image: php:8.2
 stages:
   - setup
   - build
-  - build-docker
+  - docker
   - publish
-  - publish-docker
 
 before_script:
   - apt update -yqq
@@ -51,9 +50,9 @@ build-debian:
       - build/*.deb
 
 # Build the Alpine Docker image
-ncc-docker-build-alpine:
+docker-alpine:
   image: docker:latest
-  stage: build-docker
+  stage: docker
   services:
     - docker:dind
   before_script:
@@ -61,22 +60,22 @@ ncc-docker-build-alpine:
   script:
     - |
       if [[ "$CI_COMMIT_BRANCH" == "master" ]]; then
-        DOCKER_TAG="latest-alpine"
+        DOCKER_TAG="latest"
       elif [[ ! -z "$CI_COMMIT_TAG" ]]; then
-        DOCKER_TAG="$CI_COMMIT_TAG-alpine"
+        DOCKER_TAG="$CI_COMMIT_TAG"
       else
-        DOCKER_TAG="$CI_COMMIT_REF_SLUG-alpine"
+        DOCKER_TAG="$CI_COMMIT_REF_SLUG"
       fi
-    - docker build -f Dockerfile.alpine -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
+    - docker build -f Dockerfile -t $CI_REGISTRY_IMAGE:$DOCKER_TAG .
     - docker push $CI_REGISTRY_IMAGE:$DOCKER_TAG
   rules:
     - exists:
-        - Dockerfile.alpine
+        - Dockerfile
 
 # Build the Debian Docker image
-ncc-docker-build-debian:
+docker-debian:
   image: docker:latest
-  stage: build-docker
+  stage: docker
   services:
     - docker:dind
   before_script:
@@ -84,7 +83,7 @@ ncc-docker-build-debian:
   script:
     - |
       if [[ "$CI_COMMIT_BRANCH" == "master" ]]; then
-        DOCKER_TAG="latest-debian"
+        DOCKER_TAG="debian"
       elif [[ ! -z "$CI_COMMIT_TAG" ]]; then
         DOCKER_TAG="$CI_COMMIT_TAG-debian"
       else
