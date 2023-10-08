@@ -416,53 +416,6 @@
         }
 
         /**
-         * Attempts to convert a weird version number to a standard version number
-         *
-         * @param $version
-         * @return string
-         */
-        public static function convertToSemVer($version): string
-        {
-            if(stripos(strtolower($version), 'v') === 0)
-            {
-                $version = substr($version, 1);
-            }
-
-            if(!Validate::version($version))
-            {
-                $parts = explode('.', $version);
-                $major = (string)null;
-                $minor = (string)null;
-                $patch = (string)null;
-
-                if(count($parts) >= 1)
-                {
-                    $major = $parts[0];
-                }
-
-                if(count($parts) >= 2)
-                {
-                    $minor = $parts[1];
-                }
-
-                if(count($parts) >= 3)
-                {
-                    $patch = $parts[2];
-                }
-
-                // Assemble the SemVer compatible string
-                $version = "$major.$minor.$patch";
-            }
-
-            if(!Validate::version($version))
-            {
-                return '1.0.0';
-            }
-
-            return $version;
-        }
-
-        /**
          * Attempts to cast the correct type of the given value
          *
          * @param string $input
