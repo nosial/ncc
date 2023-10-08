@@ -23,13 +23,17 @@
     namespace ncc\Classes\PhpExtension\Templates;
 
     use ncc\Classes\NccExtension\ConstantCompiler;
+    use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\ProjectOptions;
     use ncc\Enums\Runners;
+    use ncc\Enums\SpecialConstants\AssemblyConstants;
+    use ncc\Enums\Types\BuildOutputType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Interfaces\TemplateInterface;
     use ncc\Managers\ProjectManager;
+    use ncc\Objects\ProjectConfiguration\Build\BuildConfiguration;
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Utilities\IO;
 
@@ -50,6 +54,23 @@
 
             $project_manager->getProjectConfiguration()->getBuild()->setMain('main_policy');
             $project_manager->getProjectConfiguration()->getProject()->addOption(ProjectOptions::CREATE_SYMLINK, true);
+
+            // Create the release build configuration
+            $release_executable = new BuildConfiguration('release_executable',
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+            );
+            $release_executable->setBuildType(BuildOutputType::EXECUTABLE);
+            $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release');
+            $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($release_executable);
+
+            // Create the debug build configuration
+            $debug_executable = new BuildConfiguration('debug_executable',
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+            );
+            $debug_executable->setDefinedConstant('DEBUG', '1');
+            $debug_executable->setBuildType(BuildOutputType::EXECUTABLE);
+            $debug_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug');
+            $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($debug_executable);
 
             self::writeProgramTemplate($project_manager);
             self::writeMainEntryTemplate($project_manager);

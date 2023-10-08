@@ -353,11 +353,11 @@
 
             // Generate the Debug & Release build configurations
             $debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug',
-                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . '.ncc'
             );
             $debug_configuration->setDefinedConstant('DEBUG', '1');
             $build->addBuildConfiguration(new ProjectConfiguration\Build\BuildConfiguration('release',
-                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . '.ncc'
             ));
             $build->addBuildConfiguration($debug_configuration);
             $build->setDefaultConfiguration('release');

@@ -28,6 +28,7 @@
     use ncc\Objects\CliHelpSection;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\Security;
 
     class ProjectMenu
     {
@@ -60,16 +61,6 @@
          */
         private static function initializeProject(array $args): int
         {
-            if(isset($args['path']) || isset($args['p']))
-            {
-                $project_path = $args['path'] ?? $args['p'];
-            }
-            else
-            {
-                Console::outError('Missing required option: --path|-p, please specify the path to the project', true, 1);
-                return 1;
-            }
-
             if(isset($args['name']) || isset($args['n']))
             {
                 $project_name = $args['name'] ?? $args['n'];
@@ -78,6 +69,16 @@
             {
                 Console::outError('Missing required option: --name|-n, please specify the name of the project', true, 1);
                 return 1;
+            }
+
+            if(isset($args['path']) || isset($args['p']))
+            {
+                $project_path = $args['path'] ?? $args['p'];
+            }
+            else
+            {
+                $project_path = Security::sanitizeFilename($project_name, false);
+                Console::out(sprintf('No path specified, using \'%s\'', $project_path));
             }
 
             if(isset($args['package']) || isset($args['pkg']))
