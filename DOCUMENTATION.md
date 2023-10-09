@@ -46,6 +46,13 @@ basic usage, standards, and much more.
     * [Adding a repository (add)](#adding-a-repository-add)
     * [Removing a repository (remove)](#removing-a-repository-remove)
     * [Listing repositories (list)](#listing-repositories-list)
+  * [Inspecting a package (ins)](#inspecting-a-package-ins)
+    * [Package Information (info)](#package-information-info)
+    * [Package Headers (headers)](#package-headers-headers)
+    * [Package Metadata (metadata)](#package-metadata-metadata)
+    * [Assembly Information (assembly)](#assembly-information-assembly)
+    * [Package Dependencies (dependencies)](#package-dependencies-dependencies)
+    * [Execution Units (execution_units)](#execution-units-executionunits)
   * [Building Projects (build)](#building-projects-build)
   * [Execute (exec)](#execute-exec)
 <!-- TOC -->
@@ -648,6 +655,140 @@ $ ncc repo list
  - martinvlba (git.martinvlba.eu) [gitea]
  - kuny (git.it-kuny.ch) [gitea]
 Total: 8
+```
+
+## Inspecting a package (ins)
+
+This is more of a debugging tool, but it can be useful for inspecting a package to see what files are included in the
+package and what dependencies are required by the package, this command accepts multiple commands that can be used to
+inspect a package and display information about it, you can also inspect executable binaries if they contain the
+binary package data.
+
+To use this command, you need to specify the `--path` or `-p` option to specify the package to inspect, this must be a 
+local package file. You cannot inspect packages installed on your system using this command.
+
+You may also pass on the `--json` or `--json-pretty` option to output the information in JSON format, this is useful
+for debugging or if you want to use the output in a script.
+
+### Package Information (info)
+
+This command allows you to print out very basic information about the package's structure, such as where ncc detects
+different sections of the package.
+
+```shell
+$ ncc ins -p com.example.program.ncc info
+
+File Version: 2.0
+crc32: bb0feb59
+sha256: c25f0c7e2a30a98e76331dd9dc4589afa8d3a800a069ad8be8b7566a132bd26e
+Flags: gzip
+Package Offset: 12320
+Package Length: 2989
+Header Offset: 12327
+Header Length: 184
+Data Offset: 12515
+Data Length: 2790
+Directory Size: 5 items
+```
+
+ - File Version: The version of the ncc binary package file format
+ - crc32: The CRC32 checksum of the package itself, this is not the same as entirty of the file.
+ - Flags: The flags that were used when building the package, this is used to determine how to read the package.
+ - Package Offset: The offset of the entire package data in the file.
+ - Package Length: The length of the entire package data in the file.
+ - Header Offset: The offset of the package header section in the file.
+ - Header Length: The length of the package header section in the file.
+ - Data Offset: The offset of the package data section in the file.
+ - Data Length: The length of the package data section in the file.
+ - Directory Size: The number of items in the package
+
+### Package Headers (headers)
+
+This command allows you to print out the package headers, this includes information about how ncc can read the package
+and what contents are included in the package, this is a raw decoded representation of the package headers.
+
+```shell
+$ ncc ins -p com.example.program.ncc headers
+
+1937008233: '2.0'
+1936941414: {  }
+1869898597:
+  '@1835365473': '0:129'
+  '@1634956133': '129:98'
+  '@1702389091:main_policy': '227:828'
+  '@1668246896:src/TestProgram/Program.php': '1055:1735'
+  '@1668047219:TestProgram\Program': '1055:1735'
+```
+
+### Package Metadata (metadata)
+
+This command allows you to print out the package metadata, this includes minimal information associated with the package
+that tells ncc how to handle the package and how to execute it.
+
+```shell
+$ ncc ins -p com.example.program.ncc metadata
+
+compiler_extension:
+  extension: php
+  minimum_version: '8.2'
+  maximum_version: '8.0'
+compiler_version: 2.0.0
+update_source: null
+installer: null
+main_execution_policy: main_policy
+options:
+  create_symlink: true
+```
+
+### Assembly Information (assembly)
+
+This command allows you to print out the package assembly information, this includes information about the package's
+name, description, uuid and other attributes provided by the package.
+
+```shell
+$ ncc ins -p com.example.program.ncc assembly
+
+name: TestProgram
+package: com.example.test
+version: 1.0.0
+uuid: 25f93a3d-3cfc-49ed-aed4-d182dd804f48
+```
+
+### Package Dependencies (dependencies)
+
+This command allows you to print out the package dependencies, this includes information about the package's dependencies
+and what versions are required by the package.
+
+```shell
+$ ncc ins -p com.example.program.ncc dependencies
+
+com.symfony.console: 2.0.7
+com.symfony.polyfill_php72: v1.28.0
+com.symfony.http_kernel: 2.0.7
+```
+
+### Execution Units (execution_units)
+
+The execution units are the entry points of the package, this command allows you to print out the package's execution
+units, this includes information about the package's execution units and what attributes are required by the package.
+
+```shell
+$ ncc ins -p com.example.program.ncc execution_units
+
+-
+  execution_policy:
+    name: main_policy
+    runner: php
+    execute:
+      working_directory: '%CWD%'
+      options: {  }
+      environment_variables: {  }
+      silent: false
+      tty: true
+      timeout: null
+      idle_timeout: null
+      target: main
+  data: <base64 data here>
 ```
 
 ## Building Projects (build)
