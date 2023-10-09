@@ -33,6 +33,7 @@ basic usage, standards, and much more.
     * [Creating a new project (create)](#creating-a-new-project-create)
     * [Applying Templates (template)](#applying-templates-template)
       * [phpcli template](#phpcli-template)
+      * [phplib template](#phplib-template)
   * [Package Management (package or pkg)](#package-management-package-or-pkg)
     * [Listing Installed Packages (list)](#listing-installed-packages-list)
     * [Installing Packages (install)](#installing-packages-install)
@@ -577,7 +578,7 @@ build/release/com.example.cli_program.ncc
 To test your program, you can run `ncc exec` on the compiled binary package
 
 ```shell
-$ ncc exec --package build/release/com.example.cli_program.ncc
+$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
 Hello World from com.example.cli_program!
 ```
 
@@ -599,10 +600,349 @@ build/release/MyCommandLineProgram
 Now you may directly run the program without the need of `ncc exec`
 
 ```shell
-$ build/release/MyCommandLineProgram
+$ MyCommandLineProgram/build/release/MyCommandLineProgram
 Hello World from com.example.cli_program!
 ```
 
+#### phplib template
+
+The phplib template is a template for creating a library project, allowing you to create a library with ease similar to
+creating a CLI program, this section will guide you through how to create a library for your program and how to use it
+as a dependency in another project. This section will use the previous `phpcli` template as a base for creating a library
+to use in a CLI program.
+
+First, let's begin by creating a new project.
+
+```shell
+$ ncc project create -n MyLibrary --pkg com.example.library --ext php
+No path specified, using 'MyLibrary'
+Project successfully created in 'MyLibrary'
+Modify the project configuration in 'MyLibrary/project.json'
+````
+
+Next, let's apply the `phplib` template to the project.
+
+```shell
+$ ncc project template -p MyLibrary -n phplib
+Template successfully applied to project in 'MyLibrary'
+```
+
+Similarly to phpcli, additional files will be created for your project
+
+```shell
+$ tree MyLibrary
+MyLibrary/
+├── Makefile
+├── project.json
+└── src
+    └── MyLibrary
+        └── MyLibrary.php
+```
+
+This is a blank library, you can write your code however you want, but for this example we are going to demonstrate
+a function call with this template to show how it works, first we'll modify the `MyLibrary.php` file to add a function
+that returns a string.
+
+```php
+<?php
+
+    namespace MyLibrary;
+
+    class MyLibrary
+    {
+        public function getName(string $name): string
+        {
+                return sprintf("Hello %s!", $name);
+        }
+    }
+```
+
+Next, we'll build the library
+
+```shell
+$ ncc build -p MyLibrary
+Building project 'MyLibrary'
+[ =========== ] 100% 1/1 remaining:  0 sec.  elapsed: 0 sec.  
+build/release/com.example.library.ncc
+```
+
+Finally, we'll install it onto the system so we can actually use it
+
+```shell
+$ sudo ncc package install -p build/release/com.example.library.ncc -y
+Package installation information:
+   UUID: de1df7b6-108f-4cfc-a818-416bad08daa9
+   Name: MyLibrary
+   Package: com.example.library
+   Version: 1.0.0
+
+Installing package com.example.library=1.0.0
+[ =========== ] 100% 7/7 remaining:  0 sec.  elapsed: 0 sec.  
+Installed 1 packages
+```
+
+Now we should be able to see the package on the system when we run `ncc package list`
+
+```shell
+$ ncc package list
+   com.example.library=1.0.0
+Total: 1 packages
+```
+
+Great! We created a library and installed it onto the system, let's test it by running `php -a` to open the PHP shell
+and import the package and test its function call
+
+```shell
+$ php -a
+
+Interactive shell
+
+php > require 'ncc';
+php > import('com.example.library');
+php > 
+php > $my_library = new \MyLibrary\MyLibrary();
+php > echo $my_library->getName('John');
+Hello John!
+```
+
+But libraries are usually used by other programs, so let's go back to our `MyCommandLineProgram` project and use the
+library we just created. If you don't have the project, you can create it by following the steps in the
+[phpcli template](#phpcli-template) section.
+
+First, we'll need to add the library as a dependency to the project, this can be done by editing the `project.json` in
+the `build` section by creating an array of dependencies you need, a dependency looks something like this once it's
+defined in `project.json`
+
+```json
+{
+  "dependencies": [
+      {
+        "name": "com.example.library",
+        "version": "latest"
+      }
+  ]
+}
+```
+
+Now if you hosted your project on a remote source, you may also define where ncc should get the package from if the
+dependency is not available on the system.
+
+```json
+{
+  "dependencies": [
+      {
+        "name": "com.example.library",
+        "version": "latest",
+        "source": "johndoe/example_library=latest@n64"
+      }
+  ]
+}
+```
+
+overall, your project.json file should look something like this
+
+```json
+{
+    "project": {
+        "compiler": {
+            "extension": "php",
+            "minimum_version": "8.2",
+            "maximum_version": "8.0"
+        },
+        "options": {
+            "create_symlink": true
+        }
+    },
+    "assembly": {
+        "name": "MyCommandLineProgram",
+        "package": "com.example.cli_program",
+        "version": "1.0.0",
+        "uuid": "462a7f76-2cdc-428a-bbc6-c5feba614799"
+    },
+    "build": {
+        "source_path": "src/MyCommandLineProgram",
+        "default_configuration": "release",
+        "main": "main_policy",
+        "define_constants": {
+            "ASSEMBLY_PACKAGE": "%ASSEMBLY.PACKAGE%",
+            "ASSEMBLY_VERSION": "%ASSEMBLY.VERSION%",
+            "ASSEMBLY_UID": "%ASSEMBLY.UID%"
+        },
+	    "dependencies": [
+            {
+              "name": "com.example.library", 
+              "version": "latest"
+            }
+	    ],
+        "configurations": [
+            {
+                "name": "release",
+                "build_type": "ncc",
+                "output": "build/release/%ASSEMBLY.PACKAGE%.ncc"
+            },
+            {
+                "name": "debug",
+                "build_type": "ncc",
+                "output": "build/debug/%ASSEMBLY.PACKAGE%.ncc",
+                "define_constants": {
+                    "DEBUG": "1"
+                }
+            },
+            {
+                "name": "release_executable",
+                "build_type": "executable",
+                "output": "build/release/%ASSEMBLY.NAME%",
+                "options": {
+                    "ncc_configuration": "release"
+                }
+            },
+            {
+                "name": "debug_executable",
+                "build_type": "executable",
+                "output": "build/debug/%ASSEMBLY.NAME%",
+                "options": {
+                    "ncc_configuration": "debug"
+                },
+                "define_constants": {
+                    "DEBUG": "1"
+                }
+            }
+        ]
+    },
+    "execution_policies": [
+        {
+            "name": "main_policy",
+            "runner": "php",
+            "execute": {
+                "working_directory": "%CWD%",
+                "silent": false,
+                "tty": true,
+                "timeout": null,
+                "idle_timeout": null,
+                "target": "main"
+            }
+        }
+    ]
+}
+```
+
+Once you have defined the dependency on your program, let's modify the CLI program to use the library we created, we'll
+modify the `src/MyCommandLineProgram/Program.php` file to use the library.
+
+```php
+<?php
+
+    namespace MyCommandLineProgram;
+
+    class Program
+    {
+        /**
+         * MyCommandLineProgram main entry point
+         *
+         * @param string[] $args Command-line arguments
+         * @return int Exit code
+         */
+        public static function main(array $args): int
+        {
+            // Create a new instance of the library
+            $my_library = new \MyLibrary\MyLibrary();
+            
+            // Call the getName function
+            print($my_library->getName('John') . PHP_EOL);
+            
+            return 0;
+        }
+    }
+```
+
+Notice how we don't use the `import()` function to import the package, this is because ncc's import system will take a
+look at the requirements that your package needs and automatically import them for you, this is useful for CLI programs
+as it allows you to import packages without having to worry about whether the package is installed or not. This works
+recursively, so if the package you imported also has a dependency, it will also be imported.
+
+Now let's build the program
+
+```shell
+$ ncc build -p MyCommandLineProgram
+Building project 'MyCommandLineProgram'
+[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
+build/release/com.example.cli_program.ncc
+```
+
+And let's test it!
+
+```shell
+$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
+Hello John!
+```
+
+Great! We successfully created a library and used it in a CLI program, this is just a simple example of how to use the
+phplib template, you can use it however you want to create your own libraries and use them in your projects.
+
+If you'd like to create a build a static version of your package where all your dependencies are bundled into one file,
+you can modify the project.json file to achieve this, more specifically the build configuration, in this case the
+default build configuration we're using is called `release` so we'd need to adjust the configuration as so by adding the
+`static` option to the configuration.
+
+```json
+{
+    "name": "release",
+    "build_type": "ncc",
+    "output": "build/release/%ASSEMBLY.PACKAGE%.ncc",
+    "options": {
+        "static": true
+    }
+}
+```
+
+Now let's build the program again and test it
+
+```shell
+$ ncc build -p MyCommandLineProgram
+Building project 'MyCommandLineProgram'
+[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.
+$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
+Hello John!
+```
+
+And if you'd like to confirm if the dependencies are actually bundled into your program, you may ues the package
+inspection command to view its headers, inside it you'll notice the components for `MyLibrary` being bundled into the
+package.
+
+```shell
+$ ncc ins -p MyCommandLineProgram/build/release/com.example.cli_program.ncc headers
+headers
+1937008233: '2.0'
+1936941414:
+  - static_dependencies
+1869898597:
+  '@1835365473': '0:137'
+  '@1634956133': '137:114'
+  '@1702389091:main_policy': '251:868'
+  '@1668246896:src/MyCommandLineProgram/Program.php': '1119:2996'
+  '@1668047219:MyCommandLineProgram\Program': '1119:2996'
+  '@1684369509:com.example.library': '4115:40'
+  '@1668246896:src/MyLibrary.php': '4155:1366'
+  '@1668047219:MyLibrary\MyLibrary': '4155:1366
+```
+
+You may uninstall the package `com.example.library` from the system and try to run the program again, you'll notice that
+the program will still run without any issues, this is because the package is bundled into the program itself.
+
+```shell
+$ sudo ncc package uninstall -p com.example.library -y
+Uninstalling package com.example.library=1.0.0
+Uninstalled 1 packages
+
+$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
+Hello John!
+```
+
+And that's the magic that ncc does for you, it allows you to create libraries and bundle them into your programs without
+having to worry about whether the library is installed or not, and with its import system you no longer have to worry
+about autoloaders or anything like that, ncc will take care of that for you. This is what composer cannot do, composer
+can only install packages onto your project directory, but it cannot bundle them into your programs if you wish to 
+have an easy way to distribute your project to other people, this is where ncc shines.
 
 ## Package Management (package or pkg)
 
@@ -624,6 +964,7 @@ $ ncc package list
    com.symfony.event_dispatcher=2.0.7
 Total: 4 packages
 ```
+
 
 ### Installing Packages (install)
 
