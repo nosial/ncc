@@ -42,6 +42,10 @@ basic usage, standards, and much more.
     * [Adding a credential (add)](#adding-a-credential-add)
     * [Removing a credential (remove)](#removing-a-credential-remove)
     * [Listing credential entries (list)](#listing-credential-entries-list)
+  * [Managing Repositories (repository or repo)](#managing-repositories-repository-or-repo)
+    * [Adding a repository (add)](#adding-a-repository-add)
+    * [Removing a repository (remove)](#removing-a-repository-remove)
+    * [Listing repositories (list)](#listing-repositories-list)
 <!-- TOC -->
 
 
@@ -563,4 +567,83 @@ Entries:
  - johndoe  (encrypted)
  - secretdoe  (encrypted)
 Total: 2
+```
+
+
+## Managing Repositories (repository or repo)
+
+Repositories are used in ncc to pull packages from remote sources, such as GitHub, GitLab, Gitea, and so on. ncc uses
+a repository manager to manage repositories for these sources, this command provides a set of commands for managing
+repositories.
+
+Note that ncc currently supports the following repository types:
+
+ - GitHub
+ - GitLab
+ - Gitea
+ - Packagist
+
+And by default, ncc comes with the following repositories:
+
+| Name       | Type      | Host                                               | Description                                                                                        |
+|------------|-----------|----------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| n64        | gitlab    | [git.n64.cc](https://git.n64.cc)                   | The official n64 git instance, maintained by Nosial & a community of volunteers                    |
+| packagist  | packagist | [packagist.org](https://packagist.org)             | The official Packagist repository, mainly used for Composer packages                               |
+| github     | github    | [github.com](https://github.com)                   | GitHub's official Git instance                                                                     |
+| gitlab     | gitlab    | [gitlab.com](https://gitlab.com)                   | GitLab's official Git instance                                                                     |
+| gitgud     | gitlab    | [gitgud.io](https://gitgud.io)                     | Gitgud's public GitLab instance, maintained by a community of volunteers                           |
+| nocturn9x  | gitea     | [git.nocturn9x.space](https://git.nocturn9x.space) | Nocturn9x's private Gitea instance, maintained by a community of volunteers from the private cloud |
+| martinvlba | gitea     | [git.martinvlba.eu](https://git.martinvlba.eu)     | Martinvlba's public Gitea instance, maintained by the site owner                                   |
+| kuny       | gitea     | [git.it-kuny.ch](https://git.it-kuny.ch)           | Kuny's public Gitea instance, maintained by the site owner                                         |
+
+If you'd like to add your own repository to ncc as a default repository, you can submit a pull request to add it to
+the [repositories.json](src/config/default_repositories.json) file, this file contains all the default repositories
+that ncc will attempt to add when first installing ncc.
+
+
+### Adding a repository (add)
+
+To add a repository to ncc, you can use the `repo add` command, this command will add a new repository to the repository
+manager, this command requires you to provide the repository name, the repository type, and the repository host.
+
+| Option   | Required | Example           | Description                                                                                                                |
+|----------|----------|-------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `--name` | Yes      | `n64`             | The name of the repository                                                                                                 |
+| `--type` | Yes      | `gitlab`          | The type of the repository, can either be `gitlab`, `github`, `gitea`, or `packagist`                                      |
+| `--host` | Yes      | `git.n64.cc`      | The host of the repository, this is the URL to the repository eg; `git.n64.cc` for the n64 repository (Without http/https) |
+| `--ssl`  | No       | `true` or `false` | Whether or not to use SSL when connecting to the repository, defaults to `true`                                            |
+
+```shell
+ncc repo add --name n64 --type gitlab --host git.n64.cc
+```
+
+### Removing a repository (remove)
+
+To remove a repository, you can use the `repo remove` command, this command will remove a repository from the repository
+manager, this command requires the '--name' option to specify the repository to remove.
+
+| Option   | Required | Example | Description      |
+|----------|----------|---------|------------------|
+| `--name` | Yes      | `n64`   | The name of repo |
+
+```shell
+ncc repo remove --name n64
+```
+
+### Listing repositories (list)
+
+To list all the repositories, you can use the `repo list` command, this command will list all the repositories in the
+repository manager.
+
+```shell
+$ ncc repo list
+ - n64 (git.n64.cc) [gitlab]
+ - packagist (packagist.org) [packagist]
+ - github (api.github.com) [github]
+ - gitlab (gitlab.com) [gitlab]
+ - gitgud (gitgud.io) [gitlab]
+ - nocturn9x (git.nocturn9x.space) [gitea]
+ - martinvlba (git.martinvlba.eu) [gitea]
+ - kuny (git.it-kuny.ch) [gitea]
+Total: 8
 ```
