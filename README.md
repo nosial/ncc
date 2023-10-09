@@ -24,7 +24,7 @@ The official repository for ncc is hosted on [GitLab](https://git.n64.cc/nosial/
 mirrors of the repository mirrored on different platforms, including 
 community powered mirrors. (more to come)
 
- - [git.it-kuny.ch](https://git.it-kuny.ch)
+ - [git.it-kuny.ch](https://git.it-kuny.ch/Nosial/ncc)
  - [git.martinvlba.eu](https://git.martinvlba.eu/Nosial/ncc)
  - [github.com](https://github.com/Nosial/ncc)
 
