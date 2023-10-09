@@ -46,6 +46,8 @@ basic usage, standards, and much more.
     * [Adding a repository (add)](#adding-a-repository-add)
     * [Removing a repository (remove)](#removing-a-repository-remove)
     * [Listing repositories (list)](#listing-repositories-list)
+  * [Building Projects (build)](#building-projects-build)
+  * [Execute (exec)](#execute-exec)
 <!-- TOC -->
 
 
@@ -647,3 +649,47 @@ $ ncc repo list
  - kuny (git.it-kuny.ch) [gitea]
 Total: 8
 ```
+
+## Building Projects (build)
+
+The build command is responsible for building projects, this command will build the project in the current working
+directory or the directory specified by the `--path` option.
+
+| Option           | Required | Example        | Description                                                                                                                   |
+|------------------|----------|----------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `--path`, `-p`   | No       | ExampleProject | The directory to create/use to build the project in, if not provided then the current working directory would be used instead |
+| `--config`, `-c` | No       | `release`      | The build configuration file to use, if not provided then the default build configuration will be used instead                |
+| `--output`, `-o` | No       | `program`      | The output file to produce, if not provided then the default output in your build configuration will be used instead          |
+
+```shell
+ncc build
+```
+
+```shell
+ncc build --config release_executable --output program
+```
+
+## Execute (exec)
+
+The execute command is responsible for executing packages, this command can execute packages that are installed on your
+system, or you can specify a package to execute from directly.
+
+ > **Note:** Depending on if the package is statically built, you need to ensure that you have the required dependencies
+ > installed on your system, if you don't have the required dependencies installed, the package will fail to execute.
+
+| Option           | Required | Example                                                                           | Description                                                                                                                                     |
+|------------------|----------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--package`      | Yes      | `com.example.program` (From the system) or `com.example.program.ncc` (Local file) | The package to execute, this can either be a package installed on your system or a local package file                                           |
+| `--exec-version` | No       | `1.0.0` or `latest`                                                               | The version of the package to execute if the package is installed on your system, defaults to `latest`                                          |
+| `--exec-args`    | No       | `--arg1 --arg2`                                                                   | The arguments to pass to the package when executing it, this has to be the last option in the command before the options to pass to the package |
+
+```shell
+ncc exec --package com.example.program --exec-version latest --exec-args --arg1 --arg2
+```
+
+```shell
+ncc exec --package com.example.program.ncc --exec-args --arg1 --arg2
+```
+
+The exit code of the package will be returned as the exit code of the command, if the package fails to execute, the
+command will return an exit code of 1 and display the error details.
