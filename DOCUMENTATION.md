@@ -32,6 +32,7 @@ basic usage, standards, and much more.
   * [Project Management (project)](#project-management-project)
     * [Creating a new project (create)](#creating-a-new-project-create)
     * [Applying Templates (template)](#applying-templates-template)
+      * [phpcli template](#phpcli-template)
   * [Package Management (package or pkg)](#package-management-package-or-pkg)
     * [Listing Installed Packages (list)](#listing-installed-packages-list)
     * [Installing Packages (install)](#installing-packages-install)
@@ -433,6 +434,174 @@ Once the template is applied, you will see additional files and directories crea
 are part of the template and are required for the project to function properly, your project.json file will also be
 updated to reflect the changes made by the template.
 
+#### phpcli template
+
+The phpcli template is a template for creating a CLI-based project, allowing you to create a CLI application with ease
+similar to how C and C++ CLI applications are created. This section will demonstrate what the template does and how to
+use it.
+
+Assuming you have a project already created, if not, see [Creating a new project (create)](#creating-a-new-project-create)
+for more information on how to create a new project.
+
+```shell
+$ ncc project create -n MyCommandLineProgram --pkg com.example.cli_program --ext php
+No path specified, using 'MyCommandLineProgram'
+Project successfully created in 'MyCommandLineProgram'
+Modify the project configuration in 'MyCommandLineProgram/project.json
+```
+
+Once the project is created, you can apply the phpcli template to it.
+
+```shell
+$ ncc project template -p MyCommandLineProgram -n phpcli
+Template successfully applied to project in 'MyCommandLineProgram'
+```
+
+Now if we take a look at the directory structure of the project, we will notice additional files and the project.json
+file containing two new build configurations for creating an executable file of the project.
+
+```shell
+$ tree MyCommandLineProgram
+MyCommandLineProgram/
+├── main
+├── Makefile
+├── project.json
+└── src
+    └── MyCommandLineProgram
+        └── Program.php
+
+2 directories, 4 files
+```
+
+The `main` file is the entry point of the project, this is where the project starts, this is defined as a execution
+policy in `project.json` as shown here
+
+```json
+{
+  "execution_policies": [
+    {
+      "name": "main_policy",
+      "runner": "php",
+      "execute": {
+        "working_directory": "%CWD%",
+        "silent": false,
+        "tty": true,
+        "timeout": null,
+        "idle_timeout": null,
+        "target": "main"
+      }
+    }
+  ]
+}
+```
+
+Note how the target points to the `main` file, this is the file that will be executed when the project is executed, the
+working directory is also configured to always use the current working directory as defined by the special constant
+`%CWD%`, this is useful for CLI applications as it allows you to execute the application from any directory.
+
+The `main` file can be altered however you want, but it serves one important purpose which is to determine how to self
+execute itself
+
+```php
+<?php
+    // First check if the script is being executed from the command line
+    if (PHP_SAPI !== 'cli')
+    {
+        print('com.example.cli_program must be run from the command line.' . PHP_EOL);
+        exit(1);
+    }
+
+    // Try to retrieve the command-line arguments
+    if(!isset($argv))
+    {
+        if(isset($_SERVER['argv']))
+        {
+            $argv = $_SERVER['argv'];
+        }
+        else
+        {
+            print('com.example.cli_program failed to run, no $argv found.' . PHP_EOL);
+            exit(1);
+        }
+    }
+
+    // Import ncc
+    require('ncc');
+    
+    // Import the package
+    \ncc\Classes\Runtime::import('com.example.cli_program', 'latest');
+    
+    // Run the program
+    exit(\MyCommandLineProgram\Program::main($argv));
+```
+
+ > **Note:** In a case where the package is not installed on the system, but rather executed directly, ncc will already
+ > have the package imported to memory before-hand so that an import statement will be skipped and the package will be
+ > loaded from the package instead. In both scenarios where the package is installed or directly executed, this code
+ > will work without any issues.
+
+After the execution unit runs this code, the control is passed onto the your Program class to which you can find in
+`src/MyCommandLineProgram/Program.php`, this is where you can write your code for your CLI application.
+
+```php
+<?php
+
+    namespace MyCommandLineProgram;
+
+    class Program
+    {
+        /**
+         * MyCommandLineProgram main entry point
+         *
+         * @param string[] $args Command-line arguments
+         * @return int Exit code
+         */
+        public static function main(array $args): int
+        {
+            print("Hello World from com.example.cli_program!" . PHP_EOL);
+            return 0;
+        }
+    }
+```
+
+To build this program you can run `ncc build` from the project's directory, this will build the project and create an
+executable file in the `build` directory.
+
+```shell
+$ ncc build -p MyCommandLineProgram
+Building project 'MyCommandLineProgram'
+[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
+build/release/com.example.cli_program.ncc
+```
+
+To test your program, you can run `ncc exec` on the compiled binary package
+
+```shell
+$ ncc exec --package build/release/com.example.cli_program.ncc
+Hello World from com.example.cli_program!
+```
+
+If you'd like to build a executable program of your project, you may look at the `project.json` file for the build
+configuration that is used for building executable files, more specifically the `release_executable` and `debug_executable`
+configurations. You may alter how these configurations work to suit your needs, but the `build_type` must be set to
+`executable` rather than ncc, this template would already have created these configurations for you so all you'd have to
+do is run the `build` command with the `--config` option to specify which configuration to use.
+
+```shell
+$ `ncc build -p MyCommandLineProgram --config release_executable`
+Building project 'MyCommandLineProgram'
+[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
+Processing build/release/com.example.cli_program.ncc to hex dump
+[ =========== ] 100% 3063/3063 remaining:  0 sec.  elapsed: 0 sec.  
+build/release/MyCommandLineProgram
+```
+
+Now you may directly run the program without the need of `ncc exec`
+
+```shell
+$ build/release/MyCommandLineProgram
+Hello World from com.example.cli_program!
+```
 
 
 ## Package Management (package or pkg)
