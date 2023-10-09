@@ -51,7 +51,7 @@
             IO::fwrite(
                 $project_manager->getProjectSourcePath() . DIRECTORY_SEPARATOR . $project_manager->getProjectConfiguration()->getAssembly()->getName() . '.php',
                 ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
-                    IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'TemplateFiles' . DIRECTORY_SEPARATOR . 'class.php.tpl')
+                    IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'class.php.tpl')
                 )
             );
         }
@@ -69,7 +69,7 @@
             IO::fwrite(
                 $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'Makefile',
                 ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
-                    IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'TemplateFiles' . DIRECTORY_SEPARATOR . 'Makefile.tpl')
+                    IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile.tpl')
                 )
             );
         }
