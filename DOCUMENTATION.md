@@ -38,6 +38,10 @@ basic usage, standards, and much more.
     * [Uninstalling Packages (uninstall)](#uninstalling-packages-uninstall)
     * [Uninstalling All Packages (uninstall-all)](#uninstalling-all-packages-uninstall-all)
     * [Fix Broken Packages (fix-broken)](#fix-broken-packages-fix-broken)
+  * [Credentials Management (cred)](#credentials-management-cred)
+    * [Adding a credential (add)](#adding-a-credential-add)
+    * [Removing a credential (remove)](#removing-a-credential-remove)
+    * [Listing credential entries (list)](#listing-credential-entries-list)
 <!-- TOC -->
 
 
@@ -415,6 +419,7 @@ are part of the template and are required for the project to function properly, 
 updated to reflect the changes made by the template.
 
 
+
 ## Package Management (package or pkg)
 
 The command `package` provides a set of commands for managing packages, such as installing packages and uninstalling
@@ -496,4 +501,66 @@ The command does the following checks
 
 ```shell
 ncc package fix-broken -y
+```
+
+
+## Credentials Management (cred)
+
+Credentials are used in ncc to pull packages from private sources, such as private repositories on GitHub, GitLab, Gitea,
+and so on. ncc uses a credential manager to manage credentials for these sources, this command provides a set of commands
+for managing credentials.
+
+All credentials stored by ncc are encrypted using the provided token/password, this means each entry in the credential manager
+is encrypted and requires a secret to decrypt it, so even if the credential database can be accessed, the credentials
+cannot be decrypted without the secret.
+
+ > **Note:** The credential manager is not a password manager, it's only used to store credentials for private sources
+ > such as private repositories on GitHub, GitLab, Gitea, and so on, root access is required to access and make changes
+ > to the credential manager. The credential database is only accessible by root.
+
+### Adding a credential (add)
+
+To add a credential, you can use the `cred add` command, this command will add a new credential to the credential manager,
+this command will prompt you to enter the credential details such as the credential name, the credential type, and the
+credential token/password, if you provide the options needed for these details, you can skip the prompts by using the
+options instead.
+
+| Option        | Required       | Example          | Description                                                                                              |
+|---------------|----------------|------------------|----------------------------------------------------------------------------------------------------------|
+| `--alias`     | Yes            | `johndoe`        | The alias of the credential                                                                              |
+| `--auth-type` | Yes            | `login` or `pat` | The type of the credential, can either be `login` (Username & Password) or `pat` (Personal Access Token) |
+| `--username`  | Yes if `login` | `johndoe`        | The username of the credential, only required if the credential type is `login`                          |
+| `--password`  | Yes if `login` | `password`       | The password of the credential, only required if the credential type is `login`                          |
+| `--token`     | Yes if `pat`   | `token`          | The token of the credential, only required if the credential type is `pat`                               |
+
+```shell
+ncc cred add --alias johndoe --auth-type login --username johndoe --password <password>
+ncc cred add --alias secretdoe --auth-type pat --token <token>
+```
+
+### Removing a credential (remove)
+
+To remove a credential, you can use the `cred remove` command, this command will remove a credential from the credential
+manager, this command requires the '--alias' option to specify the credential to remove.
+
+| Option    | Required | Example   | Description           |
+|-----------|----------|-----------|-----------------------|
+| `--alias` | Yes      | `johndoe` | The alias of the user |
+
+```shell
+ncc cred remove --alias johndoe
+```
+
+
+### Listing credential entries (list)
+
+To list all the credential entries, you can use the `cred list` command, this command will list all the credential entries
+in the credential manager.
+
+```shell
+$ ncc cred list
+Entries:
+ - johndoe  (encrypted)
+ - secretdoe  (encrypted)
+Total: 2
 ```
