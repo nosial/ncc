@@ -55,6 +55,7 @@ basic usage, standards, and much more.
     * [Execution Units (execution_units)](#execution-units-executionunits)
   * [Building Projects (build)](#building-projects-build)
   * [Execute (exec)](#execute-exec)
+* [Project Configuration (package.json)](#project-configuration-packagejson)
 <!-- TOC -->
 
 
@@ -395,9 +396,10 @@ and the compiler extension to use.
 | `--name`, `-n`       | Yes      | ExampleProject      | The name of the project                                                                                       |
 | `--package`, `--pkg` | Yes      | com.example.project | The package name to use, see [Package Naming](#package-naming) for more information                           |
 | `--path`, `-p`       | No       | example_project     | The directory to create/use to initialize the project in, if not provided then `--name` would be used instead |
+| `--ext`              | No       | php                 | The compiler extension to use, defaults to `php`                                                              |
 
 ```shell
-ncc project create --name ExampleProject --package com.example.project
+ncc project create --name ExampleProject --package com.example.project --ext php
 ```
 
 Once the project is created, will see a new directory with the name of the project you specified, this directory will
@@ -460,13 +462,14 @@ To install a package, you can use the `package install` command, this command wi
 all its dependencies. There are two ways to install a package, you can either install a package from a remote source
 or install a package from a local source such as a local .ncc file.
 
-| Option                | Required | Example                                                         | Description                                                                                                                                                                               |
-|-----------------------|----------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--package`, `-p`     | Yes      | `symfony/process=latest@packagist` or `com.example.package.ncc` | The package to install it can be a remote package or a local package, see [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for more information when installing a remote package |
-| `--version`, `-v`     | No       | `1.0.0` or `latest`                                             | The version of the package to install, defaults to `latest`                                                                                                                               |
-| `--reinstall`         | No       | Not Applicable                                                  | Reinstall the package even if it's already installed                                                                                                                                      |
-| `--skip-dependencies` | No       | Not Applicable                                                  | Skips installing the package's dependencies                                                                                                                                               |
-| `-y`                  | No       | Not Applicable                                                  | Skips the confirmation prompt when installing a package                                                                                                                                   |
+| Option                   | Required | Example                                                         | Description                                                                                                                                                                               |
+|--------------------------|----------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--package`, `-p`        | Yes      | `symfony/process=latest@packagist` or `com.example.package.ncc` | The package to install it can be a remote package or a local package, see [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for more information when installing a remote package |
+| `--version`, `-v`        | No       | `1.0.0` or `latest`                                             | The version of the package to install, defaults to `latest`                                                                                                                               |
+| `--reinstall`            | No       | Not Applicable                                                  | Reinstall the package even if it's already installed                                                                                                                                      |
+| `--skip-dependencies`    | No       | Not Applicable                                                  | Skips installing the package's dependencies                                                                                                                                               |
+| `--authentication`, `-a` | No       | johndoe                                                         | The authentication credential to use when pulling from private repositories, see [Credentials Management (cred)](#credentials-management-cred) for more information                       |
+| `-y`                     | No       | Not Applicable                                                  | Skips the confirmation prompt when installing a package                                                                                                                                   |
 
 ```shell
 ncc package install -p symfony/process=latest@packagist -y
@@ -546,9 +549,23 @@ options instead.
 | `--password`  | Yes if `login` | `password`       | The password of the credential, only required if the credential type is `login`                          |
 | `--token`     | Yes if `pat`   | `token`          | The token of the credential, only required if the credential type is `pat`                               |
 
+For instance, to add a username/password entry, you can use the following command
+
 ```shell
 ncc cred add --alias johndoe --auth-type login --username johndoe --password <password>
+```
+
+And similar for private access tokens
+
+```shell
 ncc cred add --alias secretdoe --auth-type pat --token <token>
+```
+
+When installing a package, you may pass on the `--authentication` or `-a` option to specify the credential to use when
+pulling from private repositories, this option accepts the alias of the credential to use.
+
+```shell
+ncc package install -p com.example.package -a johndoe
 ```
 
 ### Removing a credential (remove)
@@ -693,6 +710,7 @@ Directory Size: 5 items
 
  - File Version: The version of the ncc binary package file format
  - crc32: The CRC32 checksum of the package itself, this is not the same as entirty of the file.
+ - sha256: The SHA256 checksum of the package itself, this is not the same as entirty of the file.
  - Flags: The flags that were used when building the package, this is used to determine how to read the package.
  - Package Offset: The offset of the entire package data in the file.
  - Package Length: The length of the entire package data in the file.
@@ -834,3 +852,16 @@ ncc exec --package com.example.program.ncc --exec-args --arg1 --arg2
 
 The exit code of the package will be returned as the exit code of the command, if the package fails to execute, the
 command will return an exit code of 1 and display the error details.
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+# Project Configuration (package.json)
+
+The project configuration file is the central hub for managing your project, this file contains all the information
+about your project and how to build it. This file is required for ncc to build your project, without it, ncc will not
+know how to build your project.
+
+This section will describe the structure of the project configuration file and what each section is used for.
+
