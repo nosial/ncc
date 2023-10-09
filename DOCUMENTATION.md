@@ -588,7 +588,7 @@ configurations. You may alter how these configurations work to suit your needs, 
 do is run the `build` command with the `--config` option to specify which configuration to use.
 
 ```shell
-$ `ncc build -p MyCommandLineProgram --config release_executable`
+$ ncc build -p MyCommandLineProgram --config release_executable`
 Building project 'MyCommandLineProgram'
 [ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
 Processing build/release/com.example.cli_program.ncc to hex dump
