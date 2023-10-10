@@ -58,6 +58,12 @@ basic usage, standards, and much more.
   * [Building Projects (build)](#building-projects-build)
   * [Execute (exec)](#execute-exec)
 * [Project Configuration (package.json)](#project-configuration-packagejson)
+  * [Root Section](#root-section)
+    * [Project (object)](#project-object)
+      * [Compiler (object)](#compiler-object)
+      * [UpdateSource (object)](#updatesource-object)
+        * [Repository (object)](#repository-object)
+    * [Assembly (object)](#assembly-object)
 <!-- TOC -->
 
 
@@ -1367,11 +1373,83 @@ command will return an exit code of 1 and display the error details.
 ------------------------------------------------------------------------------------------------------------------------
 
 
+Certainly, here's an expanded version of your project configuration documentation with even more details:
+
+
 # Project Configuration (package.json)
 
-The project configuration file is the central hub for managing your project, this file contains all the information
-about your project and how to build it. This file is required for ncc to build your project, without it, ncc will not
-know how to build your project.
+The project configuration file is the cornerstone of managing your project in `ncc`. It contains comprehensive
+information about your project and how it should be built. Without this file, `ncc` won't have the necessary
+instructions to compile your project effectively. This section aims to provide an in-depth explanation of the structure
+of the project configuration file and the purpose of each section.
 
-This section will describe the structure of the project configuration file and what each section is used for.
+## Root Section
 
+The root section serves as the foundation of the project configuration file, housing all the essential information about
+your project and its build process. It is a pivotal section that instructs `ncc` on how to manage your project effectively.
+
+| Property Name        | Object Type                    | Required | Example | Description                                                                                                                                                                                                                       |
+|----------------------|--------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `project`            | [`Project`](#project-object)   | Yes      | N/A     | The primary project configuration defining how `ncc` compiles and handles the package. This object contains essential settings for your project.                                                                                  |
+| `assembly`           | [`Assembly`](#assembly-object) | Yes      | N/A     | Metadata information about the project, providing details such as the project's name, version, and author.                                                                                                                        |
+| `build`              | `Build`                        | Yes      | N/A     | Build Configuration for the project, encompassing additional configuration options to guide `ncc` in building the project. This section houses build-specific settings.                                                           |
+| `execution_policies` | `ExecutionPolicy[]`            | No       | N/A     | An array of execution policies defined within the project. Execution policies determine how different parts of the project should run after compilation. These policies offer fine-grained control and are optional.              |
+| `installer`          | `Installer`                    | No       | N/A     | Installer configuration for specifying how the installation process is managed. Note that this feature is a work in progress (WIP) and is not yet available. It enables you to configure how the package installation is handled. |
+
+### Project (object)
+
+The project section is the core of your project's configuration, dictating how `ncc` compiles and manages your package.
+This object defines essential settings for your project.
+
+| Property Name   | Object Type                            | Required | Example | Description                                                                                                                                                                                                           |
+|-----------------|----------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `compiler`      | [`Compiler`](#compiler-object)         | Yes      | N/A     | Compiler configuration for the project. This property is crucial as it informs `ncc` about the type of project and how to compile it for a specific version.                                                          |
+| `options`       | `array`                                | No       | N/A     | An associative array of options. These options can be passed on to the compiler or package installer to customize the build process. This property is optional.                                                       |
+| `update_source` | [`UpdateSource`](#updatesource-object) | No       | N/A     | An `UpdateSource` object that allows your package to receive updates from its remote source. This feature enables you to add new repositories to the system when you install the package. It is an optional property. |
+
+#### Compiler (object)
+
+Compiler configuration is pivotal for the project, informing `ncc` about the project type and how to compile it accurately.
+
+| Property Name     | Object Type | Required | Example | Description                                                                                                           |
+|-------------------|-------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------|
+| `extension`       | `string`    | Yes      | `php`   | The compiler extension used. Currently, only `php` is supported as an extension for the compiler.                     |
+| `minimum_version` | `string`    | Yes      | `8.0`   | The minimum version of the compiler required for the project, ensuring compatibility with specific compiler versions. |
+| `maximum_version` | `string`    | Yes      | `8.2`   | The maximum version of the compiler allowed for the project, setting an upper limit on compiler compatibility.        |
+
+#### UpdateSource (object)
+
+The `UpdateSource` object enables your package to receive updates from its remote source, allowing you to add new
+repositories to the system during package installation.
+
+| Property Name | Object Type                        | Required | Example                            | Description                                                                                                                                                              |
+|---------------|------------------------------------|----------|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `source`      | `string`                           | Yes      | `symfony/process=latest@packagist` | The [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for instructing `ncc` how to fetch this package. This syntax specifies the package and its version source. |
+| `repository`  | [`Repository`](#repository-object) | No       | N/A                                | The repository configuration to add to the system. This allows you to define additional repositories, such as Packagist. This property is optional.                      |
+
+##### Repository (object)
+
+The repository configuration defines additional repositories, like Packagist, that can be added to the system.
+This is an optional property.
+
+| Property Name | Object Type | Required | Example      | Description                                                                                                                                                                      |
+|---------------|-------------|----------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`        | `string`    | Yes      | `n64`        | The repository's name for system registration, serving as its identifier.                                                                                                        |
+| `type`        | `string`    | Yes      | `gitlab`     | The repository's type, which can be `github`, `gitlab`, `gitea`, or `packagist`.                                                                                                 |
+| `host`        | `string`    | Yes      | `git.n64.cc` | The repository's host without the protocol (e.g., http/https), specifying the server hosting the repository.                                                                     |
+| `ssl`         | `boolean`   | No       | `True`       | An optional property determining whether SSL should be used when sending requests to the repository's server. If `True`, SSL is enabled; if omitted or `False`, SSL is not used. |
+
+### Assembly (object)
+
+The `Assembly` object furnishes metadata about your project, including its name, version, author, and more.
+
+| Property Name | Object Type        | Required | Example                                   | Description                                                                                                                                               |
+|---------------|--------------------|----------|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `uuid`        | `string (UUID v4)` | Yes      | `2675498a-829e-4d1a-abdf-b9dbea8005c6`    | The Universally Unique Identifier (UUID) for the project. This is generated by `ncc` when you first create a project and is used to uniquely identify it. |
+| `name`        | `string`           | Yes      | `ExampleLibrary`                          | The project's name. It's crucial to avoid special characters and spaces when naming the project, as it serves as a unique identifier.                     |
+| `package`     | `string`           | Yes      | `com.example.library`                     | The package name, following package naming conventions, similar to Java packages.                                                                         |
+| `version`     | `string`           | Yes      | `1.0.0`                                   | The package version, adhering to the Semantic Versioning format to accurately indicate the project's version.                                             |
+| `description` | `string`           | No       | `This is an example library built in ncc` | An optional description of the project, providing insights into its functionality.                                                                        |
+| `company`     | `string`           | No       | `Nosial`                                  | An optional field for specifying the company or vendor name responsible for maintaining the package.                                                      |
+| `copyright`   | `string`           | No       | `Copyright 2022-2023 Nosial`              | An optional field for indicating the copyright associated with the package.                                                                               |
+| `trademark`   | `string`           | No       | `Nosial`                                  | An optional field for specifying any trademarks associated with the package.                                                                              |
