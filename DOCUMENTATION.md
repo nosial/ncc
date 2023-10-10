@@ -25,9 +25,12 @@ basic usage, standards, and much more.
   * [Installing ncc](#installing-ncc)
     * [Command line arguments](#command-line-arguments)
   * [Uninstalling ncc](#uninstalling-ncc)
-* [Conventions](#conventions)
+* [Helpful Information](#helpful-information)
   * [Package Naming](#package-naming)
   * [Remote Package Syntax (RPS)](#remote-package-syntax-rps)
+  * [ncc Binary Package](#ncc-binary-package)
+    * [Package Header](#package-header)
+    * [Package Data](#package-data)
 * [ncc cli](#ncc-cli)
   * [Project Management (project)](#project-management-project)
     * [Creating a new project (create)](#creating-a-new-project-create)
@@ -310,9 +313,9 @@ and so on.
 ------------------------------------------------------------------------------------------------------------------------
 
 
-# Conventions
+# Helpful Information
 
-This section covers the conventions that ncc uses for its source code, documentation, and other things.
+This section covers helpful information about ncc, such as conventions, standards, and so on.
 
 
 ## Package Naming
@@ -375,6 +378,47 @@ to separate the group name from the subgroup name.
 nosial/libs.config@n64 # installs the latest version of ConfigLib from n64
 nosial/libs.config=1.0.0@n64 # installs version 1.0.0 of ConfigLib from n64
 ```
+
+
+## ncc Binary Package
+
+ncc binary packages are packages that are compiled by ncc, these packages are used to install packages on the system and
+can also be executed directly by ncc, the file format is a flexible memory safe archive type similiar to `PHAR` or the
+`ZIP` file format. This section will attempt to explain the file sturcture of a binary package and how they work.
+
+![ncc binary package file structure](assets/package_structure.png)
+
+The ncc Binary Package File consists of three main sections: the package header, the package data, and the end of package marker.
+
+### Package Header
+
+The package header is the data that ncc will load into memory to be able to find data on the package without needing to
+load the entire package into memory. The package begins with the magic bytes `ncc_pkg` followed by the header data,
+this header data ends with the sequence of bytes `1F 1F 1F 1F` to indicate the end of the header data.
+
+![ncc binary package file structure](assets/header_structure.png)
+
+Once ncc is able to locate and decode the header data, it's able to identify where all the files and components are
+located in the package, this is because the header data provides an offset and length for each component. It's up to
+ncc's PackageReader to determine the correct offset to be able to read the data correctly, as ncc binary packages may
+also be embedded into other files such as an executable file.
+
+The header data is encoded using `msgpack` to ensure that the data is compact and can be decoded quickly, the header
+cannot be compressed as it's required to be loaded into memory as-is.
+
+### Package Data
+
+After the end of the header marker, the package data begins, this is where all the files and components are located,
+each component and file and it's data contents are not seperated or easily identifiable, this is because the package
+data is located using the header data. The data section ends with the sequence of bytes `FF AA 55 F0` to indicate that
+this is the end of the ncc binary package data, any data beyond that is not part of the package file.
+
+![ncc binary package file structure](assets/data_structure.png)
+
+The data sections can be any sort of data. Additionally, if the headers contain a flag for compression, ncc will attempt
+to decompress the data as you read it, this is useful for reducing the size of the package file and to reduce the amount
+of memory required to load the package into memory. Though this is optional and is not required for ncc to be able to
+read the package file.
 
 
 ------------------------------------------------------------------------------------------------------------------------
