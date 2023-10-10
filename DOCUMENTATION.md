@@ -67,6 +67,7 @@ basic usage, standards, and much more.
       * [UpdateSource (object)](#updatesource-object)
         * [Repository (object)](#repository-object)
     * [Assembly (object)](#assembly-object)
+    * [Build (object)](#build-object)
 <!-- TOC -->
 
 
@@ -1497,3 +1498,22 @@ The `Assembly` object furnishes metadata about your project, including its name,
 | `company`     | `string`           | No       | `Nosial`                                  | An optional field for specifying the company or vendor name responsible for maintaining the package.                                                      |
 | `copyright`   | `string`           | No       | `Copyright 2022-2023 Nosial`              | An optional field for indicating the copyright associated with the package.                                                                               |
 | `trademark`   | `string`           | No       | `Nosial`                                  | An optional field for specifying any trademarks associated with the package.                                                                              |
+
+### Build (object)
+
+The build section is responsible for defining the build configuration for the project, encompassing additional
+configuration options to guide `ncc` in building the project. This section houses build-specific settings and one or
+more build configurations.
+
+| Property Name           | Object Type            | Required | Example                                   | Description                                                                                                  |
+|-------------------------|------------------------|----------|-------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `source_path`           | `string`               | Yes      | `src`                                     | The path to the source directory, relative to the project root.                                              |
+| `default_configuration` | `string`               | Yes      | `release`                                 | The default build configuration to use when building the project.                                            |
+| `exclude_files`         | `string[]`             | No       | `["*.md", "*.txt"]`                       | An array of glob patterns to exclude from the build.                                                         |
+| `options`               | `array`                | No       | N/A                                       | An associative array of options.                                                                             |
+| `main`                  | `string`               | No       | `main_policy`                             | The main execution policy to use when executing the package.                                                 |
+| `define_constants`      | `array`                | No       | `{ "DEBUG": true }`                       | An associative array of constants to define when importing the package, this feature is not yet implemented. |
+| `pre_build`             | `string[]`             | No       | `["pre_setup_policy", "cleanup_policy"]`  | An array of execution policies to run before building the project, this feature is not yet implemented.      |
+| `post_build`            | `string[]`             | No       | `["post_setup_policy", "cleanup_policy"]` | An array of execution policies to run after building the project, this feature is not yet implemented.       |
+| `dependencies`          | `Dependency[]`         | No       | N/A                                       | An array of dependencies to install or use when building the project.                                        |
+| `build_configurations`  | `BuildConfiguration[]` | No       | N/A                                       | An array of build configurations to use when building the project.                                           |
