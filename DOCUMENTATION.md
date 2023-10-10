@@ -67,6 +67,9 @@ basic usage, standards, and much more.
       * [UpdateSource (object)](#updatesource-object)
         * [Repository (object)](#repository-object)
     * [Assembly (object)](#assembly-object)
+    * [Build (object)](#build-object)
+      * [Dependency (Object)](#dependency-object)
+      * [BuildConfiguration (Object)](#buildconfiguration-object)
 <!-- TOC -->
 
 
@@ -1436,7 +1439,7 @@ your project and its build process. It is a pivotal section that instructs `ncc`
 |----------------------|--------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `project`            | [`Project`](#project-object)   | Yes      | N/A     | The primary project configuration defining how `ncc` compiles and handles the package. This object contains essential settings for your project.                                                                                  |
 | `assembly`           | [`Assembly`](#assembly-object) | Yes      | N/A     | Metadata information about the project, providing details such as the project's name, version, and author.                                                                                                                        |
-| `build`              | `Build`                        | Yes      | N/A     | Build Configuration for the project, encompassing additional configuration options to guide `ncc` in building the project. This section houses build-specific settings.                                                           |
+| `build`              | [`Build`](#build-object)       | Yes      | N/A     | Build Configuration for the project, encompassing additional configuration options to guide `ncc` in building the project. This section houses build-specific settings.                                                           |
 | `execution_policies` | `ExecutionPolicy[]`            | No       | N/A     | An array of execution policies defined within the project. Execution policies determine how different parts of the project should run after compilation. These policies offer fine-grained control and are optional.              |
 | `installer`          | `Installer`                    | No       | N/A     | Installer configuration for specifying how the installation process is managed. Note that this feature is a work in progress (WIP) and is not yet available. It enables you to configure how the package installation is handled. |
 
@@ -1497,3 +1500,54 @@ The `Assembly` object furnishes metadata about your project, including its name,
 | `company`     | `string`           | No       | `Nosial`                                  | An optional field for specifying the company or vendor name responsible for maintaining the package.                                                      |
 | `copyright`   | `string`           | No       | `Copyright 2022-2023 Nosial`              | An optional field for indicating the copyright associated with the package.                                                                               |
 | `trademark`   | `string`           | No       | `Nosial`                                  | An optional field for specifying any trademarks associated with the package.                                                                              |
+
+### Build (object)
+
+The build section is responsible for defining the build configuration for the project, encompassing additional
+configuration options to guide `ncc` in building the project. This section houses build-specific settings and one or
+more build configurations.
+
+| Property Name           | Object Type                                          | Required | Example                                   | Description                                                                                             |
+|-------------------------|------------------------------------------------------|----------|-------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `source_path`           | `string`                                             | Yes      | `src`                                     | The path to the source directory, relative to the project's root directory.                             |
+| `default_configuration` | `string`                                             | Yes      | `release`                                 | The default build configuration to use when building the project.                                       |
+| `exclude_files`         | `string[]`                                           | No       | `["*.md", "*.txt"]`                       | An array of glob patterns for files to exclude from the build process.                                  |
+| `options`               | `array`                                              | No       | N/A                                       | An associative array of customizable options for configuring the project.                               |
+| `main`                  | `string`                                             | No       | `main_policy`                             | The main execution policy to be used when executing the package.                                        |
+| `define_constants`      | `array`                                              | No       | `{ "DEBUG": true }`                       | An associative array of constants to define when importing the package (feature not yet implemented).   |
+| `pre_build`             | `string[]`                                           | No       | `["pre_setup_policy", "cleanup_policy"]`  | An array of execution policies to run before the project's build process (feature not yet implemented). |
+| `post_build`            | `string[]`                                           | No       | `["post_setup_policy", "cleanup_policy"]` | An array of execution policies to run after the project's build process (feature not yet implemented).  |
+| `dependencies`          | [`Dependency[]`](#dependency-object)                 | No       | N/A                                       | An array of dependencies to install or utilize during the project's build process.                      |
+| `build_configurations`  | [`BuildConfiguration[]`](#buildconfiguration-object) | No       | N/A                                       | An array of build configurations to use when building the project.                                      |
+
+
+#### Dependency (Object)
+
+The `Dependency` object is used to specify dependencies for installation or utilization during the project's build process.
+
+| Property Name | Object Type | Required | Example                            | Description                                                                                                                                                                                               |
+|---------------|-------------|----------|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`        | `string`    | Yes      | `com.symfony.console`              | The name of the dependency to require.                                                                                                                                                                    |
+| `version`     | `string`    | Yes      | `latest` or `1.0.0`                | The version of the dependency to require. If set to `latest` and the package is already installed on the system, it will use the latest installed version; otherwise, it will install the latest version. |
+| `source`      | `string`    | No       | `symfony/console=latest@packagist` | The [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for instructing ncc on how to fetch this package. This syntax specifies the package and its version source.                                 |
+
+#### BuildConfiguration (Object)
+
+The `BuildConfiguration` object is used to define specific build configurations for your project, allowing you to
+specify different build settings for different purposes. For example, you can create a `debug` build configuration for
+debugging purposes and a `release` build configuration for production use. Additionally, each build configuration can
+generate different versions of the package.
+
+Please note that when building the project using a build configuration, the project's root build properties will be
+merged with the properties defined in the build configuration, with the latter overriding any conflicting values.
+
+| Property Name      | Object Type                          | Required | Example                        | Description                                                                                             |
+|--------------------|--------------------------------------|----------|--------------------------------|---------------------------------------------------------------------------------------------------------|
+| `name`             | `string`                             | Yes      | `debug`                        | The name of the build configuration.                                                                    |
+| `build_type`       | `string`                             | Yes      | `ncc`                          | The build type to use when building the project. Currently, only `ncc` and `executable` are supported.  |
+| `output`           | `string`                             | Yes      | `build/%ASSEMBLY.PACKAGE%.ncc` | The output file to generate when building the project with this build configuration.                    |
+| `define_constants` | `array`                              | No       | `{ "DEBUG": true }`            | An associative array of constants to define when importing the package (feature not yet implemented).   |
+| `exclude_files`    | `string[]`                           | No       | `["*.md", "*.txt"]`            | An array of glob patterns specifying files to exclude from the build process.                           |
+| `pre_build`        | `string[]`                           | No       | `["pre_setup_policy"]`         | An array of execution policies to run before the project's build process (feature not yet implemented). |
+| `post_build`       | `string[]`                           | No       | `["post_setup_policy"]`        | An array of execution policies to run after the project's build process (feature not yet implemented).  |
+| `dependencies`     | [`Dependency[]`](#dependency-object) | No       | N/A                            | An array of additional dependencies to utilize during the project's build process.                      |
