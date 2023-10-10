@@ -31,6 +31,10 @@ basic usage, standards, and much more.
   * [ncc Binary Package](#ncc-binary-package)
     * [Package Header](#package-header)
     * [Package Data](#package-data)
+  * [How to build binary executable files](#how-to-build-binary-executable-files)
+    * [How are they compiled?](#how-are-they-compiled)
+    * [Can I adjust the compiler process?](#can-i-adjust-the-compiler-process)
+    * [What does an executable build configuration look like?](#what-does-an-executable-build-configuration-look-like)
 * [ncc cli](#ncc-cli)
   * [Project Management (project)](#project-management-project)
     * [Creating a new project (create)](#creating-a-new-project-create)
@@ -424,6 +428,86 @@ The data sections can be any sort of data. Additionally, if the headers contain 
 to decompress the data as you read it, this is useful for reducing the size of the package file and to reduce the amount
 of memory required to load the package into memory. Though this is optional and is not required for ncc to be able to
 read the package file.
+
+
+## How to build binary executable files
+
+ncc can build binary executable files for your project, this is useful for CLI applications or for creating a single
+file that can be directly executed on any machine or even used as a dependency for other projects. This section will
+attempt to explain how to build binary executable files and more importantly, how they work.
+
+ > **Note:** This process requires `gcc` to be installed on the system.
+
+### How are they compiled?
+
+ncc utilizes a bootstrap approach to transform your project into a binary executable file. However, it's important to
+note that your project won't be able to function independently without ncc. This dependency exists because ncc needs to
+load your project's components and dependencies into memory before execution, this also requires php to actually execute
+the code. The key component for this process is the bootstrap file, which is located at
+[src/ncc/Classes/PhpExtension/bootstrap_main.c](src/ncc/Classes/PhpExtension/bootstrap_main.c).
+
+![ncc compiler process](assets/execution_process.png)
+
+Here's how the compiler process unfolds: initially, it generates an ncc binary package file for your project. To achieve
+this, your executable build configuration must include an option called `ncc_configuration`. This option anticipates a
+value where the key corresponds to the name of a build configuration that produces an ncc binary package file. Once the
+ncc binary package file is created, ncc proceeds to convert it into a hexadecimal representation.
+
+Following the creation of the hex representation of the binary package file, ncc invokes the gcc compiler. This, in
+combination with the hex representation of the binary package file, results in the creation of an executable file. If
+your package contains a designated main execution point, this executable file can be run directly. If your package lacks
+a main execution point, the executable file will function as a library and can be employed as a dependency in other
+projects or imported during runtime.
+
+![ncc compiler process](assets/compiler_process.png)
+
+ > **Note:** If the program requires dependencies that are not available on the system, direct execution will fail. In
+ > such cases, you should add the `static` option to the build configuration to create a static executable file. This
+ > file will contain all the dependencies and components required to run the program.
+
+### Can I adjust the compiler process?
+
+You have the flexibility to customize the compiler process by providing additional parameters to gcc. This customization
+can be achieved by modifying the `options` property within your executable build configuration, with each option name
+prefixed by gcc-, for example:
+
+If you need to pass a key-value option, include it like this: `{ "gcc-<option>": "<value>" }` within the `options` property.
+
+```json
+{
+  "options": {
+    "gcc-O": "3"
+  }
+}
+```
+
+If an option doesn't require a value, you can pass null instead. For instance:
+
+```json
+{
+  "options": {
+    "gcc-Wall": null
+  }
+}
+```
+
+This way, you can fine-tune the behavior of the gcc compiler to suit your project's specific requirements.
+
+### What does an executable build configuration look like?
+
+Here's an example of a build configuration that produces an executable file, you can append this to your
+`build_configurations` property in your project's build section in the package.json file.
+
+```json
+{
+  "name": "release_executable",
+  "build_type": "executable",
+  "output": "build/%ASSEMBLY.NAME%",
+  "options": {
+    "ncc_configuration": "release"
+  }
+}
+```
 
 
 ------------------------------------------------------------------------------------------------------------------------
