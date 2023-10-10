@@ -70,6 +70,8 @@ basic usage, standards, and much more.
     * [Build (object)](#build-object)
       * [Dependency (Object)](#dependency-object)
       * [BuildConfiguration (Object)](#buildconfiguration-object)
+    * [ExecutionPolicy (object)](#executionpolicy-object)
+      * [Execute (object)](#execute-object)
 <!-- TOC -->
 
 
@@ -1435,13 +1437,13 @@ of the project configuration file and the purpose of each section.
 The root section serves as the foundation of the project configuration file, housing all the essential information about
 your project and its build process. It is a pivotal section that instructs `ncc` on how to manage your project effectively.
 
-| Property Name        | Object Type                    | Required | Example | Description                                                                                                                                                                                                                       |
-|----------------------|--------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `project`            | [`Project`](#project-object)   | Yes      | N/A     | The primary project configuration defining how `ncc` compiles and handles the package. This object contains essential settings for your project.                                                                                  |
-| `assembly`           | [`Assembly`](#assembly-object) | Yes      | N/A     | Metadata information about the project, providing details such as the project's name, version, and author.                                                                                                                        |
-| `build`              | [`Build`](#build-object)       | Yes      | N/A     | Build Configuration for the project, encompassing additional configuration options to guide `ncc` in building the project. This section houses build-specific settings.                                                           |
-| `execution_policies` | `ExecutionPolicy[]`            | No       | N/A     | An array of execution policies defined within the project. Execution policies determine how different parts of the project should run after compilation. These policies offer fine-grained control and are optional.              |
-| `installer`          | `Installer`                    | No       | N/A     | Installer configuration for specifying how the installation process is managed. Note that this feature is a work in progress (WIP) and is not yet available. It enables you to configure how the package installation is handled. |
+| Property Name        | Object Type                                    | Required | Example | Description                                                                                                                                                                                                                       |
+|----------------------|------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `project`            | [`Project`](#project-object)                   | Yes      | N/A     | The primary project configuration defining how `ncc` compiles and handles the package. This object contains essential settings for your project.                                                                                  |
+| `assembly`           | [`Assembly`](#assembly-object)                 | Yes      | N/A     | Metadata information about the project, providing details such as the project's name, version, and author.                                                                                                                        |
+| `build`              | [`Build`](#build-object)                       | Yes      | N/A     | Build Configuration for the project, encompassing additional configuration options to guide `ncc` in building the project. This section houses build-specific settings.                                                           |
+| `execution_policies` | [`ExecutionPolicy[]`](#executionpolicy-object) | No       | N/A     | An array of execution policies defined within the project. Execution policies determine how different parts of the project should run after compilation. These policies offer fine-grained control and are optional.              |
+| `installer`          | `Installer`                                    | No       | N/A     | Installer configuration for specifying how the installation process is managed. Note that this feature is a work in progress (WIP) and is not yet available. It enables you to configure how the package installation is handled. |
 
 ### Project (object)
 
@@ -1551,3 +1553,31 @@ merged with the properties defined in the build configuration, with the latter o
 | `pre_build`        | `string[]`                           | No       | `["pre_setup_policy"]`         | An array of execution policies to run before the project's build process (feature not yet implemented). |
 | `post_build`       | `string[]`                           | No       | `["post_setup_policy"]`        | An array of execution policies to run after the project's build process (feature not yet implemented).  |
 | `dependencies`     | [`Dependency[]`](#dependency-object) | No       | N/A                            | An array of additional dependencies to utilize during the project's build process.                      |
+
+### ExecutionPolicy (object)
+
+The `ExecutionPolicy` object is used to define execution policies for your project, allowing you to specify how different
+parts of the project should run after compilation. These policies offer fine-grained control and are optional.
+
+| Property Name   | Object Type                  | Required | Example          | Description                                                                                                                                                                         |
+|-----------------|------------------------------|----------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`          | `string`                     | Yes      | `main_policy`    | The unique name of the execution policy.                                                                                                                                            |
+| `runner`        | `string`                     | Yes      | `php`            | The runner to use when executing the policy. Currently, `bash`, `lua`, `perl`, `php` and `python` are supported.                                                                    |
+| `execute`       | [`Execute`](#execute-object) | Yes      | N/A              | The execution configuration for the policy.                                                                                                                                         |
+| `exit_handlers` | `ExitHandler`                | No       | N/A              | The exit handlers for the policy allowing to execute other policies after the policy has finished executing at different stages, this is not yet implemented and planned to change. |
+| `message`       | `string`                     | No       | `"Hello World!"` | The message to display when the policy is invoked.                                                                                                                                  |
+
+#### Execute (object)
+
+The `Execute` object is used to define the execution configuration for the policy.
+
+| Property Name           | Object Type | Required | Example            | Description                                                                                            |
+|-------------------------|-------------|----------|--------------------|--------------------------------------------------------------------------------------------------------|
+| `target`                | `string`    | Yes      | `main.php`         | The target to execute when invoking the police, relative to the project's root directory.              |
+| `working_directory`     | `string`    | Yes      | `%CWD%`            | The working directory to use when executing the policy, you may use special constants such as `%CWD%`. |
+| `options`               | `array`     | No       | `{"static": true}` | An associative array of options to pass to the runner when executing the policy.                       |
+| `environment_variables` | `array`     | No       | `{"DEBUG": "1" }`  | An associative array of environment variables to set when executing the policy.                        |
+| `silent`                | `bool`      | No       | `true`             | Whether or not to silence the output of the policy.                                                    |
+| `tty`                   | `bool`      | No       | `true`             | Whether or not to allocate a TTY when executing the policy.                                            |
+| `timeout`               | `int`       | No       | `60`               | The timeout in seconds to use when executing the policy.                                               |
+| `idle_timeout`          | `int`       | No       | `60`               | The idle timeout in seconds to use when executing the policy.                                          |
