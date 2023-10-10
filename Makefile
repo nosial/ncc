@@ -135,7 +135,7 @@ docker-debian:
 
 .PHONY: docker-debian-run
 docker-debian-run:
-	docker run -it --rm -v $(PWD):/ncc ncc-debian /bin/bash
+	docker run -it --rm ncc-debian /bin/bash
 
 .PHONY: docker-alpine
 docker-alpine:
@@ -143,7 +143,7 @@ docker-alpine:
 
 .PHONY: docker-alpine-run
 docker-alpine-run:
-	docker run -it --rm -v $(PWD):/ncc ncc-alpine /bin/sh
+	docker run -it --rm ncc-alpine /bin/sh
 
 .PHONY: clean
 clean:
