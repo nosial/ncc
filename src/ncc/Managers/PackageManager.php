@@ -558,7 +558,7 @@
 
                 // First try to fetch a pre-built package from the repository
                 $results = $this->repository_manager->getRepository($input->getRepository())->fetchPackage(
-                    $input->getVendor(), $input->getPackage(), $input->getVersion(),
+                    $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication
                 );
 
                 $package_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
