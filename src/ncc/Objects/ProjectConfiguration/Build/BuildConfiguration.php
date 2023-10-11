@@ -457,7 +457,7 @@
 
             if($output === null)
             {
-                throw new ConfigurationException('Build configuration "output_path" property is required');
+                throw new ConfigurationException('Build configuration "output" property is required');
             }
 
             $object = new BuildConfiguration($name, $output);
