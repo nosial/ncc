@@ -13,7 +13,7 @@ dependencies can be installed collectively using the 'install' command added in 
 is further documented in `DOCUMENTATION.md`
 
 ### Added
- - Add functionality to install project dependencies
+ - Add functionality to install project dependencies with the new `project install` command in `ProjectMenu.php`
 
 ### Fixed
  - Correct exception message for configuration property in `\ncc\Objects\ProjectConfiguration\Build > BuildConfiguration > fromArray()`
