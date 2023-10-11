@@ -41,6 +41,7 @@ basic usage, standards, and much more.
     * [Applying Templates (template)](#applying-templates-template)
       * [phpcli template](#phpcli-template)
       * [phplib template](#phplib-template)
+    * [Install Dependencies (install)](#install-dependencies-install)
   * [Package Management (package or pkg)](#package-management-package-or-pkg)
     * [Listing Installed Packages (list)](#listing-installed-packages-list)
     * [Installing Packages (install)](#installing-packages-install)
@@ -1082,6 +1083,20 @@ having to worry about whether the library is installed or not, and with its impo
 about autoloaders or anything like that, ncc will take care of that for you. This is what composer cannot do, composer
 can only install packages onto your project directory, but it cannot bundle them into your programs if you wish to 
 have an easy way to distribute your project to other people, this is where ncc shines.
+
+### Install Dependencies (install)
+
+The `install` command satisfies the dependencies of a project by installing the required packages. This command is
+not the same as `package install`, this command will install the dependencies of a project, while `package install`
+only handles your dependencies, including dependencies defined in build configurations.
+
+| Option                   | Required | Example         | Description                                                                                                                                                         |
+|--------------------------|----------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--path`, `-p`           | No       | example_project | The project directory to use to install the dependencies, if not provided then the current working directory would be used instead                                  |
+| `--authentication`, `-a` | No       | johndoe         | The authentication credential to use when pulling from private repositories, see [Credentials Management (cred)](#credentials-management-cred) for more information |
+
+
+
 
 ## Package Management (package or pkg)
 

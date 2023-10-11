@@ -36,6 +36,7 @@
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\InitializeProjectOptions;
     use ncc\Enums\ProjectTemplates;
+    use ncc\Enums\Scopes;
     use ncc\Enums\SpecialConstants\AssemblyConstants;
     use ncc\Enums\Types\BuildOutputType;
     use ncc\Exceptions\BuildException;
@@ -44,9 +45,11 @@
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
+    use ncc\Interfaces\AuthenticationInterface;
     use ncc\Objects\ComposerJson;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\ProjectConfiguration;
+    use ncc\Objects\RemotePackageInput;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
@@ -193,6 +196,56 @@
                 default:
                     throw new NotSupportedException('The given template \'' . $template_name . '\' is not supported');
             }
+        }
+
+        /**
+         * Install dependencies for the project
+         *
+         * @param AuthenticationInterface|null $authentication
+         * @return array Array of installed packages
+         * @throws OperationException
+         * @throws IOException
+         * @throws ConfigurationException
+         * @throws PathNotFoundException
+         * @throws NotSupportedException
+         */
+        public function installDependencies(?AuthenticationInterface $authentication=null): array
+        {
+            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            {
+                throw new OperationException('Unable to install dependencies, you must be running as root');
+            }
+
+            $installed_packages = [];
+            $dependencies = $this->project_configuration->getBuild()->getDependencies();
+            $package_manager = new PackageManager();
+
+            foreach($this->project_configuration->getBuild()->getBuildConfigurations() as $configuration)
+            {
+                /** @noinspection SlowArrayOperationsInLoopInspection */
+                $dependencies = array_merge(
+                    $dependencies,
+                    $this->project_configuration->getBuild()->getBuildConfiguration($configuration)->getDependencies()
+                );
+            }
+
+            foreach($dependencies as $dependency)
+            {
+                if($dependency->getSource() === null)
+                {
+                    Console::outVerbose('Skipping dependency \'' . $dependency->getName() . '\' because there is no source available');
+                }
+                elseif($package_manager->getPackageLock()->entryExists($dependency->getName(), $dependency->getVersion()))
+                {
+                    Console::outVerbose('Skipping dependency \'' . $dependency->getName() . '\' because it is already installed');
+                }
+                else
+                {
+                    $installed_packages[] = $package_manager->install(RemotePackageInput::fromString($dependency->getSource()), $authentication);
+                }
+            }
+
+            return $installed_packages;
         }
 
         /**
@@ -549,6 +602,7 @@
 
                 foreach($composer_json->getAutoload()?->getFiles() as $path)
                 {
+                    /** @noinspection SlowArrayOperationsInLoopInspection */
                     $required_files = array_merge($required_files, self::copyContents($project_path, $project_src, $path));
                 }
 

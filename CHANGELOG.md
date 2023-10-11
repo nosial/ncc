@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.1] - Unreleased
 
-This update introduces minor bug fixes and changes
+Added a new feature in `ProjectManager.php` that allows automatic installation of a project's dependencies. The 
+`installDependencies` function eases the task of separately installing each dependency. Now, both public and private 
+dependencies can be installed collectively using the 'install' command added in `ProjectMenu.php`. This functionality 
+is further documented in `DOCUMENTATION.md`
+
+### Added
+ - Add functionality to install project dependencies
 
 ### Fixed
  - Correct exception message for configuration property in `\ncc\Objects\ProjectConfiguration\Build > BuildConfiguration > fromArray()`
