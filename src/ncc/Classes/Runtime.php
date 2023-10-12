@@ -268,9 +268,18 @@
                 }
             }
 
-            // Import dependencies recursively
             if(!$package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
             {
+                // Fake import the dependencies
+                foreach($package_reader->getDependencies() as $dependency_name)
+                {
+                    $dependency = $package_reader->getDependency($dependency_name);
+                    self::$imported_packages[$dependency->getName()] = $package_reader;
+                }
+            }
+            else
+            {
+                // Import dependencies recursively
                 foreach($package_reader->getDependencies() as $dependency)
                 {
                     $dependency = $package_reader->getDependency($dependency);
