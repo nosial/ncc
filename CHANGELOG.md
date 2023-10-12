@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - Updated fetchPackage method to include authentication
  - Update dependencies import in \ncc\Classes > Runtime > importFromPackage()
+ - Refactor ncc extension registration logic, this also allows for debian packages to install the ncc extension
+   automatically.
 
 ### Fixed
  - Fixed issue where some build artifacts are being bundled with package builds such as `output_path` and `static`

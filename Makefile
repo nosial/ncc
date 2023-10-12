@@ -76,7 +76,6 @@ redist: autoload
 	cp -f $(CONFIG_PATH)/ncc.yaml $(GENERIC_BUILD_PATH)/CLI/template_config.yaml
 	cp -f $(CONFIG_PATH)/default_repositories.json $(GENERIC_BUILD_PATH)/default_repositories.json
 	cp -f $(INSTALLER_SRC_PATH)/ncc-package.xml $(GENERIC_BUILD_PATH)/ncc-package.xml
-	cp -f $(INSTALLER_SRC_PATH)/extension $(GENERIC_BUILD_PATH)/extension
 	chmod +x $(GENERIC_BUILD_PATH)/INSTALL
 	cp -f LICENSE $(GENERIC_BUILD_PATH)/LICENSE
 	cp -f README.md $(GENERIC_BUILD_PATH)/README.md

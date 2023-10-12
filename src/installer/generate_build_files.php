@@ -41,8 +41,7 @@
         'installer',
         'checksum.bin',
         'build_files',
-        'ncc.sh',
-        'extension'
+        'ncc.sh'
     ];
 
     ncc\Utilities\Console::out('Creating build_files ...');

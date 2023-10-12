@@ -28,6 +28,7 @@
     use ncc\Enums\Scopes;
     use ncc\Enums\Versions;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Managers\ConfigurationManager;
@@ -338,6 +339,66 @@
             {
                 throw new OperationException('Failed to initialize repository database, ' . $e->getMessage(), $e);
             }
+
+            try
+            {
+                self::registerExtension($filesystem);
+            }
+            catch(Exception $e)
+            {
+                throw new OperationException('Failed to register ncc extension, ' . $e->getMessage(), $e);
+            }
+        }
+
+        /**
+         * Register the ncc extension with the given filesystem.
+         *
+         * @param Filesystem $filesystem The filesystem object used for file operations.
+         * @throws IOException If the extension cannot be registered.
+         * @throws NotSupportedException If `get_include_path()` function is not available.
+         * @throws PathNotFoundException If the default include path is not available.
+         */
+        private static function registerExtension(Filesystem $filesystem): void
+        {
+            if(!function_exists('get_include_path'))
+            {
+                throw new NotSupportedException('Cannot register ncc extension, get_include_path() is not available');
+            }
+
+            $default_share = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'share' . DIRECTORY_SEPARATOR . 'php';
+            $include_paths = explode(':', get_include_path());
+            $extension = str_ireplace('%ncc_install', NCC_EXEC_LOCATION, IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'extension'));
+
+            if(in_array($default_share, $include_paths))
+            {
+                if($filesystem->exists($default_share . DIRECTORY_SEPARATOR . 'ncc'))
+                {
+                    $filesystem->remove($default_share . DIRECTORY_SEPARATOR . 'ncc');
+                }
+
+                IO::fwrite($default_share . DIRECTORY_SEPARATOR . 'ncc', $extension);
+                return;
+            }
+
+            foreach($include_paths as $include_path)
+            {
+                try
+                {
+                    if($filesystem->exists($include_path . DIRECTORY_SEPARATOR . 'ncc'))
+                    {
+                        $filesystem->remove($include_path . DIRECTORY_SEPARATOR . 'ncc');
+                    }
+
+                    IO::fwrite($include_path . DIRECTORY_SEPARATOR . 'ncc', $extension);
+                    return;
+                }
+                catch(IOException $e)
+                {
+                    Console::outWarning(sprintf('Failed to register ncc extension in %s: %s', $include_path, $e->getMessage()));
+                }
+            }
+
+            throw new IOException('Cannot register ncc extension, no include path is available');
         }
 
         /**
