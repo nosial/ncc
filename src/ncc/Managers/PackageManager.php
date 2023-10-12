@@ -558,7 +558,7 @@
 
                 // First try to fetch a pre-built package from the repository
                 $results = $this->repository_manager->getRepository($input->getRepository())->fetchPackage(
-                    $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication
+                    $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication, $options
                 );
 
                 $package_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
@@ -592,7 +592,7 @@
                     ));
 
                     $results = $this->repository_manager->getRepository($input->getRepository())->fetchSourceArchive(
-                        $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication
+                        $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication, $options
                     );
 
                     $archive_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());

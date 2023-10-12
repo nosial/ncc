@@ -98,6 +98,8 @@
          */
         public const OPERATION_EXCEPTION = -1776;
 
+        public const IMPORT_EXCEPTION = -1777;
+
         /**
          * All the exception codes from NCC
          */
@@ -115,6 +117,7 @@
             self::PACKAGE_EXCEPTION,
             self::NETWORK_EXCEPTION,
             self::INTEGRITY_EXCEPTION,
-            self::OPERATION_EXCEPTION
+            self::OPERATION_EXCEPTION,
+            self::IMPORT_EXCEPTION
         ];
     }

@@ -40,11 +40,12 @@
          * @param string $project The project to get the source for (eg; "ncc" or "libs/config")
          * @param string $version Optional. The version to get the source for. By default, it will get the latest version
          * @param AuthenticationType|null $authentication Optional. The authentication to use. If null, No authentication will be used.
+         * @param array $options Optional. The options to use for the request
          * @return RepositoryResult The result of the request
          * @throws AuthenticationException If the authentication is invalid
          * @throws NetworkException If there was an error getting the source
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult;
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult;
 
         /**
          * Returns the archive URL for the ncc package of the specified group and project.
@@ -55,9 +56,10 @@
          * @param string $project The project to get the package for (eg; "ncc" or "libs/config")
          * @param string $version Optional. The version to get the package for. By default, it will get the latest version
          * @param AuthenticationType|null $authentication Optional. The authentication to use. If null, No authentication will be used.
+         * @param array $options Optional. The options to use for the request
          * @return RepositoryResult The result of the request
          * @throws AuthenticationException If the authentication is invalid
          * @throws NetworkException If there was an error getting the package
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult;
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult;
     }

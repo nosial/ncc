@@ -37,4 +37,10 @@
          * Including dependencies if they are being processed.
          */
         public const REINSTALL = 'reinstall';
+
+        /**
+         * Installs a static version of the package if it's available
+         * otherwise it will install non-static version
+         */
+        public const PREFER_STATIC = 'prefer_static';
     }

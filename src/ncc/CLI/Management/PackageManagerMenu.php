@@ -152,6 +152,11 @@
                 $options[InstallPackageOptions::REINSTALL] = true;
             }
 
+            if(isset($args['prefer-static']) || isset($args['static']))
+            {
+                $options[InstallPackageOptions::PREFER_STATIC] = true;
+            }
+
             if(isset($args['skip-dependencies']))
             {
                 $options[InstallPackageOptions::SKIP_DEPENDENCIES] = true;
@@ -548,6 +553,7 @@
                 new CliHelpSection(['install', '--package', '-p', '--version', '-v'], 'Installs a specified ncc package version'),
                 new CliHelpSection(['install', '-p', '--skip-dependencies'], 'Installs a specified ncc package but skips the installation of dependencies'),
                 new CliHelpSection(['install', '-p', '--reinstall'], 'Installs a specified ncc package, reinstall if already installed'),
+                new CliHelpSection(['install', '--prefer-static', '--static'], 'Installs a static version of the package from the remote repository if available'),
                 new CliHelpSection(['uninstall', '--package', '-p'], 'Uninstalls a specified ncc package'),
                 new CliHelpSection(['uninstall', '--package', '-p', '--version', '-v'], 'Uninstalls a specified ncc package version'),
                 new CliHelpSection(['uninstall-all'], 'Uninstalls all packages'),

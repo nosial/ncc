@@ -30,6 +30,7 @@
     use ncc\Enums\PackageDirectory;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\NotSupportedException;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Metadata;
@@ -341,6 +342,7 @@
          *
          * @return Metadata
          * @throws ConfigurationException
+         * @throws NotSupportedException
          */
         public function getMetadata(): Metadata
         {
@@ -357,6 +359,11 @@
             }
 
             $metadata = Metadata::fromArray(ZiProto::decode($this->get($directory)));
+            foreach($this->getFlags() as $flag)
+            {
+                $metadata->setOption($flag, true);
+            }
+
             $this->cache[$directory] = $metadata;
             return $metadata;
         }

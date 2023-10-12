@@ -46,7 +46,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
         {
             if($version === Versions::LATEST)
             {
@@ -98,7 +98,7 @@
          * @inheritDoc
          * @throws NotSupportedException
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
         {
             throw new NotSupportedException('Fetching ncc packages from Packagist is not supported');
         }

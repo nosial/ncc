@@ -177,15 +177,6 @@
                 self::$class_map[strtolower($class)] = $component_path;
             }
 
-            self::$imported_packages[$package] = $entry->getPath($version);
-
-            // Import dependencies recursively
-            foreach($entry->getVersion($version)->getDependencies() as $dependency)
-            {
-                /** @noinspection UnusedFunctionResultInspection */
-                self::import($dependency->getName(), $dependency->getVersion());
-            }
-
             if($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES) !== null)
             {
                 foreach($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES) as $item)
@@ -206,6 +197,26 @@
                 }
             }
 
+            self::$imported_packages[$package] = $entry->getPath($version);
+
+            if(isset($entry->getMetadata($version)->getOptions()[PackageFlags::STATIC_DEPENDENCIES]))
+            {
+                // Fake import the dependencies
+                foreach($entry->getVersion($version)->getDependencies() as $dependency)
+                {
+                    self::$imported_packages[$dependency->getName()] = $entry->getPath($version);
+                }
+            }
+            else
+            {
+                // Import dependencies recursively
+                foreach($entry->getVersion($version)->getDependencies() as $dependency)
+                {
+                    /** @noinspection UnusedFunctionResultInspection */
+                    self::import($dependency->getName(), $dependency->getVersion());
+                }
+            }
+
             return $package;
         }
 
@@ -215,10 +226,9 @@
          * @param string $package_path
          * @return string
          * @throws ConfigurationException
-         * @throws IOException
          * @throws ImportException
+         * @throws NotSupportedException
          * @throws OperationException
-         * @throws PathNotFoundException
          */
         private static function importFromPackage(string $package_path): string
         {
@@ -268,7 +278,7 @@
                 }
             }
 
-            if(!$package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
+            if($package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
             {
                 // Fake import the dependencies
                 foreach($package_reader->getDependencies() as $dependency_name)

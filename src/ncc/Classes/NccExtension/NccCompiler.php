@@ -323,6 +323,19 @@
             $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
 
+            // Strip out 'output_file' build artifact.
+            if(isset($metadata->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            {
+                $metadata->removeOption(BuildConfigurationOptions::OUTPUT_FILE);
+            }
+
+            // Strip out 'static' build artifact, PackageFlags::STATIC_DEPENDENCIES is used instead
+            // Making this option redundant.
+            if(isset($metadata->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]))
+            {
+                $metadata->removeOption(BuildConfigurationOptions::STATIC_DEPENDENCIES);
+            }
+
             /** @noinspection UnusedFunctionResultInspection */
             $package_writer->setMetadata($metadata);
         }

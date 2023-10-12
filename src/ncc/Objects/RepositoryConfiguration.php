@@ -178,13 +178,13 @@
          * @throws NetworkException If there was an error getting the package
          * @throws NotSupportedException If the repository type does not support fetching packages
          */
-        public function fetchPackage(string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
+        public function fetchPackage(string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             return match(strtolower($this->type))
             {
-                RepositoryType::GITHUB => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication),
-                RepositoryType::GITLAB => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication),
-                RepositoryType::GITEA => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication),
+                RepositoryType::GITHUB => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITLAB => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITEA => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
                 RepositoryType::PACKAGIST => throw new NotSupportedException('Fetching ncc packages from Packagist is not supported'),
                 default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type)),
             };
@@ -202,14 +202,14 @@
          * @throws AuthenticationException If the authentication is invalid
          * @throws NetworkException If there was an error getting the source
          */
-        public function fetchSourceArchive(string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
+        public function fetchSourceArchive(string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             return match(strtolower($this->type))
             {
-                RepositoryType::GITHUB => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication),
-                RepositoryType::GITLAB => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication),
-                RepositoryType::GITEA => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication),
-                RepositoryType::PACKAGIST => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication),
+                RepositoryType::GITHUB => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITLAB => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITEA => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::PACKAGIST => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
                 default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type)),
             };
         }

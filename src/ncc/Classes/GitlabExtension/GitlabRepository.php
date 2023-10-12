@@ -25,6 +25,7 @@
     use CurlHandle;
     use Exception;
     use JsonException;
+    use ncc\Enums\Options\InstallPackageOptions;
     use ncc\Enums\Types\AuthenticationType;
     use ncc\Enums\Types\HttpRequestType;
     use ncc\Enums\Types\RepositoryResultType;
@@ -46,7 +47,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             try
             {
@@ -63,9 +64,9 @@
         /**
          * @inheritDoc
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
-            return self::getReleasePackage($repository, $vendor, $project, $version, $authentication);
+            return self::getReleasePackage($repository, $vendor, $project, $version, $authentication, $options);
         }
 
         /**
@@ -300,19 +301,19 @@
          * @param string $project The project to get the release for (eg; "ncc" or "libs/config")
          * @param string $release The release to get the release for (eg; "v1.0.0")
          * @param AuthenticationInterface|null $authentication Optional. The authentication to use. If null, No authentication will be used.
+         * @param array $options Optional. The options to use for the request
          * @return RepositoryResult The URL to the archive
          * @throws AuthenticationException
          * @throws NetworkException
          */
-        private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null): RepositoryResult
+        private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null, array $options=[]): RepositoryResult
         {
-            /** @noinspection DuplicatedCode */
             if($release === Versions::LATEST)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
+            $project = str_replace('.', '/', $project);
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases/%s', $repository->isSsl() ? 'https' : 'http', $repository->getHost(), $group, rawurlencode($project), rawurlencode($release));
 
             if(RuntimeCache::exists($endpoint))
@@ -339,27 +340,37 @@
             ]);
 
             $response = self::processHttpResponse($curl, $group, $project);
+            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC]);
+            $preferred_asset = null;
+            $fallback_asset = null;
 
             foreach($response['assets']['links'] as $asset)
             {
-                if(preg_match('/\.ncc$/', $asset['name']) === 1)
+                if($static_preferred && preg_match('/(_static|-static)\.ncc$/', $asset['name']) === 1)
                 {
-                    if(isset($asset['direct_asset_url']))
-                    {
-                        $result = new RepositoryResult($asset['direct_asset_url'], RepositoryResultType::PACKAGE, $release);
-                    }
-                    elseif(isset($asset['url']))
-                    {
-                        $result = new RepositoryResult($asset['url'], RepositoryResultType::PACKAGE, $release);
-                    }
-                    else
-                    {
-                        throw new NetworkException(sprintf('No direct asset URL found for %s/%s/%s', $group, $project, $release));
-                    }
+                    $preferred_asset = $asset;
+                }
+                elseif(preg_match('/\.ncc$/', $asset['name']) === 1)
+                {
+                    $fallback_asset = $asset;
+                }
+            }
+
+            $target_asset = $preferred_asset ?: $fallback_asset;
+
+            if ($target_asset)
+            {
+                $asset_url = $target_asset['direct_asset_url'] ?? $target_asset['url'] ?? null;
+
+                if ($asset_url)
+                {
+                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
 
                     RuntimeCache::set($endpoint, $result);
                     return $result;
                 }
+
+                throw new NetworkException(sprintf('No direct asset URL found for %s/%s/%s', $group, $project, $release));
             }
 
             throw new NetworkException(sprintf('No ncc package found for %s/%s/%s', $group, $project, $release));
@@ -504,14 +515,14 @@
 
                 if($response === false)
                 {
-                    Console::outWarning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $vendor, $project, curl_error($curl), $retry_count + 1));
+                    Console::outWarning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $group, $project, curl_error($curl), $retry_count + 1));
                     $retry_count++;
                 }
             }
 
             if($response === false)
             {
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $vendor, $project, curl_error($curl)));
+                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
             }
 
             switch (curl_getinfo($curl, CURLINFO_HTTP_CODE))

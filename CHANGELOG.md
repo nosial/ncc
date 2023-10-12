@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.2] - Unreleased
 
+### Added
+ - Added support for importing static packages from the system, allowing you to install static packages onto your
+   system and import them without importing additional dependencies that isn't already included in the package.
+ - Added the ability to pull static versions of packages from repositories where package names ending with `-static.ncc`
+   or `_static.ncc` can be pulled if you use the `--prefer-static` or `--static` option when using the `package install`
+   command. Otherwise, the normal package will be installed, avoiding static versions.
+
 ### Changed
  - Updated fetchPackage method to include authentication
  - Update dependencies import in \ncc\Classes > Runtime > importFromPackage()
 
+### Fixed
+ - Fixed issue where some build artifacts are being bundled with package builds such as `output_path` and `static`
+   where they should not be included in the package.
 
 
 ## [2.0.1] - 2023-10-11

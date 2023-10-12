@@ -25,6 +25,7 @@
     use CurlHandle;
     use Exception;
     use JsonException;
+    use ncc\Enums\Options\InstallPackageOptions;
     use ncc\Enums\Types\AuthenticationType;
     use ncc\Enums\Types\HttpRequestType;
     use ncc\Enums\Types\RepositoryResultType;
@@ -46,7 +47,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             try
             {
@@ -63,9 +64,9 @@
         /**
          * @inheritDoc
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
-            return self::getReleasePackage($repository, $vendor, $project, $version, $authentication);
+            return self::getReleasePackage($repository, $vendor, $project, $version, $authentication, $options);
         }
 
         /**
@@ -298,11 +299,12 @@
          * @param string $project The project to get the release for (eg; "ncc" or "libs/config")
          * @param string $release The release to get the release for (eg; "v1.0.0")
          * @param AuthenticationInterface|null $authentication Optional. The authentication to use. If null, No authentication will be used.
+         * @param array $options Optional. An array of options to use when fetching the package
          * @return RepositoryResult The URL to the archive
          * @throws AuthenticationException
          * @throws NetworkException
          */
-        private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null): RepositoryResult
+        private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null, array $options=[]): RepositoryResult
         {
             /** @noinspection DuplicatedCode */
             if($release === Versions::LATEST)
@@ -310,7 +312,13 @@
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
 
-            $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/releases/tags/%s', ($repository->isSsl() ? 'https' : 'http'), $repository->getHost(), rawurlencode($group), rawurlencode($project), rawurlencode($release));
+            $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/releases/tags/%s',
+                $repository->isSsl() ? 'https' : 'http',
+                $repository->getHost(),
+                rawurlencode($group),
+                rawurlencode($project),
+                rawurlencode($release)
+            );
 
             if(RuntimeCache::exists($endpoint))
             {
@@ -336,23 +344,48 @@
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
-            Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
+            Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s',
+                $group, $project, $release, $endpoint));
+
             $response = self::processHttpResponse($curl, $group, $project);
 
             if(!isset($response['assets']))
             {
-                throw new NetworkException(sprintf('Failed to get release %s package url for %s/%s', $release, $group, $project));
+                throw new NetworkException(sprintf('Failed to get release %s package url for %s/%s',
+                    $release, $group, $project));
             }
+
+            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC]);
+            $preferred_asset = null;
+            $fallback_asset = null;
 
             foreach($response['assets'] as $asset)
             {
-                if(isset($asset['name'], $asset['browser_download_url']) && preg_match('/\.ncc$/', $asset['name']))
+                if($static_preferred && preg_match('/(_static|-static)\.ncc$/', $asset['name']))
                 {
-                    $result = new RepositoryResult($asset['browser_download_url'], RepositoryResultType::PACKAGE, $release);
+                    $preferred_asset = $asset;
+                }
+                elseif(preg_match('/\.ncc$/', $asset['name']))
+                {
+                    $fallback_asset = $asset;
+                }
+            }
+
+            $target_asset = $preferred_asset ?: $fallback_asset;
+
+            if($target_asset)
+            {
+                $asset_url = $target_asset['browser_download_url'] ?? null;
+
+                if($asset_url)
+                {
+                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
 
                     RuntimeCache::set($endpoint, $result);
                     return $result;
                 }
+
+                throw new NetworkException(sprintf('No direct asset URL found for %s/%s/%s', $group, $project, $release));
             }
 
             throw new NetworkException(sprintf('No ncc package found for %s/%s/%s', $group, $project, $release));
@@ -368,6 +401,7 @@
          * @param string $project The project to get the release for (eg; "ncc" or "libs/config")
          * @param string $release The release to get the release for (eg; "v1.0.0")
          * @param AuthenticationInterface|null $authentication Optional. The authentication to use. If null, No authentication will be used.
+         * @param array $options Optional. An array of options to use when fetching the archive
          * @return RepositoryResult The URL to the archive
          * @throws AuthenticationException
          * @throws NetworkException
@@ -483,14 +517,14 @@
 
                 if($response === false)
                 {
-                    Console::outWarning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $vendor, $project, curl_error($curl), $retry_count + 1));
+                    Console::outWarning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $group, $project, curl_error($curl), $retry_count + 1));
                     $retry_count++;
                 }
             }
 
             if($response === false)
             {
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $vendor, $project, curl_error($curl)));
+                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
             }
 
             switch(curl_getinfo($curl, CURLINFO_HTTP_CODE))
