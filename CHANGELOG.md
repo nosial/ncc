@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.2] - 2023-10-12
 
+In this new update, the software introduces a feature for importing static packages without extra dependencies and
+supports pulling static versions of packages from repositories. Changes include enhanced security through an updated
+fetchPackage method along with improvements in dependency imports and extension registration logic for Debian packages.
+Finally, bugs related to unnecessary bundling of some build artifacts and mime type errors in ncc-package.xml have
+been fixed.
+
 ### Added
  - Added support for importing static packages from the system, allowing you to install static packages onto your
    system and import them without importing additional dependencies that isn't already included in the package.
