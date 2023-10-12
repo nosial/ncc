@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
  - Fixed issue where some build artifacts are being bundled with package builds such as `output_path` and `static`
    where they should not be included in the package.
+ - Corrected mistakes in `ncc-package.xml` mime type
 
 
 ## [2.0.1] - 2023-10-11
