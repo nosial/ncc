@@ -259,6 +259,11 @@
                 {
                     return $version_entry;
                 }
+
+                if(Semver::satisfies($version_entry->getVersion(), $version))
+                {
+                    return $version_entry;
+                }
             }
 
             throw new InvalidArgumentException(sprintf('Version %s does not exist in package %s', $version, $this->name));
