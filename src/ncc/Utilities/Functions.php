@@ -382,6 +382,11 @@
 
             foreach($include_paths as $include_path)
             {
+                if($include_path === '.')
+                {
+                    continue;
+                }
+
                 try
                 {
                     if($filesystem->exists($include_path . DIRECTORY_SEPARATOR . 'ncc'))

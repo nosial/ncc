@@ -65,7 +65,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
 	install-php-extensions zip xsl
 
 # Install ncc
-RUN php INSTALL --auto; cd ../; rm -rf ncc
+RUN php INSTALL --auto
 
 # Finalize image
 RUN mkdir /app
