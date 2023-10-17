@@ -24,7 +24,9 @@
 
     namespace ncc\Utilities;
 
+    use InvalidArgumentException;
     use ncc\Enums\LogLevel;
+    use ncc\Enums\PackageDirectory;
     use ncc\Enums\Scopes;
     use ncc\Enums\Types\ProjectType;
     use ncc\Exceptions\NotSupportedException;
@@ -255,5 +257,70 @@
             }
 
             return false;
+        }
+
+        /**
+         * Get the component type based on the file name
+         *
+         * @param string $component_path Component name
+         * @return int Component type
+         * @throws InvalidArgumentException If the component name is invalid
+         * @see PackageDirectory
+         */
+        public static function componentType(string $component_path): int
+        {
+            // Check for empty string and presence of ":"
+            if (empty($component_path) || !str_contains($component_path, ':'))
+            {
+                throw new InvalidArgumentException(sprintf('Invalid component format "%s"', $component_path));
+            }
+
+            // Get the prefix before ":" and remove "@" character
+            $file_stub_code = str_ireplace('@', '', explode(':', $component_path, 2)[0]);
+
+            // Check if the prefix is numeric
+            if (!is_numeric($file_stub_code))
+            {
+                throw new InvalidArgumentException(sprintf('Invalid component prefix "%s"', $file_stub_code));
+            }
+
+            return match ((int)$file_stub_code)
+            {
+                PackageDirectory::METADATA => PackageDirectory::METADATA,
+                PackageDirectory::ASSEMBLY => PackageDirectory::ASSEMBLY,
+                PackageDirectory::EXECUTION_UNITS => PackageDirectory::EXECUTION_UNITS,
+                PackageDirectory::INSTALLER => PackageDirectory::INSTALLER,
+                PackageDirectory::DEPENDENCIES => PackageDirectory::DEPENDENCIES,
+                PackageDirectory::CLASS_POINTER => PackageDirectory::CLASS_POINTER,
+                PackageDirectory::RESOURCES => PackageDirectory::RESOURCES,
+                PackageDirectory::COMPONENTS => PackageDirectory::COMPONENTS,
+                default => throw new InvalidArgumentException(sprintf('Invalid component type "%s"', $component_path)),
+            };
+        }
+
+        /**
+         * Returns the component name based on the file name
+         *
+         * @param string $component_path
+         * @return string
+         */
+        public static function componentName(string $component_path): string
+        {
+            // Check for empty string and presence of ":"
+            if (empty($component_path) || !str_contains($component_path, ':'))
+            {
+                throw new InvalidArgumentException(sprintf('Invalid component format "%s"', $component_path));
+            }
+
+            // Get the prefix before ":" and remove "@" character
+            $file_stub_code = str_ireplace('@', '', explode(':', $component_path, 2)[0]);
+
+            // Check if the prefix is numeric
+            if (!is_numeric($file_stub_code))
+            {
+                throw new InvalidArgumentException(sprintf('Invalid component prefix "%s"', $file_stub_code));
+            }
+
+            return explode(':', $component_path, 2)[1];
         }
     }

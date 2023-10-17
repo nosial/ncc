@@ -22,8 +22,10 @@
 
     namespace ncc\Utilities;
 
+    use InvalidArgumentException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PathNotFoundException;
+    use RuntimeException;
     use SplFileInfo;
     use SplFileObject;
 
@@ -121,5 +123,49 @@
 
             Console::outDebug(sprintf('reading %s', $uri));
             return $file->fread($length);
+        }
+
+        /**
+         * Returns an array of all files in the specified path
+         *
+         * @param string $path
+         * @param bool $recursive
+         * @return array
+         * @throws IOException
+         */
+        public static function scan(string $path, bool $recursive = true): array
+        {
+            if (!is_readable($path))
+            {
+                throw new IOException(sprintf('Directory does not exist or is not readable: %s', $path));
+            }
+
+            $files = [];
+            $items = scandir($path, SCANDIR_SORT_NONE);
+
+            if ($items === false)
+            {
+                throw new IOException(sprintf('Unable to list directory items: %s', $path));
+            }
+
+            foreach ($items as $file)
+            {
+                if ($file === '.' || $file === '..')
+                {
+                    continue;
+                }
+
+                $file_path = $path . DIRECTORY_SEPARATOR . $file;
+                if (is_dir($file_path) && $recursive)
+                {
+                    /** @noinspection SlowArrayOperationsInLoopInspection */
+                    $files = array_merge($files, self::scan($file_path));
+                    continue;
+                }
+
+                $files[] = $file_path;
+            }
+
+            return $files;
         }
     }

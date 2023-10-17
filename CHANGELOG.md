@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.3] - Unreleased
 
+### Added
+ - Implemented support in the AST traversal for the PHP statements `include`, `include_once`, `require`, and
+   `require_once`. These statements are transformed into function calls. With this change, ncc can correctly handle and 
+   import files from system packages or direct binary package files.
+
 ### Fixed
  - When finding package versions in the package lock, ncc will try to find a satisfying version rather than the exact
    version, this is to prevent errors when the package lock contains a version that is not available in the repository.
+- Fixed issue when registering ncc's extension, when using the INSTALLER, the installation path used in the process
+  appears to be incorrect, added a optional parameter to the `registerExtension` method to allow the installer to pass
+  the correct installation path.
 
 
 ## [2.0.2] - 2023-10-13

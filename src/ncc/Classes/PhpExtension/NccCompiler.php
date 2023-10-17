@@ -53,6 +53,9 @@
             try
             {
                 $stmts = (new ParserFactory())->create(ParserFactory::PREFER_PHP7)->parse(IO::fread($file_path));
+                $stmts = AstWalker::transformRequireCalls(
+                    $stmts, $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getPackage()
+                );
 
                 $component = new Component($component_name, ZiProto::encode($stmts), ComponentDataType::AST);
                 $component->addFlag(ComponentFlags::PHP_AST);

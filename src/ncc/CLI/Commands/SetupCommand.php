@@ -58,7 +58,7 @@
 
             try
             {
-                Functions::initializeFiles($default_repositories);
+                Functions::initializeFiles(null, $default_repositories);
             }
             catch(Exception $e)
             {

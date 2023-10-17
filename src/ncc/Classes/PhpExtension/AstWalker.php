@@ -24,6 +24,7 @@
 
     use ncc\ThirdParty\nikic\PhpParser\Comment;
     use ncc\ThirdParty\nikic\PhpParser\Node;
+    use ncc\ThirdParty\nikic\PhpParser\NodeTraverser;
     use ReflectionClass;
     use ReflectionException;
     use RuntimeException;
@@ -60,9 +61,10 @@
          */
         public static function extractClasses(Node|array $node, string $prefix=''): array
         {
+            $classes = [];
+
             if(is_array($node))
             {
-                $classes = [];
                 foreach($node as $sub_node)
                 {
                     /** @noinspection SlowArrayOperationsInLoopInspection */
@@ -71,8 +73,6 @@
                 return $classes;
             }
 
-            $classes = [];
-
             if ($node instanceof Node\Stmt\ClassLike)
             {
                 $classes[] = $prefix . $node->name;
@@ -80,9 +80,9 @@
 
             if ($node instanceof Node\Stmt\Namespace_)
             {
-                if ($node->name && $node->name->parts)
+                if ($node->name && $node->name->getParts())
                 {
-                    $prefix .= implode('\\', $node->name->parts) . '\\';
+                    $prefix .= implode('\\', $node->name->getParts()) . '\\';
                 }
                 else
                 {
@@ -253,5 +253,20 @@
             }
 
             throw new RuntimeException("Unknown node type \"$nodeType\"");
+        }
+
+        /**
+         * Transforms include, include_once, require and require_once statements into function calls.
+         *
+         * @param Node|array $stmts The AST node or array of nodes to transform.
+         * @param string|null $package Optionally. The package name to pass to the transformed function calls.
+         * @return Node|array The transformed AST node or array of nodes.
+         */
+        public static function transformRequireCalls(Node|array $stmts, ?string $package=null): Node|array
+        {
+            $traverser = new NodeTraverser();
+            $traverser->addVisitor(new ExpressionTraverser($package));
+
+            return $traverser->traverse($stmts);
         }
     }

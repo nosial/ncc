@@ -285,13 +285,13 @@
         }
 
         /**
-         * Initializes ncc system files
+         * Initializes the necessary files and directories for the ncc application
          *
-         * @param array $default_repositories
-         * @return void
+         * @param string|null $install_path The installation path of ncc (optional)
+         * @param array $default_repositories The default repositories to initialize (optional)
          * @throws OperationException
          */
-        public static function initializeFiles(array $default_repositories=[]): void
+        public static function initializeFiles(?string $install_path=null, array $default_repositories=[]): void
         {
             if(Resolver::resolveScope() !== Scopes::SYSTEM)
             {
@@ -342,7 +342,7 @@
 
             try
             {
-                self::registerExtension($filesystem);
+                self::registerExtension($filesystem, $install_path);
             }
             catch(Exception $e)
             {
@@ -351,23 +351,30 @@
         }
 
         /**
-         * Register the ncc extension with the given filesystem.
+         * Registers the ncc extension with the given filesystem and optional install path.
          *
-         * @param Filesystem $filesystem The filesystem object used for file operations.
-         * @throws IOException If the extension cannot be registered.
-         * @throws NotSupportedException If `get_include_path()` function is not available.
-         * @throws PathNotFoundException If the default include path is not available.
+         * @param Filesystem $filesystem The filesystem to register the extension with
+         * @param string|null $install_path The optional install path for the extension
+         * @return void
+         * @throws IOException
+         * @throws NotSupportedException
+         * @throws PathNotFoundException
          */
-        private static function registerExtension(Filesystem $filesystem): void
+        private static function registerExtension(Filesystem $filesystem, ?string $install_path=null): void
         {
             if(!function_exists('get_include_path'))
             {
                 throw new NotSupportedException('Cannot register ncc extension, get_include_path() is not available');
             }
 
+            if($install_path === null)
+            {
+                $install_path = NCC_EXEC_LOCATION;
+            }
+
             $default_share = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'share' . DIRECTORY_SEPARATOR . 'php';
             $include_paths = explode(':', get_include_path());
-            $extension = str_ireplace('%ncc_install', NCC_EXEC_LOCATION, IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'extension'));
+            $extension = str_ireplace('%ncc_install', $install_path, IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'extension'));
 
             if(in_array($default_share, $include_paths))
             {

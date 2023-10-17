@@ -640,6 +640,25 @@
         }
 
         /**
+         * Searches the package's directory for a file that matches the given filename
+         *
+         * @param string $filename
+         * @return string|false
+         */
+        public function find(string $filename): string|false
+        {
+            foreach($this->headers[PackageStructure::DIRECTORY] as $name => $location)
+            {
+                if(str_ends_with($name, $filename))
+                {
+                    return $name;
+                }
+            }
+
+            return false;
+        }
+
+        /**
          * Returns the offset of the package
          *
          * @return int

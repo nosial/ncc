@@ -29,6 +29,8 @@
     use ncc\Enums\FileDescriptor;
     use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\Options\BuildConfigurationOptions;
+    use ncc\Enums\Options\ComponentDecodeOptions;
+    use ncc\Enums\PackageDirectory;
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\ImportException;
@@ -39,8 +41,12 @@
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Managers\PackageManager;
     use ncc\Objects\Package\Metadata;
+    use ncc\Utilities\Console;
     use ncc\Utilities\IO;
+    use ncc\Utilities\Resolver;
+    use ncc\Utilities\Validate;
     use RuntimeException;
+    use Throwable;
 
     class Runtime
     {
@@ -58,6 +64,11 @@
          * @var PackageManager|null
          */
         private static $package_manager;
+
+        /**
+         * @var array
+         */
+        private static $included_files = [];
 
         /**
          * Executes the main execution point of an imported package and returns the evaluated result
@@ -170,6 +181,7 @@
             }
 
             $entry = self::getPackageManager()->getPackageLock()->getEntry($package);
+            self::$imported_packages[$package] = $entry->getPath($version);
 
             foreach($entry->getClassMap($version) as $class => $component_name)
             {
@@ -196,8 +208,6 @@
                     }
                 }
             }
-
-            self::$imported_packages[$package] = $entry->getPath($version);
 
             if(isset($entry->getMetadata($version)->getOptions()[PackageFlags::STATIC_DEPENDENCIES]))
             {
@@ -345,7 +355,6 @@
             if(is_string(self::$class_map[$class]) && is_file(self::$class_map[$class]))
             {
                 require_once self::$class_map[$class];
-                return;
             }
         }
 
@@ -360,5 +369,275 @@
             }
 
             return self::$package_manager;
+        }
+
+        /**
+         * Returns an array of included files both from the php runtime and ncc runtime
+         *
+         * @return array
+         */
+        public static function runtimeGetIncludedFiles(): array
+        {
+            return array_merge(get_included_files(), self::$included_files);
+        }
+
+        /**
+         * Evaluates and executes PHP code with error handling, this function
+         * gracefully handles <?php ?> tags and exceptions the same way as the
+         * require/require_once/include/include_once expressions
+         *
+         * @param string $code The PHP code to be executed
+         */
+        public static function extendedEvaluate(string $code): void
+        {
+            if(ob_get_level() > 0)
+            {
+                ob_clean();
+            }
+
+            $exceptions = [];
+            $code = preg_replace_callback('/<\?php(.*?)\?>/s', static function ($matches) use (&$exceptions)
+            {
+                ob_start();
+
+                try
+                {
+                    eval($matches[1]);
+                }
+                catch (Throwable $e)
+                {
+                    $exceptions[] = $e;
+                }
+
+                return ob_get_clean();
+            }, $code);
+
+            ob_start();
+
+            try
+            {
+                eval('?>' . $code);
+            }
+            catch (Throwable $e)
+            {
+                $exceptions[] = $e;
+            }
+
+            if (!empty($exceptions))
+            {
+                print(ob_get_clean());
+
+                $exception_stack = null;
+                foreach ($exceptions as $e)
+                {
+                    if($exception_stack === null)
+                    {
+                        $exception_stack = $e;
+                    }
+                    else
+                    {
+                        $exception_stack = new Exception($exception_stack->getMessage(), $exception_stack->getCode(), $e);
+                    }
+                }
+
+                throw new RuntimeException('An exception occurred while evaluating the code', 0, $exception_stack);
+            }
+
+            print(ob_get_clean());
+        }
+
+        /**
+         * Returns the content of the aquired file
+         *
+         * @param string $path
+         * @param string|null $package
+         * @return string
+         * @throws ConfigurationException
+         * @throws IOException
+         * @throws OperationException
+         * @throws PathNotFoundException
+         */
+        private static function acquireFile(string $path, ?string $package=null): string
+        {
+            $cwd_checked = false; // sanity check to prevent checking the cwd twice
+
+            // Check if the file is absolute
+            if(is_file($path))
+            {
+                Console::outDebug(sprintf('Acquired file "%s" from absolute path', $path));
+                return IO::fread($path);
+            }
+
+            // Since $package is not null, let's try to acquire the file from the package
+            if($package !== null && isset(self::$imported_packages[$package]))
+            {
+                $base_path = basename($path);
+
+                if(self::$imported_packages[$package] instanceof PackageReader)
+                {
+                    $acquired_file = self::$imported_packages[$package]->find($base_path);
+                    Console::outDebug(sprintf('Acquired file "%s" from package "%s"', $path, $package));
+
+                    return match (Resolver::componentType($acquired_file))
+                    {
+                        PackageDirectory::RESOURCES => self::$imported_packages[$package]->getResource(Resolver::componentName($acquired_file))->getData(),
+                        PackageDirectory::COMPONENTS => self::$imported_packages[$package]->getComponent(Resolver::componentName($acquired_file))->getData([ComponentDecodeOptions::AS_FILE]),
+                        default => throw new IOException(sprintf('Unable to acquire file "%s" from package "%s" because it is not a resource or component', $path, $package)),
+                    };
+                }
+
+                if(is_dir(self::$imported_packages[$package]))
+                {
+                    $base_path = basename($path);
+                    foreach(IO::scan(self::$imported_packages[$package]) as $file)
+                    {
+                        if(str_ends_with($file, $base_path))
+                        {
+                            Console::outDebug(sprintf('Acquired file "%s" from package "%s"', $path, $package));
+                            return IO::fread($file);
+                        }
+                    }
+                }
+            }
+
+            // If not, let's try the include_path
+            foreach(explode(PATH_SEPARATOR, get_include_path()) as $file_path)
+            {
+                if($file_path === '.' && !$cwd_checked)
+                {
+                    $cwd_checked = true;
+                    $file_path = getcwd();
+                }
+
+                if(is_file($file_path . DIRECTORY_SEPARATOR . $path))
+                {
+                    Console::outDebug(sprintf('Acquired file "%s" from include_path', $path));
+                    return IO::fread($file_path . DIRECTORY_SEPARATOR . $path);
+                }
+
+                if(is_file($file_path . DIRECTORY_SEPARATOR . basename($path)))
+                {
+                    Console::outDebug(sprintf('Acquired file "%s" from include_path (using basename)', $path));
+                    return IO::fread($file_path . DIRECTORY_SEPARATOR . basename($path));
+                }
+            }
+
+            // Check the current working directory
+            if(!$cwd_checked)
+            {
+                if(is_file(getcwd() . DIRECTORY_SEPARATOR . $path))
+                {
+                    Console::outDebug(sprintf('Acquired file "%s" from current working directory', $path));
+                    return IO::fread(getcwd() . DIRECTORY_SEPARATOR . $path);
+                }
+
+                if(is_file(getcwd() . DIRECTORY_SEPARATOR . basename($path)))
+                {
+                    Console::outDebug(sprintf('Acquired file "%s" from current working directory (using basename)', $path));
+                    return IO::fread(getcwd() . DIRECTORY_SEPARATOR . basename($path));
+                }
+            }
+
+            // Check the calling script's directory
+            $called_script_directory = dirname(debug_backtrace()[0]['file']);
+            $file_path = $called_script_directory . DIRECTORY_SEPARATOR . $path;
+            if(is_file($file_path))
+            {
+                Console::outDebug(sprintf('Acquired file "%s" from calling script\'s directory', $path));
+                return IO::fread($file_path);
+            }
+
+            throw new IOException(sprintf('Unable to acquire file "%s" because it does not exist', $path));
+        }
+
+        /**
+         * Includes a file at runtime
+         *
+         * @param string $path
+         * @param string|null $package
+         * @return void
+         */
+        public static function runtimeInclude(string $path, ?string $package=null): void
+        {
+            try
+            {
+                $acquired_file = self::acquireFile($path, $package);
+            }
+            catch(Exception $e)
+            {
+                $package ?
+                    Console::outWarning(sprintf('Failed to acquire file "%s" from package "%s" at runtime: %s', $path, $package, $e->getMessage())) :
+                    Console::outWarning(sprintf('Failed to acquire file "%s" at runtime: %s', $path, $e->getMessage()));
+
+                return;
+            }
+
+            if(!in_array($path, self::$included_files, true))
+            {
+                self::$included_files[] = $path;
+            }
+
+            self::extendedEvaluate($acquired_file);
+        }
+
+        /**
+         * Includes a file at runtime if it's not already included
+         *
+         * @param string $path
+         * @param string|null $package
+         * @return void
+         */
+        public static function runtimeIncludeOnce(string $path, ?string $package=null): void
+        {
+            if(in_array($path, self::runtimeGetIncludedFiles(), true))
+            {
+                return;
+            }
+
+            self::runtimeInclude($path, $package);
+        }
+
+        /**
+         * Requires a file at runtime, throws an exception if the file failed to require
+         *
+         * @param string $path
+         * @param string|null $package
+         * @return void
+         */
+        public static function runtimeRequire(string $path, ?string $package=null): void
+        {
+            try
+            {
+                $acquired_file = self::acquireFile($path, $package);
+            }
+            catch(Exception $e)
+            {
+                $package ?
+                    throw new RuntimeException(sprintf('Failed to acquire file "%s" from package "%s" at runtime: %s', $path, $package, $e->getMessage()), $e->getCode(), $e) :
+                    throw new RuntimeException(sprintf('Failed to acquire file "%s" at runtime: %s', $path, $e->getMessage()), $e->getCode(), $e);
+            }
+
+            if(!in_array($path, self::$included_files, true))
+            {
+                self::$included_files[] = $path;
+            }
+
+            self::extendedEvaluate($acquired_file);
+        }
+
+        /**
+         * Requires a file at runtime if it's not already required
+         *
+         * @param string $path
+         * @return void
+         */
+        public static function runtimeRequireOnce(string $path): void
+        {
+            if(in_array($path, self::runtimeGetIncludedFiles(), true))
+            {
+                return;
+            }
+
+            self::runtimeRequire($path);
         }
     }

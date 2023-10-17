@@ -242,23 +242,6 @@
 
     $NCC_FILESYSTEM->mkdir($NCC_INSTALL_PATH, 0755);
 
-    try
-    {
-        if(is_file(__DIR__ . DIRECTORY_SEPARATOR . 'default_repositories.json'))
-        {
-            Functions::initializeFiles(Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'default_repositories.json', Functions::FORCE_ARRAY));
-        }
-        else
-        {
-            Functions::initializeFiles();
-        }
-    }
-    catch(Exception $e)
-    {
-        Console::outException('Cannot initialize NCC files, ' . $e->getMessage(), $e, 1);
-        return;
-    }
-
     // Copy files to the installation path
     try
     {
@@ -300,6 +283,24 @@
 
         ++$processed_items;
         Console::inlineProgressBar($processed_items, $total_items);
+    }
+
+    // Initialize ncc's files
+    try
+    {
+        if(is_file(__DIR__ . DIRECTORY_SEPARATOR . 'default_repositories.json'))
+        {
+            Functions::initializeFiles($NCC_INSTALL_PATH, Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'default_repositories.json', Functions::FORCE_ARRAY));
+        }
+        else
+        {
+            Functions::initializeFiles($NCC_INSTALL_PATH);
+        }
+    }
+    catch(Exception $e)
+    {
+        Console::outException('Cannot initialize NCC files, ' . $e->getMessage(), $e, 1);
+        return;
     }
 
 
