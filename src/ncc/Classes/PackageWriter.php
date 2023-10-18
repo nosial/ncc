@@ -29,6 +29,7 @@
     use ncc\Enums\PackageDirectory;
     use ncc\Enums\PackageStructure;
     use ncc\Enums\PackageStructureVersions;
+    use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
@@ -39,6 +40,7 @@
     use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Utilities\Console;
+    use ncc\Utilities\ConsoleProgressBar;
 
     class PackageWriter
     {
@@ -357,13 +359,17 @@
          *
          * @param PackageReader $reader
          * @return void
+         * @throws ConfigurationException
          */
         public function merge(PackageReader $reader): void
         {
+            $progress_bar = new ConsoleProgressBar(sprintf('Merging %s', $reader->getAssembly()->getPackage()), count($reader->getDirectory()));
             $processed_resources = [];
 
             foreach($reader->getDirectory() as $name => $pointer)
             {
+                $progress_bar->setMiscText($name, true);
+
                 switch((int)substr(explode(':', $name, 2)[0], 1))
                 {
                     case PackageDirectory::METADATA:
@@ -383,9 +389,13 @@
 
                         Console::outDebug(sprintf('Merging %s', $name));
                         $processed_resources[$pointer] = $this->add($name, $reader->get($name));
-
                 }
+
+                $progress_bar->increaseValue(1, true);
             }
+
+            $progress_bar->setMiscText('done', true);
+            unset($progress_bar);
         }
 
         /**

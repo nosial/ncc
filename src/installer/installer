@@ -255,10 +255,12 @@
     }
     
     $total_items = count($build_files);
-    $processed_items = 1;
+    //$processed_items = 1;
+    $progress_bar = new \ncc\Utilities\ConsoleProgressBar('Installing ncc', $total_items);
 
     foreach ($build_files as $item)
     {
+        $progress_bar->setMiscText($item, true);
         $source = __DIR__ . DIRECTORY_SEPARATOR . $item;
         $destination = $NCC_INSTALL_PATH . DIRECTORY_SEPARATOR . $item;
 
@@ -281,9 +283,13 @@
             }
         }
 
-        ++$processed_items;
-        Console::inlineProgressBar($processed_items, $total_items);
+        //++$processed_items;
+        //Console::inlineProgressBar($processed_items, $total_items);
+        $progress_bar->increaseValue(1, true);
     }
+
+    $progress_bar->setMiscText('done', true);
+    unset($progress_bar);
 
     // Initialize ncc's files
     try

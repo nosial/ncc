@@ -56,6 +56,7 @@
     use ncc\Objects\RemotePackageInput;
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\Utilities\Console;
+    use ncc\Utilities\ConsoleProgressBar;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
     use ncc\Utilities\PathFinder;
@@ -643,6 +644,7 @@
          * @return void
          * @throws ConfigurationException
          * @throws IOException
+         * @throws NotSupportedException
          * @throws OperationException
          */
         private function extractPackageContents(PackageReader $package_reader, string $package_path): void
@@ -654,61 +656,88 @@
                 count($package_reader->getResources()) +
                 count($package_reader->getExecutionUnits()) +
                 6;
-            $current_step = 0;
+            //$current_step = 0;
+            $progress_bar = new ConsoleProgressBar(sprintf('Extracting package %s=%s', $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()), $total_steps);
 
-            Console::inlineProgressBar(++$current_step, $total_steps);
+            //Console::inlineProgressBar(++$current_step, $total_steps);
+            $progress_bar->increaseValue(1, true);
             foreach($package_reader->getComponents() as $component_name)
             {
+                $progress_bar->setMiscText($component_name);
+
+                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                {
+                    Console::outVerbose(sprintf('Extracting component %s to %s', $component_name, $bin_path . DIRECTORY_SEPARATOR . $component_name));
+                }
+
                 IO::fwrite(
                     $bin_path . DIRECTORY_SEPARATOR . $component_name,
                     $package_reader->getComponent($component_name)->getData([ComponentDecodeOptions::AS_FILE]), 0755
                 );
 
-                Console::inlineProgressBar(++$current_step, $total_steps);
+                //Console::inlineProgressBar(++$current_step, $total_steps);
+                $progress_bar->increaseValue(1, true);
             }
 
             foreach($package_reader->getResources() as $resource_name)
             {
-                IO::fwrite(
-                    $bin_path . DIRECTORY_SEPARATOR . $resource_name,
-                    $package_reader->getResource($resource_name)->getData(), 0755
-                );
+                $progress_bar->setMiscText($resource_name);
 
                 if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting resource %s to %s', $resource_name, $bin_path . DIRECTORY_SEPARATOR . $resource_name));
                 }
 
-                Console::inlineProgressBar(++$current_step, $total_steps);
+                IO::fwrite(
+                    $bin_path . DIRECTORY_SEPARATOR . $resource_name,
+                    $package_reader->getResource($resource_name)->getData(), 0755
+                );
+
+                //Console::inlineProgressBar(++$current_step, $total_steps);
+                $progress_bar->increaseValue(1, true);
             }
 
             foreach($package_reader->getExecutionUnits() as $unit)
             {
+                $progress_bar->setMiscText($unit);
+
+                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                {
+                    Console::outVerbose(sprintf('Extracting execution unit %s to %s', $unit, $package_path . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $package_reader->getExecutionUnit($unit)->getExecutionPolicy()->getName() . '.unit'));
+                }
+
                 $execution_unit = $package_reader->getExecutionUnit($unit);
                 $unit_path = $package_path . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $execution_unit->getExecutionPolicy()->getName() . '.unit';
                 IO::fwrite($unit_path, ZiProto::encode($execution_unit->toArray(true)), 0755);
 
-                Console::inlineProgressBar(++$current_step, $total_steps);
+                //Console::inlineProgressBar(++$current_step, $total_steps);
+                $progress_bar->increaseValue(1, true);
             }
 
             $class_map = [];
             foreach($package_reader->getClassMap() as $class)
             {
+                $progress_bar->setMiscText($class);
                 $class_map[$class] = $package_reader->getComponentByClass($class)->getName();
             }
-            Console::inlineProgressBar(++$current_step, $total_steps);
+            //Console::inlineProgressBar(++$current_step, $total_steps);
+            $progress_bar->increaseValue(1, true);
 
             if($package_reader->getInstaller() !== null)
             {
+                $progress_bar->setMiscText('installer');
                 IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER, ZiProto::encode($package_reader->getInstaller()?->toArray(true)));
             }
-            Console::inlineProgressBar(++$current_step, $total_steps);
+            //Console::inlineProgressBar(++$current_step, $total_steps);
+            $progress_bar->increaseValue(1, true);
 
             if(count($class_map) > 0)
             {
+                $progress_bar->setMiscText('class map');
                 IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP, ZiProto::encode($class_map));
             }
-            Console::inlineProgressBar(++$current_step, $total_steps);
+            //Console::inlineProgressBar(++$current_step, $total_steps);
+            $progress_bar->increaseValue(1, true);
 
             IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY, ZiProto::encode($package_reader->getAssembly()->toArray(true)));
             IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::METADATA, ZiProto::encode($package_reader->getMetadata()->toArray(true)));
@@ -717,11 +746,16 @@
             {
                 IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::UPDATE, ZiProto::encode($package_reader->getMetadata()->getUpdateSource()?->toArray(true)));
             }
+            //Console::inlineProgressBar(++$current_step, $total_steps);
+            $progress_bar->increaseValue(1, true);
 
-            Console::inlineProgressBar(++$current_step, $total_steps);
-
+            $progress_bar->setMiscText('creating shadowcopy', true);
             $package_reader->saveCopy($package_path . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE);
-            Console::inlineProgressBar(++$current_step, $total_steps);
+            //Console::inlineProgressBar(++$current_step, $total_steps);
+
+            $progress_bar->setMiscText('done', true);
+            $progress_bar->increaseValue(1, true);
+            unset($progress_bar);
         }
 
         /**
@@ -851,6 +885,7 @@
 
             $file_handle = fopen($file_path, 'wb');
             $end = false;
+            $progress_bar = new ConsoleProgressBar(sprintf('Downloading %s', $url), 100);
 
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
@@ -859,34 +894,39 @@
             curl_setopt($curl, CURLOPT_HTTPHEADER, [
                 'User-Agent: ncc'
             ]);
-            curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function ($resource, $downloadSize, $downloaded)  use ($url, &$end)
+            curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function ($resource, $download_size, $downloaded)  use ($url, &$end, $progress_bar)
             {
-                if($downloadSize === $downloaded && $end)
+                if($download_size === $downloaded && $end)
                 {
                     return;
                 }
 
-                if($downloadSize === 0)
+                if($download_size === 0)
                 {
                     return;
                 }
 
                 if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
                 {
-                    $percentage = round(($downloaded / $downloadSize) * 100, 2);
-                    Console::out(sprintf('Download progress %s (%s/%s) for %s', $percentage, $downloaded, $downloadSize, $url));
+                    $percentage = round(($downloaded / $download_size) * 100, 2);
+                    Console::out(sprintf('Download progress %s (%s/%s) for %s', $percentage, $downloaded, $download_size, $url));
                 }
                 else
                 {
-                    Console::inlineProgressBar($downloaded, $downloadSize);
+                    $progress_bar->setMaxValue($download_size);
+                    $progress_bar->setValue($downloaded);
+                    $progress_bar->setMiscText(sprintf('%s/%s', $downloaded, $download_size));
+
+                    $progress_bar->update();
                 }
 
-                if($downloadSize === $downloaded)
+                if($download_size === $downloaded)
                 {
                     $end = true;
                 }
             });
 
+            unset($progress_bar);
             curl_exec($curl);
             fclose($file_handle);
 

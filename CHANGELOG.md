@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Implemented support in the AST traversal for the PHP statements `include`, `include_once`, `require`, and
    `require_once`. These statements are transformed into function calls. With this change, ncc can correctly handle and 
    import files from system packages or direct binary package files.
+ - Added new `ConsoleProgressBar` class for UI improvement, imrpoved the CLI Progress Bar inspired by
+   [pacman](https://wiki.archlinux.org/title/pacman)
 
 ### Fixed
  - When finding package versions in the package lock, ncc will try to find a satisfying version rather than the exact

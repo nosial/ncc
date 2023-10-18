@@ -47,6 +47,7 @@
     use ncc\Objects\ProjectConfiguration\Dependency;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
+    use ncc\Utilities\ConsoleProgressBar;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
     use ncc\Utilities\Resolver;
@@ -103,15 +104,15 @@
                 $package_path = ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $configuration->getOutput());
             }
 
-            $progress = 0;
+            //$progress = 0;
             $steps =
                 count($this->project_manager->getProjectConfiguration()->getExecutionPolicies()) +
                 count($this->project_manager->getComponents($build_configuration)) +
                 count($this->project_manager->getResources($build_configuration));
-
+            $progress_bar = new ConsoleProgressBar(sprintf('Building project \'%s\'', $this->project_manager->getProjectConfiguration()->getAssembly()->getName()), $steps);
             $package_writer = $this->createPackageWriter($package_path, $configuration);
 
-            Console::out(sprintf('Building project \'%s\'', $this->project_manager->getProjectConfiguration()->getAssembly()->getName()));
+            Console::outVerbose(sprintf('Building project \'%s\'', $this->project_manager->getProjectConfiguration()->getAssembly()->getName()));
 
             if($static_dependencies)
             {
@@ -155,38 +156,50 @@
 
                 if(count($execution_units) === 0)
                 {
-                    $progress = count($this->project_manager->getProjectConfiguration()->getExecutionPolicies());
-                    Console::inlineProgressBar($progress, $steps);
+                    //$progress = count($this->project_manager->getProjectConfiguration()->getExecutionPolicies());
+                    //Console::inlineProgressBar($progress, $steps);
+                    $progress_bar->increaseValue(count($this->project_manager->getProjectConfiguration()->getExecutionPolicies()), true);
                     Console::outWarning('The project contains execution policies but none of them are used');
                 }
 
                 foreach($execution_units as $unit)
                 {
-                    $progress++;
-                    Console::inlineProgressBar($progress, $steps);
+                    $progress_bar->setMiscText($unit->getExecutionPolicy()->getName());
+                    //$progress++;
+                    //Console::inlineProgressBar($progress, $steps);
                     $package_writer->addExecutionUnit($unit);
+                    $progress_bar->increaseValue(1, true);
                 }
             }
 
             // Compile package components
             foreach($this->project_manager->getComponents($build_configuration) as $component)
             {
-                $progress++;
-                Console::inlineProgressBar($progress, $steps);
+                //$progress++;
+                //Console::inlineProgressBar($progress, $steps);
+                $progress_bar->setMiscText($component);
                 Console::outVerbose(sprintf('Compiling \'%s\'', $component));
 
                 $this->processComponent($package_writer, $component);
+                $progress_bar->increaseValue(1, true);
             }
 
             // Compile package resources
             foreach($this->project_manager->getResources($build_configuration) as $resource)
             {
-                $progress++;
-                Console::inlineProgressBar($progress, $steps);
+                //$progress++;
+                //Console::inlineProgressBar($progress, $steps);
+                $progress_bar->setMiscText($resource);
                 Console::outVerbose(sprintf('Processing \'%s\'', $resource));
 
                 $this->processResource($package_writer, $resource);
+                $progress_bar->increaseValue(1, true);
             }
+
+            $progress_bar->setMiscText('done', true);
+            unset($progress_bar);
+
+            Console::out(sprintf('Processing dependencies...'));
 
             // Add the project dependencies
             foreach($this->project_manager->getProjectConfiguration()->getBuild()->getDependencies() as $dependency)
@@ -211,6 +224,7 @@
          * @param Dependency $dependency
          * @param bool $static
          * @return void
+         * @throws ConfigurationException
          * @throws IOException
          */
         private function processDependency(PackageWriter $package_writer, Dependency $dependency, bool $static=false): void

@@ -44,66 +44,6 @@
         private static $last_tick_time;
 
         /**
-         * Inline Progress bar, created by dealnews.com.
-         *
-         * @param int $value
-         * @param int $total
-         * @param int $size
-         * @param array $options
-         * @return void
-         * @copyright Copyright (c) 2010, dealnews.com, Inc. All rights reserved.
-         * @copyright Copyright (c) 2023, Nosial. All rights reserved
-         */
-        public static function inlineProgressBar(int $value, int $total, int $size = 10, array $options = []): void
-        {
-            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
-            {
-                return;
-            }
-
-            static $start_time;
-
-            // Start time initialization
-            if (!$start_time)
-            {
-                $start_time = time();
-            }
-
-            // If the value is out of bounds or zero, return early
-            if ($value > $total || $value === 0)
-            {
-                return;
-            }
-
-            // Build status bar
-            $percentage = $value / $total;
-            $barLength = floor($percentage * $size);
-            $statusBar = "\r[ "
-                . str_repeat("=", $barLength)
-                . ($barLength < $size ? ">" : "=")
-                . str_repeat(" ", $size - $barLength)
-                . " ] "
-                . number_format($percentage * 100) . "% $value/$total";
-
-            // ETA and elapsed time calculation
-            $rate = (time() - $start_time) / $value;
-            $eta = round($rate * ($total - $value), 2);
-            $elapsed = time() - $start_time;
-            $remaining_text = $options['remaining_text'] ?? 'remaining: ';
-            $statusBar .= " $remaining_text " . number_format($eta) . " sec.  elapsed: " . number_format($elapsed) . " sec.";
-            print("$statusBar  ");
-
-            flush();
-
-            // Reset variables once the progress is complete
-            if ($value === $total)
-            {
-                print("\n");
-                $start_time = null; // This resets the start time for the next progress bar
-            }
-        }
-
-        /**
          * Appends a verbose prefix to the message
          *
          * @param string $log_level

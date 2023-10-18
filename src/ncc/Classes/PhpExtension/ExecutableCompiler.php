@@ -31,6 +31,7 @@
     use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
     use ncc\ThirdParty\Symfony\Process\Process;
     use ncc\Utilities\Console;
+    use ncc\Utilities\ConsoleProgressBar;
     use ncc\Utilities\Functions;
     use ncc\Utilities\PathFinder;
 
@@ -168,32 +169,35 @@
          */
         private function hexDump(string $input_path, string $output_path, string $variable_name): void
         {
-            Console::out(sprintf('Processing %s to hex dump', $input_path));
+            Console::outVerbose(sprintf('Processing %s to hex dump', $input_path));
 
             $input = fopen($input_path, 'rb');
             $output = fopen($output_path, 'wb');
             $byte_count = 0;
-            $total_bytes = filesize($input_path);
-            fwrite($output, sprintf("unsigned char %s[] = {\n", Functions::toSnakeCase($variable_name)));
+            $progress_bar = new ConsoleProgressBar(sprintf('HexDump %s', $input_path), filesize($input_path));
 
-            // Convert the binary data to hex and write it to the output file
+            fwrite($output, sprintf("unsigned char %s[] = {\n", Functions::toSnakeCase($variable_name)));
+            // Convert the binary data to hex and write it to the output file using chunks
             while (!feof($input))
             {
-                Console::inlineProgressBar(ftell($input), $total_bytes);
+                $bytes = fread($input, 5026);
+                $len = strlen($bytes);
 
-                $byte = fread($input, 1);
-                if (strlen($byte) === 1)
+                for ($i = 0; $i < $len; $i++)
                 {
-                    fwrite($output, sprintf(" 0x%02x,", ord($byte)));
+                    fwrite($output, sprintf(" 0x%02x,", ord($bytes[$i])));
                     $byte_count++;
+
+                    // Write 12 bytes per line or when reaching the end of the file
+                    if ($byte_count === 12 || ($i == $len - 1 && feof($input)))
+                    {
+                        fwrite($output, "\n");
+                        $byte_count = 0;
+                    }
                 }
 
-                // Write 12 bytes per line or when reaching the end of the file
-                if ($byte_count === 12 || feof($input))
-                {
-                    fwrite($output, "\n");
-                    $byte_count = 0;
-                }
+                $progress_bar->increaseValue($len, true);
+                $progress_bar->setMiscText(sprintf('Processed (%d/%d)', $progress_bar->getValue(), $progress_bar->getMaxValue()));
             }
 
             // Close the output file
@@ -204,5 +208,9 @@
             // Finally, close the input and output files
             fclose($input);
             fclose($output);
+
+            // Close the progress bar
+            $progress_bar->setMiscText('done', true);
+            unset($progress_bar);
         }
     }
