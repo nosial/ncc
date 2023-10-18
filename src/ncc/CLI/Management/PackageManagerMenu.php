@@ -145,6 +145,12 @@
             $repository_manager = new RepositoryManager();
             $package_manager = new PackageManager();
 
+            if($package === null)
+            {
+                Console::outError('No package specified', true, 1);
+                return 1;
+            }
+
             $options = [];
 
             if(isset($args['reinstall']))
