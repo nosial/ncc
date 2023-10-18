@@ -572,9 +572,16 @@
                 return;
             }
 
-            if(!in_array($path, self::$included_files, true))
+            $acquired_name = $path;
+
+            if(!is_file($path))
             {
-                self::$included_files[] = $path;
+                $acquired_name = hash('crc32', $acquired_file);
+            }
+
+            if(!in_array($acquired_name, self::$included_files, true))
+            {
+                self::$included_files[] = sprintf('virtual(%s)', $acquired_name);
             }
 
             self::extendedEvaluate($acquired_file);
@@ -617,9 +624,16 @@
                     throw new RuntimeException(sprintf('Failed to acquire file "%s" at runtime: %s', $path, $e->getMessage()), $e->getCode(), $e);
             }
 
-            if(!in_array($path, self::$included_files, true))
+            $acquired_name = $path;
+
+            if(!is_file($path))
             {
-                self::$included_files[] = $path;
+                $acquired_name = hash('crc32', $acquired_file);
+            }
+
+            if(!in_array($acquired_name, self::$included_files, true))
+            {
+                self::$included_files[] = sprintf('virtual(%s)', $acquired_name);
             }
 
             self::extendedEvaluate($acquired_file);

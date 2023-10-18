@@ -12,6 +12,7 @@ This update introduces minor bug fixes.
 
 ### Fixed
  - Improve build efficiency by preventing duplicate merges
+ - Updated file tracking in Runtime class
 
 
 ## [2.0.3] - 2023-10-17
