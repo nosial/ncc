@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.3] - Unreleased
+## [2.0.3] - 2023-10-17
+
+This update includes enhanced support for PHP statements in AST traversal, a friendly CLI Progress Bar, and fixes
+related to package version searching, ncc's extension registration, and error handling in PackageManagerMenu.
+The changes improve the system's efficiency, error resilience, and user experience.
 
 ### Added
  - Implemented support in the AST traversal for the PHP statements `include`, `include_once`, `require`, and
