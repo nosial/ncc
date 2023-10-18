@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces minor bug fixes.
 
+### Fixed
+ - Improve build efficiency by preventing duplicate merges
+
 
 ## [2.0.3] - 2023-10-17
 

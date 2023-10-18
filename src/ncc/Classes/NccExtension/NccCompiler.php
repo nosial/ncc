@@ -60,10 +60,16 @@
         private $project_manager;
 
         /**
+         * @var array
+         */
+        private $merged_dependencies;
+
+        /**
          * @param ProjectManager $project_manager
          */
         public function __construct(ProjectManager $project_manager)
         {
+            $this->merged_dependencies = [];
             $this->project_manager = $project_manager;
         }
 
@@ -89,6 +95,7 @@
          */
         public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
         {
+            $this->merged_dependencies = [];
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
             $configuration->setOptions(array_merge($configuration->getOptions(), $options));
             $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]);
@@ -234,13 +241,14 @@
             /** @noinspection UnusedFunctionResultInspection */
             $package_writer->addDependencyConfiguration($dependency);
 
-            if(!$static)
+            if(!$static || in_array($dependency->getName(), $this->merged_dependencies, true))
             {
                 return;
             }
 
             $entry = (new PackageManager())->getPackageLock()->getVersionEntry($dependency->getName(), $dependency->getVersion());
             $package_writer->merge((new PackageReader($entry->getShadowPackagePath($dependency->getName()))));
+            $this->merged_dependencies[] = $dependency->getName();
 
             foreach($entry->getDependencies() as $sub_dependency)
             {
