@@ -368,10 +368,16 @@
          */
         private function renderProgressBar(): string
         {
-            $hashes_count = round($this->progress_width * $this->value / $this->max_value);
-            $dashes_count = $this->progress_width - $hashes_count;
-            $percent_done = round($this->value * 100 / $this->max_value);
+            $hashes_count = 0;
+            $percent_done = 0;
 
+            if($this->max_value !== 0)
+            {
+                $hashes_count = round($this->progress_width * $this->value / $this->max_value);
+                $percent_done = round($this->value * 100 / $this->max_value);
+            }
+
+            $dashes_count = $this->progress_width - $hashes_count;
             return ' [' . str_repeat('#', $hashes_count) . str_repeat('-', $dashes_count) . ']' . sprintf('%4s', $percent_done) . '%';
         }
 
