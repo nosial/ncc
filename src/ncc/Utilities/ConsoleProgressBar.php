@@ -25,6 +25,9 @@
 
     namespace ncc\Utilities;
 
+    use ncc\CLI\Main;
+    use ncc\Enums\LogLevel;
+
     class ConsoleProgressBar
     {
         /**
@@ -286,6 +289,11 @@
          */
         public function update(): void
         {
+            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            {
+                return;
+            }
+
             if($this->auto_end && $this->value >= $this->max_value)
             {
                 print($this->renderInformation() . $this->renderProgressBar() . "\n");

@@ -14,6 +14,7 @@ This update introduces minor bug fixes.
  - Improve build efficiency by preventing duplicate merges
  - Updated file tracking in Runtime class
  - Fixed division by zero in ConsoleProgressBar
+ - Fixed issue where progress bar is displayed in VERBOSE mode
 
 
 ## [2.0.3] - 2023-10-17
