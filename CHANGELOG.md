@@ -18,6 +18,7 @@ This update introduces minor bug fixes.
  - Updated file tracking in Runtime class
  - Fixed division by zero in ConsoleProgressBar
  - Fixed issue where progress bar is displayed in VERBOSE mode
+ - Set default process timeouts to null
 
 
 ## [2.0.3] - 2023-10-17

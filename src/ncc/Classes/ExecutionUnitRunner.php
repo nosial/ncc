@@ -76,10 +76,18 @@
             {
                 $process->setTimeout($unit->getExecutionPolicy()->getExecute()->getTimeout());
             }
+            else
+            {
+                $process->setTimeout(null);
+            }
 
             if($unit->getExecutionPolicy()->getExecute()->getIdleTimeout() !== null)
             {
                 $process->setIdleTimeout($unit->getExecutionPolicy()->getExecute()->getIdleTimeout());
+            }
+            else
+            {
+                $process->setIdleTimeout(null);
             }
 
             return $process;
