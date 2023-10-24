@@ -85,6 +85,11 @@
         private $package_file;
 
         /**
+         * @var string
+         */
+        private $package_path;
+
+        /**
          * @var array
          */
         private $cache;
@@ -102,7 +107,9 @@
                 throw new IOException(sprintf('File \'%s\' does not exist', $file_path));
             }
 
+            $this->package_path = $file_path;
             $this->package_file = fopen($file_path, 'rb');
+
             if($this->package_file === false)
             {
                 throw new IOException(sprintf('Failed to open file \'%s\'', $file_path));
@@ -257,7 +264,7 @@
         {
             if(!isset($this->headers[PackageStructure::DIRECTORY][$name]))
             {
-                throw new RuntimeException(sprintf('File \'%s\' not found in package', $name));
+                throw new RuntimeException(sprintf('File \'%s\' not found in package \'%s\'', $name, $this->package_path));
             }
 
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
@@ -281,7 +288,7 @@
         {
             if(!isset($this->headers[PackageStructure::DIRECTORY][$name]))
             {
-                throw new RuntimeException(sprintf('Resource \'%s\' not found in package', $name));
+                throw new RuntimeException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->package_path));
             }
 
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
@@ -330,7 +337,7 @@
 
             if(!isset($this->headers[PackageStructure::DIRECTORY][$directory]))
             {
-                throw new ConfigurationException('Package does not contain an assembly');
+                throw new ConfigurationException(sprintf('Assembly object not found in package \'%s\'', $this->package_path));
             }
 
             try
@@ -339,7 +346,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode assembly from package using ZiProto: %s', $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode assembly from package \'%s\' using ZiProto: %s', $this->package_path, $e->getMessage()), $e);
             }
 
             $this->cache[$directory] = $assembly;
@@ -364,7 +371,7 @@
 
             if(!isset($this->headers[PackageStructure::DIRECTORY][$directory]))
             {
-                throw new ConfigurationException('Package does not contain metadata');
+                throw new ConfigurationException(sprintf('Metadata object not found in package \'%s\'', $this->package_path));
             }
 
             try
@@ -373,7 +380,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode metadata from package using ZiProto: %s', $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode metadata from package \'%s\' using ZiProto: %s', $this->package_path, $e->getMessage()), $e);
             }
 
             foreach($this->getFlags() as $flag)
@@ -411,7 +418,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode installer from package using ZiProto: %s', $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode installer from package \'%s\' using ZiProto: %s', $this->package_path, $e->getMessage()), $e);
             }
 
             $this->cache[$directory] = $installer;
@@ -452,7 +459,7 @@
             $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$dependency_name]))
             {
-                throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package', $name));
+                throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package \'%s\'', $name, $this->package_path));
             }
 
             try
@@ -461,7 +468,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode dependency \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode dependency \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -481,7 +488,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode dependency from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode dependency from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -519,7 +526,7 @@
             $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$execution_unit_name]))
             {
-                throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package', $name));
+                throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package \'%s\'', $name, $this->package_path));
             }
 
             try
@@ -528,7 +535,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode execution unit \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode execution unit \'%s\' from package file \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -548,7 +555,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode execution unit from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode execution unit from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -607,7 +614,7 @@
             $component_name = sprintf('@%s:%s', PackageDirectory::COMPONENTS, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$component_name]))
             {
-                throw new ConfigurationException(sprintf('Component \'%s\' not found in package', $name));
+                throw new ConfigurationException(sprintf('Component \'%s\' not found in package \'%s\'', $name, $this->package_path));
             }
 
             try
@@ -616,7 +623,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode component \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode component \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -636,7 +643,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode component from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode component from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -653,7 +660,7 @@
             $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$class_name]))
             {
-                throw new ConfigurationException(sprintf('Class map \'%s\' not found in package', $class));
+                throw new ConfigurationException(sprintf('Class map \'%s\' not found in package \'%s\'', $class, $this->package_path));
             }
 
             try
@@ -662,7 +669,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode component from class pointer \'%s\' from package using ZiProto: %s', $class, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode component from class pointer \'%s\' from package \'%s\' using ZiProto: %s', $class, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -700,7 +707,7 @@
             $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY][$resource_name]))
             {
-                throw new ConfigurationException(sprintf('Resource \'%s\' not found in package', $name));
+                throw new ConfigurationException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->package_path));
             }
 
             try
@@ -709,7 +716,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode resource \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode resource \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
             }
         }
 
@@ -729,7 +736,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode resource from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode resource from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
             }
         }
 
