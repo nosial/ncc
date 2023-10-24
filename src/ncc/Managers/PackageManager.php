@@ -663,7 +663,7 @@
             $progress_bar->increaseValue(1, true);
             foreach($package_reader->getComponents() as $component_name)
             {
-                $progress_bar->setMiscText($component_name);
+                $progress_bar->setMiscText(basename($component_name), true);
 
                 if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
                 {
@@ -681,7 +681,7 @@
 
             foreach($package_reader->getResources() as $resource_name)
             {
-                $progress_bar->setMiscText($resource_name);
+                $progress_bar->setMiscText(basename($resource_name), true);
 
                 if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
                 {

@@ -171,7 +171,7 @@
 
                 foreach($execution_units as $unit)
                 {
-                    $progress_bar->setMiscText($unit->getExecutionPolicy()->getName());
+                    $progress_bar->setMiscText(basename($unit->getExecutionPolicy()->getName()));
                     //$progress++;
                     //Console::inlineProgressBar($progress, $steps);
                     $package_writer->addExecutionUnit($unit);
@@ -184,7 +184,7 @@
             {
                 //$progress++;
                 //Console::inlineProgressBar($progress, $steps);
-                $progress_bar->setMiscText($component);
+                $progress_bar->setMiscText(basename($component));
                 Console::outVerbose(sprintf('Compiling \'%s\'', $component));
 
                 $this->processComponent($package_writer, $component);
@@ -196,7 +196,7 @@
             {
                 //$progress++;
                 //Console::inlineProgressBar($progress, $steps);
-                $progress_bar->setMiscText($resource);
+                $progress_bar->setMiscText(basename($resource));
                 Console::outVerbose(sprintf('Processing \'%s\'', $resource));
 
                 $this->processResource($package_writer, $resource);

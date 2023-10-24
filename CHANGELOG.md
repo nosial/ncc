@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces minor bug fixes.
 
+### Changed
+ - Update progress bar text to display basename only
+
 ### Fixed
  - Improve build efficiency by preventing duplicate merges
  - Updated file tracking in Runtime class
