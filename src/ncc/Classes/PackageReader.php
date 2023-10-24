@@ -29,8 +29,8 @@
     use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\PackageDirectory;
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\IntegrityException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NotSupportedException;
     use ncc\Objects\Package\Component;
     use ncc\Objects\Package\ExecutionUnit;
     use ncc\Objects\Package\Metadata;
@@ -317,6 +317,7 @@
          *
          * @return Assembly
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getAssembly(): Assembly
         {
@@ -332,7 +333,15 @@
                 throw new ConfigurationException('Package does not contain an assembly');
             }
 
-            $assembly = Assembly::fromArray(ZiProto::decode($this->get($directory)));
+            try
+            {
+                $assembly = Assembly::fromArray(ZiProto::decode($this->get($directory)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode assembly from package using ZiProto: %s', $e->getMessage()), $e);
+            }
+
             $this->cache[$directory] = $assembly;
             return $assembly;
         }
@@ -342,7 +351,7 @@
          *
          * @return Metadata
          * @throws ConfigurationException
-         * @throws NotSupportedException
+         * @throws IntegrityException
          */
         public function getMetadata(): Metadata
         {
@@ -358,7 +367,15 @@
                 throw new ConfigurationException('Package does not contain metadata');
             }
 
-            $metadata = Metadata::fromArray(ZiProto::decode($this->get($directory)));
+            try
+            {
+                $metadata = Metadata::fromArray(ZiProto::decode($this->get($directory)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode metadata from package using ZiProto: %s', $e->getMessage()), $e);
+            }
+
             foreach($this->getFlags() as $flag)
             {
                 $metadata->setOption($flag, true);
@@ -372,6 +389,7 @@
          * Optional. Returns the package's installer
          *
          * @return Installer|null
+         * @throws IntegrityException
          */
         public function getInstaller(): ?Installer
         {
@@ -387,7 +405,15 @@
                 return null;
             }
 
-            $installer = Installer::fromArray(ZiProto::decode($this->get($directory)));
+            try
+            {
+                $installer = Installer::fromArray(ZiProto::decode($this->get($directory)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode installer from package using ZiProto: %s', $e->getMessage()), $e);
+            }
+
             $this->cache[$directory] = $installer;
             return $installer;
         }
@@ -419,6 +445,7 @@
          * @param string $name
          * @return Dependency
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getDependency(string $name): Dependency
         {
@@ -428,7 +455,14 @@
                 throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package', $name));
             }
 
-            return Dependency::fromArray(ZiProto::decode($this->get($dependency_name)));
+            try
+            {
+                return Dependency::fromArray(ZiProto::decode($this->get($dependency_name)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode dependency \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -437,11 +471,18 @@
          * @param int $pointer
          * @param int $length
          * @return Dependency
-         * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getDependencyByPointer(int $pointer, int $length): Dependency
         {
-            return Dependency::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            try
+            {
+                return Dependency::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode dependency from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -471,6 +512,7 @@
          * @param string $name
          * @return ExecutionUnit
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getExecutionUnit(string $name): ExecutionUnit
         {
@@ -480,7 +522,14 @@
                 throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package', $name));
             }
 
-            return ExecutionUnit::fromArray(ZiProto::decode($this->get($execution_unit_name)));
+            try
+            {
+                return ExecutionUnit::fromArray(ZiProto::decode($this->get($execution_unit_name)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode execution unit \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -489,11 +538,18 @@
          * @param int $pointer
          * @param int $length
          * @return ExecutionUnit
-         * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getExecutionUnitByPointer(int $pointer, int $length): ExecutionUnit
         {
-            return ExecutionUnit::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            try
+            {
+                return ExecutionUnit::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode execution unit from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -544,6 +600,7 @@
          * @param string $name
          * @return Component
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getComponent(string $name): Component
         {
@@ -553,7 +610,14 @@
                 throw new ConfigurationException(sprintf('Component \'%s\' not found in package', $name));
             }
 
-            return Component::fromArray(ZiProto::decode($this->get($component_name)));
+            try
+            {
+                return Component::fromArray(ZiProto::decode($this->get($component_name)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode component \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -562,11 +626,18 @@
          * @param int $pointer
          * @param int $length
          * @return Component
-         * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getComponentByPointer(int $pointer, int $length): Component
         {
-            return Component::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            try
+            {
+                return Component::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode component from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -575,6 +646,7 @@
          * @param string $class
          * @return Component
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getComponentByClass(string $class): Component
         {
@@ -584,7 +656,14 @@
                 throw new ConfigurationException(sprintf('Class map \'%s\' not found in package', $class));
             }
 
-            return Component::fromArray(ZiProto::decode($this->get($class_name)));
+            try
+            {
+                return Component::fromArray(ZiProto::decode($this->get($class_name)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode component from class pointer \'%s\' from package using ZiProto: %s', $class, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -614,6 +693,7 @@
          * @param string $name
          * @return Resource
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getResource(string $name): Resource
         {
@@ -623,7 +703,14 @@
                 throw new ConfigurationException(sprintf('Resource \'%s\' not found in package', $name));
             }
 
-            return Resource::fromArray(ZiProto::decode($this->get($resource_name)));
+            try
+            {
+                return Resource::fromArray(ZiProto::decode($this->get($resource_name)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode resource \'%s\' from package using ZiProto: %s', $name, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -632,11 +719,18 @@
          * @param int $pointer
          * @param int $length
          * @return Resource
-         * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function getResourceByPointer(int $pointer, int $length): Resource
         {
-            return Resource::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            try
+            {
+                return Resource::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+            }
+            catch(Exception $e)
+            {
+                throw new IntegrityException(sprintf('Failed to decode resource from pointer \'%s\' with length \'%s\' from package using ZiProto: %s', $pointer, $length, $e->getMessage()), $e);
+            }
         }
 
         /**
@@ -755,7 +849,7 @@
             fseek($this->package_file, $this->package_offset);
             $remaining_bytes = $this->package_length;
 
-            while ($remaining_bytes > 0)
+            while($remaining_bytes > 0)
             {
                 $bytes_to_read = min($remaining_bytes, 4096);
                 $data = fread($this->package_file, $bytes_to_read);

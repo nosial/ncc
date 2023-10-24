@@ -12,6 +12,7 @@ This update introduces minor bug fixes.
 
 ### Changed
  - Update progress bar text to display basename only
+ - Updated exception handling in PackageReader
 
 ### Fixed
  - Improve build efficiency by preventing duplicate merges
