@@ -38,6 +38,7 @@
     use ncc\ThirdParty\composer\Semver\Comparator;
     use ncc\ThirdParty\composer\Semver\Semver;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Resolver;
     use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
@@ -69,6 +70,13 @@
                     'Accept: application/json',
                     'User-Agent: ncc'
                 ];
+
+                $resolved_host = Resolver::getResolveOption($endpoint);
+
+                if($resolved_host !== null)
+                {
+                    curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
+                }
 
                 curl_setopt_array($curl, [
                     CURLOPT_RETURNTRANSFER => true,
@@ -129,6 +137,13 @@
                     'Accept: application/json',
                     'User-Agent: ncc'
                 ];
+
+                $resolved_host = Resolver::getResolveOption($endpoint);
+
+                if($resolved_host !== null)
+                {
+                    curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
+                }
 
                 curl_setopt_array($curl, [
                     CURLOPT_RETURNTRANSFER => true,

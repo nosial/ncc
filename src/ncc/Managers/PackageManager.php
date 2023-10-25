@@ -886,6 +886,12 @@
             $file_handle = fopen($file_path, 'wb');
             $end = false;
             $progress_bar = new ConsoleProgressBar(sprintf('Downloading %s', $url), 100);
+            $resolved_host = Resolver::getResolveOption($url);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
+            }
 
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);

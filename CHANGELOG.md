@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces minor bug fixes.
 
+### Added
+ - Added host resolving in network calls to improve the handling of invalid or unreachable URLs
+
 ### Changed
  - Update progress bar text to display basename only
  - Updated exception handling in PackageReader

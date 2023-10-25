@@ -39,6 +39,7 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Resolver;
     use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
@@ -97,10 +98,16 @@
                 'User-Agent: ncc'
             ];
 
-
             if($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [
@@ -186,6 +193,13 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
+            }
+
             curl_setopt_array($curl, [
                 CURLOPT_URL => $endpoint,
                 CURLOPT_RETURNTRANSFER => true,
@@ -244,6 +258,13 @@
             if($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [
@@ -335,6 +356,13 @@
             if($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [
@@ -431,6 +459,13 @@
             if ($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [

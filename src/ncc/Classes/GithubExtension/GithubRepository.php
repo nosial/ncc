@@ -39,6 +39,7 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Console;
+    use ncc\Utilities\Resolver;
     use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
@@ -100,6 +101,13 @@
             if($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [
@@ -183,6 +191,13 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
+            }
+
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_NOBODY => true,
@@ -245,6 +260,13 @@
             if($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [
@@ -331,7 +353,18 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CUSTOMREQUEST => HttpRequestType::GET, CURLOPT_HTTPHEADER => $headers]);
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_HTTPHEADER => $headers
+            ]);
 
             Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
@@ -411,6 +444,13 @@
             if($authentication !== null)
             {
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
+            }
+
+            $resolved_host = Resolver::getResolveOption($endpoint);
+
+            if($resolved_host !== null)
+            {
+                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
             }
 
             curl_setopt_array($curl, [

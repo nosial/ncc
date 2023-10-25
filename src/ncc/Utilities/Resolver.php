@@ -42,6 +42,11 @@
         private static $user_id_cache;
 
         /**
+         * @var array
+         */
+        private static $resolved_hosts = [];
+
+        /**
          * Returns the current scope of the application
          *
          * @return string Scopes::SYSTEM if the user is root, Scopes::USER otherwise
@@ -322,5 +327,55 @@
             }
 
             return explode(':', $component_path, 2)[1];
+        }
+
+        /**
+         * Resolve host and cache the result
+         *
+         * @param string $host The host to resolve
+         * @return string The resolved host IP address
+         */
+        public static function resolveHost(string $host): string
+        {
+            $resolved_host = self::$resolved_hosts[$host] ?? null;
+
+            if($resolved_host !== null)
+            {
+                Console::outDebug(sprintf('Resolved host "%s" to "%s" from cache', $host, $resolved_host));
+                return $resolved_host;
+            }
+
+            $resolved_host = gethostbyname($host);
+
+            if($resolved_host === $host)
+            {
+                Console::outDebug(sprintf('Unable to resolve host "%s"', $host));
+                return $host;
+            }
+
+            Console::outDebug(sprintf('Resolved host "%s" to "%s"', $host, $resolved_host));
+            self::$resolved_hosts[$host] = $resolved_host;
+            return $resolved_host;
+        }
+
+        /**
+         * Get resolved option for the given URL
+         *
+         * @param string $url The input URL
+         * @return string|null Resolved option in the format "{host}:{port}:{ip_address}", or null if $ip_address is same as $host
+         */
+        public static function getResolveOption(string $url): ?string
+        {
+            $parsed_url = parse_url($url);
+            $host = $parsed_url['host'];
+            $port = str_starts_with($url, 'https') ? 443 : 80;
+            $ip_address = self::resolveHost($host);
+
+            if($ip_address === $host)
+            {
+                return null;
+            }
+
+            return "{$host}:{$port}:{$ip_address}";
         }
     }
