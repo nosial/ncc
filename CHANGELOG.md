@@ -13,6 +13,7 @@ This update introduces minor bug fixes.
 ### Changed
  - Update progress bar text to display basename only
  - Updated exception handling in PackageReader
+ - Updated the Download function to attempt to retry the download upon an error for at least 3 times.
 
 ### Fixed
  - Improve build efficiency by preventing duplicate merges

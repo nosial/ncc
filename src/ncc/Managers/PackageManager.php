@@ -861,7 +861,7 @@
          * @throws NetworkException
          * @noinspection UnusedFunctionResultInspection
          */
-        private function downloadFile(string $url, string $path): string
+        private function downloadFile(string $url, string $path, int $retries=3): string
         {
             $file_path = basename(parse_url($url, PHP_URL_PATH));
             $curl = curl_init($url);
@@ -934,16 +934,23 @@
             curl_exec($curl);
             fclose($file_handle);
 
+            if(curl_errno($curl))
+            {
+                ShutdownHandler::declareTemporaryPath($file_path);
+
+                if($retries === 0)
+                {
+                    throw new NetworkException(sprintf('Failed to download file from %s: %s', $url, curl_error($curl)));
+                }
+
+                Console::outWarning(sprintf('Failed to download file from %s: %s, retrying', $url, curl_error($curl)));
+                return $this->downloadFile($url, $path, ($retries - 1));
+            }
+
             $progress_bar->setMaxValue(100);
             $progress_bar->setValue(100);
             $progress_bar->setMiscText('done', true);
             unset($progress_bar);
-
-            if(curl_errno($curl))
-            {
-                ShutdownHandler::declareTemporaryPath($file_path);
-                throw new NetworkException(sprintf('Failed to download file from %s: %s', $url, curl_error($curl)));
-            }
 
             curl_close($curl);
             return $file_path;
