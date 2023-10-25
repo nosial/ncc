@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\PackageLock;
 
+    use Exception;
     use InvalidArgumentException;
     use ncc\Classes\PackageReader;
     use ncc\Enums\FileDescriptor;
@@ -41,6 +42,7 @@
     use ncc\Objects\ProjectConfiguration\UpdateSource;
     use ncc\ThirdParty\composer\Semver\Semver;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
+    use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
 
@@ -189,8 +191,9 @@
                 {
                     $version = $this->getLatestVersion();
                 }
-                catch(InvalidArgumentException $e)
+                catch(Exception $e)
                 {
+                    Console::outWarning(sprintf('Unable to find latest version for package %s, called on versionExists() in PackageEntry: %s', $this->name, $e->getMessage()));
                     return false;
                 }
             }

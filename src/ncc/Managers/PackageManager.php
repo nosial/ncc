@@ -906,6 +906,11 @@
                     return;
                 }
 
+                if($downloaded > $download_size)
+                {
+                    $download_size = $downloaded;
+                }
+
                 if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
                 {
                     $percentage = round(($downloaded / $download_size) * 100, 2);
@@ -926,9 +931,13 @@
                 }
             });
 
-            unset($progress_bar);
             curl_exec($curl);
             fclose($file_handle);
+
+            $progress_bar->setMaxValue(100);
+            $progress_bar->setValue(100);
+            $progress_bar->setMiscText('done', true);
+            unset($progress_bar);
 
             if(curl_errno($curl))
             {

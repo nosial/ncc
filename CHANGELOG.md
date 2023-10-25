@@ -20,6 +20,8 @@ This update introduces minor bug fixes.
  - Fixed division by zero in ConsoleProgressBar
  - Fixed issue where progress bar is displayed in VERBOSE mode
  - Set default process timeouts to null
+ - Fixed issue where a newline is sometimes added to the end of a download output due to how short the download process
+   was, mitigated the issue by enforcing a "done" update at the end of the download process
 
 
 ## [2.0.3] - 2023-10-17
