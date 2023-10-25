@@ -195,7 +195,7 @@
                 }
             }
 
-            if($this->data_length === null)
+            if($this->data_length === null || $this->data_length === 0)
             {
                 throw new IOException(sprintf('File \'%s\' is not a valid package file (missing end of package)', $file_path));
             }

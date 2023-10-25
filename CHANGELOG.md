@@ -26,6 +26,9 @@ This update introduces minor bug fixes.
  - Set default process timeouts to null
  - Fixed issue where a newline is sometimes added to the end of a download output due to how short the download process
    was, mitigated the issue by enforcing a "done" update at the end of the download process
+ - Fixed issue where all development dependencies were not correctly being added to debug builds in composer projects,
+   instead these dependencies were added globally to the build configuration. This issue was fixed by adding all the
+   development dependencies to the debug build configurations only.
 
 
 ## [2.0.3] - 2023-10-17
@@ -38,7 +41,7 @@ The changes improve the system's efficiency, error resilience, and user experien
  - Implemented support in the AST traversal for the PHP statements `include`, `include_once`, `require`, and
    `require_once`. These statements are transformed into function calls. With this change, ncc can correctly handle and 
    import files from system packages or direct binary package files.
- - Added new `ConsoleProgressBar` class for UI improvement, imrpoved the CLI Progress Bar inspired by
+ - Added new `ConsoleProgressBar` class for UI improvement, improved the CLI Progress Bar inspired by
    [pacman](https://wiki.archlinux.org/title/pacman)
 
 ### Fixed

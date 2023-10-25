@@ -496,6 +496,7 @@
             // Create the build configuration
             $build = new ProjectConfiguration\Build('auto_src');
             $build->setDefaultConfiguration('release_ncc');
+            $require_dev = [];
 
             // Process dependencies
             if($composer_json->getRequire() !== null)
@@ -516,7 +517,6 @@
             }
 
             // Process developer dependencies
-            $require_dev = [];
             if($composer_json->getRequireDev() !== null)
             {
                 /** @var ComposerJson\PackageLink $package_link */
@@ -528,10 +528,9 @@
                     }
 
                     $source = sprintf('%s=%s@packagist', $package_link->getPackageName(), $package_link->getVersion());
-                    $build->addDependency(new ProjectConfiguration\Dependency(
+                    $require_dev[] = new ProjectConfiguration\Dependency(
                         Resolver::composerNameToPackage($package_link->getPackageName()), $source, $package_link->getVersion()
-                    ));
-                    $require_dev[] = $package_link->getPackageName();
+                    );
                 }
             }
 
