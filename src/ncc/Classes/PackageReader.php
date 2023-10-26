@@ -182,17 +182,28 @@
 
             // Seek the data until the end of the package (FF AA 55 F0)
             fseek($this->package_file, $this->data_offset);
+            $buffer = '';
             while(!feof($this->package_file))
             {
-                $buffer = fread($this->package_file, 1024);
-                $this->data_length += strlen($buffer);
+                $current_chunk = fread($this->package_file, 1024);
+                $this->data_length += strlen($current_chunk);
+                $buffer .= $current_chunk;
 
+                // If we detect the end-of-data byte sequence
                 if (($position = strpos($buffer, "\xFF\xAA\x55\xF0")) !== false)
                 {
                     $this->data_length -= strlen($buffer) - $position;
                     $this->package_length += $this->data_length + 4;
                     break;
                 }
+
+                // Check if the buffer is 1MB or larger
+                if(strlen($buffer) > 1048576)
+                {
+                    // Remove the first 512kb of the buffer
+                    $buffer = substr($buffer, 512000);
+                }
+
             }
 
             if($this->data_length === null || $this->data_length === 0)

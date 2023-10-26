@@ -29,6 +29,10 @@ This update introduces minor bug fixes.
  - Fixed issue where all development dependencies were not correctly being added to debug builds in composer projects,
    instead these dependencies were added globally to the build configuration. This issue was fixed by adding all the
    development dependencies to the debug build configurations only.
+ - Fixed issue when creating a shadow copy of a package, if the universe aligns together and the cosmos unit together to
+   produce a package length exactly to where the end-of-package byte sequence is cut in half, the shadow copy will fail
+   to be created due to the end-of-package byte sequence being cut in half, this issue was fixed by reading the package
+   in chunks to determine the end-of-package byte sequence.
 
 
 ## [2.0.3] - 2023-10-17
