@@ -89,19 +89,43 @@
                 return 1;
             }
 
-            // Build the project
-            try
+            $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT;
+
+            if($build_configuration === BuildConfigurationValues::ALL)
             {
-                $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT;
-                $output = $project_manager->build($build_configuration, $options);
+                // Build all configurations
+                foreach($project_manager->getProjectConfiguration()->getBuild()->getBuildConfigurations() as $configuration_name)
+                {
+                    Console::out(sprintf('Building configuration \'%s\'', $configuration_name));
+                    try
+                    {
+                        $output = $project_manager->build($configuration_name, $options);
+                    }
+                    catch (Exception $e)
+                    {
+                        Console::outException('Failed to build project', $e, 1);
+                        return 1;
+                    }
+
+                    Console::out($output);
+                }
             }
-            catch (Exception $e)
+            else
             {
-                Console::outException('Failed to build project', $e, 1);
-                return 1;
+                // Build the project
+                try
+                {
+                    $output = $project_manager->build($build_configuration, $options);
+                }
+                catch (Exception $e)
+                {
+                    Console::outException('Failed to build project', $e, 1);
+                    return 1;
+                }
+
+                Console::out($output);
             }
 
-            Console::out($output);
             return 0;
         }
 

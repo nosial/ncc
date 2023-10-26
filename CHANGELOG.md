@@ -12,6 +12,8 @@ This update introduces minor bug fixes.
 
 ### Added
  - Added host resolving in network calls to improve the handling of invalid or unreachable URLs
+ - Added the ability to use 'all' as a build configuration when running `ncc build`, to build all build configurations
+   in the project.
 
 ### Changed
  - Update progress bar text to display basename only
