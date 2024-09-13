@@ -14,6 +14,9 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Update Scopes to enum and adjust scope checks
  - Convert Runners class to enum with string cases
 
+### Removed
+ - Removed EncoderType enum file, unused.
+
 
 ## [2.0.3] - 2023-10-17
 
