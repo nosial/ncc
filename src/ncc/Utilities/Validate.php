@@ -76,17 +76,17 @@ namespace ncc\Utilities;
          */
         public static function version(string $input): bool
         {
-            if(preg_match(RegexPatterns::SEMANTIC_VERSIONING_2, $input))
+            if(preg_match(RegexPatterns::SEMANTIC_VERSIONING_2->value, $input))
             {
                 return true;
             }
 
-            if(preg_match(RegexPatterns::COMPOSER_VERSION_FORMAT, $input))
+            if(preg_match(RegexPatterns::COMPOSER_VERSION_FORMAT->value, $input))
             {
                 return true;
             }
 
-            if(preg_match(RegexPatterns::PYTHON_VERSION_FORMAT, $input))
+            if(preg_match(RegexPatterns::PYTHON_VERSION_FORMAT->value, $input))
             {
                 return true;
             }
@@ -133,7 +133,7 @@ namespace ncc\Utilities;
                 return false;
             }
 
-            if(!preg_match(RegexPatterns::PACKAGE_NAME_FORMAT, $input))
+            if(!preg_match(RegexPatterns::PACKAGE_NAME_FORMAT->value, $input))
             {
                 return false;
             }
@@ -175,7 +175,7 @@ namespace ncc\Utilities;
          */
         public static function unixFilepath($input): bool
         {
-            if(preg_match(RegexPatterns::UNIX_PATH, $input))
+            if(preg_match(RegexPatterns::UNIX_PATH->value, $input))
             {
                 return true;
             }
@@ -196,7 +196,7 @@ namespace ncc\Utilities;
                 return false;
             }
 
-            if(!preg_match(RegexPatterns::CONSTANT_NAME, $input))
+            if(!preg_match(RegexPatterns::CONSTANT_NAME->value, $input))
             {
                 return false;
             }
@@ -212,7 +212,7 @@ namespace ncc\Utilities;
          */
         public static function executionPolicyName(string $input): bool
         {
-            if(!preg_match(RegexPatterns::EXECUTION_POLICY_NAME, $input))
+            if(!preg_match(RegexPatterns::EXECUTION_POLICY_NAME->value, $input))
             {
                 return false;
             }
@@ -308,7 +308,7 @@ namespace ncc\Utilities;
          */
         public static function remotePackageInput(string $input): bool
         {
-            if(preg_match(RegexPatterns::REMOTE_PACKAGE, $input))
+            if(preg_match(RegexPatterns::REMOTE_PACKAGE->value, $input))
             {
                 return true;
             }

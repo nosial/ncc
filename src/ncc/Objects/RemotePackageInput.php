@@ -230,7 +230,7 @@
          */
         public static function fromString(string $input): RemotePackageInput
         {
-            if (preg_match(RegexPatterns::REMOTE_PACKAGE, $input, $matches))
+            if (preg_match(RegexPatterns::REMOTE_PACKAGE->value, $input, $matches))
             {
                 if ($matches['package'] === null || $matches['vendor'] === null)
                 {

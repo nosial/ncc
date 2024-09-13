@@ -199,7 +199,7 @@
                 $authentication_entry = $entry->getPassword();
             }
 
-            if(preg_match(RegexPatterns::REMOTE_PACKAGE, $package) === 1)
+            if(preg_match(RegexPatterns::REMOTE_PACKAGE->value, $package) === 1)
             {
                 $package_input = RemotePackageInput::fromString($package);
 

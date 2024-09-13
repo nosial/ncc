@@ -267,7 +267,7 @@
          */
         public function validate(): void
         {
-            if(!preg_match(RegexPatterns::UUID, $this->uuid))
+            if(!preg_match(RegexPatterns::UUID->value, $this->uuid))
             {
                 throw new ConfigurationException(sprintf('The UUID is not a valid v4 UUID: %s, in property assembly.uuid', $this->uuid));
             }
@@ -277,7 +277,7 @@
                 throw new ConfigurationException(sprintf('The version number is invalid: %s, in property assembly.version', $this->version));
             }
 
-            if($this->package !== null && !preg_match(RegexPatterns::PACKAGE_NAME_FORMAT, $this->package))
+            if($this->package !== null && !preg_match(RegexPatterns::PACKAGE_NAME_FORMAT->value, $this->package))
             {
                 throw new ConfigurationException(sprintf('The package name is invalid: %s, in property assembly.package', $this->package));
             }

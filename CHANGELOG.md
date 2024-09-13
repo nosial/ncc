@@ -13,6 +13,7 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Convert Versions constants to enum cases
  - Update Scopes to enum and adjust scope checks
  - Convert Runners class to enum with string cases
+ - Convert RegexPatterns constants to enum cases
 
 ### Removed
  - Removed EncoderType enum file, unused.

@@ -169,7 +169,7 @@
             }
 
             // If the input is a remote package, we can assume it's a remote package input
-            if(preg_match(RegexPatterns::REMOTE_PACKAGE, $input) === 1)
+            if(preg_match(RegexPatterns::REMOTE_PACKAGE->value, $input) === 1)
             {
                 return $this->installRemotePackage(RemotePackageInput::fromString($input), $authentication, $options);
             }
