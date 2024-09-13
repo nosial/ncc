@@ -59,7 +59,7 @@
         /**
          * Public Constructor
          */
-        public function __construct(array $entries=[], string $package_lock_version=Versions::PACKAGE_LOCK_VERSION, ?int $last_updated_timestamp=null)
+        public function __construct(array $entries=[], string $package_lock_version=Versions::PACKAGE_LOCK_VERSION->value, ?int $last_updated_timestamp=null)
         {
             $this->entries = $entries;
             $this->package_lock_version = $package_lock_version;
@@ -280,7 +280,7 @@
             }, $entries_array);
 
 
-            $package_lock_version = Functions::array_bc($data, 'package_lock_version') ?? Versions::PACKAGE_LOCK_VERSION;
+            $package_lock_version = Functions::array_bc($data, 'package_lock_version') ?? Versions::PACKAGE_LOCK_VERSION->value;
             $last_updated_timestamp = Functions::array_bc($data, 'last_updated_timestamp') ?? time();
 
             if($package_lock_version === null)

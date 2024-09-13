@@ -178,7 +178,7 @@
          * @throws NetworkException If there was an error getting the package
          * @throws NotSupportedException If the repository type does not support fetching packages
          */
-        public function fetchPackage(string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public function fetchPackage(string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             return match(strtolower($this->type))
             {
@@ -202,7 +202,7 @@
          * @throws AuthenticationException If the authentication is invalid
          * @throws NetworkException If there was an error getting the source
          */
-        public function fetchSourceArchive(string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public function fetchSourceArchive(string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             return match(strtolower($this->type))
             {

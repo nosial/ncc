@@ -47,7 +47,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             try
             {
@@ -64,7 +64,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST->value, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
         {
             return self::getReleasePackage($repository, $vendor, $project, $version, $authentication, $options);
         }
@@ -161,7 +161,7 @@
          */
         private static function getTagArchive(RepositoryConfiguration $repository, string $group, string $project, string $tag, ?AuthenticationInterface $authentication = null): RepositoryResult
         {
-            if($tag === Versions::LATEST)
+            if($tag === Versions::LATEST->value)
             {
                 $tag = self::getLatestTag($repository, $group, $project, $authentication);
             }
@@ -307,7 +307,7 @@
         private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null, array $options=[]): RepositoryResult
         {
             /** @noinspection DuplicatedCode */
-            if($release === Versions::LATEST)
+            if($release === Versions::LATEST->value)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
@@ -389,7 +389,7 @@
         private static function getReleaseArchive(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication = null): RepositoryResult
         {
             /** @noinspection DuplicatedCode */
-            if($release === Versions::LATEST)
+            if($release === Versions::LATEST->value)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }

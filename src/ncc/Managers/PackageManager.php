@@ -206,7 +206,7 @@
                 {
                     Console::outVerbose(sprintf(
                         'Removing symlink for %s=%s at %s',
-                        $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST)->getVersion(),
+                        $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST->value)->getVersion(),
                         PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_name)
                     ));
 
@@ -216,7 +216,7 @@
                     }
                     catch(Exception $e)
                     {
-                        throw new IOException(sprintf('Failed to resolve symlink for %s=%s: %s', $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST)->getVersion(), $e->getMessage()), $e);
+                        throw new IOException(sprintf('Failed to resolve symlink for %s=%s: %s', $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST->value)->getVersion(), $e->getMessage()), $e);
                     }
 
                     if(is_file($symlink_path))

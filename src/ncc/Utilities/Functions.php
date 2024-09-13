@@ -641,7 +641,7 @@
          * @param string $version
          * @return string
          */
-        public static function createExecutionPointer(string $package_name, string $version=Versions::LATEST): string
+        public static function createExecutionPointer(string $package_name, string $version=Versions::LATEST->value): string
         {
             $content = "#!/bin/sh\n";
             $content .= sprintf('exec ncc exec --package "%s" --exec-version "%s" --exec-args "$@"', $package_name, $version);

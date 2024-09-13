@@ -45,7 +45,7 @@
          * @throws AuthenticationException If the authentication is invalid
          * @throws NetworkException If there was an error getting the source
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult;
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult;
 
         /**
          * Returns the archive URL for the ncc package of the specified group and project.
@@ -61,5 +61,5 @@
          * @throws AuthenticationException If the authentication is invalid
          * @throws NetworkException If there was an error getting the package
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult;
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult;
     }

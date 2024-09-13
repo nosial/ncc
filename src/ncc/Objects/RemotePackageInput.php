@@ -66,7 +66,7 @@
         {
             $this->package = $package;
             $this->vendor = $vendor;
-            $this->version = Versions::LATEST;
+            $this->version = Versions::LATEST->value;
         }
 
         /**
@@ -126,7 +126,7 @@
          */
         public function setVersion(?string $version): void
         {
-            $this->version = $version ?? Versions::LATEST;
+            $this->version = $version ?? Versions::LATEST->value;
         }
 
         /**
@@ -238,7 +238,7 @@
                 }
 
                 $object = new RemotePackageInput($matches['package'], $matches['vendor']);
-                $object->version = empty($matches['version']) ? Versions::LATEST : $matches['version'];
+                $object->version = empty($matches['version']) ? Versions::LATEST->value : $matches['version'];
                 $object->branch = empty($matches['branch']) ? null : $matches['branch'];
                 $object->repository = empty($matches['source']) ? null : $matches['source'];
 

@@ -121,7 +121,7 @@
          * @return string
          * @throws ImportException
          */
-        public static function import(string $package, string $version=Versions::LATEST): string
+        public static function import(string $package, string $version=Versions::LATEST->value): string
         {
             if(self::isImported($package))
             {
@@ -173,7 +173,7 @@
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
-        private static function importFromSystem(string $package, string $version=Versions::LATEST): string
+        private static function importFromSystem(string $package, string $version=Versions::LATEST->value): string
         {
             if(!self::getPackageManager()->getPackageLock()->entryExists($package))
             {

@@ -53,7 +53,7 @@
          */
         public function __construct()
         {
-            $this->version = Versions::CREDENTIALS_STORE_VERSION;
+            $this->version = Versions::CREDENTIALS_STORE_VERSION->value;
             $this->entries = [];
         }
 

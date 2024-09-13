@@ -183,7 +183,7 @@
          */
         public function versionExists(string $version): bool
         {
-            if($version === Versions::LATEST)
+            if($version === Versions::LATEST->value)
             {
                 try
                 {
@@ -219,7 +219,7 @@
          */
         public function getSatisfyingVersion(string $version): string
         {
-            if($version === Versions::LATEST)
+            if($version === Versions::LATEST->value)
             {
                 $version = $this->getLatestVersion();
             }
@@ -248,7 +248,7 @@
          */
         public function getVersion(string $version): VersionEntry
         {
-            if($version === Versions::LATEST)
+            if($version === Versions::LATEST->value)
             {
                 $version = $this->getLatestVersion();
             }
@@ -354,7 +354,7 @@
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public function getAssembly(string $version=Versions::LATEST): Assembly
+        public function getAssembly(string $version=Versions::LATEST->value): Assembly
         {
             $assembly_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY;
             if(!is_file($assembly_path))
@@ -375,7 +375,7 @@
          * @throws PathNotFoundException
          * @throws NotSupportedException
          */
-        public function getMetadata(string $version=Versions::LATEST): Metadata
+        public function getMetadata(string $version=Versions::LATEST->value): Metadata
         {
             $metadata_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA;
             if(!is_file($metadata_path))
@@ -394,7 +394,7 @@
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public function getInstaller(string $version=Versions::LATEST): ?Installer
+        public function getInstaller(string $version=Versions::LATEST->value): ?Installer
         {
             $installer_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER;
             if(!is_file($installer_path))
@@ -413,7 +413,7 @@
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public function getClassMap(string $version=Versions::LATEST): array
+        public function getClassMap(string $version=Versions::LATEST->value): array
         {
             $class_map_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP;
             if(!is_file($class_map_path))
@@ -434,7 +434,7 @@
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public function getExecutionPolicy(string $policy_name, string $version=Versions::LATEST): ExecutionPolicy
+        public function getExecutionPolicy(string $policy_name, string $version=Versions::LATEST->value): ExecutionPolicy
         {
             $execution_policy_path = $this->getPath($version) . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $policy_name . '.policy';
             if(!is_file($execution_policy_path))
@@ -453,7 +453,7 @@
          * @return string
          * @throws IOException
          */
-        public function getExecutionBinaryPath(string $policy_name, string $version=Versions::LATEST): string
+        public function getExecutionBinaryPath(string $policy_name, string $version=Versions::LATEST->value): string
         {
             $execution_binary_path = $this->getPath($version) . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $policy_name;
             if(!is_file($execution_binary_path))
