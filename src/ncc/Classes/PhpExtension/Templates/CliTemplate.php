@@ -49,7 +49,7 @@
         public static function applyTemplate(ProjectManager $project_manager): void
         {
             $project_manager->getProjectConfiguration()->addExecutionPolicy(
-                new ExecutionPolicy('main_policy', Runners::PHP, new ExecutionPolicy\Execute('main'))
+                new ExecutionPolicy('main_policy', Runners::PHP->value, new ExecutionPolicy\Execute('main'))
             );
 
             $project_manager->getProjectConfiguration()->getBuild()->setMain('main_policy');

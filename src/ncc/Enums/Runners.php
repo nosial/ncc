@@ -22,25 +22,15 @@
 
     namespace ncc\Enums;
 
-    final class Runners
+    enum Runners : string
     {
-        public const PHP = 'php';
+        case PHP = 'php';
 
-        public const BASH = 'bash';
+        case BASH = 'bash';
 
-        public const PYTHON = 'python';
+        case PYTHON = 'python';
 
-        public const PERL = 'perl';
+        case PERL = 'perl';
 
-        public const LUA = 'lua';
-
-        public const ALL = [
-            self::PHP,
-            self::BASH,
-            self::PYTHON,
-            self::PYTHON_3,
-            self::PYTHON_2,
-            self::PERL,
-            self::LUA
-        ];
+        case LUA = 'lua';
     }

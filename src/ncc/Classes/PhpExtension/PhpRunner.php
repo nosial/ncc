@@ -44,7 +44,7 @@
          */
         public static function executeUnit(ExecutionUnit $unit, array $args=[], bool $local=true): int
         {
-            if($unit->getExecutionPolicy()->getRunner() !== Runners::PHP)
+            if($unit->getExecutionPolicy()->getRunner() !== Runners::PHP->value)
             {
                 throw new InvalidArgumentException(sprintf('The execution unit %s is not a php execution unit', $unit->getExecutionPolicy()->getName()));
             }

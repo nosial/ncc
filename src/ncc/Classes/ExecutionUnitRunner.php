@@ -54,11 +54,11 @@
         {
             $bin = match($unit->getExecutionPolicy()->getRunner())
             {
-                Runners::PHP => (new ExecutableFinder())->find('php'),
-                Runners::BASH => (new ExecutableFinder())->find('bash'),
-                Runners::PYTHON => (new ExecutableFinder())->find('python'),
-                Runners::LUA => (new ExecutableFinder())->find('lua'),
-                Runners::PERL => (new ExecutableFinder())->find('perl'),
+                Runners::PHP->value => (new ExecutableFinder())->find('php'),
+                Runners::BASH->value => (new ExecutableFinder())->find('bash'),
+                Runners::PYTHON->value => (new ExecutableFinder())->find('python'),
+                Runners::LUA->value => (new ExecutableFinder())->find('lua'),
+                Runners::PERL->value => (new ExecutableFinder())->find('perl'),
 
                 default => throw new NotSupportedException(sprintf('The execution policy %s is not supported because it uses the %s runner', $unit->getExecutionPolicy()->getName(), $unit->getExecutionPolicy()->getRunner()))
             };
@@ -109,8 +109,8 @@
                 $execution_unit = ExecutionUnit::fromArray(ZiProto::decode(IO::fread($unit_path)));
                 return match ($execution_unit->getExecutionPolicy()->getRunner())
                 {
-                    Runners::PHP => PhpRunner::executeUnit($execution_unit, $args),
-                    Runners::BASH => BashRunner::executeUnit($execution_unit, $args),
+                    Runners::PHP->value => PhpRunner::executeUnit($execution_unit, $args),
+                    Runners::BASH->value => BashRunner::executeUnit($execution_unit, $args),
                     default => throw new NotSupportedException(sprintf('The execution policy %s is not supported because it uses the %s runner', $execution_unit->getExecutionPolicy()->getName(), $execution_unit->getExecutionPolicy()->getRunner())),
                 };
             }
@@ -138,8 +138,8 @@
             {
                 return match ($execution_unit->getExecutionPolicy()->getRunner())
                 {
-                    Runners::PHP => PhpRunner::executeUnit($execution_unit, $args, false),
-                    Runners::BASH => BashRunner::executeUnit($execution_unit, $args),
+                    Runners::PHP->value => PhpRunner::executeUnit($execution_unit, $args, false),
+                    Runners::BASH->value => BashRunner::executeUnit($execution_unit, $args),
                     default => throw new NotSupportedException(sprintf('The execution policy %s is not supported because it uses the %s runner', $execution_unit->getExecutionPolicy()->getName(), $execution_unit->getExecutionPolicy()->getRunner())),
                 };
             }
