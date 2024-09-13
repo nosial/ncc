@@ -56,10 +56,10 @@
 
             if(self::$user_id_cache === 0)
             {
-                return Scopes::SYSTEM;
+                return Scopes::SYSTEM->value;
             }
 
-            return Scopes::USER;
+            return Scopes::USER->value;
         }
 
         /**

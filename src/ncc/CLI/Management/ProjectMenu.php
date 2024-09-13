@@ -134,7 +134,7 @@
          */
         private static function installProject(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot install packages in a user scope, please run this command as root', true, 1);
                 return 1;

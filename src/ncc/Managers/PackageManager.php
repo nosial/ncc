@@ -151,7 +151,7 @@
          */
         public function install(string|PackageReader $input, ?AuthenticationInterface $authentication=null, array $options=[]): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to install packages');
             }
@@ -188,7 +188,7 @@
          */
         public function uninstall(string $package_name, ?string $version=null): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to uninstall packages');
             }
@@ -285,7 +285,7 @@
          */
         public function uninstallAll(): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to uninstall packages');
             }

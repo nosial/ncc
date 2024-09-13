@@ -293,7 +293,7 @@
          */
         public static function initializeFiles(?string $install_path=null, array $default_repositories=[]): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to initialize ncc files');
             }
@@ -523,7 +523,7 @@
          */
         public static function finalizePermissions(): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 return;
             }

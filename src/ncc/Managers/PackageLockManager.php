@@ -80,7 +80,7 @@
          */
         public function save(): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to update the system package lock');
             }
@@ -98,7 +98,7 @@
          */
         public static function initializePackageLock(): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to update the system package lock');
             }

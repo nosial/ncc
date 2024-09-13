@@ -211,7 +211,7 @@
          */
         public function installDependencies(?AuthenticationInterface $authentication=null): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('Unable to install dependencies, you must be running as root');
             }

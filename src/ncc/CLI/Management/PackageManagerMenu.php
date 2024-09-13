@@ -132,7 +132,7 @@
          */
         private static function installPackage(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot install packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -388,7 +388,7 @@
          */
         private static function uninstallPackage($args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot uninstall packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -419,7 +419,7 @@
          */
         private static function uninstallAllPackages(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot uninstall all packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -455,7 +455,7 @@
          */
         private static function fixBrokenPackages(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot fix broken packages in a user scope, please run this command as root', true, 1);
                 return 1;

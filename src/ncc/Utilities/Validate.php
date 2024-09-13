@@ -111,8 +111,8 @@ namespace ncc\Utilities;
 
             switch($input)
             {
-                case Scopes::SYSTEM:
-                case Scopes::USER:
+                case Scopes::SYSTEM->value:
+                case Scopes::USER->value:
                     return true;
 
                 default:

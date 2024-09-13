@@ -89,7 +89,7 @@
         {
             Console::outDebug(sprintf('saving configuration file to %s', PathFinder::getConfigurationFile()));
 
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new AuthenticationException('Cannot save configuration file, insufficient permissions');
             }

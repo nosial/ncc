@@ -141,7 +141,7 @@
          */
         private static function addEntry(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You must be running as root to add a new repository', true, 1);
                 return 1;
@@ -230,7 +230,7 @@
          */
         private static function removeEntry(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You must be running as root to remove a repository', true, 1);
                 return 1;
