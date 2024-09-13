@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - Ongoing
+
+This update introduces a refactored code-base, code quality improvements, and better exception handling.
+
+### Changed
+ - Convert Versions constants to enum cases
+ - Update Scopes to enum and adjust scope checks
+ - Convert Runners class to enum with string cases
+
+
 ## [2.0.3] - 2023-10-17
 
 This update includes enhanced support for PHP statements in AST traversal, a friendly CLI Progress Bar, and fixes
@@ -20,7 +30,7 @@ The changes improve the system's efficiency, error resilience, and user experien
 
 ### Fixed
  - When finding package versions in the package lock, ncc will try to find a satisfying version rather than the exact
-   version, this is to prevent errors when the package lock contains a version that is not available in the repository.
+   version, this is to prevent[CHANGELOG.md](CHANGELOG.md) errors when the package lock contains a version that is not available in the repository.
  - Fixed issue when registering ncc's extension, when using the INSTALLER, the installation path used in the process
   appears to be incorrect, added a optional parameter to the `registerExtension` method to allow the installer to pass
   the correct installation path.
