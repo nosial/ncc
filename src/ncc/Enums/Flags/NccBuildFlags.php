@@ -22,16 +22,16 @@
 
     namespace ncc\Enums\Flags;
 
-    final class NccBuildFlags
+    enum NccBuildFlags : string
     {
         /**
          * Indicates if the build is currently unstable and some features may not work correctly
          * and can cause errors
          */
-        public const UNSTABLE = 'unstable';
+        case UNSTABLE = 'unstable';
 
         /**
          * Indicates if the build is currently in beta testing phase
          */
-        public const BETA = 'beta';
+        case BETA = 'beta';
     }

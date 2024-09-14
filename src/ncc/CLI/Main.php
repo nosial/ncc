@@ -125,12 +125,12 @@
                 Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
             }
 
-            if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS, true))
+            if(in_array(NccBuildFlags::UNSTABLE->value, NCC_VERSION_FLAGS, true))
             {
                 Console::outWarning('This is an unstable build of ncc, expect some features to not work as expected');
             }
 
-            if(in_array(NccBuildFlags::BETA, NCC_VERSION_FLAGS, true))
+            if(in_array(NccBuildFlags::BETA->value, NCC_VERSION_FLAGS, true))
             {
                 Console::outWarning('This is a beta build of ncc, expect some features to not work as expected');
             }
