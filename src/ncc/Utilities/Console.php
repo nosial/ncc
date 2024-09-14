@@ -53,13 +53,13 @@
         private static function setPrefix(string $log_level, string $input): string
         {
             $input = match ($log_level) {
-                LogLevel::VERBOSE->value => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN) . " $input",
-                LogLevel::DEBUG->value => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA) . " $input",
-                LogLevel::INFO->value => self::formatColor('INF:', ConsoleColors::WHITE) . " $input",
-                LogLevel::WARNING->value => self::formatColor('WRN:', ConsoleColors::YELLOW) . " $input",
-                LogLevel::ERROR->value => self::formatColor('ERR:', ConsoleColors::LIGHT_RED) . " $input",
-                LogLevel::FATAL->value => self::formatColor('FTL:', ConsoleColors::LIGHT_RED) . " $input",
-                default => self::formatColor('MSG:', ConsoleColors::DEFAULT) . " $input",
+                LogLevel::VERBOSE->value => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN->value) . " $input",
+                LogLevel::DEBUG->value => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA->value) . " $input",
+                LogLevel::INFO->value => self::formatColor('INF:', ConsoleColors::WHITE->value) . " $input",
+                LogLevel::WARNING->value => self::formatColor('WRN:', ConsoleColors::YELLOW->value) . " $input",
+                LogLevel::ERROR->value => self::formatColor('ERR:', ConsoleColors::LIGHT_RED->value) . " $input",
+                LogLevel::FATAL->value => self::formatColor('FTL:', ConsoleColors::LIGHT_RED->value) . " $input",
+                default => self::formatColor('MSG:', ConsoleColors::DEFAULT->value) . " $input",
             };
 
             $tick_time = (string)microtime(true);
@@ -82,11 +82,11 @@
 
                 if ($timeDiff > 1.0)
                 {
-                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_RED);
+                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_RED->value);
                 }
                 elseif ($timeDiff > 0.5)
                 {
-                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW);
+                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW->value);
                 }
             }
 
@@ -155,9 +155,9 @@
             $trace_msg = null;
             if($backtrace !== null && isset($backtrace[1]))
             {
-                $trace_msg = self::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY);
+                $trace_msg = self::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY->value);
                 $trace_msg .= $backtrace[1]['type'];
-                $trace_msg .= self::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN);
+                $trace_msg .= self::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN->value);
                 $trace_msg .= ' > ';
             }
 
@@ -205,7 +205,7 @@
 
             if($persist)
             {
-                return $color_code . $input . ConsoleColors::DEFAULT;
+                return $color_code . $input . ConsoleColors::DEFAULT->value;
             }
 
             return $color_code . $input;
@@ -236,7 +236,7 @@
                 return;
             }
 
-            self::out(self::formatColor('Warning: ', ConsoleColors::YELLOW) . $message, $newline);
+            self::out(self::formatColor('Warning: ', ConsoleColors::YELLOW->value) . $message, $newline);
         }
 
         /**
@@ -265,7 +265,7 @@
             }
             else
             {
-                self::out(self::formatColor(ConsoleColors::RED, 'Error: ') . $message, $newline);
+                self::out(self::formatColor(ConsoleColors::RED->value, 'Error: ') . $message, $newline);
             }
 
             if($exit_code !== null)
@@ -291,7 +291,7 @@
 
             if($message !== '' && Resolver::checkLogLevel(LogLevel::ERROR->value, Main::getLogLevel()))
             {
-                self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED) . $message);
+                self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED->value) . $message);
             }
 
             self::out(PHP_EOL . '===== Exception Details =====');
@@ -318,8 +318,8 @@
             }
 
             // Exception name without namespace
-            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::MAGENTA);
-            $trace_error = self::formatColor( 'Error: ', ConsoleColors::RED);
+            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::MAGENTA->value);
+            $trace_error = self::formatColor( 'Error: ', ConsoleColors::RED->value);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());
             self::out(sprintf('Exception: %s', get_class($e)));
             self::out(sprintf('Error code: %s', $e->getCode()));
@@ -329,7 +329,7 @@
                 self::out('Stack Trace:');
                 foreach($trace as $item)
                 {
-                    self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED) . ':' . $item['line']);
+                    self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED->value) . ':' . $item['line']);
                 }
             }
 

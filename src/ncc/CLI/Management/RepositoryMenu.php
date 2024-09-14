@@ -117,13 +117,13 @@
             {
                 $output = sprintf('%s (%s) [%s]',
                     $source->getName(),
-                    Console::formatColor($source->getHost(), ConsoleColors::GREEN),
-                    Console::formatColor($source->getType(), ConsoleColors::YELLOW)
+                    Console::formatColor($source->getHost(), ConsoleColors::GREEN->value),
+                    Console::formatColor($source->getType(), ConsoleColors::YELLOW->value)
                 );
 
                 if(!$source->isSsl())
                 {
-                    $output .= Console::formatColor('*', ConsoleColors::RED);
+                    $output .= Console::formatColor('*', ConsoleColors::RED->value);
                 }
 
                 Console::out(' - ' .  $output);

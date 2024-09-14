@@ -342,9 +342,9 @@
         private static function printTree($data, string $prefix=''): void
         {
             $symbols = [
-                'corner' => Console::formatColor(' └─', ConsoleColors::LIGHT_RED),
-                'line' => Console::formatColor(' │ ', ConsoleColors::LIGHT_RED),
-                'cross' => Console::formatColor(' ├─', ConsoleColors::LIGHT_RED),
+                'corner' => Console::formatColor(' └─', ConsoleColors::LIGHT_RED->value),
+                'line' => Console::formatColor(' │ ', ConsoleColors::LIGHT_RED->value),
+                'cross' => Console::formatColor(' ├─', ConsoleColors::LIGHT_RED->value),
             ];
 
             $keys = array_keys($data);

@@ -174,7 +174,7 @@
 
                     if(!$basic)
                     {
-                        $result = Console::formatColor($result, ConsoleColors::GREEN);
+                        $result = Console::formatColor($result, ConsoleColors::GREEN->value);
                     }
 
                     $out[] .= $result;
@@ -185,7 +185,7 @@
                 }
                 else
                 {
-                    $out[] .= Console::formatColor(implode(' ', $this->parameters), ConsoleColors::GREEN);
+                    $out[] .= Console::formatColor(implode(' ', $this->parameters), ConsoleColors::GREEN->value);
                 }
             }
 
