@@ -897,12 +897,12 @@
             ]);
             curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function ($resource, $download_size, $downloaded)  use ($url, &$end, $progress_bar)
             {
-                if($download_size === $downloaded && $end)
+                if($download_size == 0)
                 {
                     return;
                 }
 
-                if($download_size === 0)
+                if($download_size === $downloaded && $end)
                 {
                     return;
                 }
@@ -917,7 +917,6 @@
                     $progress_bar->setMaxValue($download_size);
                     $progress_bar->setValue($downloaded);
                     $progress_bar->setMiscText(sprintf('%s/%s', $downloaded, $download_size));
-
                     $progress_bar->update();
                 }
 

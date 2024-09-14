@@ -48,6 +48,9 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Convert NccBuildFlags constants to enum cases
  - Convert ComponentFlags constants to enum cases
 
+### Fixed
+ - Fixed Division by zero in PackageManager
+
 ### Removed
  - Removed EncoderType enum file, unused.
  - Removed PackageStandardVersions.php
