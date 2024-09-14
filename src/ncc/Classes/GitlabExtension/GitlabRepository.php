@@ -210,7 +210,7 @@
                 throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
-            $results = new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            $results = new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE->value, $tag);
             RuntimeCache::set($endpoint, $results);
 
             return $results;
@@ -364,7 +364,7 @@
 
                 if ($asset_url)
                 {
-                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
+                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE->value, $release);
 
                     RuntimeCache::set($endpoint, $result);
                     return $result;
@@ -440,11 +440,11 @@
 
                 if($asset['format'] === 'zip')
                 {
-                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE->value, $release);
                 }
                 elseif($asset['format'] === 'tar')
                 {
-                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE->value, $release);
                 }
                 else
                 {

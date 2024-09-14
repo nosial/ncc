@@ -198,11 +198,11 @@
 
             if(isset($response['zipball_url']))
             {
-                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $tag);
+                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE->value, $tag);
             }
             elseif(isset($response['tarball_url']))
             {
-                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $tag);
+                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE->value, $tag);
             }
             else
             {
@@ -379,7 +379,7 @@
 
                 if($asset_url)
                 {
-                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
+                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE->value, $release);
 
                     RuntimeCache::set($endpoint, $result);
                     return $result;
@@ -445,11 +445,11 @@
 
             if(isset($response['zipball_url']))
             {
-                $results = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
+                $results = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE->value, $release);
             }
             elseif(isset($response['tarball_url']))
             {
-                $results = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+                $results = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE->value, $release);
             }
             else
             {

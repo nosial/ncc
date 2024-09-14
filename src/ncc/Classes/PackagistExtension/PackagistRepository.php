@@ -91,7 +91,7 @@
                 throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $vendor, $project, $version));
             }
 
-            return new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE, $version);
+            return new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE->value, $version);
         }
 
         /**

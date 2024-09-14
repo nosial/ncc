@@ -207,7 +207,7 @@
                 throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
-            $result =  new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            $result =  new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE->value, $tag);
             curl_close($curl);
             RuntimeCache::set($endpoint, $result);
 
@@ -363,7 +363,7 @@
             {
                 $asset_url = $target_asset['browser_download_url'];
 
-                $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
+                $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE->value, $release);
 
                 RuntimeCache::set($endpoint, $result);
                 return $result;
@@ -425,11 +425,11 @@
 
             if(isset($response['zipball_url']))
             {
-                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
+                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE->value, $release);
             }
             elseif(isset($response['tarball_url']))
             {
-                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE->value, $release);
             }
             else
             {
