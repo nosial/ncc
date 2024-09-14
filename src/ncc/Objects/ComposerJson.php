@@ -191,7 +191,7 @@
          */
         public function __construct()
         {
-            $this->type = ComposerPackageTypes::LIBRARY;
+            $this->type = ComposerPackageTypes::LIBRARY->value;
             $this->minimum_stability = ComposerStabilityTypes::STABLE->value;
             $this->abandoned = false;
         }
