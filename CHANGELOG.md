@@ -14,10 +14,50 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Update Scopes to enum and adjust scope checks
  - Convert Runners class to enum with string cases
  - Convert RegexPatterns constants to enum cases
+ - Convert ProjectTemplates constants to enum cases
+ - Convert PackageStructureVersions constants to enum cases
+ - Convert PackageStructure constants to enum cases
+ - Convert PackageDirectory constants to enum cases
+ - Convert LogLevel constants to enum cases
+ - Convert FileDescriptor constants to enum cases
+ - Convert ExceptionCodes constants to enum cases
+ - Convert ConsoleColors constants to enum cases
+ - Convert CompilerExtensions constants to enum cases
+ - Convert RepositoryType constants to enum cases
+ - Convert RepositoryResultType constants to enum cases
+ - Convert ProjectType constants to enum cases
+ - Convert HttpRequestType constants to enum cases
+ - Convert ComposerStabilityTypes constants to enum cases
+ - Convert ComposerPackageTypes constants to enum cases
+ - Convert ComponentDataType constants to enum cases
+ - Convert BuildOutputType constants to enum cases
+ - Convert AuthenticationType constants to enum cases
+ - Convert RuntimeConstants constants to enum cases
+ - Convert InstallConstants constants to enum cases
+ - Convert DateTimeConstants constants to enum cases
+ - Convert BuildConstants constants to enum cases
+ - Convert AssemblyConstants constants to enum cases
+ - Convert ProjectOptions constants to enum cases
+ - Convert InstallPackageOptions constants to enum cases
+ - Convert InitializeProjectOptions constants to enum cases
+ - Convert ComponentDecodeOptions constants to enum cases
+ - Convert BuildConfigurationValues constants to enum cases
+ - Convert BuildConfigurationOptions constants to enum cases
+ - Convert CompressionOptions constants to enum cases
+ - Convert PackageFlags constants to enum cases
+ - Convert NccBuildFlags constants to enum cases
+ - Convert ComponentFlags constants to enum cases
 
 ### Removed
  - Removed EncoderType enum file, unused.
-
+ - Removed PackageStandardVersions.php
+ - Removed ConstantReferences.php
+ - Removed HttpStatusCodes.php
+ - Removed CompilerExtensionDefaultVersions.php
+ - Removed RemoteSourceType
+ - Removed DependencySourceType
+ - Removed BuiltinRemoteSourceType
+ - Removed RuntimeImportOptions
 
 ## [2.0.3] - 2023-10-17
 
