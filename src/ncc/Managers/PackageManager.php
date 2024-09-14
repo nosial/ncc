@@ -405,7 +405,7 @@
             Console::out(sprintf('Installing package %s=%s', $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()));
             if($this->package_lock->entryExists($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()))
             {
-                if(!isset($options[InstallPackageOptions::REINSTALL]))
+                if(!isset($options[InstallPackageOptions::REINSTALL->value]))
                 {
                     Console::outVerbose(sprintf(
                         'Package %s=%s is already installed, skipping',
@@ -505,7 +505,7 @@
 
             $this->saveLock();
 
-            if(!isset($options[InstallPackageOptions::SKIP_DEPENDENCIES]))
+            if(!isset($options[InstallPackageOptions::SKIP_DEPENDENCIES->value]))
             {
                 foreach($this->checkRequiredDependencies($package_reader) as $dependency)
                 {
