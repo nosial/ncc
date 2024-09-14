@@ -22,20 +22,13 @@
 
     namespace ncc\Enums\Types;
 
-    final class RepositoryType
+    enum RepositoryType : string
     {
-        public const GITLAB = 'gitlab';
+        case GITLAB = 'gitlab';
 
-        public const GITHUB = 'github';
+        case GITHUB = 'github';
 
-        public const GITEA = 'gitea';
+        case GITEA = 'gitea';
 
-        public const PACKAGIST = 'packagist';
-
-        public const ALL = [
-            self::GITLAB,
-            self::GITHUB,
-            self::GITEA,
-            self::PACKAGIST
-        ];
+        case PACKAGIST = 'packagist';
     }

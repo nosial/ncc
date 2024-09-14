@@ -117,7 +117,8 @@
          */
         public function setType(string $type): void
         {
-            if(!in_array(strtolower($type), RepositoryType::ALL, true))
+            // TODO: Fix this, not a proper use of cases()
+            if(!in_array(strtolower($type), RepositoryType::cases(), true))
             {
                 throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $type));
             }
@@ -182,10 +183,10 @@
         {
             return match(strtolower($this->type))
             {
-                RepositoryType::GITHUB => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITLAB => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITEA => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::PACKAGIST => throw new NotSupportedException('Fetching ncc packages from Packagist is not supported'),
+                RepositoryType::GITHUB->value => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITLAB->value => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITEA->value => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::PACKAGIST->value => throw new NotSupportedException('Fetching ncc packages from Packagist is not supported'),
                 default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type)),
             };
         }
@@ -206,10 +207,10 @@
         {
             return match(strtolower($this->type))
             {
-                RepositoryType::GITHUB => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITLAB => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITEA => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::PACKAGIST => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITHUB->value => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITLAB->value => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITEA->value => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::PACKAGIST->value => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
                 default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type)),
             };
         }
