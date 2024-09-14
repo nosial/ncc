@@ -22,14 +22,9 @@
 
     namespace ncc\Enums\Types;
 
-    final class ProjectType
+    enum ProjectType : string
     {
-        public const COMPOSER = 'composer';
+        case COMPOSER = 'composer';
 
-        public const NCC = 'ncc';
-
-        public const ALL = [
-            self::COMPOSER,
-            self::NCC,
-        ];
+        case NCC = 'ncc';
     }

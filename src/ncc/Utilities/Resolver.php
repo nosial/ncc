@@ -212,12 +212,12 @@
             {
                 if(str_ends_with($file, 'project.json'))
                 {
-                    return new ProjectDetectionResults($file, ProjectType::NCC);
+                    return new ProjectDetectionResults($file, ProjectType::NCC->value);
                 }
 
                 if(str_ends_with($file, 'composer.json'))
                 {
-                    return new ProjectDetectionResults($file, ProjectType::COMPOSER);
+                    return new ProjectDetectionResults($file, ProjectType::COMPOSER->value);
                 }
             }
 

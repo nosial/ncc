@@ -798,9 +798,10 @@
                 throw new OperationException(sprintf('Failed to detect project type from source %s: %s', $archive, $e->getMessage()), $e);
             }
 
+            // TODO: getProjectType() could return the enum case
             switch($project_detection->getProjectType())
             {
-                case ProjectType::NCC:
+                case ProjectType::NCC->value:
                     try
                     {
                         $package_path = (new ProjectManager($project_detection->getProjectFilePath()))->build(
@@ -823,7 +824,7 @@
                         throw new OperationException(sprintf('Failed to build from source %s: %s', $archive, $e->getMessage()), $e);
                     }
 
-                case ProjectType::COMPOSER:
+                case ProjectType::COMPOSER->value:
                     try
                     {
                         $project_manager = ProjectManager::initializeFromComposer(dirname($project_detection->getProjectFilePath()), $options);
