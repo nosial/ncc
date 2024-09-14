@@ -22,17 +22,17 @@
 
     namespace ncc\Enums;
 
-    final class FileDescriptor
+    enum FileDescriptor : string
     {
-        public const ASSEMBLY = 'ASSEMBLY';
+        case ASSEMBLY = 'ASSEMBLY';
 
-        public const METADATA = 'METADATA';
+        case METADATA = 'METADATA';
 
-        public const INSTALLER = 'INSTALLER';
+        case INSTALLER = 'INSTALLER';
 
-        public const CLASS_MAP = 'CLASS_MAP';
+        case CLASS_MAP = 'CLASS_MAP';
 
-        public const UPDATE = 'UPDATE';
+        case UPDATE = 'UPDATE';
 
-        public const SHADOW_PACKAGE = 'SHADOW_PKG';
+        case SHADOW_PACKAGE = 'SHADOW_PKG';
     }

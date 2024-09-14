@@ -726,7 +726,7 @@
             if($package_reader->getInstaller() !== null)
             {
                 $progress_bar->setMiscText('installer');
-                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER, ZiProto::encode($package_reader->getInstaller()?->toArray(true)));
+                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER->value, ZiProto::encode($package_reader->getInstaller()?->toArray(true)));
             }
             //Console::inlineProgressBar(++$current_step, $total_steps);
             $progress_bar->increaseValue(1, true);
@@ -734,23 +734,23 @@
             if(count($class_map) > 0)
             {
                 $progress_bar->setMiscText('class map');
-                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP, ZiProto::encode($class_map));
+                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP->value, ZiProto::encode($class_map));
             }
             //Console::inlineProgressBar(++$current_step, $total_steps);
             $progress_bar->increaseValue(1, true);
 
-            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY, ZiProto::encode($package_reader->getAssembly()->toArray(true)));
-            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::METADATA, ZiProto::encode($package_reader->getMetadata()->toArray(true)));
+            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY->value, ZiProto::encode($package_reader->getAssembly()->toArray(true)));
+            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value, ZiProto::encode($package_reader->getMetadata()->toArray(true)));
 
             if($package_reader->getMetadata()->getUpdateSource() !== null)
             {
-                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::UPDATE, ZiProto::encode($package_reader->getMetadata()->getUpdateSource()?->toArray(true)));
+                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::UPDATE->value, ZiProto::encode($package_reader->getMetadata()->getUpdateSource()?->toArray(true)));
             }
             //Console::inlineProgressBar(++$current_step, $total_steps);
             $progress_bar->increaseValue(1, true);
 
             $progress_bar->setMiscText('creating shadowcopy', true);
-            $package_reader->saveCopy($package_path . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE);
+            $package_reader->saveCopy($package_path . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE->value);
             //Console::inlineProgressBar(++$current_step, $total_steps);
 
             $progress_bar->setMiscText('done', true);

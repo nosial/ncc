@@ -99,7 +99,7 @@
 
             if(is_string(self::$imported_packages[$package]))
             {
-                $metadata_path = self::$imported_packages[$package] . DIRECTORY_SEPARATOR . FileDescriptor::METADATA;
+                $metadata_path = self::$imported_packages[$package] . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value;
 
                 if(!is_file($metadata_path))
                 {

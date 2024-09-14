@@ -231,7 +231,7 @@
          */
         public function getShadowPackagePath(string $package_name): string
         {
-            return $this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE;
+            return $this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE->value;
         }
 
         /**
@@ -241,17 +241,17 @@
          */
         public function isBroken(string $package_name): bool
         {
-            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE))
+            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE->value))
             {
                 return true;
             }
 
-            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY))
+            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY->value))
             {
                 return true;
             }
 
-            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA))
+            if(!is_file($this->getPath($package_name) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value))
             {
                 return true;
             }

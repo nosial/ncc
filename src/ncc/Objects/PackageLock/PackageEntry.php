@@ -356,7 +356,7 @@
          */
         public function getAssembly(string $version=Versions::LATEST->value): Assembly
         {
-            $assembly_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY;
+            $assembly_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY->value;
             if(!is_file($assembly_path))
             {
                 throw new IOException(sprintf('Assembly file for package %s version %s does not exist (Expected %s)', $this->name, $version, $assembly_path));
@@ -377,7 +377,7 @@
          */
         public function getMetadata(string $version=Versions::LATEST->value): Metadata
         {
-            $metadata_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA;
+            $metadata_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value;
             if(!is_file($metadata_path))
             {
                 throw new IOException(sprintf('Metadata file for package %s version %s does not exist (Expected %s)', $this->name, $version, $metadata_path));
@@ -396,7 +396,7 @@
          */
         public function getInstaller(string $version=Versions::LATEST->value): ?Installer
         {
-            $installer_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER;
+            $installer_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER->value;
             if(!is_file($installer_path))
             {
                 return null;
@@ -415,7 +415,7 @@
          */
         public function getClassMap(string $version=Versions::LATEST->value): array
         {
-            $class_map_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP;
+            $class_map_path = $this->getPath($version) . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP->value;
             if(!is_file($class_map_path))
             {
                 return [];
