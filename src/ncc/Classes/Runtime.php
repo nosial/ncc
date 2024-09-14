@@ -209,7 +209,7 @@
                 }
             }
 
-            if(isset($entry->getMetadata($version)->getOptions()[PackageFlags::STATIC_DEPENDENCIES]))
+            if(isset($entry->getMetadata($version)->getOptions()[PackageFlags::STATIC_DEPENDENCIES->value]))
             {
                 // Fake import the dependencies
                 foreach($entry->getVersion($version)->getDependencies() as $dependency)
@@ -288,7 +288,7 @@
                 }
             }
 
-            if($package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES))
+            if($package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES->value))
             {
                 // Fake import the dependencies
                 foreach($package_reader->getDependencies() as $dependency_name)

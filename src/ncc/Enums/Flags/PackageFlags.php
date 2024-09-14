@@ -22,15 +22,15 @@
 
     namespace ncc\Enums\Flags;
 
-    final class PackageFlags
+    enum PackageFlags : string
     {
-        public const COMPRESSION = 'gzip';
+        case COMPRESSION = 'gzip';
 
-        public const LOW_COMPRESSION = 'low_gz`';
+        case LOW_COMPRESSION = 'low_gz`';
 
-        public const MEDIUM_COMPRESSION = 'medium_gz';
+        case MEDIUM_COMPRESSION = 'medium_gz';
 
-        public const HIGH_COMPRESSION = 'high_gz';
+        case HIGH_COMPRESSION = 'high_gz';
 
-        public const STATIC_DEPENDENCIES = 'static_dependencies';
+        case STATIC_DEPENDENCIES = 'static_dependencies';
     }

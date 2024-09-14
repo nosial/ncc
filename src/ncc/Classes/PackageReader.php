@@ -263,7 +263,7 @@
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
             fseek($this->package_file, ($this->data_offset + (int)$location[0]));
 
-            if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS->value], true))
+            if(in_array(PackageFlags::COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
             {
                 return gzuncompress(fread($this->package_file, (int)$location[1]));
             }

@@ -174,6 +174,7 @@
          * @return void
          * @throws IOException
          */
+        // TODO: Package flags should use the PackageFlags enum directly.
         public function addFlag(string $flag): void
         {
             if($this->data_written)
@@ -218,17 +219,17 @@
                 return explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
             }
 
-            if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS->value], true))
+            if(in_array(PackageFlags::COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
             {
-                if(in_array(PackageFlags::LOW_COMPRESSION, $this->headers[PackageStructure::FLAGS->value], true))
+                if(in_array(PackageFlags::LOW_COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
                 {
                     $data = gzcompress($data, 1);
                 }
-                else if(in_array(PackageFlags::MEDIUM_COMPRESSION, $this->headers[PackageStructure::FLAGS->value], true))
+                else if(in_array(PackageFlags::MEDIUM_COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
                 {
                     $data = gzcompress($data, 6);
                 }
-                else if(in_array(PackageFlags::HIGH_COMPRESSION, $this->headers[PackageStructure::FLAGS->value], true))
+                else if(in_array(PackageFlags::HIGH_COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
                 {
                     $data = gzcompress($data, 9);
                 }

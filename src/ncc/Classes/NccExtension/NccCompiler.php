@@ -119,7 +119,7 @@
             {
                 // Add the static dependencies flag so that the package manager
                 // Won't try to resolve the dependencies from the system.
-                $package_writer->addFlag(PackageFlags::STATIC_DEPENDENCIES);
+                $package_writer->addFlag(PackageFlags::STATIC_DEPENDENCIES->value);
             }
 
             // Debugging information
@@ -264,19 +264,19 @@
 
             if(isset($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
             {
-                $package_writer->addFlag(PackageFlags::COMPRESSION);
+                $package_writer->addFlag(PackageFlags::COMPRESSION->value);
                 switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
                 {
                     case BuildConfigurationOptions\CompressionOptions::HIGH->value:
-                        $package_writer->addFlag(PackageFlags::HIGH_COMPRESSION);
+                        $package_writer->addFlag(PackageFlags::HIGH_COMPRESSION->value);
                         break;
 
                     case BuildConfigurationOptions\CompressionOptions::MEDIUM->value:
-                        $package_writer->addFlag(PackageFlags::MEDIUM_COMPRESSION);
+                        $package_writer->addFlag(PackageFlags::MEDIUM_COMPRESSION->value);
                         break;
 
                     case BuildConfigurationOptions\CompressionOptions::LOW->value:
-                        $package_writer->addFlag(PackageFlags::LOW_COMPRESSION);
+                        $package_writer->addFlag(PackageFlags::LOW_COMPRESSION->value);
                         break;
 
                     default:
