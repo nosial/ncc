@@ -53,7 +53,7 @@
             );
 
             $project_manager->getProjectConfiguration()->getBuild()->setMain('main_policy');
-            $project_manager->getProjectConfiguration()->getProject()->addOption(ProjectOptions::CREATE_SYMLINK, true);
+            $project_manager->getProjectConfiguration()->getProject()->addOption(ProjectOptions::CREATE_SYMLINK->value, true);
 
             // Create the release build configuration
             $release_executable = new BuildConfiguration('release_executable',

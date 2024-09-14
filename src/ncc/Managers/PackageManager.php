@@ -453,7 +453,7 @@
                 throw new IOException(sprintf('Failed to add package to package lock file due to an exception: %s', $e->getMessage()), $e);
             }
 
-            if($package_reader->getMetadata()->getOption(ProjectOptions::CREATE_SYMLINK) === null)
+            if($package_reader->getMetadata()->getOption(ProjectOptions::CREATE_SYMLINK->value) === null)
             {
                 // Remove the symlink if it exists
                 if($this->package_lock->getEntry($package_reader->getAssembly()->getPackage())->isSymlinkRegistered())

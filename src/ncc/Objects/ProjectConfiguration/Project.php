@@ -105,6 +105,7 @@
          */
         public function addOption(string $key, mixed $value): void
         {
+            // TODO: Options here could be using ProjectOptions enum
             $this->options[$key] = $value;
         }
 

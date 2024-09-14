@@ -22,7 +22,7 @@
 
     namespace ncc\Enums\Options;
 
-    final class ProjectOptions
+    enum ProjectOptions : string
     {
-        public const CREATE_SYMLINK = 'create_symlink';
+        case CREATE_SYMLINK = 'create_symlink';
     }
