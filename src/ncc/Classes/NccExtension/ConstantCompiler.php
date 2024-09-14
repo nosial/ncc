@@ -121,10 +121,10 @@
 
             return str_replace(
                 [
-                    BuildConstants::COMPILE_TIMESTAMP,
-                    BuildConstants::NCC_BUILD_VERSION,
-                    BuildConstants::NCC_BUILD_FLAGS,
-                    BuildConstants::NCC_BUILD_BRANCH
+                    BuildConstants::COMPILE_TIMESTAMP->value,
+                    BuildConstants::NCC_BUILD_VERSION->value,
+                    BuildConstants::NCC_BUILD_FLAGS->value,
+                    BuildConstants::NCC_BUILD_BRANCH->value
                 ],
                 [
                     time(),
