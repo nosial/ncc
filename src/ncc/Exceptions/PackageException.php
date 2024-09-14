@@ -34,6 +34,6 @@
          */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::PACKAGE_EXCEPTION, $previous);
+            parent::__construct($message, ExceptionCodes::PACKAGE_EXCEPTION->value, $previous);
         }
     }

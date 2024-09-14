@@ -26,98 +26,80 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
-    final class ExceptionCodes
+    enum ExceptionCodes : int
     {
         /**
          * @see RuntimeException
          */
-        public const RUNTIME = -1706;
+        case RUNTIME = -1706;
 
         /**
          * @see BuildException
          */
-        public const BUILD_EXCEPTION = -1727;
+        case BUILD_EXCEPTION = -1727;
 
         /**
          * @see IOException
          */
-        public const IO_EXCEPTION = -1735;
+        case IO_EXCEPTION = -1735;
 
         /**
          * @see ComposerException
          */
-        public const COMPOSER_EXCEPTION = -1749;
+        case COMPOSER_EXCEPTION = -1749;
 
         /**
          * @see AuthenticationException
          */
-        public const AUTHENTICATION_EXCEPTION = -1760;
+        case AUTHENTICATION_EXCEPTION = -1760;
 
         /**
          * @see NotSupportedException
          */
-        public const NOT_SUPPORTED_EXCEPTION = -1761;
+        case NOT_SUPPORTED_EXCEPTION = -1761;
 
         /**
          * @see ArchiveException
          */
-        public const ARCHIVE_EXCEPTION = -1764;
+        case ARCHIVE_EXCEPTION = -1764;
 
         /**
          * @see PathNotFoundException
          */
-        public const PATH_NOT_FOUND = -1769;
+        case PATH_NOT_FOUND = -1769;
 
         /**
          * @see GitException
          */
-        public const GIT_EXCEPTION = -1770;
+        case GIT_EXCEPTION = -1770;
 
         /**
          * @see ConfigurationException
          */
-        public const CONFIGURATION_EXCEPTION = -1772;
+        case CONFIGURATION_EXCEPTION = -1772;
 
         /**
          * @see PackageException
          */
-        public const PACKAGE_EXCEPTION = -1773;
+        case PACKAGE_EXCEPTION = -1773;
 
         /**
          * @see NetworkException
          */
-        public const NETWORK_EXCEPTION = -1774;
+        case NETWORK_EXCEPTION = -1774;
 
         /**
          * @see IntegrityException
          */
-        public const INTEGRITY_EXCEPTION = -1775;
+        case INTEGRITY_EXCEPTION = -1775;
 
         /**
          * @see OperationException
          */
-        public const OPERATION_EXCEPTION = -1776;
-
-        public const IMPORT_EXCEPTION = -1777;
+        case OPERATION_EXCEPTION = -1776;
 
         /**
-         * All the exception codes from NCC
+         * @see ImportException
          */
-        public const All = [
-            self::RUNTIME,
-            self::BUILD_EXCEPTION,
-            self::IO_EXCEPTION,
-            self::COMPOSER_EXCEPTION,
-            self::AUTHENTICATION_EXCEPTION,
-            self::NOT_SUPPORTED_EXCEPTION,
-            self::ARCHIVE_EXCEPTION,
-            self::PATH_NOT_FOUND,
-            self::GIT_EXCEPTION,
-            self::CONFIGURATION_EXCEPTION,
-            self::PACKAGE_EXCEPTION,
-            self::NETWORK_EXCEPTION,
-            self::INTEGRITY_EXCEPTION,
-            self::OPERATION_EXCEPTION,
-            self::IMPORT_EXCEPTION
-        ];
+        case IMPORT_EXCEPTION = -1777;
     }
