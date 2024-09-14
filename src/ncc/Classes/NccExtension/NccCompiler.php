@@ -267,15 +267,15 @@
                 $package_writer->addFlag(PackageFlags::COMPRESSION);
                 switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
                 {
-                    case BuildConfigurationOptions\CompressionOptions::HIGH:
+                    case BuildConfigurationOptions\CompressionOptions::HIGH->value:
                         $package_writer->addFlag(PackageFlags::HIGH_COMPRESSION);
                         break;
 
-                    case BuildConfigurationOptions\CompressionOptions::MEDIUM:
+                    case BuildConfigurationOptions\CompressionOptions::MEDIUM->value:
                         $package_writer->addFlag(PackageFlags::MEDIUM_COMPRESSION);
                         break;
 
-                    case BuildConfigurationOptions\CompressionOptions::LOW:
+                    case BuildConfigurationOptions\CompressionOptions::LOW->value:
                         $package_writer->addFlag(PackageFlags::LOW_COMPRESSION);
                         break;
 

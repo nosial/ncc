@@ -22,11 +22,11 @@
 
     namespace ncc\Enums\Options\BuildConfigurationOptions;
 
-    final class CompressionOptions
+    enum CompressionOptions : string
     {
-        public const HIGH = 'high';
+        case HIGH = 'high';
 
-        public const MEDIUM = 'medium';
+        case MEDIUM = 'medium';
 
-        public const LOW = 'low';
+        case LOW = 'low';
     }
