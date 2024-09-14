@@ -173,7 +173,7 @@
                     return $this->data;
 
                 case ComponentDataType::BASE64_ENCODED->value:
-                    if(in_array(ComponentFlags::PHP_B64, $this->flags, true))
+                    if(in_array(ComponentFlags::PHP_B64->value, $this->flags, true))
                     {
                         try
                         {
@@ -186,14 +186,14 @@
                         }
                         catch(Exception $e)
                         {
-                            throw new OperationException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_B64, $e->getMessage()), $e->getCode(), $e);
+                            throw new OperationException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_B64->value, $e->getMessage()), $e->getCode(), $e);
                         }
                     }
 
                     return base64_decode($this->data);
 
                 case ComponentDataType::AST->value:
-                    if(in_array(ComponentFlags::PHP_AST, $this->flags, true))
+                    if(in_array(ComponentFlags::PHP_AST->value, $this->flags, true))
                     {
                         try
                         {
@@ -206,7 +206,7 @@
                         }
                         catch(Exception $e)
                         {
-                            throw new OperationException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_AST, $e->getMessage()), $e->getCode(), $e);
+                            throw new OperationException(sprintf('Failed to decode component %s with data type %s because the component is corrupted: %s', $this->name, ComponentFlags::PHP_AST->value, $e->getMessage()), $e->getCode(), $e);
                         }
                     }
 

@@ -58,7 +58,7 @@
                 );
 
                 $component = new Component($component_name, ZiProto::encode($stmts), ComponentDataType::AST->value);
-                $component->addFlag(ComponentFlags::PHP_AST);
+                $component->addFlag(ComponentFlags::PHP_AST->value);
                 $pointer = $package_writer->addComponent($component);
 
                 foreach(AstWalker::extractClasses($stmts) as $class)
@@ -74,7 +74,7 @@
             }
 
             $component = new Component($component_name, Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED->value);
-            $component->addFlag(ComponentFlags::PHP_B64);
+            $component->addFlag(ComponentFlags::PHP_B64->value);
             $package_writer->addComponent($component);
         }
     }
