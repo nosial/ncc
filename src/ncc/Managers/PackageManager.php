@@ -598,8 +598,8 @@
 
                     $archive_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
                     $package_path = $this->buildFromSource($archive_path, [
-                        InitializeProjectOptions::COMPOSER_PACKAGE_VERSION => $results->getVersion(),
-                        InitializeProjectOptions::COMPOSER_REMOTE_SOURCE => $input->toString()
+                        InitializeProjectOptions::COMPOSER_PACKAGE_VERSION->value => $results->getVersion(),
+                        InitializeProjectOptions::COMPOSER_REMOTE_SOURCE->value => $input->toString()
                     ]);
                 }
                 catch(Exception $e)

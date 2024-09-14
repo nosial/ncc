@@ -378,7 +378,7 @@
 
             if(is_file($project_path . DIRECTORY_SEPARATOR . 'project.json'))
             {
-                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE]))
+                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE->value]))
                 {
                     throw new IOException('A project has already been initialized in \'' . $project_path . DIRECTORY_SEPARATOR . 'project.json' . '\'');
                 }
@@ -387,7 +387,7 @@
                 unlink($project_path . DIRECTORY_SEPARATOR . 'project.json');
             }
 
-            $project_src = $options[InitializeProjectOptions::PROJECT_SRC_PATH] ?? ('src' . DIRECTORY_SEPARATOR . $name);
+            $project_src = $options[InitializeProjectOptions::PROJECT_SRC_PATH->value] ?? ('src' . DIRECTORY_SEPARATOR . $name);
             if(str_ends_with($project_src, DIRECTORY_SEPARATOR))
             {
                 $project_src = substr($project_src, 0, -1);
@@ -455,7 +455,7 @@
 
             if(is_file($project_file))
             {
-                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE]))
+                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE->value]))
                 {
                     throw new IOException('A project has already been initialized in \'' . $project_file . '\'');
                 }
@@ -464,7 +464,7 @@
                 unlink($project_file);
             }
 
-            if(!isset($options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION]))
+            if(!isset($options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION->value]))
             {
                 throw new OperationException('Unable to initialize project from composer.json without a version option');
             }
@@ -489,7 +489,7 @@
             $assembly = new ProjectConfiguration\Assembly(
                 Resolver::composerName($composer_json->getName()),
                 Resolver::composerNameToPackage($composer_json->getName()),
-                $options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION]
+                $options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION->value]
             );
             $assembly->setDescription($composer_json->getDescription());
 
@@ -645,10 +645,10 @@
             $build->addBuildConfiguration($executable_release_configuration);
 
             // Create an update source for the project
-            if(isset($options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE]))
+            if(isset($options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE->value]))
             {
                 $project->setUpdateSource(new ProjectConfiguration\UpdateSource(
-                    $options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE],
+                    $options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE->value],
                     (new RepositoryManager())->getRepository('packagist')->getProjectRepository()
                 ));
             }
