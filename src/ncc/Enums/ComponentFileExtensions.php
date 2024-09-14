@@ -29,5 +29,6 @@
          *
          * @var array
          */
+        // TODO: Cannot convert this to enum, try another way
         public const PHP = ['*.php', '*.php3', '*.php4', '*.php5', '*.phtml'];
     }
