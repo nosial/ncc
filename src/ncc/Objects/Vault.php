@@ -177,10 +177,10 @@
             $input = [];
             switch($entry->getPassword()->getAuthenticationType())
             {
-                case AuthenticationType::USERNAME_PASSWORD:
+                case AuthenticationType::USERNAME_PASSWORD->value:
                     $input = ['password' => $password];
                     break;
-                case AuthenticationType::ACCESS_TOKEN:
+                case AuthenticationType::ACCESS_TOKEN->value:
                     $input = ['token' => $password];
                     break;
             }

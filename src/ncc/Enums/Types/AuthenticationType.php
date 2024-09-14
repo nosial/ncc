@@ -22,15 +22,15 @@
 
     namespace ncc\Enums\Types;
 
-    final class AuthenticationType
+    enum AuthenticationType : int
     {
         /**
          * A combination of a username and password is used for authentication
          */
-        public const USERNAME_PASSWORD = 1;
+        case USERNAME_PASSWORD = 1;
 
         /**
          * A single private access token is used for authentication
          */
-        public const ACCESS_TOKEN = 2;
+        case ACCESS_TOKEN = 2;
     }

@@ -96,7 +96,8 @@
          */
         public function getAuthenticationType(): string
         {
-            return AuthenticationType::USERNAME_PASSWORD;
+            // TODO: Could return the enum here
+            return AuthenticationType::USERNAME_PASSWORD->value;
         }
 
         /**
@@ -115,7 +116,7 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::USERNAME_PASSWORD,
+                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::USERNAME_PASSWORD->value,
                 ($bytecode ? Functions::cbc('username') : 'username') => $this->username,
                 ($bytecode ? Functions::cbc('password') : 'password') => $this->password,
             ];

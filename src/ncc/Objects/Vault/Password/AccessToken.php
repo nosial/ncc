@@ -69,7 +69,8 @@
          */
         public function getAuthenticationType(): string
         {
-            return AuthenticationType::ACCESS_TOKEN;
+            // TODO: Could return the enum case here
+            return AuthenticationType::ACCESS_TOKEN->value;
         }
 
         /**
@@ -91,7 +92,7 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::ACCESS_TOKEN,
+                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::ACCESS_TOKEN->value,
                 ($bytecode ? Functions::cbc('access_token') : 'access_token') => $this->access_token,
             ];
         }

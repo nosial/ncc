@@ -103,7 +103,7 @@
 
             switch($this->password->getAuthenticationType())
             {
-                case AuthenticationType::USERNAME_PASSWORD:
+                case AuthenticationType::USERNAME_PASSWORD->value:
                     if(!($this->password instanceof UsernamePassword))
                     {
                         return false;
@@ -129,7 +129,7 @@
 
                     return $username === $this->password->getUsername() && $password === $this->password->getPassword();
 
-                case AuthenticationType::ACCESS_TOKEN:
+                case AuthenticationType::ACCESS_TOKEN->value:
                     if(!($this->password instanceof AccessToken))
                     {
                         return false;
@@ -402,8 +402,8 @@
                 {
                     $self->password = match (Functions::array_bc($password, 'authentication_type'))
                     {
-                        AuthenticationType::USERNAME_PASSWORD => UsernamePassword::fromArray($password),
-                        AuthenticationType::ACCESS_TOKEN => AccessToken::fromArray($password)
+                        AuthenticationType::USERNAME_PASSWORD->value => UsernamePassword::fromArray($password),
+                        AuthenticationType::ACCESS_TOKEN->value => AccessToken::fromArray($password)
                     };
                 }
             }

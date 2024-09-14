@@ -453,7 +453,7 @@
         {
             switch($authentication->getAuthenticationType())
             {
-                case AuthenticationType::ACCESS_TOKEN:
+                case AuthenticationType::ACCESS_TOKEN->value:
                     if($authentication instanceof AccessToken)
                     {
                         $headers[] = 'Authorization: Bearer ' . $authentication->getAccessToken();
@@ -461,7 +461,7 @@
                     }
                     throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()));
 
-                case AuthenticationType::USERNAME_PASSWORD:
+                case AuthenticationType::USERNAME_PASSWORD->value:
                     if($authentication instanceof UsernamePassword)
                     {
                         curl_setopt($curl, CURLOPT_USERPWD, $authentication->getUsername() . ':' . $authentication->getPassword());
