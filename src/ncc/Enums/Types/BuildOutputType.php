@@ -22,8 +22,8 @@
 
     namespace ncc\Enums\Types;
 
-    final class BuildOutputType
+    enum BuildOutputType : string
     {
-        public const NCC_PACKAGE = 'ncc';
-        public const EXECUTABLE = 'executable';
+        case NCC_PACKAGE = 'ncc';
+        case EXECUTABLE = 'executable';
     }

@@ -59,7 +59,7 @@
             $release_executable = new BuildConfiguration('release_executable',
                 'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
             );
-            $release_executable->setBuildType(BuildOutputType::EXECUTABLE);
+            $release_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
             $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release');
             $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($release_executable);
 
@@ -68,7 +68,7 @@
                 'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
             );
             $debug_executable->setDefinedConstant('DEBUG', '1');
-            $debug_executable->setBuildType(BuildOutputType::EXECUTABLE);
+            $debug_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
             $debug_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug');
             $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($debug_executable);
 

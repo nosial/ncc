@@ -162,8 +162,8 @@
             {
                 CompilerExtensions::PHP->value => match (strtolower($configuration->getBuildType()))
                 {
-                    BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration, $options),
-                    BuildOutputType::EXECUTABLE => (new ExecutableCompiler($this))->build($build_configuration, $options),
+                    BuildOutputType::NCC_PACKAGE->value => (new NccCompiler($this))->build($build_configuration, $options),
+                    BuildOutputType::EXECUTABLE->value => (new ExecutableCompiler($this))->build($build_configuration, $options),
                     default => throw new BuildException(sprintf('php cannot produce the build type \'%s\'', $configuration->getBuildType())),
                 },
 
@@ -618,14 +618,14 @@
             $ncc_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_ncc',
                 'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
             );
-            $ncc_debug_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
+            $ncc_debug_configuration->setBuildType(BuildOutputType::NCC_PACKAGE->value);
             $ncc_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($ncc_debug_configuration);
 
             $executable_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_executable',
                 'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
             );
-            $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE);
+            $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE->value);
             $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug_ncc');
             $executable_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($executable_debug_configuration);
@@ -634,14 +634,14 @@
             $ncc_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_ncc',
                 'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . 'ncc'
             );
-            $ncc_release_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
+            $ncc_release_configuration->setBuildType(BuildOutputType::NCC_PACKAGE->value);
             $build->addBuildConfiguration($ncc_release_configuration);
 
             $executable_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_executable',
                 'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
             );
             $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release_ncc');
-            $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE);
+            $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE->value);
             $build->addBuildConfiguration($executable_release_configuration);
 
             // Create an update source for the project

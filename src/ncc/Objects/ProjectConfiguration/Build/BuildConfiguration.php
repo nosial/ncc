@@ -107,7 +107,7 @@
         public function __construct(string $name, string $output)
         {
             $this->name = $name;
-            $this->build_type = BuildOutputType::NCC_PACKAGE;
+            $this->build_type = BuildOutputType::NCC_PACKAGE->value;
             $this->output = $output;
             $this->options = [];
             $this->define_constants = [];
@@ -462,7 +462,7 @@
 
             $object = new BuildConfiguration($name, $output);
 
-            $object->build_type = Functions::array_bc($data, 'build_type') ?? BuildOutputType::NCC_PACKAGE;
+            $object->build_type = Functions::array_bc($data, 'build_type') ?? BuildOutputType::NCC_PACKAGE->value;
             $object->options = Functions::array_bc($data, 'options') ?? [];
             $object->define_constants = Functions::array_bc($data, 'define_constants') ?? [];
             $object->exclude_files = Functions::array_bc($data, 'exclude_files') ?? [];
