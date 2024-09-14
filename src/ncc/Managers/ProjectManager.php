@@ -154,7 +154,7 @@
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT->value, array $options=[]): string
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -275,7 +275,7 @@
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public function getExecutionUnits(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getExecutionUnits(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $execution_units = [];
 
@@ -301,7 +301,7 @@
          * @return array
          * @throws NotSupportedException
          */
-        public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -317,7 +317,7 @@
          * @return array
          * @throws NotSupportedException
          */
-        public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -334,7 +334,7 @@
          * @param string $build_configuration
          * @return array
          */
-        public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 

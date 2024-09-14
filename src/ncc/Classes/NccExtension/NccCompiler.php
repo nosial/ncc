@@ -87,7 +87,8 @@
          * @throws PathNotFoundException
          * @noinspection UnusedFunctionResultInspection
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
+        // TODO: $build_configuration could use enum case
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT->value, array $options=[]): string
         {
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
             $configuration->setOptions(array_merge($configuration->getOptions(), $options));
@@ -327,7 +328,8 @@
          * @param string $build_configuration
          * @return void
          */
-        public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT): void
+        // TODO: $build_configuration could use the enum case
+        public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT->value): void
         {
             $metadata = new Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
 

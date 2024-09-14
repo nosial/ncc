@@ -41,7 +41,7 @@
          * @inheritDoc
          * @throws BuildException
          */
-        public function build(string $build_configuration = BuildConfigurationValues::DEFAULT, array $options=[]): string
+        public function build(string $build_configuration = BuildConfigurationValues::DEFAULT->value, array $options=[]): string
         {
             $configuration = $this->getProjectManager()->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
 

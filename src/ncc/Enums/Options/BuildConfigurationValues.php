@@ -22,9 +22,9 @@
 
     namespace ncc\Enums\Options;
 
-    final class BuildConfigurationValues
+    enum BuildConfigurationValues : string
     {
-        public const DEFAULT = 'default';
+        case DEFAULT = 'default';
 
-        public const ALL = 'all';
+        case ALL = 'all';
     }

@@ -206,7 +206,7 @@
          * @return string[]
          * @throws ConfigurationException
          */
-        public function getRequiredExecutionPolicies(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getRequiredExecutionPolicies(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             if(count($this->execution_policies) === 0)
             {
@@ -287,7 +287,7 @@
                 }
             }
 
-            if($build_configuration === BuildConfigurationValues::ALL)
+            if($build_configuration === BuildConfigurationValues::ALL->value)
             {
                 /** @var BuildConfiguration $configuration */
                 foreach($this->build->getBuildConfigurations() as $configuration)
@@ -424,7 +424,7 @@
                     throw new ConfigurationException(sprintf('Build configuration build.main points to a undefined execution policy "%s"', $this->build->getMain()));
                 }
 
-                if($this->build->getMain() === BuildConfigurationValues::ALL)
+                if($this->build->getMain() === BuildConfigurationValues::ALL->value)
                 {
                     throw new ConfigurationException(sprintf('Build configuration build.main cannot be set to "%s"', BuildConfigurationValues::ALL));
                 }

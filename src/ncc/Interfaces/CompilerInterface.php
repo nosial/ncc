@@ -41,5 +41,6 @@
          * @param array $options Optional. The options to use/override for this build
          * @return string
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string;
+        // TODO: $build_configuration could use the enum case directly
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT->value, array $options=[]): string;
     }

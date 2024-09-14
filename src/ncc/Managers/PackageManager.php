@@ -805,7 +805,7 @@
                     try
                     {
                         $package_path = (new ProjectManager($project_detection->getProjectFilePath()))->build(
-                            BuildConfigurationValues::DEFAULT,
+                            BuildConfigurationValues::DEFAULT->value,
                             [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
                         );
 
@@ -829,7 +829,7 @@
                     {
                         $project_manager = ProjectManager::initializeFromComposer(dirname($project_detection->getProjectFilePath()), $options);
                         $package_path = $project_manager->build(
-                            BuildConfigurationValues::DEFAULT,
+                            BuildConfigurationValues::DEFAULT->value,
                             [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
                         );
 

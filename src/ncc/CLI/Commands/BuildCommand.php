@@ -92,7 +92,7 @@
             // Build the project
             try
             {
-                $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT;
+                $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT->value;
                 $output = $project_manager->build($build_configuration, $options);
             }
             catch (Exception $e)
