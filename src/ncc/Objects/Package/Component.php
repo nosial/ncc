@@ -177,7 +177,7 @@
                     {
                         try
                         {
-                            if(in_array(ComponentDecodeOptions::AS_FILE, $options, true))
+                            if(in_array(ComponentDecodeOptions::AS_FILE->value, $options, true))
                             {
                                 return (new Standard())->prettyPrintFile(AstWalker::decodeRecursive(base64_decode($this->data)));
                             }
@@ -197,7 +197,7 @@
                     {
                         try
                         {
-                            if(in_array(ComponentDecodeOptions::AS_FILE, $options, true))
+                            if(in_array(ComponentDecodeOptions::AS_FILE->value, $options, true))
                             {
                                 return (new Standard())->prettyPrintFile(AstWalker::decodeRecursive(ZiProto::decode($this->data)));
                             }

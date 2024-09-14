@@ -672,7 +672,7 @@
 
                 IO::fwrite(
                     $bin_path . DIRECTORY_SEPARATOR . $component_name,
-                    $package_reader->getComponent($component_name)->getData([ComponentDecodeOptions::AS_FILE]), 0755
+                    $package_reader->getComponent($component_name)->getData([ComponentDecodeOptions::AS_FILE->value]), 0755
                 );
 
                 //Console::inlineProgressBar(++$current_step, $total_steps);
