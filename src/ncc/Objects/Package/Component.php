@@ -66,7 +66,8 @@
          * @param string $data
          * @param string $data_type
          */
-        public function __construct(string $name, string $data, string $data_type=ComponentDataType::PLAIN)
+        // TODO: $data_type Can be a enum case
+        public function __construct(string $name, string $data, string $data_type=ComponentDataType::PLAIN->value)
         {
             $this->name = $name;
             $this->flags = [];
@@ -167,11 +168,11 @@
         {
             switch($this->data_type)
             {
-                case ComponentDataType::PLAIN:
-                case ComponentDataType::BINARY:
+                case ComponentDataType::PLAIN->value:
+                case ComponentDataType::BINARY->value:
                     return $this->data;
 
-                case ComponentDataType::BASE64_ENCODED:
+                case ComponentDataType::BASE64_ENCODED->value:
                     if(in_array(ComponentFlags::PHP_B64, $this->flags, true))
                     {
                         try
@@ -191,7 +192,7 @@
 
                     return base64_decode($this->data);
 
-                case ComponentDataType::AST:
+                case ComponentDataType::AST->value:
                     if(in_array(ComponentFlags::PHP_AST, $this->flags, true))
                     {
                         try
@@ -222,11 +223,13 @@
          * @param mixed $data
          * @param string $data_type
          */
-        public function setData(mixed $data, string $data_type=ComponentDataType::PLAIN): void
+        // TODO: $data_type can be a direct enum case
+        public function setData(mixed $data, string $data_type=ComponentDataType::PLAIN->value): void
         {
             $data_type = strtolower($data_type);
 
-            if(!in_array($data_type, ComponentDataType::ALL, true))
+            // TODO: Update this, not a proper use of the cases() method
+            if(!in_array($data_type, ComponentDataType::cases(), true))
             {
                 throw new InvalidArgumentException(sprintf('Unknown component data type "%s"', $data_type));
             }
@@ -262,7 +265,7 @@
         {
             $name = Functions::array_bc($data, 'name');
             $component_data = Functions::array_bc($data, 'data');
-            $data_type = Functions::array_bc($data, 'data_type') ?? ComponentDataType::PLAIN;
+            $data_type = Functions::array_bc($data, 'data_type') ?? ComponentDataType::PLAIN->value;
 
             if($name === null)
             {

@@ -22,35 +22,25 @@
 
     namespace ncc\Enums\Types;
 
-    final class ComponentDataType
+    enum ComponentDataType : string
     {
         /**
          * Indicates whether the component is represented as an AST representation
          */
-        public const AST = 'ast';
+        case AST = 'ast';
 
         /**
          * Indicates whether the component is represented as plaintext
          */
-        public const PLAIN = 'plain';
+        case PLAIN = 'plain';
 
         /**
          * Indicates whether the component is represented as binary or executable
          */
-        public const BINARY = 'binary';
+        case BINARY = 'binary';
 
         /**
          * Indicates whether the component is represented as as a base64 encoded string (Raw bytes' representation)
          */
-        public const BASE64_ENCODED = 'b64enc';
-
-        /**
-         * All the possible data types of a component
-         */
-        public const ALL = [
-            self::AST,
-            self::PLAIN,
-            self::BINARY,
-            self::BASE64_ENCODED
-        ];
+        case BASE64_ENCODED = 'b64enc';
     }

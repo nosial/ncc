@@ -57,7 +57,7 @@
                     $stmts, $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getPackage()
                 );
 
-                $component = new Component($component_name, ZiProto::encode($stmts), ComponentDataType::AST);
+                $component = new Component($component_name, ZiProto::encode($stmts), ComponentDataType::AST->value);
                 $component->addFlag(ComponentFlags::PHP_AST);
                 $pointer = $package_writer->addComponent($component);
 
@@ -73,7 +73,7 @@
                 Console::outWarning(sprintf('Failed to compile file "%s" with error "%s"', $file_path, $e->getMessage()));
             }
 
-            $component = new Component($component_name, Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED);
+            $component = new Component($component_name, Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED->value);
             $component->addFlag(ComponentFlags::PHP_B64);
             $package_writer->addComponent($component);
         }
