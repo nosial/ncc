@@ -150,10 +150,10 @@
 
             return str_replace(
                 [
-                    InstallConstants::INSTALL_PATH,
-                    InstallConstants::INSTALL_PATH_BIN,
-                    InstallConstants::INSTALL_PATH_SRC,
-                    InstallConstants::INSTALL_PATH_DATA
+                    InstallConstants::INSTALL_PATH->value,
+                    InstallConstants::INSTALL_PATH_BIN->value,
+                    InstallConstants::INSTALL_PATH_SRC->value,
+                    InstallConstants::INSTALL_PATH_DATA->value
                 ],
                 [
                     $installation_paths->getInstallationpath(),
