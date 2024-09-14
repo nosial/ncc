@@ -67,10 +67,10 @@
 
             $input = str_replace(
                 [
-                    AssemblyConstants::ASSEMBLY_NAME,
-                    AssemblyConstants::ASSEMBLY_PACKAGE,
-                    AssemblyConstants::ASSEMBLY_VERSION,
-                    AssemblyConstants::ASSEMBLY_UID
+                    AssemblyConstants::ASSEMBLY_NAME->value,
+                    AssemblyConstants::ASSEMBLY_PACKAGE->value,
+                    AssemblyConstants::ASSEMBLY_VERSION->value,
+                    AssemblyConstants::ASSEMBLY_UID->value
                 ],
                 [
                     $assembly->getName(),
@@ -81,27 +81,27 @@
 
             if($assembly->getDescription() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->getDescription(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION->value, $assembly->getDescription(), $input);
             }
 
             if($assembly->getCompany() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->getCompany(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY->value, $assembly->getCompany(), $input);
             }
 
             if($assembly->getProduct() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->getProduct(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT->value, $assembly->getProduct(), $input);
             }
 
             if($assembly->getCopyright() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->getCopyright(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT->value, $assembly->getCopyright(), $input);
             }
 
             if($assembly->getTrademark() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->getTrademark(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK->value, $assembly->getTrademark(), $input);
             }
             return $input;
         }

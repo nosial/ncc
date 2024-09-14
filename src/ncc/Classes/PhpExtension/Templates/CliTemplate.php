@@ -57,7 +57,7 @@
 
             // Create the release build configuration
             $release_executable = new BuildConfiguration('release_executable',
-                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
             $release_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
             $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release');
@@ -65,7 +65,7 @@
 
             // Create the debug build configuration
             $debug_executable = new BuildConfiguration('debug_executable',
-                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
             $debug_executable->setDefinedConstant('DEBUG', '1');
             $debug_executable->setBuildType(BuildOutputType::EXECUTABLE->value);

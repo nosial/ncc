@@ -22,50 +22,50 @@
 
     namespace ncc\Enums\SpecialConstants;
 
-    final class AssemblyConstants
+    enum AssemblyConstants : string
     {
         /**
          * Assembly's Name Property
          */
-        public const ASSEMBLY_NAME = '%ASSEMBLY.NAME%';
+        case ASSEMBLY_NAME = '%ASSEMBLY.NAME%';
 
         /**
          * Assembly's Package Property
          */
-        public const ASSEMBLY_PACKAGE = '%ASSEMBLY.PACKAGE%';
+        case ASSEMBLY_PACKAGE = '%ASSEMBLY.PACKAGE%';
 
         /**
          * Assembly's Description Property
          */
-        public const ASSEMBLY_DESCRIPTION = '%ASSEMBLY.DESCRIPTION%';
+        case ASSEMBLY_DESCRIPTION = '%ASSEMBLY.DESCRIPTION%';
 
         /**
          * Assembly's Company Property
          */
-        public const ASSEMBLY_COMPANY = '%ASSEMBLY.COMPANY%';
+        case ASSEMBLY_COMPANY = '%ASSEMBLY.COMPANY%';
 
         /**
          * Assembly's Product Property
          */
-        public const ASSEMBLY_PRODUCT = '%ASSEMBLY.PRODUCT%';
+        case ASSEMBLY_PRODUCT = '%ASSEMBLY.PRODUCT%';
 
         /**
          * Assembly's Copyright Property
          */
-        public const ASSEMBLY_COPYRIGHT = '%ASSEMBLY.COPYRIGHT%';
+        case ASSEMBLY_COPYRIGHT = '%ASSEMBLY.COPYRIGHT%';
 
         /**
          * Assembly's Trademark Property
          */
-        public const ASSEMBLY_TRADEMARK = '%ASSEMBLY.TRADEMARK%';
+        case ASSEMBLY_TRADEMARK = '%ASSEMBLY.TRADEMARK%';
 
         /**
          * Assembly's Version Property
          */
-        public const ASSEMBLY_VERSION = '%ASSEMBLY.VERSION%';
+        case ASSEMBLY_VERSION = '%ASSEMBLY.VERSION%';
 
         /**
          * Assembly's UUID property
          */
-        public const ASSEMBLY_UID = '%ASSEMBLY.UID%';
+        case ASSEMBLY_UID = '%ASSEMBLY.UID%';
     }
