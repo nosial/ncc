@@ -22,7 +22,7 @@
 
     namespace ncc\Enums\Options;
 
-    final class InstallPackageOptions
+    enum InstallPackageOptions : string
     {
         /**
          * Skips the installation of dependencies of the package
@@ -30,17 +30,17 @@
          * @warning This will cause the package to fail to import of
          *          the dependencies are not met
          */
-        public const SKIP_DEPENDENCIES = 'skip_dependencies';
+        case SKIP_DEPENDENCIES = 'skip_dependencies';
 
         /**
          * Reinstall all packages if they are already installed,
          * Including dependencies if they are being processed.
          */
-        public const REINSTALL = 'reinstall';
+        case REINSTALL = 'reinstall';
 
         /**
          * Installs a static version of the package if it's available
          * otherwise it will install non-static version
          */
-        public const PREFER_STATIC = 'prefer_static';
+        case PREFER_STATIC = 'prefer_static';
     }

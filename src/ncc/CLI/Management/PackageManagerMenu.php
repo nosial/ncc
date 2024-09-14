@@ -155,17 +155,17 @@
 
             if(isset($args['reinstall']))
             {
-                $options[InstallPackageOptions::REINSTALL] = true;
+                $options[InstallPackageOptions::REINSTALL->value] = true;
             }
 
             if(isset($args['prefer-static']) || isset($args['static']))
             {
-                $options[InstallPackageOptions::PREFER_STATIC] = true;
+                $options[InstallPackageOptions::PREFER_STATIC->value] = true;
             }
 
             if(isset($args['skip-dependencies']))
             {
-                $options[InstallPackageOptions::SKIP_DEPENDENCIES] = true;
+                $options[InstallPackageOptions::SKIP_DEPENDENCIES->value] = true;
             }
 
             if($authentication !== null)

@@ -355,7 +355,7 @@
                     $release, $group, $project));
             }
 
-            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC]);
+            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC->value]);
             $preferred_asset = null;
             $fallback_asset = null;
 
