@@ -611,7 +611,7 @@
                     $required_files[$index] = Functions::removeBasename($file, $project_path);
                 }
 
-                $build->setOption(BuildConfigurationOptions::REQUIRE_FILES, $required_files);
+                $build->setOption(BuildConfigurationOptions::REQUIRE_FILES->value, $required_files);
             }
 
             // Generate debug build configuration
@@ -626,7 +626,7 @@
                 'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
             $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE->value);
-            $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug_ncc');
+            $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'debug_ncc');
             $executable_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($executable_debug_configuration);
 
@@ -640,7 +640,7 @@
             $executable_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_executable',
                 'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
-            $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release_ncc');
+            $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'release_ncc');
             $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE->value);
             $build->addBuildConfiguration($executable_release_configuration);
 

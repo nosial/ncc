@@ -92,12 +92,12 @@
         {
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
             $configuration->setOptions(array_merge($configuration->getOptions(), $options));
-            $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]);
+            $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES->value]);
 
-            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]))
             {
                 $package_path = ConstantCompiler::compileConstants(
-                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
+                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]
                 );
             }
             else
@@ -262,10 +262,10 @@
         {
             $package_writer = new PackageWriter($path);
 
-            if(isset($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]))
+            if(isset($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
             {
                 $package_writer->addFlag(PackageFlags::COMPRESSION);
-                switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]))
+                switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
                 {
                     case BuildConfigurationOptions\CompressionOptions::HIGH:
                         $package_writer->addFlag(PackageFlags::HIGH_COMPRESSION);
@@ -280,7 +280,7 @@
                         break;
 
                     default:
-                        throw new NotSupportedException(sprintf('The compression level \'%s\' is not supported', $build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]));
+                        throw new NotSupportedException(sprintf('The compression level \'%s\' is not supported', $build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]));
                 }
             }
 
@@ -340,16 +340,16 @@
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
 
             // Strip out 'output_file' build artifact.
-            if(isset($metadata->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            if(isset($metadata->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]))
             {
-                $metadata->removeOption(BuildConfigurationOptions::OUTPUT_FILE);
+                $metadata->removeOption(BuildConfigurationOptions::OUTPUT_FILE->value);
             }
 
             // Strip out 'static' build artifact, PackageFlags::STATIC_DEPENDENCIES is used instead
             // Making this option redundant.
-            if(isset($metadata->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]))
+            if(isset($metadata->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES->value]))
             {
-                $metadata->removeOption(BuildConfigurationOptions::STATIC_DEPENDENCIES);
+                $metadata->removeOption(BuildConfigurationOptions::STATIC_DEPENDENCIES->value);
             }
 
             /** @noinspection UnusedFunctionResultInspection */

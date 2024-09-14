@@ -60,7 +60,7 @@
                 'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
             $release_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
-            $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release');
+            $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'release');
             $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($release_executable);
 
             // Create the debug build configuration
@@ -69,7 +69,7 @@
             );
             $debug_executable->setDefinedConstant('DEBUG', '1');
             $debug_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
-            $debug_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug');
+            $debug_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'debug');
             $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($debug_executable);
 
             self::writeProgramTemplate($project_manager);

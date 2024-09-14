@@ -189,9 +189,9 @@
                 self::$class_map[strtolower($class)] = $component_path;
             }
 
-            if($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES) !== null)
+            if($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) !== null)
             {
-                foreach($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES) as $item)
+                foreach($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) as $item)
                 {
                     try
                     {
@@ -273,9 +273,9 @@
             }
 
             // Import the required files
-            if($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES) !== null)
+            if($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) !== null)
             {
-                foreach($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES) as $item)
+                foreach($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) as $item)
                 {
                     try
                     {

@@ -75,7 +75,7 @@
 
             if($output_path !== null)
             {
-                $options[BuildConfigurationOptions::OUTPUT_FILE] = $output_path;
+                $options[BuildConfigurationOptions::OUTPUT_FILE->value] = $output_path;
             }
 
             // Load the project
