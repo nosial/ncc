@@ -22,15 +22,15 @@
 
     namespace ncc\Enums\Types;
 
-    final class ComposerStabilityTypes
+    enum ComposerStabilityTypes : string
     {
-        public const DEV = 'dev';
+        case DEV = 'dev';
 
-        public const ALPHA = 'alpha';
+        case ALPHA = 'alpha';
 
-        public const BETA = 'beta';
+        case BETA = 'beta';
 
-        public const RC = 'rc';
+        case RC = 'rc';
 
-        public const STABLE ='stable';
+        case STABLE ='stable';
     }
