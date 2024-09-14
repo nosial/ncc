@@ -257,7 +257,7 @@
 
             if(function_exists('getcwd'))
             {
-                $input = str_replace(RuntimeConstants::CWD, getcwd(), $input);
+                $input = str_replace(RuntimeConstants::CWD->value, getcwd(), $input);
             }
             else
             {
@@ -266,7 +266,7 @@
 
             if(function_exists('getmypid'))
             {
-                $input = str_replace(RuntimeConstants::PID, getmypid(), $input);
+                $input = str_replace(RuntimeConstants::PID->value, getmypid(), $input);
             }
             else
             {
@@ -275,7 +275,7 @@
 
             if(function_exists('getmyuid'))
             {
-                $input = str_replace(RuntimeConstants::UID, getmyuid(), $input);
+                $input = str_replace(RuntimeConstants::UID->value, getmyuid(), $input);
             }
             else
             {
@@ -284,7 +284,7 @@
 
             if(function_exists('getmygid'))
             {
-                $input = str_replace(RuntimeConstants::GID, getmygid(), $input);
+                $input = str_replace(RuntimeConstants::GID->value, getmygid(), $input);
             }
             else
             {
@@ -293,7 +293,7 @@
 
             if(function_exists('get_current_user'))
             {
-                $input = str_replace(RuntimeConstants::USER, get_current_user(), $input);
+                $input = str_replace(RuntimeConstants::USER->value, get_current_user(), $input);
             }
             else
             {

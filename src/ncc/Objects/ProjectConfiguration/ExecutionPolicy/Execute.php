@@ -81,7 +81,7 @@
         public function __construct(string $target, ?string $working_directory=null)
         {
             $this->target = $target;
-            $this->working_directory = $working_directory ?? RuntimeConstants::CWD;
+            $this->working_directory = $working_directory ?? RuntimeConstants::CWD->value;
             $this->options = [];
             $this->environment_variables = [];
             $this->silent = false;
@@ -116,7 +116,7 @@
          */
         public function getWorkingDirectory(): string
         {
-            return $this->working_directory ?? RuntimeConstants::CWD;
+            return $this->working_directory ?? RuntimeConstants::CWD->value;
         }
 
         /**
@@ -127,7 +127,7 @@
          */
         public function setWorkingDirectory(?string $working_directory): void
         {
-            $this->working_directory = $working_directory ?? RuntimeConstants::CWD;
+            $this->working_directory = $working_directory ?? RuntimeConstants::CWD->value;
         }
 
         /**
