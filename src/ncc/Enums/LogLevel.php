@@ -22,29 +22,19 @@
 
     namespace ncc\Enums;
 
-    final class LogLevel
+    enum LogLevel : string
     {
-        public const SILENT = 'silent';
+        case SILENT = 'silent';
 
-        public const VERBOSE = 'verbose';
+        case VERBOSE = 'verbose';
 
-        public const DEBUG = 'debug';
+        case DEBUG = 'debug';
 
-        public const INFO = 'info';
+        case INFO = 'info';
 
-        public const WARNING = 'warn';
+        case WARNING = 'warn';
 
-        public const ERROR = 'error';
+        case ERROR = 'error';
 
-        public const FATAL = 'fatal';
-
-        public const ALL = [
-            self::SILENT,
-            self::VERBOSE,
-            self::DEBUG,
-            self::INFO,
-            self::WARNING,
-            self::ERROR,
-            self::FATAL,
-        ];
+        case FATAL = 'fatal';
     }

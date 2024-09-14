@@ -93,28 +93,28 @@
             {
                 switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
                 {
-                    case LogLevel::SILENT:
-                    case LogLevel::FATAL:
-                    case LogLevel::ERROR:
-                    case LogLevel::WARNING:
-                    case LogLevel::INFO:
-                    case LogLevel::DEBUG:
-                    case LogLevel::VERBOSE:
+                    case LogLevel::SILENT->value:
+                    case LogLevel::FATAL->value:
+                    case LogLevel::ERROR->value:
+                    case LogLevel::WARNING->value:
+                    case LogLevel::INFO->value:
+                    case LogLevel::DEBUG->value:
+                    case LogLevel::VERBOSE->value:
                         self::$log_level = strtolower(self::$args['l'] ?? self::$args['log-level']);
                         break;
 
                     default:
                         Console::outWarning('Unknown log level: ' . (self::$args['l'] ?? self::$args['log-level']) . ', using \'info\'');
-                        self::$log_level = LogLevel::INFO;
+                        self::$log_level = LogLevel::INFO->value;
                         break;
                 }
             }
             else
             {
-                self::$log_level = LogLevel::INFO;
+                self::$log_level = LogLevel::INFO->value;
             }
 
-            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
+            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG->value))
             {
                 Console::outDebug('Debug logging enabled');
 
@@ -236,7 +236,7 @@
         {
             if(self::$log_level === null)
             {
-                self::$log_level = LogLevel::INFO;
+                self::$log_level = LogLevel::INFO->value;
             }
 
             return self::$log_level;

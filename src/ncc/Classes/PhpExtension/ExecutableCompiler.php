@@ -112,11 +112,11 @@
 
             switch(Main::getLogLevel())
             {
-                case LogLevel::VERBOSE:
+                case LogLevel::VERBOSE->value:
                     $gcc_options[] = '-v';
                     break;
 
-                case LogLevel::DEBUG:
+                case LogLevel::DEBUG->value:
                     $gcc_options[] = '-v';
                     $gcc_options[] = '-v';
                     break;

@@ -228,7 +228,8 @@ namespace ncc\Utilities;
          */
         public static function checkLogLevel(string $input): bool
         {
-            if(!in_array(strtolower($input), LogLevel::ALL))
+            // TODO: Fix this, it's not the proper use of cases()
+            if(!in_array(strtolower($input), LogLevel::cases()))
             {
                 return false;
             }

@@ -188,12 +188,13 @@
 
             return match ($current_level)
             {
-                LogLevel::DEBUG => in_array($input, [LogLevel::DEBUG, LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::VERBOSE => in_array($input, [LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::INFO => in_array($input, [LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::WARNING => in_array($input, [LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::ERROR => in_array($input, [LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::FATAL => $input === LogLevel::FATAL,
+                // TODO: Move this to the enum
+                LogLevel::DEBUG->value => in_array($input, [LogLevel::DEBUG->value, LogLevel::VERBOSE->value, LogLevel::INFO->value, LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
+                LogLevel::VERBOSE->value => in_array($input, [LogLevel::VERBOSE->value, LogLevel::INFO->value, LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
+                LogLevel::INFO->value => in_array($input, [LogLevel::INFO->value, LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
+                LogLevel::WARNING->value => in_array($input, [LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
+                LogLevel::ERROR->value => in_array($input, [LogLevel::FATAL->value, LogLevel::ERROR->value], true),
+                LogLevel::FATAL->value => $input === LogLevel::FATAL->value,
                 default => false,
             };
         }
