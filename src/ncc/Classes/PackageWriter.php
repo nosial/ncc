@@ -108,7 +108,7 @@
             $this->temp_file = @fopen($this->temporary_path, 'wb'); // Create a temporary data file
             $this->package_file = @fopen($file_path, 'wb');
             $this->headers = [
-                PackageStructure::FILE_VERSION => PackageStructureVersions::_2_0,
+                PackageStructure::FILE_VERSION => PackageStructureVersions::_2_0->value,
                 PackageStructure::FLAGS => [],
                 PackageStructure::DIRECTORY => []
             ];
