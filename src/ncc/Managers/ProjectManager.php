@@ -185,11 +185,11 @@
         {
             switch(strtolower($template_name))
             {
-                case ProjectTemplates::PHP_CLI:
+                case ProjectTemplates::PHP_CLI->value:
                     CliTemplate::applyTemplate($this);
                     break;
 
-                case ProjectTemplates::PHP_LIBRARY:
+                case ProjectTemplates::PHP_LIBRARY->value:
                     LibraryTemplate::applyTemplate($this);
                     break;
 

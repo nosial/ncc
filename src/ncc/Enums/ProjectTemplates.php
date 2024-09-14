@@ -22,23 +22,15 @@
 
     namespace ncc\Enums;
 
-    final class ProjectTemplates
+    enum ProjectTemplates : string
     {
         /**
          * A template that is used to create a PHP library project
          */
-        public const PHP_LIBRARY = 'phplib';
+        case PHP_LIBRARY = 'phplib';
 
         /**
          * A template that is used to create a PHP CLI application project
          */
-        public const PHP_CLI = 'phpcli';
-
-        /**
-         * An array of all the available project templates
-         */
-        public const ALL = [
-            self::PHP_LIBRARY,
-            self::PHP_CLI
-        ];
+        case PHP_CLI = 'phpcli';
     }

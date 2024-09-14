@@ -292,9 +292,9 @@
             }
 
             Console::out(PHP_EOL . 'Available Templates:');
-            foreach(ProjectTemplates::ALL as $template)
+            foreach(ProjectTemplates::cases() as $template)
             {
-                Console::out('   ' . $template);
+                Console::out('   ' . $template->value);
             }
 
             return 0;
