@@ -104,7 +104,7 @@
 
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -186,7 +186,7 @@
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_NOBODY => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers,
                 CURLOPT_FOLLOWLOCATION => true
             ]);
@@ -249,7 +249,7 @@
 
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -331,7 +331,7 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CUSTOMREQUEST => HttpRequestType::GET, CURLOPT_HTTPHEADER => $headers]);
+            curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value, CURLOPT_HTTPHEADER => $headers]);
 
             Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
@@ -415,7 +415,7 @@
 
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 

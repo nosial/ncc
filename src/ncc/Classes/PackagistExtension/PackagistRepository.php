@@ -72,7 +72,7 @@
 
                 curl_setopt_array($curl, [
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                     CURLOPT_HTTPHEADER => $headers
                 ]);
 
@@ -132,7 +132,7 @@
 
                 curl_setopt_array($curl, [
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                     CURLOPT_HTTPHEADER => $headers
                 ]);
 
