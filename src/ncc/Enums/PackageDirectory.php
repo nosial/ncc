@@ -22,21 +22,21 @@
 
     namespace ncc\Enums;
 
-    final class PackageDirectory
+    enum PackageDirectory : int
     {
-        public const ASSEMBLY = 0x61737365;
+        case ASSEMBLY = 0x61737365;
 
-        public const METADATA = 0x6D657461;
+        case METADATA = 0x6D657461;
 
-        public const INSTALLER = 0x696E7374;
+        case INSTALLER = 0x696E7374;
 
-        public const DEPENDENCIES = 0x64657065;
+        case DEPENDENCIES = 0x64657065;
 
-        public const EXECUTION_UNITS = 0x65786563;
+        case EXECUTION_UNITS = 0x65786563;
 
-        public const COMPONENTS = 0x636F6D70;
+        case COMPONENTS = 0x636F6D70;
 
-        public const RESOURCES = 0x7265736F;
+        case RESOURCES = 0x7265736F;
 
-        public const CLASS_POINTER = 0x636C6173;
+        case CLASS_POINTER = 0x636C6173;
     }

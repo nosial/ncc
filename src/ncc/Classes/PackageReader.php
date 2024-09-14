@@ -320,7 +320,7 @@
          */
         public function getAssembly(): Assembly
         {
-            $directory = sprintf('@%s', PackageDirectory::ASSEMBLY);
+            $directory = sprintf('@%s', PackageDirectory::ASSEMBLY->value);
 
             if(isset($this->cache[$directory]))
             {
@@ -346,7 +346,7 @@
          */
         public function getMetadata(): Metadata
         {
-            $directory = sprintf('@%s', PackageDirectory::METADATA);
+            $directory = sprintf('@%s', PackageDirectory::METADATA->value);
 
             if(isset($this->cache[$directory]))
             {
@@ -375,7 +375,7 @@
          */
         public function getInstaller(): ?Installer
         {
-            $directory = sprintf('@%s', PackageDirectory::INSTALLER);
+            $directory = sprintf('@%s', PackageDirectory::INSTALLER->value);
 
             if(isset($this->cache[$directory]))
             {
@@ -400,7 +400,7 @@
         public function getDependencies(): array
         {
             $dependencies = [];
-            $directory = sprintf('@%s:', PackageDirectory::DEPENDENCIES);
+            $directory = sprintf('@%s:', PackageDirectory::DEPENDENCIES->value);
 
             foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
             {
@@ -422,7 +422,7 @@
          */
         public function getDependency(string $name): Dependency
         {
-            $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES, $name);
+            $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value[$dependency_name]]))
             {
                 throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package', $name));
@@ -452,7 +452,7 @@
         public function getExecutionUnits(): array
         {
             $execution_units = [];
-            $directory = sprintf('@%s:', PackageDirectory::EXECUTION_UNITS);
+            $directory = sprintf('@%s:', PackageDirectory::EXECUTION_UNITS->value);
 
             foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
             {
@@ -474,7 +474,7 @@
          */
         public function getExecutionUnit(string $name): ExecutionUnit
         {
-            $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS, $name);
+            $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value[$execution_unit_name]]))
             {
                 throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package', $name));
@@ -504,7 +504,7 @@
         public function getComponents(): array
         {
             $components = [];
-            $directory = sprintf('@%s:', PackageDirectory::COMPONENTS);
+            $directory = sprintf('@%s:', PackageDirectory::COMPONENTS->value);
 
             foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
             {
@@ -525,7 +525,7 @@
         public function getClassMap(): array
         {
             $class_map = [];
-            $directory = sprintf('@%s:', PackageDirectory::CLASS_POINTER);
+            $directory = sprintf('@%s:', PackageDirectory::CLASS_POINTER->value);
 
             foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
             {
@@ -547,7 +547,7 @@
          */
         public function getComponent(string $name): Component
         {
-            $component_name = sprintf('@%s:%s', PackageDirectory::COMPONENTS, $name);
+            $component_name = sprintf('@%s:%s', PackageDirectory::COMPONENTS->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$component_name]))
             {
                 throw new ConfigurationException(sprintf('Component \'%s\' not found in package', $name));
@@ -578,7 +578,7 @@
          */
         public function getComponentByClass(string $class): Component
         {
-            $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class);
+            $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER->value, $class);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value[$class_name]]))
             {
                 throw new ConfigurationException(sprintf('Class map \'%s\' not found in package', $class));
@@ -595,7 +595,7 @@
         public function getResources(): array
         {
             $resources = [];
-            $directory = sprintf('@%s:', PackageDirectory::RESOURCES);
+            $directory = sprintf('@%s:', PackageDirectory::RESOURCES->value);
 
             foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
             {
@@ -617,7 +617,7 @@
          */
         public function getResource(string $name): Resource
         {
-            $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES, $name);
+            $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value[$resource_name]]))
             {
                 throw new ConfigurationException(sprintf('Resource \'%s\' not found in package', $name));

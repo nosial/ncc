@@ -480,8 +480,8 @@
 
                     return match (Resolver::componentType($acquired_file))
                     {
-                        PackageDirectory::RESOURCES => self::$imported_packages[$package]->getResource(Resolver::componentName($acquired_file))->getData(),
-                        PackageDirectory::COMPONENTS => self::$imported_packages[$package]->getComponent(Resolver::componentName($acquired_file))->getData([ComponentDecodeOptions::AS_FILE]),
+                        PackageDirectory::RESOURCES->value => self::$imported_packages[$package]->getResource(Resolver::componentName($acquired_file))->getData(),
+                        PackageDirectory::COMPONENTS->value => self::$imported_packages[$package]->getComponent(Resolver::componentName($acquired_file))->getData([ComponentDecodeOptions::AS_FILE]),
                         default => throw new IOException(sprintf('Unable to acquire file "%s" from package "%s" because it is not a resource or component', $path, $package)),
                     };
                 }

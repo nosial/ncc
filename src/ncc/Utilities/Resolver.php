@@ -284,16 +284,17 @@
                 throw new InvalidArgumentException(sprintf('Invalid component prefix "%s"', $file_stub_code));
             }
 
+            // TODO: What the hell is this?
             return match ((int)$file_stub_code)
             {
-                PackageDirectory::METADATA => PackageDirectory::METADATA,
-                PackageDirectory::ASSEMBLY => PackageDirectory::ASSEMBLY,
-                PackageDirectory::EXECUTION_UNITS => PackageDirectory::EXECUTION_UNITS,
-                PackageDirectory::INSTALLER => PackageDirectory::INSTALLER,
-                PackageDirectory::DEPENDENCIES => PackageDirectory::DEPENDENCIES,
-                PackageDirectory::CLASS_POINTER => PackageDirectory::CLASS_POINTER,
-                PackageDirectory::RESOURCES => PackageDirectory::RESOURCES,
-                PackageDirectory::COMPONENTS => PackageDirectory::COMPONENTS,
+                PackageDirectory::METADATA->value => PackageDirectory::METADATA->value,
+                PackageDirectory::ASSEMBLY->value => PackageDirectory::ASSEMBLY->value,
+                PackageDirectory::EXECUTION_UNITS->value => PackageDirectory::EXECUTION_UNITS->value,
+                PackageDirectory::INSTALLER->value => PackageDirectory::INSTALLER->value,
+                PackageDirectory::DEPENDENCIES->value => PackageDirectory::DEPENDENCIES->value,
+                PackageDirectory::CLASS_POINTER->value => PackageDirectory::CLASS_POINTER->value,
+                PackageDirectory::RESOURCES->value => PackageDirectory::RESOURCES->value,
+                PackageDirectory::COMPONENTS->value => PackageDirectory::COMPONENTS->value,
                 default => throw new InvalidArgumentException(sprintf('Invalid component type "%s"', $component_path)),
             };
         }

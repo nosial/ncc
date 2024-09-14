@@ -272,7 +272,7 @@
          */
         public function setAssembly(Assembly $assembly): array
         {
-            return $this->add(sprintf('@%s', PackageDirectory::ASSEMBLY), ZiProto::encode($assembly->toArray(true)));
+            return $this->add(sprintf('@%s', PackageDirectory::ASSEMBLY->value), ZiProto::encode($assembly->toArray(true)));
         }
 
         /**
@@ -283,7 +283,7 @@
          */
         public function setMetadata(Metadata $metadata): array
         {
-            return $this->add(sprintf('@%s', PackageDirectory::METADATA), ZiProto::encode($metadata->toArray(true)));
+            return $this->add(sprintf('@%s', PackageDirectory::METADATA->value), ZiProto::encode($metadata->toArray(true)));
         }
 
         /**
@@ -294,7 +294,7 @@
          */
         public function setInstaller(Installer $installer): array
         {
-            return $this->add(sprintf('@%s', PackageDirectory::INSTALLER), ZiProto::encode($installer->toArray(true)));
+            return $this->add(sprintf('@%s', PackageDirectory::INSTALLER->value), ZiProto::encode($installer->toArray(true)));
         }
 
         /**
@@ -305,7 +305,7 @@
          */
         public function addDependencyConfiguration(Dependency $dependency): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::DEPENDENCIES, $dependency->getName()), ZiProto::encode($dependency->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::DEPENDENCIES->value, $dependency->getName()), ZiProto::encode($dependency->toArray(true)));
         }
 
         /**
@@ -316,7 +316,7 @@
          */
         public function addExecutionUnit(ExecutionUnit $unit): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS, $unit->getExecutionPolicy()->getName()), ZiProto::encode($unit->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $unit->getExecutionPolicy()->getName()), ZiProto::encode($unit->toArray(true)));
         }
 
         /**
@@ -327,7 +327,7 @@
          */
         public function addComponent(Component $component): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::COMPONENTS, $component->getName()), ZiProto::encode($component->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::COMPONENTS->value, $component->getName()), ZiProto::encode($component->toArray(true)));
         }
 
         /**
@@ -338,7 +338,7 @@
          */
         public function addResource(Resource $resource): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES, $resource->getName()), ZiProto::encode($resource->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES->value, $resource->getName()), ZiProto::encode($resource->toArray(true)));
         }
 
         /**
@@ -351,7 +351,7 @@
          */
         public function mapClass(string $class, int $offset, int $length): void
         {
-            $this->addPointer(sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class), $offset, $length);
+            $this->addPointer(sprintf('@%s:%s', PackageDirectory::CLASS_POINTER->value, $class), $offset, $length);
         }
 
         /**
@@ -372,10 +372,10 @@
 
                 switch((int)substr(explode(':', $name, 2)[0], 1))
                 {
-                    case PackageDirectory::METADATA:
-                    case PackageDirectory::ASSEMBLY:
-                    case PackageDirectory::INSTALLER:
-                    case PackageDirectory::EXECUTION_UNITS:
+                    case PackageDirectory::METADATA->value:
+                    case PackageDirectory::ASSEMBLY->value:
+                    case PackageDirectory::INSTALLER->value:
+                    case PackageDirectory::EXECUTION_UNITS->value:
                         Console::outDebug(sprintf('Skipping %s', $name));
                         break;
 
