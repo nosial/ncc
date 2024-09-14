@@ -160,7 +160,7 @@
 
             return match (strtolower($this->project_configuration->getProject()->getCompiler()->getExtension()))
             {
-                CompilerExtensions::PHP => match (strtolower($configuration->getBuildType()))
+                CompilerExtensions::PHP->value => match (strtolower($configuration->getBuildType()))
                 {
                     BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration, $options),
                     BuildOutputType::EXECUTABLE => (new ExecutableCompiler($this))->build($build_configuration, $options),
@@ -258,7 +258,7 @@
         {
             return match ($this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
             {
-                CompilerExtensions::PHP => ComponentFileExtensions::PHP,
+                CompilerExtensions::PHP->value => ComponentFileExtensions::PHP,
                 default => throw new NotSupportedException(
                     sprintf('The compiler extension \'%s\' is not supported', $this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
                 ),
@@ -485,7 +485,7 @@
                 throw new IOException(sprintf('Project source directory "%s" was not created', $project_src));
             }
 
-            $project = new ProjectConfiguration\Project(new ProjectConfiguration\Compiler(CompilerExtensions::PHP));
+            $project = new ProjectConfiguration\Project(new ProjectConfiguration\Compiler(CompilerExtensions::PHP->value));
             $assembly = new ProjectConfiguration\Assembly(
                 Resolver::composerName($composer_json->getName()),
                 Resolver::composerNameToPackage($composer_json->getName()),

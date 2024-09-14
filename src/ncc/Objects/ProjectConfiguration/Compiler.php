@@ -77,7 +77,7 @@
             /** @noinspection DegradedSwitchInspection */
             switch($extension)
             {
-                case CompilerExtensions::PHP:
+                case CompilerExtensions::PHP->value:
 
                     if($minimum_version === null)
                     {
@@ -185,7 +185,8 @@
             }
 
             /** @noinspection InArrayMissUseInspection */
-            if(!in_array($this->extension, CompilerExtensions::ALL, true))
+            // TODO: Fix this, not a proper use of cases()
+            if(!in_array($this->extension, CompilerExtensions::cases(), true))
             {
                 throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
             }
