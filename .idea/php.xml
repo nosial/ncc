@@ -11,8 +11,8 @@
   </component>
   <component name="PhpIncludePathManager">
     <include_path>
+      <path value="/usr/share/ncc" />
       <path value="/usr/share/php" />
-      <path value="$PROJECT_DIR$/../loglib" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">
