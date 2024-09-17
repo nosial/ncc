@@ -91,28 +91,11 @@
 
             if(isset(self::$args['l']) || isset(self::$args['log-level']))
             {
-                switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
-                {
-                    // TODO: Fix this, it's not casting correctly to the enum type but rather as a string
-                    case LogLevel::SILENT->value:
-                    case LogLevel::FATAL->value:
-                    case LogLevel::ERROR->value:
-                    case LogLevel::WARNING->value:
-                    case LogLevel::INFO->value:
-                    case LogLevel::DEBUG->value:
-                    case LogLevel::VERBOSE->value:
-                        self::$log_level = strtolower(self::$args['l'] ?? self::$args['log-level']);
-                        break;
-
-                    default:
-                        Console::outWarning('Unknown log level: ' . (self::$args['l'] ?? self::$args['log-level']) . ', using \'info\'');
-                        self::$log_level = LogLevel::INFO->value;
-                        break;
-                }
+               self::$log_level = LogLevel::fromOrDefault(strtolower(self::$args['l'] ?? self::$args['log-level']));
             }
             else
             {
-                self::$log_level = LogLevel::INFO->value;
+                self::$log_level = LogLevel::INFO;
             }
 
             if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))

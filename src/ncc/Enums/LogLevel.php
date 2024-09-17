@@ -37,4 +37,23 @@
         case ERROR = 'error';
 
         case FATAL = 'fatal';
+
+        /**
+         * Converts the given string input to a LogLevel.
+         * If the input is invalid or not found, it defaults to LogLevel::INFO.
+         *
+         * @param string $input The input string to be converted to a LogLevel.
+         * @return LogLevel Returns the corresponding LogLevel for the input string or LogLevel::INFO if not found.
+         */
+        public static function fromOrDefault(string $input): LogLevel
+        {
+            $value = self::tryFrom($input);
+
+            if($value === null)
+            {
+                return self::INFO;
+            }
+
+            return $value;
+        }
     }
