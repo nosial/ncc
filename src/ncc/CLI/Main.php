@@ -50,7 +50,7 @@
         private static $args;
 
         /**
-         * @var string|null
+         * @var LogLevel|null
          */
         private static $log_level;
 
@@ -93,6 +93,7 @@
             {
                 switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
                 {
+                    // TODO: Fix this, it's not casting correctly to the enum type but rather as a string
                     case LogLevel::SILENT->value:
                     case LogLevel::FATAL->value:
                     case LogLevel::ERROR->value:
@@ -239,12 +240,6 @@
                 self::$log_level = LogLevel::INFO;
             }
 
-            $level = LogLevel::tryFrom(self::$log_level);
-            if($level === null)
-            {
-                return self::$log_level = LogLevel::INFO;
-            }
-
-            return $level;
+            return self::$log_level;
         }
     }
