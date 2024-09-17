@@ -169,26 +169,25 @@
          */
         public static function checkLogLevel(?string $input, ?string $current_level): bool
         {
-            if($input === null || $current_level === null)
+            if ($input === null || $current_level === null)
             {
                 return false;
             }
 
             $input = strtolower($input);
-            if(!Validate::checkLogLevel($input))
+            if (!Validate::checkLogLevel($input))
             {
                 return false;
             }
 
             $current_level = strtolower($current_level);
-            if(!Validate::checkLogLevel($current_level))
+            if (!Validate::checkLogLevel($current_level))
             {
                 return false;
             }
 
             return match ($current_level)
             {
-                // TODO: Move this to the enum
                 LogLevel::DEBUG->value => in_array($input, [LogLevel::DEBUG->value, LogLevel::VERBOSE->value, LogLevel::INFO->value, LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
                 LogLevel::VERBOSE->value => in_array($input, [LogLevel::VERBOSE->value, LogLevel::INFO->value, LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
                 LogLevel::INFO->value => in_array($input, [LogLevel::INFO->value, LogLevel::WARNING->value, LogLevel::FATAL->value, LogLevel::ERROR->value], true),
