@@ -22,6 +22,8 @@
 
     namespace ncc\Enums;
 
+    use ncc\Utilities\Validate;
+
     enum LogLevel : string
     {
         case SILENT = 'silent';
@@ -37,6 +39,31 @@
         case ERROR = 'error';
 
         case FATAL = 'fatal';
+
+        /**
+         * Checks if the current log level permits logging at the specified level.
+         *
+         * @param LogLevel|null $current_level The log level to be checked. If null, the method returns false.
+         * @return bool Returns true if logging is permitted at the specified level, otherwise false.
+         */
+        public function checkLogLevel(?LogLevel $current_level): bool
+        {
+            if ($current_level === null)
+            {
+                return false;
+            }
+
+            return match ($current_level)
+            {
+                LogLevel::DEBUG => in_array($this, [LogLevel::DEBUG, LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::VERBOSE => in_array($this, [LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::INFO => in_array($this, [LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::WARNING => in_array($this, [LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::ERROR => in_array($this, [LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::FATAL => $this === LogLevel::FATAL,
+                default => false,
+            };
+        }
 
         /**
          * Converts the given string input to a LogLevel.

@@ -98,7 +98,7 @@
                 self::$log_level = LogLevel::INFO;
             }
 
-            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
+            if(self::$log_level->checkLogLevel(LogLevel::DEBUG))
             {
                 Console::outDebug('Debug logging enabled');
 

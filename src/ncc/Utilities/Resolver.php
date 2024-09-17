@@ -161,43 +161,6 @@
         }
 
         /**
-         * Checks if the input level matches the current level
-         *
-         * @param LogLevel|null $input
-         * @param LogLevel|null $current_level
-         * @return bool
-         */
-        public static function checkLogLevel(?LogLevel $input, ?LogLevel $current_level): bool
-        {
-            // TODO: This method can be merged into the enum class instead
-            if ($input === null || $current_level === null)
-            {
-                return false;
-            }
-
-            if (!Validate::checkLogLevel($input))
-            {
-                return false;
-            }
-
-            if (!Validate::checkLogLevel($current_level))
-            {
-                return false;
-            }
-
-            return match ($current_level)
-            {
-                LogLevel::DEBUG => in_array($input, [LogLevel::DEBUG, LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::VERBOSE => in_array($input, [LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::INFO => in_array($input, [LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::WARNING => in_array($input, [LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::ERROR => in_array($input, [LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::FATAL => $input === LogLevel::FATAL,
-                default => false,
-            };
-        }
-
-        /**
          * Returns the ProjectDetectionResults of the project in the specified directory
          *
          * @param string $directory

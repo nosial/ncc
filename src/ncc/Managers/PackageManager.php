@@ -665,7 +665,7 @@
             {
                 $progress_bar->setMiscText($component_name);
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting component %s to %s', $component_name, $bin_path . DIRECTORY_SEPARATOR . $component_name));
                 }
@@ -683,7 +683,7 @@
             {
                 $progress_bar->setMiscText($resource_name);
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting resource %s to %s', $resource_name, $bin_path . DIRECTORY_SEPARATOR . $resource_name));
                 }
@@ -701,7 +701,7 @@
             {
                 $progress_bar->setMiscText($unit);
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting execution unit %s to %s', $unit, $package_path . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $package_reader->getExecutionUnit($unit)->getExecutionPolicy()->getName() . '.unit'));
                 }
@@ -907,7 +907,7 @@
                     return;
                 }
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     $percentage = round(($downloaded / $download_size) * 100, 2);
                     Console::out(sprintf('Download progress %s (%s/%s) for %s', $percentage, $downloaded, $download_size, $url));
