@@ -25,6 +25,7 @@
 
     namespace ncc\Classes;
 
+    use InvalidArgumentException;
     use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\PackageDirectory;
     use ncc\Enums\PackageStructure;
@@ -153,7 +154,7 @@
         /**
          * Sets the package flags
          *
-         * @param array $flags
+         * @param string[]|PackageFlags[] $flags
          * @return void
          * @throws IOException
          */
@@ -164,19 +165,39 @@
                 throw new IOException('Cannot set flags after data has been written to the package');
             }
 
-            $this->headers[PackageStructure::FLAGS->value] = $flags;
+            foreach($flags as $flag)
+            {
+                if(is_string($flag))
+                {
+                    $flag = PackageFlags::tryFrom($flag);
+                    if($flag === null)
+                    {
+                        throw new InvalidArgumentException(sprintf('Unexpected flag: %s', $flag));
+                    }
+                }
+
+                $this->headers[PackageStructure::FLAGS->value] = $flag->value;
+            }
         }
 
         /**
          * Adds a flag to the package
          *
-         * @param string $flag
+         * @param PackageFlags|string $flag
          * @return void
          * @throws IOException
          */
-        // TODO: Package flags should use the PackageFlags enum directly.
-        public function addFlag(string $flag): void
+        public function addFlag(PackageFlags|string $flag): void
         {
+            if(is_string($flag))
+            {
+                $flag = PackageFlags::tryFrom($flag);
+                if($flag === null)
+                {
+                    throw new InvalidArgumentException(sprintf('Unexpected flag: %s', $flag));
+                }
+            }
+
             if($this->data_written)
             {
                 throw new IOException('Cannot add a flag after data has been written to the package');
@@ -184,7 +205,7 @@
 
             if(!in_array($flag, $this->headers[PackageStructure::FLAGS->value], true))
             {
-                $this->headers[PackageStructure::FLAGS->value][] = $flag;
+                $this->headers[PackageStructure::FLAGS->value][] = $flag->value;
             }
         }
 
@@ -195,14 +216,23 @@
          * @return void
          * @throws IOException
          */
-        public function removeFlag(string $flag): void
+        public function removeFlag(PackageFlags|string $flag): void
         {
+            if(is_string($flag))
+            {
+                $flag = PackageFlags::tryFrom($flag);
+                if($flag === null)
+                {
+                    throw new InvalidArgumentException(sprintf('Unexpected flag: %s', $flag));
+                }
+            }
+
             if($this->data_written)
             {
                 throw new IOException('Cannot remove a flag after data has been written to the package');
             }
 
-            $this->headers[PackageStructure::FLAGS->value] = array_diff($this->headers[PackageStructure::FLAGS->value], [$flag]);
+            $this->headers[PackageStructure::FLAGS->value] = array_diff($this->headers[PackageStructure::FLAGS->value], [$flag->value]);
         }
 
         /**
