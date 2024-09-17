@@ -226,8 +226,13 @@ namespace ncc\Utilities;
          * @param string $input
          * @return bool
          */
-        public static function checkLogLevel(string $input): bool
+        public static function checkLogLevel(string|LogLevel $input): bool
         {
+            if($input instanceof LogLevel)
+            {
+                return true;
+            }
+
             return in_array(strtolower($input), array_map(
                 fn($case) => $case->value, LogLevel::cases()), true
             );

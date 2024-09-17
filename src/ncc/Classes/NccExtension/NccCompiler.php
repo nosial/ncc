@@ -123,7 +123,7 @@
             }
 
             // Debugging information
-            if(Resolver::checkLogLevel(LogLevel::DEBUG->value, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
                 foreach($this->project_manager->getProjectConfiguration()->getAssembly()->toArray() as $prop => $value)
                 {

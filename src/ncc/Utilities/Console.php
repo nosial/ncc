@@ -109,12 +109,12 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::INFO->value, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::INFO, Main::getLogLevel()))
             {
                 return;
             }
 
-            if(!$no_prefix && Resolver::checkLogLevel(LogLevel::VERBOSE->value, Main::getLogLevel()))
+            if(!$no_prefix && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 $message = self::setPrefix(LogLevel::INFO->value, $message);
             }
@@ -142,7 +142,7 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::DEBUG->value, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
             {
                 return;
             }
@@ -179,7 +179,7 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::VERBOSE->value, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 return;
             }
@@ -225,12 +225,12 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::WARNING->value, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::WARNING, Main::getLogLevel()))
             {
                 return;
             }
 
-            if(Resolver::checkLogLevel(LogLevel::VERBOSE->value, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 self::out(self::setPrefix(LogLevel::WARNING->value, $message), $newline, true);
                 return;
@@ -254,12 +254,12 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::ERROR->value, Main::getLogLevel()))
+            if(!Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
             {
                 return;
             }
 
-            if(Resolver::checkLogLevel(LogLevel::VERBOSE->value, Main::getLogLevel()))
+            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
             {
                 self::out(self::setPrefix(LogLevel::ERROR->value, $message), $newline, true);
             }
@@ -289,7 +289,7 @@
                 return;
             }
 
-            if($message !== '' && Resolver::checkLogLevel(LogLevel::ERROR->value, Main::getLogLevel()))
+            if($message !== '' && Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
             {
                 self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED->value) . $message);
             }

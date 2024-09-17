@@ -114,7 +114,7 @@
                 self::$log_level = LogLevel::INFO->value;
             }
 
-            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG->value))
+            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
             {
                 Console::outDebug('Debug logging enabled');
 
@@ -230,15 +230,21 @@
         }
 
         /**
-         * @return string
+         * @return LogLevel
          */
-        public static function getLogLevel(): string
+        public static function getLogLevel(): LogLevel
         {
             if(self::$log_level === null)
             {
-                self::$log_level = LogLevel::INFO->value;
+                self::$log_level = LogLevel::INFO;
             }
 
-            return self::$log_level;
+            $level = LogLevel::tryFrom(self::$log_level);
+            if($level === null)
+            {
+                return self::$log_level = LogLevel::INFO;
+            }
+
+            return $level;
         }
     }
