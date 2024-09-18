@@ -279,12 +279,12 @@
          */
         public function getPointer(string $name): array
         {
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$name]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
             {
                 throw new RuntimeException(sprintf('Resource \'%s\' not found in package', $name));
             }
 
-            $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value[$name]]);
+            $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
             return [(int)$location[0], (int)$location[1]];
         }
 
@@ -296,7 +296,7 @@
          */
         public function exists(string $name): bool
         {
-            return isset($this->headers[PackageStructure::DIRECTORY->value[$name]]);
+            return isset($this->headers[PackageStructure::DIRECTORY->value][$name]);
         }
 
         /**
@@ -327,7 +327,7 @@
                 return $this->cache[$directory];
             }
 
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$directory]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
             {
                 throw new ConfigurationException('Package does not contain an assembly');
             }
@@ -353,7 +353,7 @@
                 return $this->cache[$directory];
             }
 
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$directory]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
             {
                 throw new ConfigurationException('Package does not contain metadata');
             }
@@ -382,7 +382,7 @@
                 return $this->cache[$directory];
             }
 
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$directory]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
             {
                 return null;
             }
@@ -423,7 +423,7 @@
         public function getDependency(string $name): Dependency
         {
             $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$dependency_name]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$dependency_name]))
             {
                 throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package', $name));
             }
@@ -475,7 +475,7 @@
         public function getExecutionUnit(string $name): ExecutionUnit
         {
             $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$execution_unit_name]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$execution_unit_name]))
             {
                 throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package', $name));
             }
@@ -579,7 +579,7 @@
         public function getComponentByClass(string $class): Component
         {
             $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER->value, $class);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$class_name]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$class_name]))
             {
                 throw new ConfigurationException(sprintf('Class map \'%s\' not found in package', $class));
             }
@@ -618,7 +618,7 @@
         public function getResource(string $name): Resource
         {
             $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value[$resource_name]]))
+            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$resource_name]))
             {
                 throw new ConfigurationException(sprintf('Resource \'%s\' not found in package', $name));
             }
