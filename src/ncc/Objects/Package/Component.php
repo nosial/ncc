@@ -28,6 +28,7 @@
     use InvalidArgumentException;
     use ncc\Classes\PhpExtension\AstWalker;
     use ncc\Enums\Flags\ComponentFlags;
+    use ncc\Enums\LogLevel;
     use ncc\Enums\Options\ComponentDecodeOptions;
     use ncc\Enums\Types\ComponentDataType;
     use ncc\Exceptions\ConfigurationException;
@@ -224,14 +225,6 @@
          */
         public function setData(mixed $data, ComponentDataType $data_type=ComponentDataType::PLAIN): void
         {
-            $data_type = strtolower($data_type);
-
-            // TODO: Update this, not a proper use of the cases() method
-            if(!in_array($data_type, ComponentDataType::cases(), true))
-            {
-                throw new InvalidArgumentException(sprintf('Unknown component data type "%s"', $data_type));
-            }
-
             $this->data = $data;
             $this->data_type = $data_type;
         }
