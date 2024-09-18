@@ -29,3 +29,5 @@ src/ncc/autoload.php
 tests/example_project/project.json
 tests/example_project/ncc
 tests/example_project/build
+/.phpunit.result.cache
+/.idea/php-test-framework.xml
