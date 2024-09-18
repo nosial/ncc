@@ -163,12 +163,12 @@
 
             if($type === null)
             {
-                throw new ConfigurationException("The UpdateSource's Repository property requires 'type'");
+                throw new ConfigurationException(sprintf("The UpdateSource's Repository %s property requires 'type' got '%s' instead", $name, Functions::array_bc($data, 'type')));
             }
 
             if($host === null)
             {
-                throw new ConfigurationException("The UpdateSource's Repository property requires 'host'");
+                throw new ConfigurationException(sprintf("The UpdateSource's Repository %s property requires 'host'", $name));
             }
 
             return new self($name, $host, $type, $ssl);
