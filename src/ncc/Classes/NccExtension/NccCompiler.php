@@ -299,7 +299,7 @@
         {
             $package_writer->addComponent(new Component(
                 Functions::removeBasename($file_path, $this->project_manager->getProjectPath()),
-                Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED->value
+                Base64::encode(IO::fread($file_path)), ComponentDataType::BASE64_ENCODED
             ));
         }
 

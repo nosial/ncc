@@ -50,9 +50,9 @@
         private $flags;
 
         /**
-         * @var string
+         * @var ComponentDataType
          */
-        private $data_type;
+        private ComponentDataType $data_type;
 
         /**
          * @var string
@@ -64,10 +64,9 @@
          *
          * @param string $name
          * @param string $data
-         * @param string $data_type
+         * @param ComponentDataType $data_type
          */
-        // TODO: $data_type Can be a enum case
-        public function __construct(string $name, string $data, string $data_type=ComponentDataType::PLAIN->value)
+        public function __construct(string $name, string $data, ComponentDataType $data_type=ComponentDataType::PLAIN)
         {
             $this->name = $name;
             $this->flags = [];
@@ -148,10 +147,10 @@
         /**
          * Returns the data type of the component
          *
-         * @return string
+         * @return ComponentDataType
          * @see ComponentDataType
          */
-        public function getDataType(): string
+        public function getDataType(): ComponentDataType
         {
             return $this->data_type;
         }
@@ -168,11 +167,11 @@
         {
             switch($this->data_type)
             {
-                case ComponentDataType::PLAIN->value:
-                case ComponentDataType::BINARY->value:
+                case ComponentDataType::PLAIN:
+                case ComponentDataType::BINARY:
                     return $this->data;
 
-                case ComponentDataType::BASE64_ENCODED->value:
+                case ComponentDataType::BASE64_ENCODED:
                     if(in_array(ComponentFlags::PHP_B64->value, $this->flags, true))
                     {
                         try
@@ -192,7 +191,7 @@
 
                     return base64_decode($this->data);
 
-                case ComponentDataType::AST->value:
+                case ComponentDataType::AST:
                     if(in_array(ComponentFlags::PHP_AST->value, $this->flags, true))
                     {
                         try
@@ -213,7 +212,7 @@
                     throw new OperationException(sprintf('Cannot decode component %s with data type %s because the component does not have a flag to decode it properly. Got: %s', $this->name, implode(' ', $this->flags), 'AST'));
 
                 default:
-                    throw new InvalidArgumentException(sprintf('Unknown component data type "%s"', $this->data_type));
+                    throw new InvalidArgumentException(sprintf('Unknown component data type "%s"', $this->data_type->value));
             }
         }
 
@@ -221,10 +220,9 @@
          * Sets the data of the component
          *
          * @param mixed $data
-         * @param string $data_type
+         * @param ComponentDataType $data_type
          */
-        // TODO: $data_type can be a direct enum case
-        public function setData(mixed $data, string $data_type=ComponentDataType::PLAIN->value): void
+        public function setData(mixed $data, ComponentDataType $data_type=ComponentDataType::PLAIN): void
         {
             $data_type = strtolower($data_type);
 
@@ -249,7 +247,7 @@
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
                 ($bytecode ? Functions::cbc('flags') : 'flags') => $this->flags,
-                ($bytecode ? Functions::cbc('data_type') : 'data_type') => $this->data_type,
+                ($bytecode ? Functions::cbc('data_type') : 'data_type') => $this->data_type->value,
                 ($bytecode ? Functions::cbc('data') : 'data') => $this->data,
             ];
         }
@@ -265,7 +263,7 @@
         {
             $name = Functions::array_bc($data, 'name');
             $component_data = Functions::array_bc($data, 'data');
-            $data_type = Functions::array_bc($data, 'data_type') ?? ComponentDataType::PLAIN->value;
+            $data_type = ComponentDataType::tryFrom(Functions::array_bc($data, 'data_type')) ?? ComponentDataType::PLAIN;
 
             if($name === null)
             {
