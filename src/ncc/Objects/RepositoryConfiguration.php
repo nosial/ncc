@@ -67,10 +67,10 @@
          *
          * @param string $name The unique name of the remote source. (e.g. 'github')
          * @param string $host The host of the service ncc should use with this source (gitlab.com, github.com, git.example.com:8080 etc...).
-         * @param string $type The type of service ncc should use with this source (gitlab, github, etc...).
+         * @param RepositoryType $type The type of service ncc should use with this source (gitlab, github, etc...).
          * @param bool $ssl If SSL should be used when connecting to the service
          */
-        public function __construct(string $name, string $host, string $type, bool $ssl=true)
+        public function __construct(string $name, string $host, RepositoryType $type, bool $ssl=true)
         {
             $this->setName($name);
             $this->setHost($host);
@@ -111,18 +111,12 @@
 
         /**
          * Sets the type of service ncc should use with this source (gitlab, github, etc...).
-         * 
-         * @param string $type
+         *
+         * @param RepositoryType $type
          * @see RepositoryType
          */
-        public function setType(string $type): void
+        public function setType(RepositoryType $type): void
         {
-            // TODO: Fix this, not a proper use of cases()
-            if(!in_array(strtolower($type), RepositoryType::cases(), true))
-            {
-                throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $type));
-            }
-
             $this->type = $type;
         }
 

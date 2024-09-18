@@ -25,6 +25,7 @@
     use Exception;
     use ncc\Enums\ConsoleColors;
     use ncc\Enums\Scopes;
+    use ncc\Enums\Types\RepositoryType;
     use ncc\Managers\RepositoryManager;
     use ncc\Objects\CliHelpSection;
     use ncc\Objects\RepositoryConfiguration;
@@ -164,6 +165,13 @@
                 return 1;
             }
 
+            $parsed_type = RepositoryType::tryFrom($type);
+            if($parsed_type === null)
+            {
+                Console::outError(sprintf('Unknown repository type \'%s\'.', $type), true, 1);
+                return 1;
+            }
+
             if($host === null)
             {
                 Console::outError(sprintf('Missing required argument \'%s\'.', 'host'), true, 1);
@@ -172,7 +180,7 @@
 
             try
             {
-                (new RepositoryManager())->addRepository(new RepositoryConfiguration($name, $host, $type, $ssl));
+                (new RepositoryManager())->addRepository(new RepositoryConfiguration($name, $host, $parsed_type, $ssl));
             }
             catch(Exception $e)
             {
