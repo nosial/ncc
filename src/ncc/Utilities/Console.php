@@ -329,6 +329,12 @@
                 self::out('Stack Trace:');
                 foreach($trace as $item)
                 {
+                    if(!isset($item['file']))
+                    {
+                        self::out(' - ' . self::formatColor(json_encode($item), ConsoleColors::RED->value));
+                        continue;
+                    }
+
                     self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED->value) . ':' . $item['line']);
                 }
             }
