@@ -103,7 +103,6 @@
          */
         public function getExtension(): CompilerExtensions
         {
-            // TODO: Update usages from here
             return $this->extension;
         }
 
@@ -243,9 +242,12 @@
                 throw new ConfigurationException('The property \'project.compiler.extension\' must not be null.');
             }
 
-            return new self(Functions::array_bc($data, 'extension'),
-                Functions::array_bc($data, 'maximum_version'),
-                Functions::array_bc($data, 'minimum_version')
-            );
+            $extension = CompilerExtensions::tryFrom(Functions::array_bc($data, 'extension'));
+            if($extension === null)
+            {
+                throw new ConfigurationException('The property \'project.compiler.extension\' is not a valid extension');
+            }
+
+            return new self($extension, Functions::array_bc($data, 'maximum_version'), Functions::array_bc($data, 'minimum_version'));
         }
     }
