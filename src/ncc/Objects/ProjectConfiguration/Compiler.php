@@ -44,40 +44,38 @@
         /**
          * The compiler extension that the project uses
          *
-         * @var string
+         * @var CompilerExtensions
          */
-        private $extension;
+        private CompilerExtensions $extension;
 
         /**
          * The minimum version that is supported
          *
-         * @var string
+         * @var string|null
          */
-        private $minimum_version;
+        private ?string $minimum_version;
 
         /**
          * The maximum version that is supported
          *
-         * @var string
+         * @var string|null
          */
-        private $maximum_version;
+        private ?string $maximum_version;
 
         /**
          * Compiler constructor.
          *
-         * @param string $extension
+         * @param CompilerExtensions $extension
          * @param string|null $minimum_version
          * @param string|null $maximum_version
          * @throws NotSupportedException
          */
-        public function __construct(string $extension, ?string $minimum_version=null, ?string $maximum_version=null)
+        public function __construct(CompilerExtensions $extension, ?string $minimum_version=null, ?string $maximum_version=null)
         {
-            $extension = strtolower($extension);
-
             /** @noinspection DegradedSwitchInspection */
             switch($extension)
             {
-                case CompilerExtensions::PHP->value:
+                case CompilerExtensions::PHP:
 
                     if($minimum_version === null)
                     {
@@ -92,7 +90,7 @@
                     break;
 
                 default:
-                    throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported in ncc', $extension));
+                    throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported in ncc', $extension->value));
             }
 
             $this->extension = $extension;
@@ -101,17 +99,18 @@
         }
 
         /**
-         * @return string
+         * @return CompilerExtensions
          */
-        public function getExtension(): string
+        public function getExtension(): CompilerExtensions
         {
+            // TODO: Update usages from here
             return $this->extension;
         }
 
         /**
-         * @param string $extension
+         * @param CompilerExtensions $extension
          */
-        public function setExtension(string $extension): void
+        public function setExtension(CompilerExtensions $extension): void
         {
             $this->extension = $extension;
         }
@@ -157,11 +156,6 @@
          */
         public function validate(): bool
         {
-            if($this->extension === null)
-            {
-                throw new ConfigurationException('The property \'extension\' must not be null.');
-            }
-
             if($this->minimum_version === null)
             {
                 throw new ConfigurationException('The property \'minimum_version\' must not be null.');
@@ -184,11 +178,9 @@
                 throw new ConfigurationException('Version comparison failed: ' . $e->getMessage());
             }
 
-            /** @noinspection InArrayMissUseInspection */
-            // TODO: Fix this, not a proper use of cases()
             if(!in_array($this->extension, CompilerExtensions::cases(), true))
             {
-                throw new NotSupportedException('The compiler extension \'' . $this->extension . '\' is not supported');
+                throw new NotSupportedException('The compiler extension \'' . $this->extension->value . '\' is not supported');
             }
 
             /** @noinspection DegradedSwitchInspection */
@@ -198,19 +190,19 @@
 
                     if(!in_array($this->maximum_version, CompilerExtensionSupportedVersions::PHP, true))
                     {
-                        throw new NotSupportedException('The property "project.compiler.maximum_version" does not support version ' . $this->maximum_version . ' for the extension ' . $this->extension);
+                        throw new NotSupportedException('The property "project.compiler.maximum_version" does not support version ' . $this->maximum_version . ' for the extension ' . $this->extension->value);
 
                     }
 
                     if(!in_array($this->minimum_version, CompilerExtensionSupportedVersions::PHP, true))
                     {
-                        throw new NotSupportedException('The property "project.compiler.minimum_version" does not support version ' . $this->minimum_version . ' for the extension ' . $this->extension);
+                        throw new NotSupportedException('The property "project.compiler.minimum_version" does not support version ' . $this->minimum_version . ' for the extension ' . $this->extension->value);
                     }
 
                     break;
 
                 default:
-                    throw new NotSupportedException('The compiler extension "' . $this->extension . '" is not supported by ncc');
+                    throw new NotSupportedException('The compiler extension "' . $this->extension->value . '" is not supported by ncc');
             }
 
              return True;
@@ -222,10 +214,7 @@
         public function toArray(bool $bytecode = false): array
         {
             $results = [];
-            if($this->extension !== null && $this->extension !== '')
-            {
-                $results[($bytecode ? Functions::cbc('extension') : 'extension')] = $this->extension;
-            }
+            $results[($bytecode ? Functions::cbc('extension') : 'extension')] = $this->extension->value;
 
             if($this->minimum_version !== null && $this->minimum_version !== '')
             {

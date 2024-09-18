@@ -23,6 +23,7 @@
     namespace ncc\CLI\Management;
 
     use Exception;
+    use ncc\Enums\CompilerExtensions;
     use ncc\Enums\ProjectTemplates;
     use ncc\Enums\Scopes;
     use ncc\Managers\CredentialManager;
@@ -102,7 +103,12 @@
 
             if(isset($args['ext']))
             {
-                $compiler_extension = $args['ext'];
+                $compiler_extension = CompilerExtensions::tryFrom($args['ext']);
+                if($compiler_extension === null)
+                {
+                    Console::outError('Invalid compiler extension, please specify a valid compiler extension', true, 1);
+                    return 1;
+                }
             }
             else
             {

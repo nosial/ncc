@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration;
 
+    use ncc\Enums\CompilerExtensions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Interfaces\BytecodeObjectInterface;
@@ -52,17 +53,20 @@
 
         /**
          * Public Constructor
-         * @param string|Compiler $compiler
+         * @param CompilerExtensions|Compiler $extension
          * @throws NotSupportedException
          */
-        public function __construct(string|Compiler $compiler)
+        public function __construct(CompilerExtensions|Compiler $extension)
         {
-            if(is_string($compiler))
+            if($extension instanceof  Compiler)
             {
-                $compiler = new Compiler($compiler);
+                $this->compiler = $extension;
+            }
+            else
+            {
+                $this->compiler = new Compiler($extension);
             }
 
-            $this->compiler = $compiler;
             $this->options = [];
         }
 

@@ -24,6 +24,7 @@
 
     namespace ncc\Objects\ProjectConfiguration\UpdateSource;
 
+    use ncc\Enums\Types\RepositoryType;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Interfaces\BytecodeObjectInterface;
     use ncc\Utilities\Functions;
@@ -40,7 +41,7 @@
         /**
          * The type of client that is used to connect to the remote source
          *
-         * @var string|null
+         * @var RepositoryType|null
          */
         private $type;
 
@@ -58,7 +59,7 @@
          */
         private $ssl;
 
-        public function __construct(string $name, string $host, ?string $type=null, bool $ssl=false)
+        public function __construct(string $name, string $host, ?RepositoryType $type=null, bool $ssl=false)
         {
             $this->name = $name;
             $this->host = $host;
@@ -83,17 +84,17 @@
         }
 
         /**
-         * @return string|null
+         * @return RepositoryType|null
          */
-        public function getType(): ?string
+        public function getType(): ?RepositoryType
         {
             return $this->type;
         }
 
         /**
-         * @param string|null $type
+         * @param RepositoryType|null $type
          */
-        public function setType(?string $type): void
+        public function setType(?RepositoryType $type): void
         {
             $this->type = $type;
         }
@@ -137,7 +138,8 @@
         {
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
-                ($bytecode ? Functions::cbc('type') : 'type') => $this->type,
+                // TODO: Review the ? logic here to see if makes sense
+                ($bytecode ? Functions::cbc('type') : 'type') => ($this->type ? null : $this->type->value),
                 ($bytecode ? Functions::cbc('host') : 'host') => $this->host,
                 ($bytecode ? Functions::cbc('ssl') : 'ssl') => $this->ssl
             ];
@@ -150,7 +152,7 @@
         public static function fromArray(array $data): Repository
         {
             $name = Functions::array_bc($data, 'name');
-            $type = Functions::array_bc($data, 'type');
+            $type = RepositoryType::tryFrom(Functions::array_bc($data, 'type'));
             $host = Functions::array_bc($data, 'host');
             $ssl = Functions::array_bc($data, 'ssl') ?? false;
 

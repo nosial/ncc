@@ -158,16 +158,16 @@
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
-            return match (strtolower($this->project_configuration->getProject()->getCompiler()->getExtension()))
+            return match ($this->project_configuration->getProject()->getCompiler()->getExtension())
             {
-                CompilerExtensions::PHP->value => match (strtolower($configuration->getBuildType()))
+                CompilerExtensions::PHP => match (strtolower($configuration->getBuildType()))
                 {
                     BuildOutputType::NCC_PACKAGE->value => (new NccCompiler($this))->build($build_configuration, $options),
                     BuildOutputType::EXECUTABLE->value => (new ExecutableCompiler($this))->build($build_configuration, $options),
                     default => throw new BuildException(sprintf('php cannot produce the build type \'%s\'', $configuration->getBuildType())),
                 },
 
-                default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension())),
+                default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension()->value)),
             };
         }
 
@@ -361,7 +361,7 @@
          * @param string $project_path The directory for the project to be initialized in
          * @param string $name The name of the project eg; ProjectLib
          * @param string $package The standard package name eg; com.example.project
-         * @param string $compiler The compiler to use for this project
+         * @param CompilerExtensions $extension The compiler to use for this project
          * @param array $options An array of options to use when initializing the project
          * @return ProjectManager
          * @throws ConfigurationException
@@ -369,7 +369,7 @@
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
-        public static function initializeProject(string $project_path, string $name, string $package, string $compiler, array $options=[]): ProjectManager
+        public static function initializeProject(string $project_path, string $name, string $package, CompilerExtensions $extension, array $options=[]): ProjectManager
         {
             if(str_ends_with($project_path, DIRECTORY_SEPARATOR))
             {
@@ -416,7 +416,7 @@
             $build->setDefaultConfiguration('release');
 
             $project_configuration = new ProjectConfiguration(
-                new ProjectConfiguration\Project($compiler),
+                new ProjectConfiguration\Project($extension),
                 new ProjectConfiguration\Assembly($name, $package),
                 $build
             );
@@ -485,7 +485,7 @@
                 throw new IOException(sprintf('Project source directory "%s" was not created', $project_src));
             }
 
-            $project = new ProjectConfiguration\Project(new ProjectConfiguration\Compiler(CompilerExtensions::PHP->value));
+            $project = new ProjectConfiguration\Project(CompilerExtensions::PHP);
             $assembly = new ProjectConfiguration\Assembly(
                 Resolver::composerName($composer_json->getName()),
                 Resolver::composerNameToPackage($composer_json->getName()),

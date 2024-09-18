@@ -52,8 +52,7 @@
         private $host;
 
         /**
-         * @var string
-         * @see RepositoryType
+         * @var RepositoryType
          */
         private $type;
 
@@ -100,11 +99,10 @@
 
         /**
          * Returns the type of service ncc should use with this source (gitlab, github, etc...).
-         * 
-         * @return string
-         * @see RepositoryType
+         *
+         * @return RepositoryType
          */
-        public function getType(): string
+        public function getType(): RepositoryType
         {
             return $this->type;
         }
@@ -175,13 +173,13 @@
          */
         public function fetchPackage(string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
-            return match(strtolower($this->type))
+            return match($this->type)
             {
-                RepositoryType::GITHUB->value => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITLAB->value => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITEA->value => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::PACKAGIST->value => throw new NotSupportedException('Fetching ncc packages from Packagist is not supported'),
-                default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type)),
+                RepositoryType::GITHUB => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITLAB => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITEA => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::PACKAGIST => throw new NotSupportedException('Fetching ncc packages from Packagist is not supported'),
+                default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type->value)),
             };
         }
 
@@ -199,13 +197,13 @@
          */
         public function fetchSourceArchive(string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
-            return match(strtolower($this->type))
+            return match($this->type)
             {
-                RepositoryType::GITHUB->value => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITLAB->value => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITEA->value => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::PACKAGIST->value => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type)),
+                RepositoryType::GITHUB => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITLAB => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::GITEA => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                RepositoryType::PACKAGIST => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
+                default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type->value)),
             };
         }
 
@@ -226,7 +224,7 @@
         {
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
-                ($bytecode ? Functions::cbc('type') : 'type') => $this->type,
+                ($bytecode ? Functions::cbc('type') : 'type') => ($this->type ? null : $this->type->value),
                 ($bytecode ? Functions::cbc('host') : 'host') => $this->host,
                 ($bytecode ? Functions::cbc('ssl') : 'ssl') => $this->ssl
             ];
@@ -238,9 +236,14 @@
         public static function fromArray(array $data): self
         {
             $name = Functions::array_bc($data, 'name');
-            $type = Functions::array_bc($data, 'type');
+            $type = RepositoryType::tryFrom(Functions::array_bc($data, 'type'));
             $host = Functions::array_bc($data, 'host');
             $ssl = Functions::array_bc($data, 'ssl') ?? true;
+
+            if($type === null)
+            {
+                throw new InvalidArgumentException(sprintf("Unrecognized repository type %s", Functions::array_bc($data, 'type')));
+            }
 
             return new self($name, $host, $type, $ssl);
         }
