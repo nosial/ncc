@@ -66,13 +66,12 @@
          * Parse arguments
          *
          * @param array|string $message [$message] input arguments
-         * @param int $max_arguments
          * @return array Configs Key/Value
          * @noinspection RegExpRedundantEscape
          * @noinspection RegExpSimplifiable
          * @noinspection PhpMissingParamTypeInspection
          */
-        public static function parseArguments($message=null, int $max_arguments=1000): array
+        public static function parseArguments($message=null): array
         {
             if (is_string($message))
             {
@@ -125,11 +124,6 @@
                 if(isset($match['unmatched']) && $match['unmatched'] !== '')
                 {
                     $configs[$match['unmatched']] = true;
-                }
-
-                if($index >= $max_arguments)
-                {
-                    break;
                 }
             }
 
