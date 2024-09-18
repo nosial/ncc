@@ -22,7 +22,6 @@
 
     namespace ncc\Utilities;
 
-    use ncc\Enums\LogLevel;
     use ncc\Enums\RegexPatterns;
     use ncc\Enums\Scopes;
 
@@ -92,32 +91,6 @@
             }
 
             return false;
-        }
-
-        /**
-         * Validates the scope
-         *
-         * @param string $input
-         * @param bool $resolve
-         * @return bool
-         * @noinspection PhpSwitchCanBeReplacedWithMatchExpressionInspection
-         */
-        public static function scope(string $input, bool $resolve=true): bool
-        {
-            if($resolve)
-            {
-                $input = Resolver::resolveScope($input);
-            }
-
-            switch($input)
-            {
-                case Scopes::SYSTEM->value:
-                case Scopes::USER->value:
-                    return true;
-
-                default:
-                    return false;
-            }
         }
 
         /**
