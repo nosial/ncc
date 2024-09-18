@@ -94,10 +94,9 @@
         /**
          * @inheritDoc
          */
-        public function getAuthenticationType(): string
+        public function getAuthenticationType(): AuthenticationType
         {
-            // TODO: Could return the enum here
-            return AuthenticationType::USERNAME_PASSWORD->value;
+            return AuthenticationType::USERNAME_PASSWORD;
         }
 
         /**

@@ -473,23 +473,23 @@
         {
             switch($authentication->getAuthenticationType())
             {
-                case AuthenticationType::ACCESS_TOKEN->value:
+                case AuthenticationType::ACCESS_TOKEN:
                     if($authentication instanceof AccessToken)
                     {
                         $headers[] = 'Authorization: token ' . $authentication->getAccessToken();
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()->value));
 
-                case AuthenticationType::USERNAME_PASSWORD->value:
+                case AuthenticationType::USERNAME_PASSWORD:
                     if($authentication instanceof UsernamePassword)
                     {
                         curl_setopt($curl, CURLOPT_USERPWD, $authentication->getUsername() . ':' . $authentication->getPassword());
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()->value));
             }
 
             return $headers;

@@ -478,7 +478,7 @@
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()->value));
 
                 case AuthenticationType::USERNAME_PASSWORD->value:
                     if($authentication instanceof UsernamePassword)
@@ -487,7 +487,7 @@
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()->value));
             }
 
             return $headers;

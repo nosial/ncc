@@ -67,10 +67,9 @@
         /**
          * @inheritDoc
          */
-        public function getAuthenticationType(): string
+        public function getAuthenticationType(): AuthenticationType
         {
-            // TODO: Could return the enum case here
-            return AuthenticationType::ACCESS_TOKEN->value;
+            return AuthenticationType::ACCESS_TOKEN;
         }
 
         /**

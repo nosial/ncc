@@ -103,7 +103,7 @@
 
             switch($this->password->getAuthenticationType())
             {
-                case AuthenticationType::USERNAME_PASSWORD->value:
+                case AuthenticationType::USERNAME_PASSWORD:
                     if(!($this->password instanceof UsernamePassword))
                     {
                         return false;
@@ -129,7 +129,7 @@
 
                     return $username === $this->password->getUsername() && $password === $this->password->getPassword();
 
-                case AuthenticationType::ACCESS_TOKEN->value:
+                case AuthenticationType::ACCESS_TOKEN:
                     if(!($this->password instanceof AccessToken))
                     {
                         return false;

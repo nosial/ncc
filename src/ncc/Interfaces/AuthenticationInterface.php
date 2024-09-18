@@ -22,12 +22,14 @@
 
     namespace ncc\Interfaces;
 
+    use ncc\Enums\Types\AuthenticationType;
+
     interface AuthenticationInterface extends BytecodeObjectInterface
     {
         /**
-         * @return string
+         * @return AuthenticationType
          */
-        public function getAuthenticationType(): string;
+        public function getAuthenticationType(): AuthenticationType;
 
         /**
          * @return string
