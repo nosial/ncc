@@ -40,7 +40,7 @@
 
         case UNIX_PATH = '/^(((?:\.\/|\.\.\/|\/)?(?:\.?\w+\/)*)(\.?\w+\.?\w+))$/m';
 
-        case CONSTANT_NAME = '/^([^\x00-\x7F]|[\w_\ \.\+\-]){2,64}$/';
+        case CONSTANT_NAME = '/^([^\x00-\x7F]|[\w_.+]){2,64}$/';
 
         case EXECUTION_POLICY_NAME = '/^[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/m';
 
