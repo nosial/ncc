@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces a refactored code-base, code quality improvements, and better exception handling.
 
+### Added
+ - Added Test unit tests/ncc/Objects/Package/ComponentTest.php
+ - Added Test unit tests/ncc/Utilities/ResolverTest.php
+ - Added Test unit tests/ncc/Utilities/SecurityTest.php
+ - Added Test unit tests/ncc/Utilities/ValidateTest.php
+ - Add support for runtime constants
+
 ### Changed
  - Convert Versions constants to enum cases
  - Update Scopes to enum and adjust scope checks
@@ -47,6 +54,19 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Convert PackageFlags constants to enum cases
  - Convert NccBuildFlags constants to enum cases
  - Convert ComponentFlags constants to enum cases
+ - Refactor flag handling to use PackageFlags enum directly
+ - Refactor checkLogLevel to correctly utilize LogLevel cases
+ - Refactor code to improve readability in Resolver.php
+ - Update PHP include paths in project configuration
+ - Refactor logging level checks to use LogLevel enum directly
+ - Refactor log level parsing with enum method
+ - Refactor log level checking to enum method
+ - Updated Symfony/Filesystem from version 6.3.1 to 7.1.2
+ - Refactor ProjectType handling
+ - Validate and enforce repository type enum usage
+ - Updated Composer/Semver to 3.4.3
+ - Rename 'semver' directory to 'Semver' in composer package
+ - Refactor project constants handling in NccCompiler
 
 ### Fixed
  - Fixed Division by zero in PackageManager
@@ -61,6 +81,8 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Removed DependencySourceType
  - Removed BuiltinRemoteSourceType
  - Removed RuntimeImportOptions
+ - Remove ComponentFileExtensions enum
+ - Remove unused import and redundant scope validation method
 
 ## [2.0.3] - 2023-10-17
 
