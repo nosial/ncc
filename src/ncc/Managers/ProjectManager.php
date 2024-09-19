@@ -252,16 +252,12 @@
          * Returns an array of file extensions for the components that are part of this project
          *
          * @return array
-         * @throws NotSupportedException
          */
         public function getComponentFileExtensions(): array
         {
             return match ($this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
             {
-                CompilerExtensions::PHP->value => ComponentFileExtensions::PHP,
-                default => throw new NotSupportedException(
-                    sprintf('The compiler extension \'%s\' is not supported', $this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
-                ),
+                CompilerExtensions::PHP => ['*.php', '*.php3', '*.php4', '*.php5', '*.phtml']
             };
         }
 
