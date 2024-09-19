@@ -5,7 +5,7 @@
   "components": [
     {
       "vendor": "composer",
-      "package_name": "semver"
+      "package_name": "Semver"
     },
     {
       "vendor": "defuse",
