@@ -6,23 +6,24 @@ namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
 use PhpParser\BuilderHelpers;
-use PhpParser\Node;
-use PhpParser\Node\Identifier;
-use PhpParser\Node\Stmt;
+use ncc\ThirdParty\nikic\PhpParser\Node;
+use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
+use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
 
-class EnumCase implements PhpParser\Builder
-{
+class EnumCase implements PhpParser\Builder {
+    /** @var Identifier|string */
     protected $name;
-    protected $value = null;
-    protected $attributes = [];
+    protected ?Node\Expr $value = null;
+    /** @var array<string, mixed> */
+    protected array $attributes = [];
 
-    /** @var Node\AttributeGroup[] */
-    protected $attributeGroups = [];
+    /** @var list<Node\AttributeGroup> */
+    protected array $attributeGroups = [];
 
     /**
      * Creates an enum case builder.
      *
-     * @param string|Identifier $name  Name
+     * @param string|Identifier $name Name
      */
     public function __construct($name) {
         $this->name = $name;

@@ -6,6 +6,7 @@ use ncc\ThirdParty\nikic\PhpParser\Node\ComplexType;
 use ncc\ThirdParty\nikic\PhpParser\Node\Expr;
 use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
 use ncc\ThirdParty\nikic\PhpParser\Node\Name;
+use ncc\ThirdParty\nikic\PhpParser\Node\Name\FullyQualified;
 use ncc\ThirdParty\nikic\PhpParser\Node\NullableType;
 use ncc\ThirdParty\nikic\PhpParser\Node\Scalar;
 use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
@@ -15,8 +16,7 @@ use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
  *
  * @internal
  */
-final class BuilderHelpers
-{
+final class BuilderHelpers {
     /**
      * Normalizes a node: Converts builder objects to nodes.
      *
@@ -24,7 +24,7 @@ final class BuilderHelpers
      *
      * @return Node The normalized node
      */
-    public static function normalizeNode($node) : Node {
+    public static function normalizeNode($node): Node {
         if ($node instanceof Builder) {
             return $node->getNode();
         }
@@ -45,7 +45,7 @@ final class BuilderHelpers
      *
      * @return Stmt The normalized statement node
      */
-    public static function normalizeStmt($node) : Stmt {
+    public static function normalizeStmt($node): Stmt {
         $node = self::normalizeNode($node);
         if ($node instanceof Stmt) {
             return $node;
@@ -65,7 +65,7 @@ final class BuilderHelpers
      *
      * @return Identifier The normalized identifier
      */
-    public static function normalizeIdentifier($name) : Identifier {
+    public static function normalizeIdentifier($name): Identifier {
         if ($name instanceof Identifier) {
             return $name;
         }
@@ -103,7 +103,7 @@ final class BuilderHelpers
      *
      * @return Name The normalized name
      */
-    public static function normalizeName($name) : Name {
+    public static function normalizeName($name): Name {
         if ($name instanceof Name) {
             return $name;
         }
@@ -215,12 +215,12 @@ final class BuilderHelpers
      * Normalizes a value: Converts nulls, booleans, integers,
      * floats, strings and arrays into their respective nodes
      *
-     * @param Node\Expr|bool|null|int|float|string|array $value The value to normalize
+     * @param ncc\ThirdParty\nikic\PhpParser\Node\Expr|bool|null|int|float|string|array|\UnitEnum $value The value to normalize
      *
      * @return Expr The normalized value
      */
-    public static function normalizeValue($value) : Expr {
-        if ($value instanceof Node\Expr) {
+    public static function normalizeValue($value): Expr {
+        if ($value instanceof ncc\ThirdParty\nikic\PhpParser\Node\Expr) {
             return $value;
         }
 
@@ -237,11 +237,11 @@ final class BuilderHelpers
         }
 
         if (is_int($value)) {
-            return new Scalar\LNumber($value);
+            return new Scalar\Int_($value);
         }
 
         if (is_float($value)) {
-            return new Scalar\DNumber($value);
+            return new Scalar\Float_($value);
         }
 
         if (is_string($value)) {
@@ -254,12 +254,12 @@ final class BuilderHelpers
             foreach ($value as $itemKey => $itemValue) {
                 // for consecutive, numeric keys don't generate keys
                 if (null !== $lastKey && ++$lastKey === $itemKey) {
-                    $items[] = new Expr\ArrayItem(
+                    $items[] = new ncc\ThirdParty\nikic\PhpParser\Node\ArrayItem(
                         self::normalizeValue($itemValue)
                     );
                 } else {
                     $lastKey = null;
-                    $items[] = new Expr\ArrayItem(
+                    $items[] = new ncc\ThirdParty\nikic\PhpParser\Node\ArrayItem(
                         self::normalizeValue($itemValue),
                         self::normalizeValue($itemKey)
                     );
@@ -267,6 +267,10 @@ final class BuilderHelpers
             }
 
             return new Expr\Array_($items);
+        }
+
+        if ($value instanceof \UnitEnum) {
+            return new Expr\ClassConstFetch(new FullyQualified(\get_class($value)), new Identifier($value->name));
         }
 
         throw new \LogicException('Invalid value');
@@ -279,7 +283,7 @@ final class BuilderHelpers
      *
      * @return Comment\Doc The normalized doc comment
      */
-    public static function normalizeDocComment($docComment) : Comment\Doc {
+    public static function normalizeDocComment($docComment): Comment\Doc {
         if ($docComment instanceof Comment\Doc) {
             return $docComment;
         }
@@ -294,33 +298,32 @@ final class BuilderHelpers
     /**
      * Normalizes a attribute: Converts attribute to the Attribute Group if needed.
      *
-     * @param Node\Attribute|Node\AttributeGroup $attribute
+     * @param ncc\ThirdParty\nikic\PhpParser\Node\Attribute|ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup $attribute
      *
-     * @return Node\AttributeGroup The Attribute Group
+     * @return ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup The Attribute Group
      */
-    public static function normalizeAttribute($attribute) : Node\AttributeGroup
-    {
-        if ($attribute instanceof Node\AttributeGroup) {
+    public static function normalizeAttribute($attribute): ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup {
+        if ($attribute instanceof ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup) {
             return $attribute;
         }
 
-        if (!($attribute instanceof Node\Attribute)) {
+        if (!($attribute instanceof ncc\ThirdParty\nikic\PhpParser\Node\Attribute)) {
             throw new \LogicException('Attribute must be an instance of PhpParser\Node\Attribute or PhpParser\Node\AttributeGroup');
         }
 
-        return new Node\AttributeGroup([$attribute]);
+        return new ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup([$attribute]);
     }
 
     /**
      * Adds a modifier and returns new modifier bitmask.
      *
      * @param int $modifiers Existing modifiers
-     * @param int $modifier  Modifier to set
+     * @param int $modifier Modifier to set
      *
      * @return int New modifiers
      */
-    public static function addModifier(int $modifiers, int $modifier) : int {
-        Stmt\Class_::verifyModifier($modifiers, $modifier);
+    public static function addModifier(int $modifiers, int $modifier): int {
+        Modifiers::verifyModifier($modifiers, $modifier);
         return $modifiers | $modifier;
     }
 
@@ -328,8 +331,8 @@ final class BuilderHelpers
      * Adds a modifier and returns new modifier bitmask.
      * @return int New modifiers
      */
-    public static function addClassModifier(int $existingModifiers, int $modifierToSet) : int {
-        Stmt\Class_::verifyClassModifier($existingModifiers, $modifierToSet);
+    public static function addClassModifier(int $existingModifiers, int $modifierToSet): int {
+        Modifiers::verifyClassModifier($existingModifiers, $modifierToSet);
         return $existingModifiers | $modifierToSet;
     }
 }

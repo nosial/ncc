@@ -73,6 +73,7 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Updated Symfony/polyfill-ctype to version 1.31.0
  - Updated Symfony/polyfill-mbstring to version 1.31.0
  - Updated Symfony/polyfill-uuid to version 1.31.0
+ - Updated nikic/PhpParser to version 5.2.0
 
 ### Fixed
  - Fixed Division by zero in PackageManager
