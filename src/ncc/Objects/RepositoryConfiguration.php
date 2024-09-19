@@ -224,7 +224,7 @@
         {
             return [
                 ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
-                ($bytecode ? Functions::cbc('type') : 'type') => ($this->type ? null : $this->type->value),
+                ($bytecode ? Functions::cbc('type') : 'type') => ($this->type?->value),
                 ($bytecode ? Functions::cbc('host') : 'host') => $this->host,
                 ($bytecode ? Functions::cbc('ssl') : 'ssl') => $this->ssl
             ];

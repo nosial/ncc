@@ -119,7 +119,7 @@
                 throw new InvalidArgumentException(sprintf('The remote source \'%s\' already exists', $source->getName()));
             }
 
-            Console::outVerbose(sprintf('Adding repository \'%s\' as %s (type: %s)', $source->getHost(), $source->getName(), $source->getType()));
+            Console::outVerbose(sprintf('Adding repository \'%s\' as %s (type: %s)', $source->getHost(), $source->getName(), $source->getType()->value));
             $this->repositories[] = $source;
 
             if($update)
