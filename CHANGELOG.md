@@ -72,6 +72,7 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Updated Symfony/Process to version 7.1.3
  - Updated Symfony/polyfill-ctype to version 1.31.0
  - Updated Symfony/polyfill-mbstring to version 1.31.0
+ - Updated Symfony/polyfill-uuid to version 1.31.0
 
 ### Fixed
  - Fixed Division by zero in PackageManager
