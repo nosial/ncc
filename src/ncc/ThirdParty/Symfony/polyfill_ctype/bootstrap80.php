@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use ncc\ThirdParty\Symfony\polyfill_ctype as p;
+use Symfony\Polyfill\Ctype as p;
 
 if (!function_exists('ctype_alnum')) {
     function ctype_alnum(mixed $text): bool { return p\Ctype::ctype_alnum($text); }

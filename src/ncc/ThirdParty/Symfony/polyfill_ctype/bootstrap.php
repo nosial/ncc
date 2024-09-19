@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use ncc\ThirdParty\Symfony\polyfill_ctype as p;
+use Symfony\Polyfill\Ctype as p;
 
 if (\PHP_VERSION_ID >= 80000) {
     return require __DIR__.'/bootstrap80.php';

@@ -70,6 +70,7 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Updated Symfony/Yaml to version 7.1.4
  - Updated Symfony/Uid to version 7.1.4
  - Updated Symfony/Process to version 7.1.3
+ - Updated Symfony/polyfill-ctype to version 1.31.0
 
 ### Fixed
  - Fixed Division by zero in PackageManager
