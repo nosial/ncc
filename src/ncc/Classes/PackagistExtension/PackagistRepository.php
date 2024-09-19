@@ -35,8 +35,8 @@
     use ncc\Interfaces\RepositoryInterface;
     use ncc\Objects\RepositoryConfiguration;
     use ncc\Objects\RepositoryResult;
-    use ncc\ThirdParty\composer\Semver\Comparator;
-    use ncc\ThirdParty\composer\Semver\Semver;
+    use ncc\ThirdParty\composer\semver\Comparator;
+    use ncc\ThirdParty\composer\semver\Semver;
     use ncc\Utilities\Console;
     use ncc\Utilities\RuntimeCache;
     use RuntimeException;

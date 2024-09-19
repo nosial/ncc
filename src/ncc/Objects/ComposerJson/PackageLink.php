@@ -26,7 +26,7 @@
     namespace ncc\Objects\ComposerJson;
 
     use ncc\Interfaces\SerializableObjectInterface;
-    use ncc\ThirdParty\composer\Semver\VersionParser;
+    use ncc\ThirdParty\composer\semver\VersionParser;
 
     class PackageLink implements SerializableObjectInterface
     {

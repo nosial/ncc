@@ -39,7 +39,7 @@
     use ncc\Objects\ProjectConfiguration\ExecutionPolicy;
     use ncc\Objects\ProjectConfiguration\Installer;
     use ncc\Objects\ProjectConfiguration\UpdateSource;
-    use ncc\ThirdParty\composer\Semver\Semver;
+    use ncc\ThirdParty\composer\semver\Semver;
     use ncc\ThirdParty\jelix\Version\VersionComparator;
     use ncc\Utilities\Functions;
     use ncc\Utilities\IO;
