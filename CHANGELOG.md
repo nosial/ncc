@@ -69,6 +69,7 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Refactor project constants handling in NccCompiler
  - Updated Symfony/Yaml to version 7.1.4
  - Updated Symfony/Uid to version 7.1.4
+ - Updated Symfony/Process to version 7.1.3
 
 ### Fixed
  - Fixed Division by zero in PackageManager
