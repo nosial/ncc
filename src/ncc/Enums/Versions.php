@@ -30,11 +30,6 @@
         case CREDENTIALS_STORE_VERSION = '1.0.0';
 
         /**
-         * The current version of the package lock structure file format
-         */
-        case PACKAGE_LOCK_VERSION = '2.0.0';
-
-        /**
          * Generic version of the package structure file format (latest)
          */
         case LATEST = 'latest';
