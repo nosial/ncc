@@ -181,11 +181,11 @@
     {
         if($installed)
         {
-            Console::out("$ext ... " . Console::formatColor("installed", ConsoleColors::LIGHT_GREEN->value));
+            Console::out("$ext ... " . Console::formatColor("installed", ConsoleColors::LIGHT_GREEN));
         }
         else
         {
-            Console::out("$ext ... " . Console::formatColor("missing", ConsoleColors::LIGHT_RED->value));
+            Console::out("$ext ... " . Console::formatColor("missing", ConsoleColors::LIGHT_RED));
         }
     }
 
@@ -210,11 +210,11 @@
 
         try
         {
-            Console::out(Console::formatColor($full_name, ConsoleColors::GREEN->value) . ' Version: ' . Console::formatColor($component->getVersion(), ConsoleColors::LIGHT_MAGENTA->value));
+            Console::out(Console::formatColor($full_name, ConsoleColors::GREEN) . ' Version: ' . Console::formatColor($component->getVersion(), ConsoleColors::LIGHT_MAGENTA));
         }
         catch (Exception $e)
         {
-            Console::outWarning('Cannot determine component version of ' . Console::formatColor($full_name, ConsoleColors::GREEN->value));
+            Console::outWarning('Cannot determine component version of ' . Console::formatColor($full_name, ConsoleColors::GREEN));
         }
     }
 
