@@ -53,13 +53,13 @@
         private static function setPrefix(string $log_level, string $input): string
         {
             $input = match ($log_level) {
-                LogLevel::VERBOSE->value => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN->value) . " $input",
-                LogLevel::DEBUG->value => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA->value) . " $input",
-                LogLevel::INFO->value => self::formatColor('INF:', ConsoleColors::WHITE->value) . " $input",
-                LogLevel::WARNING->value => self::formatColor('WRN:', ConsoleColors::YELLOW->value) . " $input",
-                LogLevel::ERROR->value => self::formatColor('ERR:', ConsoleColors::LIGHT_RED->value) . " $input",
-                LogLevel::FATAL->value => self::formatColor('FTL:', ConsoleColors::LIGHT_RED->value) . " $input",
-                default => self::formatColor('MSG:', ConsoleColors::DEFAULT->value) . " $input",
+                LogLevel::VERBOSE->value => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN) . " $input",
+                LogLevel::DEBUG->value => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA) . " $input",
+                LogLevel::INFO->value => self::formatColor('INF:', ConsoleColors::WHITE) . " $input",
+                LogLevel::WARNING->value => self::formatColor('WRN:', ConsoleColors::YELLOW) . " $input",
+                LogLevel::ERROR->value => self::formatColor('ERR:', ConsoleColors::LIGHT_RED) . " $input",
+                LogLevel::FATAL->value => self::formatColor('FTL:', ConsoleColors::LIGHT_RED) . " $input",
+                default => self::formatColor('MSG:', ConsoleColors::DEFAULT) . " $input",
             };
 
             $tick_time = (string)microtime(true);
@@ -82,11 +82,11 @@
 
                 if ($timeDiff > 1.0)
                 {
-                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_RED->value);
+                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_RED);
                 }
                 elseif ($timeDiff > 0.5)
                 {
-                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW->value);
+                    $fmt_tick = self::formatColor($tick_time, ConsoleColors::LIGHT_YELLOW);
                 }
             }
 
@@ -155,9 +155,9 @@
             $trace_msg = null;
             if($backtrace !== null && isset($backtrace[1]))
             {
-                $trace_msg = self::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY->value);
+                $trace_msg = self::formatColor($backtrace[1]['class'], ConsoleColors::LIGHT_GREY);
                 $trace_msg .= $backtrace[1]['type'];
-                $trace_msg .= self::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN->value);
+                $trace_msg .= self::formatColor($backtrace[1]['function'] . '()', ConsoleColors::LIGHT_GREEN);
                 $trace_msg .= ' > ';
             }
 
@@ -192,11 +192,11 @@
          * Formats the text to have a different color and returns the formatted value
          *
          * @param string $input The input of the text value
-         * @param string $color_code The color code of the escaped character (\e[91m)
+         * @param ConsoleColors $color_code The color code of the escaped character (\e[91m)
          * @param bool $persist If true, the formatting will terminate in the default color
          * @return string
          */
-        public static function formatColor(string $input, string $color_code, bool $persist=true): string
+        public static function formatColor(string $input, ConsoleColors $color_code, bool $persist=true): string
         {
             if(isset(Main::getArgs()['no-color']))
             {
@@ -205,10 +205,10 @@
 
             if($persist)
             {
-                return $color_code . $input . ConsoleColors::DEFAULT->value;
+                return $color_code->value . $input . ConsoleColors::DEFAULT->value;
             }
 
-            return $color_code . $input;
+            return $color_code->value . $input;
         }
 
         /**
@@ -236,7 +236,7 @@
                 return;
             }
 
-            self::out(self::formatColor('Warning: ', ConsoleColors::YELLOW->value) . $message, $newline);
+            self::out(self::formatColor('Warning: ', ConsoleColors::YELLOW) . $message, $newline);
         }
 
         /**
@@ -265,7 +265,7 @@
             }
             else
             {
-                self::out(self::formatColor(ConsoleColors::RED->value, 'Error: ') . $message, $newline);
+                self::out(self::formatColor('Error: ', ConsoleColors::RED) . $message, $newline);
             }
 
             if($exit_code !== null)
@@ -291,7 +291,7 @@
 
             if($message !== '' && LogLevel::ERROR->checkLogLevel(Main::getLogLevel()))
             {
-                self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED->value) . $message);
+                self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED) . $message);
             }
 
             self::out(PHP_EOL . '===== Exception Details =====');
@@ -318,8 +318,8 @@
             }
 
             // Exception name without namespace
-            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::MAGENTA->value);
-            $trace_error = self::formatColor( 'Error: ', ConsoleColors::RED->value);
+            $trace_header = self::formatColor($e->getFile() . ':' . $e->getLine(), ConsoleColors::MAGENTA);
+            $trace_error = self::formatColor( 'Error: ', ConsoleColors::RED);
             self::out($trace_header . ' ' . $trace_error . $e->getMessage());
             self::out(sprintf('Exception: %s', get_class($e)));
             self::out(sprintf('Error code: %s', $e->getCode()));
@@ -331,11 +331,11 @@
                 {
                     if(!isset($item['file']))
                     {
-                        self::out(' - ' . self::formatColor(json_encode($item), ConsoleColors::RED->value));
+                        self::out(' - ' . self::formatColor(json_encode($item), ConsoleColors::RED));
                         continue;
                     }
 
-                    self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED->value) . ':' . $item['line']);
+                    self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED) . ':' . $item['line']);
                 }
             }
 
