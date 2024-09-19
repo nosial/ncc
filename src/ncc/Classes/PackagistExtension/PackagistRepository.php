@@ -163,23 +163,21 @@
         {
             $versions = self::getVersions($repository, $vendor, $project);
 
-            /** @noinspection KeysFragmentationWithArrayFunctionsInspection */
+            // Filter out pre-release versions such as alpha, beta, rc, dev
             $versions = array_filter($versions, static function($version)
             {
                 return !preg_match('/-alpha|-beta|-rc|dev/i', $version);
             });
 
-            usort($versions, static function($a, $b)
-            {
-                return Comparator::lessThanOrEqualTo($a, $b) ? 1 : -1;
-            });
+            // Sort versions in descending order using Semver::rsort
+            $versions = Semver::rsort($versions);
 
-            if($versions[0] === null)
+            if (!isset($versions[0]))
             {
                 throw new NetworkException(sprintf('Failed to resolve latest version for %s/%s', $vendor, $project));
             }
 
-            return $versions[0];
+            return $versions[0]; // The first version in the sorted array is the latest
         }
 
         /**
