@@ -333,8 +333,7 @@
 
             $metadata->addOptions($this->project_manager->getProjectConfiguration()->getBuild()->getOptions($build_configuration));
             $metadata->addOptions($this->project_manager->getProjectConfiguration()->getProject()->getOptions());
-            $metadata->addConstants($this->project_manager->getRuntimeConstants($build_configuration));
-            $metadata->addConstants($this->project_manager->getRuntimeConstants());
+            $metadata->addConstants($this->project_manager->getConstants($build_configuration));
             $metadata->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
             $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
@@ -352,6 +351,13 @@
                 $metadata->removeOption(BuildConfigurationOptions::STATIC_DEPENDENCIES->value);
             }
 
+            $compiled_constants = [];
+            foreach($this->project_manager->getConstants() as $constant => $value)
+            {
+                $compiled_constants[$constant] = ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $value);
+            }
+
+            $metadata->addConstants($compiled_constants);
 
             /** @noinspection UnusedFunctionResultInspection */
             $package_writer->setMetadata($metadata);

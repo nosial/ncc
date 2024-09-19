@@ -327,7 +327,7 @@
          * @param string $build_configuration
          * @return array
          */
-        public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
+        public function getConstants(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
             return array_merge($configuration->getDefineConstants(), $this->project_configuration->getBuild()->getDefineConstants());
