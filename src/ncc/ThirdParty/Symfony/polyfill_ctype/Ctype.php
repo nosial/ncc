@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Polyfill\Ctype;
+namespace ncc\ThirdParty\Symfony\polyfill_ctype;
 
 /**
  * Ctype implementation through regex.
