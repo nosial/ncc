@@ -44,9 +44,11 @@
     use ncc\Utilities\Console;
     use ncc\Utilities\IO;
     use ncc\Utilities\Resolver;
+    use ncc\Utilities\RuntimeCache;
     use ncc\Utilities\Validate;
     use RuntimeException;
     use Throwable;
+    use function trigger_error;
 
     class Runtime
     {
@@ -207,6 +209,34 @@
                         throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package, $e->getMessage()), $e);
                     }
                 }
+            }
+
+            $safe_package_name = strtoupper($entry->getAssembly($version)->getName());
+            foreach($entry->getMetadata($version)->getConstants() as $constant => $value)
+            {
+                $constant_full_name = sprintf("%s_%s", $safe_package_name, $constant);
+
+                // Skip if already defined.
+                if(defined($constant_full_name))
+                {
+                    if(RuntimeCache::get(sprintf("defined_%s", $constant_full_name)))
+                    {
+                        continue;
+                    }
+
+                    trigger_error(sprintf('Cannot define constant %s from package %s because the constant is already defined', $constant_full_name, $package), E_USER_WARNING);
+                    continue;
+                }
+
+                if(!Validate::constantName($constant_full_name))
+                {
+                    // trigger warning only
+                    trigger_error(sprintf('Cannot define constant %s from package %s because the constant name is invalid', $constant_full_name, $package), E_USER_WARNING);
+                    continue;
+                }
+
+                RuntimeCache::set(sprintf("defined_%s", $constant_full_name), true);
+                define($constant_full_name, $value);
             }
 
             if(isset($entry->getMetadata($version)->getOptions()[PackageFlags::STATIC_DEPENDENCIES->value]))

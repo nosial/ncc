@@ -203,11 +203,10 @@
          *
          * @param AuthenticationInterface|null $authentication
          * @return array Array of installed packages
-         * @throws OperationException
-         * @throws IOException
          * @throws ConfigurationException
+         * @throws IOException
+         * @throws OperationException
          * @throws PathNotFoundException
-         * @throws NotSupportedException
          */
         public function installDependencies(?AuthenticationInterface $authentication=null): array
         {
@@ -295,7 +294,6 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws NotSupportedException
          */
         public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
@@ -311,7 +309,6 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws NotSupportedException
          */
         public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
@@ -333,11 +330,7 @@
         public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
-
-            return array_merge(
-                $configuration->getDefineConstants(),
-                $this->project_configuration->getBuild()->getDefineConstants()
-            );
+            return array_merge($configuration->getDefineConstants(), $this->project_configuration->getBuild()->getDefineConstants());
         }
 
         /**

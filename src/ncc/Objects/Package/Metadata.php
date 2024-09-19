@@ -60,6 +60,11 @@
         private $main_execution_policy;
 
         /**
+         * @var array
+         */
+        private $constants;
+
+        /**
          * @var Installer|null
          */
         private $installer;
@@ -74,6 +79,7 @@
         {
             $this->compiler_extension = $compiler;
             $this->compiler_version = NCC_VERSION_NUMBER;
+            $this->constants = [];
             $this->options = [];
         }
 
@@ -115,6 +121,27 @@
         public function setCompilerVersion(string $compiler_version): void
         {
             $this->compiler_version = $compiler_version;
+        }
+
+        /**
+         * Returns the constants associated with the class
+         *
+         * @return array
+         */
+        public function getConstants(): array
+        {
+            return $this->constants;
+        }
+
+        /**
+         * Sets an array of constants to be used within the package
+         *
+         * @param array $constants
+         * @return void
+         */
+        public function addConstants(array $constants): void
+        {
+            $this->constants = array_merge($this->constants, $constants);
         }
 
         /**
@@ -258,6 +285,7 @@
                 ($bytecode ? Functions::cbc('update_source') : 'update_source') => ($this->update_source?->toArray($bytecode)),
                 ($bytecode ? Functions::cbc('installer') : 'installer') => ($this->installer?->toArray($bytecode)),
                 ($bytecode ? Functions::cbc('main_execution_policy') : 'main_execution_policy') => $this->main_execution_policy,
+                ($bytecode ? Functions::cbc('constants') : 'constants') => $this->constants,
                 ($bytecode ? Functions::cbc('options') : 'options') => $this->options,
             ];
         }
@@ -284,7 +312,13 @@
             $object->options = Functions::array_bc($data, 'options');
             $object->update_source = Functions::array_bc($data, 'update_source');
             $object->main_execution_policy = Functions::array_bc($data, 'main_execution_policy');
+            $object->constants = Functions::array_bc($data, 'constants');
             $object->installer = Functions::array_bc($data, 'installer');
+
+            if($object->constants === null)
+            {
+                $object->constants = [];
+            }
 
             if($object->update_source !== null)
             {
