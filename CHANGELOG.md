@@ -67,6 +67,7 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Updated Composer/Semver to 3.4.3
  - Rename 'semver' directory to 'Semver' in composer package
  - Refactor project constants handling in NccCompiler
+ - Updated Symfony/Yaml to version 7.1.4
 
 ### Fixed
  - Fixed Division by zero in PackageManager
