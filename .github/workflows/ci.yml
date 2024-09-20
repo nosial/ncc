@@ -37,7 +37,7 @@ jobs:
           sudo mv phive.phar /usr/local/bin/phive
 
       - name: Install PHPAB
-        run: phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+        run: sudo phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
 
       - name: Build project
         run: make redist
