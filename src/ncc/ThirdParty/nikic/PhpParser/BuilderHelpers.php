@@ -215,12 +215,12 @@ final class BuilderHelpers {
      * Normalizes a value: Converts nulls, booleans, integers,
      * floats, strings and arrays into their respective nodes
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Expr|bool|null|int|float|string|array|\UnitEnum $value The value to normalize
+     * @param Node\Expr|bool|null|int|float|string|array|\UnitEnum $value The value to normalize
      *
      * @return Expr The normalized value
      */
     public static function normalizeValue($value): Expr {
-        if ($value instanceof ncc\ThirdParty\nikic\PhpParser\Node\Expr) {
+        if ($value instanceof Node\Expr) {
             return $value;
         }
 
@@ -254,12 +254,12 @@ final class BuilderHelpers {
             foreach ($value as $itemKey => $itemValue) {
                 // for consecutive, numeric keys don't generate keys
                 if (null !== $lastKey && ++$lastKey === $itemKey) {
-                    $items[] = new ncc\ThirdParty\nikic\PhpParser\Node\ArrayItem(
+                    $items[] = new Node\ArrayItem(
                         self::normalizeValue($itemValue)
                     );
                 } else {
                     $lastKey = null;
-                    $items[] = new ncc\ThirdParty\nikic\PhpParser\Node\ArrayItem(
+                    $items[] = new Node\ArrayItem(
                         self::normalizeValue($itemValue),
                         self::normalizeValue($itemKey)
                     );
@@ -298,20 +298,20 @@ final class BuilderHelpers {
     /**
      * Normalizes a attribute: Converts attribute to the Attribute Group if needed.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Attribute|ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup $attribute
+     * @param Node\Attribute|Node\AttributeGroup $attribute
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup The Attribute Group
+     * @return Node\AttributeGroup The Attribute Group
      */
-    public static function normalizeAttribute($attribute): ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup {
-        if ($attribute instanceof ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup) {
+    public static function normalizeAttribute($attribute): Node\AttributeGroup {
+        if ($attribute instanceof Node\AttributeGroup) {
             return $attribute;
         }
 
-        if (!($attribute instanceof ncc\ThirdParty\nikic\PhpParser\Node\Attribute)) {
+        if (!($attribute instanceof Node\Attribute)) {
             throw new \LogicException('Attribute must be an instance of PhpParser\Node\Attribute or PhpParser\Node\AttributeGroup');
         }
 
-        return new ncc\ThirdParty\nikic\PhpParser\Node\AttributeGroup([$attribute]);
+        return new Node\AttributeGroup([$attribute]);
     }
 
     /**

@@ -30,7 +30,9 @@
     use ncc\Exceptions\PathNotFoundException;
     use ncc\Extensions\ZiProto\ZiProto;
     use ncc\Objects\Package\Component;
+    use ncc\ThirdParty\nikic\PhpParser\NodeDumper;
     use ncc\ThirdParty\nikic\PhpParser\ParserFactory;
+    use ncc\ThirdParty\nikic\PhpParser\PhpVersion;
     use ncc\Utilities\Base64;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
@@ -52,12 +54,8 @@
 
             try
             {
-                $stmts = (new ParserFactory())->create(ParserFactory::PREFER_PHP7)->parse(IO::fread($file_path));
-                $stmts = AstWalker::transformRequireCalls(
-                    $stmts, $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getPackage()
-                );
-
-                $component = new Component($component_name, ZiProto::encode($stmts), ComponentDataType::AST);
+                $stmts = ((new ParserFactory())->createForNewestSupportedVersion())->parse(IO::fread($file_path));
+                $component = new Component($component_name, ZiProto::encode(Serializer::nodesToArray($stmts)), ComponentDataType::AST);
                 $component->addFlag(ComponentFlags::PHP_AST->value);
                 $pointer = $package_writer->addComponent($component);
 

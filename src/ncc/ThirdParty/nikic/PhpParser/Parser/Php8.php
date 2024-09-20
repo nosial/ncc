@@ -2042,19 +2042,19 @@ class Php8 extends \ncc\ThirdParty\nikic\PhpParser\ParserAbstract
                  $self->semStack[$stackPos-(2-1)][] = $self->semStack[$stackPos-(2-2)]; $self->semValue = $self->semStack[$stackPos-(2-1)];
             },
             358 => static function ($self, $stackPos) {
-                 $self->semValue = new \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Precedence($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], $self->semStack[$stackPos-(4-3)], $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
+                 $self->semValue = new Stmt\TraitUseAdaptation\Precedence($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], $self->semStack[$stackPos-(4-3)], $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
             },
             359 => static function ($self, $stackPos) {
-                 $self->semValue = new \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(5-1)][0], $self->semStack[$stackPos-(5-1)][1], $self->semStack[$stackPos-(5-3)], $self->semStack[$stackPos-(5-4)], $self->getAttributes($self->tokenStartStack[$stackPos-(5-1)], $self->tokenEndStack[$stackPos]));
+                 $self->semValue = new Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(5-1)][0], $self->semStack[$stackPos-(5-1)][1], $self->semStack[$stackPos-(5-3)], $self->semStack[$stackPos-(5-4)], $self->getAttributes($self->tokenStartStack[$stackPos-(5-1)], $self->tokenEndStack[$stackPos]));
             },
             360 => static function ($self, $stackPos) {
-                 $self->semValue = new \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], $self->semStack[$stackPos-(4-3)], null, $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
+                 $self->semValue = new Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], $self->semStack[$stackPos-(4-3)], null, $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
             },
             361 => static function ($self, $stackPos) {
-                 $self->semValue = new \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], null, $self->semStack[$stackPos-(4-3)], $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
+                 $self->semValue = new Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], null, $self->semStack[$stackPos-(4-3)], $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
             },
             362 => static function ($self, $stackPos) {
-                 $self->semValue = new \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], null, $self->semStack[$stackPos-(4-3)], $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
+                 $self->semValue = new Stmt\TraitUseAdaptation\Alias($self->semStack[$stackPos-(4-1)][0], $self->semStack[$stackPos-(4-1)][1], null, $self->semStack[$stackPos-(4-3)], $self->getAttributes($self->tokenStartStack[$stackPos-(4-1)], $self->tokenEndStack[$stackPos]));
             },
             363 => static function ($self, $stackPos) {
                  $self->semValue = array($self->semStack[$stackPos-(3-1)], $self->semStack[$stackPos-(3-3)]);

@@ -3,8 +3,7 @@
 namespace ncc\ThirdParty\nikic\PhpParser\Internal;
 
 if (\PHP_VERSION_ID >= 80000) {
-    class TokenPolyfill extends \PhpToken {
-    }
+    class_alias(\PhpToken::class, TokenPolyfill::class);
     return;
 }
 

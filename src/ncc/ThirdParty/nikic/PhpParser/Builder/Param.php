@@ -5,7 +5,7 @@ namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 use ncc\ThirdParty\nikic\PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Modifiers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
+use PhpParser\Node;
 
 class Param implements PhpParser\Builder {
     protected string $name;

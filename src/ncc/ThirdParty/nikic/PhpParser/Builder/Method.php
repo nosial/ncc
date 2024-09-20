@@ -5,8 +5,8 @@ namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 use ncc\ThirdParty\nikic\PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Modifiers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\Node;
+use PhpParser\Node\Stmt;
 
 class Method extends FunctionLike {
     protected string $name;

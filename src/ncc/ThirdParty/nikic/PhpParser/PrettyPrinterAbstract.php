@@ -122,7 +122,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
 
     /** @var TokenStream|null Original tokens for use in format-preserving pretty print */
     protected ?TokenStream $origTokens;
-    /** @var ncc\ThirdParty\nikic\PhpParser\Internal\Differ<Node> Differ for node lists */
+    /** @var Internal\Differ<Node> Differ for node lists */
     protected Differ $nodeListDiffer;
     /** @var array<string, bool> Map determining whether a certain character is a label character */
     protected array $labelCharMap;
@@ -1069,7 +1069,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
                 }
                 break;
             case self::FIXUP_ENCAPSED:
-                if (!$subNode instanceof ncc\ThirdParty\nikic\PhpParser\Node\InterpolatedStringPart
+                if (!$subNode instanceof Node\InterpolatedStringPart
                     && !$this->origTokens->haveBraces($subStartPos, $subEndPos)
                 ) {
                     return '{' . $this->p($subNode) . '}';
@@ -1115,7 +1115,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
      * @return bool Whether parentheses are required
      */
     protected function callLhsRequiresParens(Node $node): bool {
-        return !($node instanceof ncc\ThirdParty\nikic\PhpParser\Node\Name
+        return !($node instanceof Node\Name
             || $node instanceof Expr\Variable
             || $node instanceof Expr\ArrayDimFetch
             || $node instanceof Expr\FuncCall
@@ -1147,7 +1147,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
      */
     protected function staticDereferenceLhsRequiresParens(Node $node): bool {
         return !($node instanceof Expr\Variable
-            || $node instanceof ncc\ThirdParty\nikic\PhpParser\Node\Name
+            || $node instanceof Node\Name
             || $node instanceof Expr\ArrayDimFetch
             || $node instanceof Expr\PropertyFetch
             || $node instanceof Expr\NullsafePropertyFetch
@@ -1169,7 +1169,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
      * @return bool Whether parentheses are required
      */
     protected function newOperandRequiresParens(Node $node): bool {
-        if ($node instanceof ncc\ThirdParty\nikic\PhpParser\Node\Name || $node instanceof Expr\Variable) {
+        if ($node instanceof Node\Name || $node instanceof Expr\Variable) {
             return false;
         }
         if ($node instanceof Expr\ArrayDimFetch || $node instanceof Expr\PropertyFetch ||
@@ -1272,7 +1272,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
             return;
         }
 
-        $this->nodeListDiffer = new ncc\ThirdParty\nikic\PhpParser\Internal\Differ(function ($a, $b) {
+        $this->nodeListDiffer = new Internal\Differ(function ($a, $b) {
             if ($a instanceof Node && $b instanceof Node) {
                 return $a === $b->getAttribute('origNode');
             }
@@ -1516,7 +1516,7 @@ abstract class PrettyPrinterAbstract implements PrettyPrinter {
             Stmt\Property::class . '->props' => ', ',
             Stmt\StaticVar::class . '->vars' => ', ',
             Stmt\TraitUse::class . '->traits' => ', ',
-            \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Precedence::class . '->insteadof' => ', ',
+            Stmt\TraitUseAdaptation\Precedence::class . '->insteadof' => ', ',
             Stmt\Unset_::class .  '->vars' => ', ',
             Stmt\UseUse::class . '->uses' => ', ',
             MatchArm::class . '->conds' => ', ',

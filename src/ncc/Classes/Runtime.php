@@ -162,7 +162,7 @@
                 }
             }
 
-            throw new RuntimeException('Importing from a package name is not supported yet');
+            throw new RuntimeException(sprintf('Failed to import package "%s" because it does not exist', $package));
         }
 
         /**

@@ -260,7 +260,7 @@ class NodeTraverser implements NodeTraverserInterface {
     }
 
     private function ensureReplacementReasonable(Node $old, Node $new): void {
-        if ($old instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt && $new instanceof ncc\ThirdParty\nikic\PhpParser\Node\Expr) {
+        if ($old instanceof Node\Stmt && $new instanceof Node\Expr) {
             throw new \LogicException(
                 "Trying to replace statement ({$old->getType()}) " .
                 "with expression ({$new->getType()}). Are you missing a " .
@@ -268,7 +268,7 @@ class NodeTraverser implements NodeTraverserInterface {
             );
         }
 
-        if ($old instanceof ncc\ThirdParty\nikic\PhpParser\Node\Expr && $new instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt) {
+        if ($old instanceof Node\Expr && $new instanceof Node\Stmt) {
             throw new \LogicException(
                 "Trying to replace expression ({$old->getType()}) " .
                 "with statement ({$new->getType()})"

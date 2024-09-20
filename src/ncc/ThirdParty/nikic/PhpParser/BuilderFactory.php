@@ -17,8 +17,8 @@ class BuilderFactory {
      * @param string|Name $name Name of the attribute
      * @param array $args Attribute named arguments
      */
-    public function attribute($name, array $args = []): ncc\ThirdParty\nikic\PhpParser\Node\Attribute {
-        return new ncc\ThirdParty\nikic\PhpParser\Node\Attribute(
+    public function attribute($name, array $args = []): Node\Attribute {
+        return new Node\Attribute(
             BuilderHelpers::normalizeName($name),
             $this->args($args)
         );
@@ -27,12 +27,12 @@ class BuilderFactory {
     /**
      * Creates a namespace builder.
      *
-     * @param null|string|ncc\ThirdParty\nikic\PhpParser\Node\Name $name Name of the namespace
+     * @param null|string|Node\Name $name Name of the namespace
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Namespace_ The created namespace builder
+     * @return Builder\Namespace_ The created namespace builder
      */
-    public function namespace($name): ncc\ThirdParty\nikic\PhpParser\Builder\Namespace_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Namespace_($name);
+    public function namespace($name): Builder\Namespace_ {
+        return new Builder\Namespace_($name);
     }
 
     /**
@@ -40,10 +40,10 @@ class BuilderFactory {
      *
      * @param string $name Name of the class
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Class_ The created class builder
+     * @return Builder\Class_ The created class builder
      */
-    public function class(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Class_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Class_($name);
+    public function class(string $name): Builder\Class_ {
+        return new Builder\Class_($name);
     }
 
     /**
@@ -51,10 +51,10 @@ class BuilderFactory {
      *
      * @param string $name Name of the interface
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Interface_ The created interface builder
+     * @return Builder\Interface_ The created interface builder
      */
-    public function interface(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Interface_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Interface_($name);
+    public function interface(string $name): Builder\Interface_ {
+        return new Builder\Interface_($name);
     }
 
     /**
@@ -62,10 +62,10 @@ class BuilderFactory {
      *
      * @param string $name Name of the trait
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Trait_ The created trait builder
+     * @return Builder\Trait_ The created trait builder
      */
-    public function trait(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Trait_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Trait_($name);
+    public function trait(string $name): Builder\Trait_ {
+        return new Builder\Trait_($name);
     }
 
     /**
@@ -73,38 +73,38 @@ class BuilderFactory {
      *
      * @param string $name Name of the enum
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Enum_ The created enum builder
+     * @return Builder\Enum_ The created enum builder
      */
-    public function enum(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Enum_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Enum_($name);
+    public function enum(string $name): Builder\Enum_ {
+        return new Builder\Enum_($name);
     }
 
     /**
      * Creates a trait use builder.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Name|string ...$traits Trait names
+     * @param Node\Name|string ...$traits Trait names
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\TraitUse The created trait use builder
+     * @return Builder\TraitUse The created trait use builder
      */
-    public function useTrait(...$traits): ncc\ThirdParty\nikic\PhpParser\Builder\TraitUse {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\TraitUse(...$traits);
+    public function useTrait(...$traits): Builder\TraitUse {
+        return new Builder\TraitUse(...$traits);
     }
 
     /**
      * Creates a trait use adaptation builder.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Name|string|null $trait Trait name
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Identifier|string $method Method name
+     * @param Node\Name|string|null $trait Trait name
+     * @param Node\Identifier|string $method Method name
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\TraitUseAdaptation The created trait use adaptation builder
+     * @return Builder\TraitUseAdaptation The created trait use adaptation builder
      */
-    public function traitUseAdaptation($trait, $method = null): ncc\ThirdParty\nikic\PhpParser\Builder\TraitUseAdaptation {
+    public function traitUseAdaptation($trait, $method = null): Builder\TraitUseAdaptation {
         if ($method === null) {
             $method = $trait;
             $trait = null;
         }
 
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\TraitUseAdaptation($trait, $method);
+        return new Builder\TraitUseAdaptation($trait, $method);
     }
 
     /**
@@ -112,10 +112,10 @@ class BuilderFactory {
      *
      * @param string $name Name of the method
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Method The created method builder
+     * @return Builder\Method The created method builder
      */
-    public function method(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Method {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Method($name);
+    public function method(string $name): Builder\Method {
+        return new Builder\Method($name);
     }
 
     /**
@@ -123,10 +123,10 @@ class BuilderFactory {
      *
      * @param string $name Name of the parameter
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Param The created parameter builder
+     * @return Builder\Param The created parameter builder
      */
-    public function param(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Param {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Param($name);
+    public function param(string $name): Builder\Param {
+        return new Builder\Param($name);
     }
 
     /**
@@ -134,10 +134,10 @@ class BuilderFactory {
      *
      * @param string $name Name of the property
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Property The created property builder
+     * @return Builder\Property The created property builder
      */
-    public function property(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Property {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Property($name);
+    public function property(string $name): Builder\Property {
+        return new Builder\Property($name);
     }
 
     /**
@@ -145,55 +145,55 @@ class BuilderFactory {
      *
      * @param string $name Name of the function
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Function_ The created function builder
+     * @return Builder\Function_ The created function builder
      */
-    public function function(string $name): ncc\ThirdParty\nikic\PhpParser\Builder\Function_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Function_($name);
+    public function function(string $name): Builder\Function_ {
+        return new Builder\Function_($name);
     }
 
     /**
      * Creates a namespace/class use builder.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Name|string $name Name of the entity (namespace or class) to alias
+     * @param Node\Name|string $name Name of the entity (namespace or class) to alias
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Use_ The created use builder
+     * @return Builder\Use_ The created use builder
      */
-    public function use($name): ncc\ThirdParty\nikic\PhpParser\Builder\Use_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Use_($name, Use_::TYPE_NORMAL);
+    public function use($name): Builder\Use_ {
+        return new Builder\Use_($name, Use_::TYPE_NORMAL);
     }
 
     /**
      * Creates a function use builder.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Name|string $name Name of the function to alias
+     * @param Node\Name|string $name Name of the function to alias
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Use_ The created use function builder
+     * @return Builder\Use_ The created use function builder
      */
-    public function useFunction($name): ncc\ThirdParty\nikic\PhpParser\Builder\Use_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Use_($name, Use_::TYPE_FUNCTION);
+    public function useFunction($name): Builder\Use_ {
+        return new Builder\Use_($name, Use_::TYPE_FUNCTION);
     }
 
     /**
      * Creates a constant use builder.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Name|string $name Name of the const to alias
+     * @param Node\Name|string $name Name of the const to alias
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\Use_ The created use const builder
+     * @return Builder\Use_ The created use const builder
      */
-    public function useConst($name): ncc\ThirdParty\nikic\PhpParser\Builder\Use_ {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\Use_($name, Use_::TYPE_CONSTANT);
+    public function useConst($name): Builder\Use_ {
+        return new Builder\Use_($name, Use_::TYPE_CONSTANT);
     }
 
     /**
      * Creates a class constant builder.
      *
      * @param string|Identifier $name Name
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Expr|bool|null|int|float|string|array $value Value
+     * @param Node\Expr|bool|null|int|float|string|array $value Value
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\ClassConst The created use const builder
+     * @return Builder\ClassConst The created use const builder
      */
-    public function classConst($name, $value): ncc\ThirdParty\nikic\PhpParser\Builder\ClassConst {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\ClassConst($name, $value);
+    public function classConst($name, $value): Builder\ClassConst {
+        return new Builder\ClassConst($name, $value);
     }
 
     /**
@@ -201,10 +201,10 @@ class BuilderFactory {
      *
      * @param string|Identifier $name Name
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Builder\EnumCase The created use const builder
+     * @return Builder\EnumCase The created use const builder
      */
-    public function enumCase($name): ncc\ThirdParty\nikic\PhpParser\Builder\EnumCase {
-        return new ncc\ThirdParty\nikic\PhpParser\Builder\EnumCase($name);
+    public function enumCase($name): Builder\EnumCase {
+        return new Builder\EnumCase($name);
     }
 
     /**

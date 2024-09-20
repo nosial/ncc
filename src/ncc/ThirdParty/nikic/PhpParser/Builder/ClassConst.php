@@ -7,10 +7,10 @@ namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 use ncc\ThirdParty\nikic\PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Modifiers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Const_;
-use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\Node;
+use PhpParser\Node\Const_;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Stmt;
 
 class ClassConst implements PhpParser\Builder {
     protected int $flags = 0;

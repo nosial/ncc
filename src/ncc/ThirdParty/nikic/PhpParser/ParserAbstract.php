@@ -174,7 +174,7 @@ abstract class ParserAbstract implements Parser {
      * @param ErrorHandler|null $errorHandler Error handler to use for lexer/parser errors, defaults
      *                                        to ErrorHandler\Throwing.
      *
-     * @return ncc\ThirdParty\nikic\PhpParser\Node\Stmt[]|null Array of statements (or null non-throwing error handler is used and
+     * @return Node\Stmt[]|null Array of statements (or null non-throwing error handler is used and
      *                          the parser was unable to recover from an error).
      */
     public function parse(string $code, ?ErrorHandler $errorHandler = null): ?array {
@@ -555,8 +555,8 @@ abstract class ParserAbstract implements Parser {
     /**
      * Moves statements of semicolon-style namespaces into $ns->stmts and checks various error conditions.
      *
-     * @param ncc\ThirdParty\nikic\PhpParser\Node\Stmt[] $stmts
-     * @return ncc\ThirdParty\nikic\PhpParser\Node\Stmt[]
+     * @param Node\Stmt[] $stmts
+     * @return Node\Stmt[]
      */
     protected function handleNamespaces(array $stmts): array {
         $hasErrored = false;
@@ -569,10 +569,10 @@ abstract class ParserAbstract implements Parser {
             // For braced namespaces we only have to check that there are no invalid statements between the namespaces
             $afterFirstNamespace = false;
             foreach ($stmts as $stmt) {
-                if ($stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Namespace_) {
+                if ($stmt instanceof Node\Stmt\Namespace_) {
                     $afterFirstNamespace = true;
-                } elseif (!$stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\HaltCompiler
-                        && !$stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Nop
+                } elseif (!$stmt instanceof Node\Stmt\HaltCompiler
+                        && !$stmt instanceof Node\Stmt\Nop
                         && $afterFirstNamespace && !$hasErrored) {
                     $this->emitError(new Error(
                         'No code may exist outside of namespace {}', $stmt->getAttributes()));
@@ -586,7 +586,7 @@ abstract class ParserAbstract implements Parser {
             $targetStmts = &$resultStmts;
             $lastNs = null;
             foreach ($stmts as $stmt) {
-                if ($stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Namespace_) {
+                if ($stmt instanceof Node\Stmt\Namespace_) {
                     if ($lastNs !== null) {
                         $this->fixupNamespaceAttributes($lastNs);
                     }
@@ -600,7 +600,7 @@ abstract class ParserAbstract implements Parser {
                         $targetStmts = &$resultStmts;
                     }
                     $lastNs = $stmt;
-                } elseif ($stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\HaltCompiler) {
+                } elseif ($stmt instanceof Node\Stmt\HaltCompiler) {
                     // __halt_compiler() is not moved into the namespace
                     $resultStmts[] = $stmt;
                 } else {
@@ -614,7 +614,7 @@ abstract class ParserAbstract implements Parser {
         }
     }
 
-    private function fixupNamespaceAttributes(ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Namespace_ $stmt): void {
+    private function fixupNamespaceAttributes(Node\Stmt\Namespace_ $stmt): void {
         // We moved the statements into the namespace node, as such the end of the namespace node
         // needs to be extended to the end of the statements.
         if (empty($stmt->stmts)) {
@@ -659,7 +659,7 @@ abstract class ParserAbstract implements Parser {
         $style = null;
         $hasNotAllowedStmts = false;
         foreach ($stmts as $i => $stmt) {
-            if ($stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Namespace_) {
+            if ($stmt instanceof Node\Stmt\Namespace_) {
                 $currentStyle = null === $stmt->stmts ? 'semicolon' : 'brace';
                 if (null === $style) {
                     $style = $currentStyle;
@@ -681,14 +681,14 @@ abstract class ParserAbstract implements Parser {
             }
 
             /* declare(), __halt_compiler() and nops can be used before a namespace declaration */
-            if ($stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Declare_
-                || $stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\HaltCompiler
-                || $stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\Nop) {
+            if ($stmt instanceof Node\Stmt\Declare_
+                || $stmt instanceof Node\Stmt\HaltCompiler
+                || $stmt instanceof Node\Stmt\Nop) {
                 continue;
             }
 
             /* There may be a hashbang line at the very start of the file */
-            if ($i === 0 && $stmt instanceof ncc\ThirdParty\nikic\PhpParser\Node\Stmt\InlineHTML && preg_match('/\A#!.*\r?\n\z/', $stmt->value)) {
+            if ($i === 0 && $stmt instanceof Node\Stmt\InlineHTML && preg_match('/\A#!.*\r?\n\z/', $stmt->value)) {
                 continue;
             }
 
@@ -709,7 +709,7 @@ abstract class ParserAbstract implements Parser {
             return $name;
         }
 
-        return new ncc\ThirdParty\nikic\PhpParser\Node\Identifier($lowerName, $name->getAttributes());
+        return new Node\Identifier($lowerName, $name->getAttributes());
     }
 
     /**
@@ -860,7 +860,7 @@ abstract class ParserAbstract implements Parser {
             return new String_($contents, $attributes);
         } else {
             assert(count($contents) > 0);
-            if (!$contents[0] instanceof ncc\ThirdParty\nikic\PhpParser\Node\InterpolatedStringPart) {
+            if (!$contents[0] instanceof Node\InterpolatedStringPart) {
                 // If there is no leading encapsed string part, pretend there is an empty one
                 $this->stripIndentation(
                     '', $indentLen, $indentChar, true, false, $contents[0]->getAttributes()
@@ -869,7 +869,7 @@ abstract class ParserAbstract implements Parser {
 
             $newContents = [];
             foreach ($contents as $i => $part) {
-                if ($part instanceof ncc\ThirdParty\nikic\PhpParser\Node\InterpolatedStringPart) {
+                if ($part instanceof Node\InterpolatedStringPart) {
                     $isLast = $i === \count($contents) - 1;
                     $part->value = $this->stripIndentation(
                         $part->value, $indentLen, $indentChar,
@@ -977,13 +977,13 @@ abstract class ParserAbstract implements Parser {
 
     protected function fixupArrayDestructuring(Array_ $node): Expr\List_ {
         $this->createdArrays->detach($node);
-        return new Expr\List_(array_map(function (ncc\ThirdParty\nikic\PhpParser\Node\ArrayItem $item) {
+        return new Expr\List_(array_map(function (Node\ArrayItem $item) {
             if ($item->value instanceof Expr\Error) {
                 // We used Error as a placeholder for empty elements, which are legal for destructuring.
                 return null;
             }
             if ($item->value instanceof Array_) {
-                return new ncc\ThirdParty\nikic\PhpParser\Node\ArrayItem(
+                return new Node\ArrayItem(
                     $this->fixupArrayDestructuring($item->value),
                     $item->key, $item->byRef, $item->getAttributes());
             }
@@ -1196,7 +1196,7 @@ abstract class ParserAbstract implements Parser {
         }
     }
 
-    /** @param array<ncc\ThirdParty\nikic\PhpParser\Node\Arg|ncc\ThirdParty\nikic\PhpParser\Node\VariadicPlaceholder> $args */
+    /** @param array<Node\Arg|Node\VariadicPlaceholder> $args */
     private function isSimpleExit(array $args): bool {
         if (\count($args) === 0) {
             return true;
@@ -1210,7 +1210,7 @@ abstract class ParserAbstract implements Parser {
     }
 
     /**
-     * @param array<ncc\ThirdParty\nikic\PhpParser\Node\Arg|ncc\ThirdParty\nikic\PhpParser\Node\VariadicPlaceholder> $args
+     * @param array<Node\Arg|Node\VariadicPlaceholder> $args
      * @param array<string, mixed> $attrs
      */
     protected function createExitExpr(string $name, int $namePos, array $args, array $attrs): Expr {

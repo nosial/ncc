@@ -27,6 +27,7 @@
     use Exception;
     use InvalidArgumentException;
     use ncc\Classes\PhpExtension\AstWalker;
+    use ncc\Classes\PhpExtension\Serializer;
     use ncc\Enums\Flags\ComponentFlags;
     use ncc\Enums\LogLevel;
     use ncc\Enums\Options\ComponentDecodeOptions;
@@ -177,12 +178,15 @@
                     {
                         try
                         {
+                            $decodedData = base64_decode($this->data);
+                            $ast = Serializer::arrayToNodes((array)$decodedData);
+
                             if(in_array(ComponentDecodeOptions::AS_FILE->value, $options, true))
                             {
-                                return (new Standard())->prettyPrintFile(AstWalker::decodeRecursive(base64_decode($this->data)));
+                                return (new Standard())->prettyPrintFile($ast);
                             }
 
-                            return (new Standard())->prettyPrint(AstWalker::decodeRecursive(base64_decode($this->data)));
+                            return (new Standard())->prettyPrint($ast);
                         }
                         catch(Exception $e)
                         {
@@ -197,12 +201,15 @@
                     {
                         try
                         {
+                            $decodedData = ZiProto::decode($this->data);
+                            $ast = Serializer::arrayToNodes($decodedData);
+
                             if(in_array(ComponentDecodeOptions::AS_FILE->value, $options, true))
                             {
-                                return (new Standard())->prettyPrintFile(AstWalker::decodeRecursive(ZiProto::decode($this->data)));
+                                return (new Standard())->prettyPrintFile($ast);
                             }
 
-                            return (new Standard())->prettyPrint(AstWalker::decodeRecursive(ZiProto::decode($this->data)));
+                            return (new Standard())->prettyPrint($ast);
                         }
                         catch(Exception $e)
                         {

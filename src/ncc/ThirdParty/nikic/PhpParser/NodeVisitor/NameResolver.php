@@ -156,7 +156,7 @@ class NameResolver extends NodeVisitorAbstract {
                     $adaptation->trait = $this->resolveClassName($adaptation->trait);
                 }
 
-                if ($adaptation instanceof \ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Precedence) {
+                if ($adaptation instanceof Stmt\TraitUseAdaptation\Precedence) {
                     foreach ($adaptation->insteadof as &$insteadof) {
                         $insteadof = $this->resolveClassName($insteadof);
                     }

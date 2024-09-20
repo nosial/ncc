@@ -5,7 +5,7 @@ namespace ncc\ThirdParty\nikic\PhpParser;
 /**
  * A PHP token. On PHP 8.0 this extends from PhpToken.
  */
-class Token extends ncc\ThirdParty\nikic\PhpParser\Internal\TokenPolyfill {
+class Token extends Internal\TokenPolyfill {
     /** Get (exclusive) zero-based end position of the token. */
     public function getEndPos(): int {
         return $this->pos + \strlen($this->text);

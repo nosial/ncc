@@ -815,12 +815,12 @@ class Standard extends PrettyPrinterAbstract {
                 : ' {' . $this->pStmts($node->adaptations) . $this->nl . '}');
     }
 
-    protected function pStmt_TraitUseAdaptation_Precedence(\ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Precedence $node): string {
+    protected function pStmt_TraitUseAdaptation_Precedence(Stmt\TraitUseAdaptation\Precedence $node): string {
         return $this->p($node->trait) . '::' . $node->method
              . ' insteadof ' . $this->pCommaSeparated($node->insteadof) . ';';
     }
 
-    protected function pStmt_TraitUseAdaptation_Alias(\ncc\ThirdParty\nikic\PhpParser\Node\Stmt\TraitUseAdaptation\Alias $node): string {
+    protected function pStmt_TraitUseAdaptation_Alias(Stmt\TraitUseAdaptation\Alias $node): string {
         return (null !== $node->trait ? $this->p($node->trait) . '::' : '')
              . $node->method . ' as'
              . (null !== $node->newModifier ? ' ' . rtrim($this->pModifiers($node->newModifier), ' ') : '')

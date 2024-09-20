@@ -5,11 +5,11 @@ namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 use ncc\ThirdParty\nikic\PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Modifiers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Identifier;
-use ncc\ThirdParty\nikic\PhpParser\Node\Name;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
-use ncc\ThirdParty\nikic\PhpParser\Node\ComplexType;
+use PhpParser\Node;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\Stmt;
+use PhpParser\Node\ComplexType;
 
 class Property implements PhpParser\Builder {
     protected string $name;

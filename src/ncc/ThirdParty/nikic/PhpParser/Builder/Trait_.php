@@ -4,8 +4,8 @@ namespace ncc\ThirdParty\nikic\PhpParser\Builder;
 
 use ncc\ThirdParty\nikic\PhpParser;
 use PhpParser\BuilderHelpers;
-use ncc\ThirdParty\nikic\PhpParser\Node;
-use ncc\ThirdParty\nikic\PhpParser\Node\Stmt;
+use PhpParser\Node;
+use PhpParser\Node\Stmt;
 
 class Trait_ extends Declaration {
     protected string $name;
