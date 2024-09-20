@@ -195,18 +195,34 @@
             {
                 foreach($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) as $item)
                 {
+                    $required_file = $entry->getPath($version) . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $item;
+
                     try
                     {
-                        // Get the file contents and prepare it
-                        $required_file = IO::fread($entry->getPath($version) . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $item);
-                        $required_file = preg_replace('/^<\?php|<\?PHP/', '', $required_file, 1);
+                        if(!file_exists($required_file))
+                        {
+                            throw new PathNotFoundException($required_file);
+                        }
 
-                        eval($required_file);
-                        unset($required_file);
+                        // Get the file contents and prepare it
+                        $evaluated_code = IO::fread($required_file(preg_replace('/^<\?php|<\?PHP/', '', $required_file, 1)));
+                        set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($item, $package)
+                        {
+                            throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package, $errstr));
+                        });
+
+                        // Evaluate the code
+                        eval($evaluated_code);
+                        restore_error_handler();
+                        unset($evaluated_code);
                     }
-                    catch(ConfigurationException $e)
+                    catch (ConfigurationException $e)
                     {
-                        throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package, $e->getMessage()), $e);
+                        throw new ImportException(sprintf('%s: Failed to import "%s" from %s: %s', $required_file, $item, $package, $e->getMessage()), $e);
+                    }
+                    catch (Throwable $e)
+                    {
+                        throw new ImportException(sprintf('%s: Failed to import "%s" from %s: %s', $required_file, $item, $package, $e->getMessage()), $e);
                     }
                 }
             }
