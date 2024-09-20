@@ -52,10 +52,10 @@ jobs:
       - name: Create redist.zip
         run: zip -r redist.zip ${{ env.NCC_DIR }}
 
-      - name: Upload NCC build directory
+      - name: Upload redist.zip
         uses: actions/upload-artifact@v3
         with:
-          name: ncc-build
+          name: redist-zip
           path: redist.zip
 
       - name: Build Debian package
@@ -99,28 +99,28 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'created'
 
     steps:
-      - name: Download NCC build directory
+      - name: Download redist.zip
         uses: actions/download-artifact@v3
         with:
-          name: ncc-build
-          path: build
+          name: redist-zip
+          path: .
 
       - name: Download Debian package
         uses: actions/download-artifact@v3
         with:
           name: ncc-deb
-          path: build
+          path: .
 
       - name: Upload redist.zip to release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/redist.zip
+          files: redist.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload ncc.deb to release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/${{ env.DEB_FILE }}
+          files: ${{ env.DEB_FILE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
