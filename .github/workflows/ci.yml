@@ -84,5 +84,4 @@ jobs:
 
       - name: Test NCC installation
         run: |
-          ls -l build
-          php build/INSTALL --auto
+          sudo php build/INSTALL --auto
