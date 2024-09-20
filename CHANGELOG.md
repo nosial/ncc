@@ -77,6 +77,7 @@ This update introduces a refactored code-base, code quality improvements, and be
 
 ### Fixed
  - Fixed Division by zero in PackageManager
+ - Fixed runner argument passing for ExecCommand
 
 ### Removed
  - Removed EncoderType enum file, unused.
