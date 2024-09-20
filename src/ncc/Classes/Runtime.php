@@ -205,10 +205,16 @@
                         }
 
                         // Get the file contents and prepare it
-                        $evaluated_code = IO::fread($required_file(preg_replace('/^<\?php|<\?PHP/', '', $required_file, 1)));
-                        set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($item, $package)
+                        $evaluated_code = IO::fread($required_file);
+
+                        // Remove the PHP tags
+                        $evaluated_code = preg_replace('/^<\?php|<\?PHP/', '', $evaluated_code, 1);
+                        // Replace __DIR__ with the actual directory that the file is in
+                        $evaluated_code = str_replace('__DIR__', sprintf('"%s"', dirname($required_file)), $evaluated_code);
+
+                        set_error_handler(function ($error_number, $message, $file, $line) use ($item, $package)
                         {
-                            throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package, $errstr));
+                            throw new ImportException(sprintf('Fatal Evaluation Error: Failed to import "%s" from %s on %s:%s: %s', $item, $package, $file, $line, $message));
                         });
 
                         // Evaluate the code
@@ -219,6 +225,10 @@
                     catch (ConfigurationException $e)
                     {
                         throw new ImportException(sprintf('%s: Failed to import "%s" from %s: %s', $required_file, $item, $package, $e->getMessage()), $e);
+                    }
+                    catch(ImportException $e)
+                    {
+                        throw $e;
                     }
                     catch (Throwable $e)
                     {

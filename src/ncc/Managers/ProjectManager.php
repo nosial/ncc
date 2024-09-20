@@ -676,14 +676,7 @@
                 $path = substr($path, 0, -1);
             }
 
-            if($path === '')
-            {
-                $destination_path .=  DIRECTORY_SEPARATOR . hash('crc32', $project_path);
-            }
-            else
-            {
-                $destination_path .= DIRECTORY_SEPARATOR . hash('crc32', $path);
-            }
+            $destination_path .= DIRECTORY_SEPARATOR . hash('crc32', $project_path);
 
             if(is_file($source_path))
             {
