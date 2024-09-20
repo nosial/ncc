@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - '**'
+  release:
+    types:
+      - created
 
 jobs:
   build:
@@ -46,11 +49,14 @@ jobs:
         id: find-ncc-dir
         run: echo "NCC_DIR=$(find build/ -type d -name 'ncc_*' | head -n 1)" >> $GITHUB_ENV
 
+      - name: Create redist.zip
+        run: zip -r redist.zip ${{ env.NCC_DIR }}
+
       - name: Upload NCC build directory
         uses: actions/upload-artifact@v3
         with:
           name: ncc-build
-          path: ${{ env.NCC_DIR }}
+          path: redist.zip
 
       - name: Build Debian package
         run: make deb
@@ -85,3 +91,37 @@ jobs:
       - name: Test NCC installation
         run: |
           sudo php build/INSTALL --auto
+
+  upload:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' && github.event.action == 'created'
+
+    steps:
+      - name: Download NCC build directory
+        uses: actions/download-artifact@v3
+        with:
+          name: ncc-build
+          path: build
+
+      - name: Download Debian package
+        uses: actions/download-artifact@v3
+        with:
+          name: ncc-deb
+          path: build
+
+      - name: Upload redist.zip to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/redist.zip
+          asset_name: redist.zip
+          asset_content_type: application/zip
+
+      - name: Upload ncc.deb to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/${{ env.DEB_FILE }}
+          asset_name: ncc.deb
+          asset_content_type: application/vnd.debian.binary-package
