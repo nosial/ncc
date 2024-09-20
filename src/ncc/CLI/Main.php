@@ -50,6 +50,11 @@
         private static $args;
 
         /**
+         * @var array
+         */
+        private static $raw_args;
+
+        /**
          * @var LogLevel|null
          */
         private static $log_level;
@@ -63,6 +68,7 @@
         public static function start(array $argv): int
         {
             self::$args = Resolver::parseArguments(implode(' ', $argv));
+            self::$raw_args = $argv;
 
             if(!isset(self::$args['ncc-cli']))
             {
@@ -211,6 +217,16 @@
             }
 
             return self::$args;
+        }
+
+        /**
+         * Returns the raw arguments passed to ncc
+         *
+         * @return array
+         */
+        public static function getRawArgs(): array
+        {
+            return self::$raw_args;
         }
 
         /**

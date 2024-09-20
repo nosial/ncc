@@ -24,9 +24,11 @@
 
     use Exception;
     use ncc\Classes\Runtime;
+    use ncc\CLI\Main;
     use ncc\Objects\CliHelpSection;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
+    use ncc\Utilities\Resolver;
 
     class ExecCommand
     {
@@ -40,6 +42,12 @@
         {
             $package = $args['package'] ?? null;
             $version = $args['exec-version'] ?? 'latest';
+            $program_arguments = [];
+
+            if(isset($args['exec-args']))
+            {
+                $program_arguments = Resolver::splitArguments(Main::getRawArgs(), '--exec-args');
+            }
 
             if($package === null)
             {
@@ -58,7 +66,7 @@
 
             try
             {
-                return Runtime::execute($package_name);
+                return Runtime::execute($package_name, $program_arguments);
             }
             catch(Exception $e)
             {

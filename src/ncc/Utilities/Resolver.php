@@ -131,6 +131,25 @@
         }
 
         /**
+         * Split arguments
+         *
+         * @param array $args List of arguments
+         * @param string $arg The argument to split from
+         * @return array Split arguments starting from specified argument
+         */
+        public static function splitArguments(array $args, string $arg): array
+        {
+            $index = array_search($arg, $args);
+
+            if($index === false)
+            {
+                return [];
+            }
+
+            return array_slice($args, $index + 1);
+        }
+
+        /**
          * Resolves the constant's full name
          *
          * @param string $scope

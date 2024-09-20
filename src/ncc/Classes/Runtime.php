@@ -84,7 +84,7 @@
          * @throws PathNotFoundException
          * @throws OperationException
          */
-        public static function execute(string $package): int
+        public static function execute(string $package, array $arguments=[]): int
         {
             if(!self::isImported($package))
             {
@@ -110,7 +110,8 @@
 
                 return ExecutionUnitRunner::executeFromSystem(
                     self::$imported_packages[$package],
-                    Metadata::fromArray(ZiProto::decode(IO::fread($metadata_path)))->getMainExecutionPolicy()
+                    Metadata::fromArray(ZiProto::decode(IO::fread($metadata_path)))->getMainExecutionPolicy(),
+                    $arguments
                 );
             }
 
