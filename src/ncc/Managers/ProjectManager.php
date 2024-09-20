@@ -96,6 +96,12 @@
                 $path = substr($path, 0, -1);
             }
 
+            if(is_file($path))
+            {
+                // We can assume the user is trying to load a project file
+                $path = dirname($path);
+            }
+
             // Detect if the folder exists or not
             if(!is_dir($path))
             {

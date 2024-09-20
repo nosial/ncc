@@ -30,7 +30,7 @@
          * @warning This will cause the package to fail to import of
          *          the dependencies are not met
          */
-        case SKIP_DEPENDENCIES = 'skip_dependencies';
+        case SKIP_DEPENDENCIES = 'skip-dependencies';
 
         /**
          * Reinstall all packages if they are already installed,
@@ -42,5 +42,11 @@
          * Installs a static version of the package if it's available
          * otherwise it will install non-static version
          */
-        case PREFER_STATIC = 'prefer_static';
+        case PREFER_STATIC = 'prefer-static';
+
+        /**
+         * Forces ncc to build packages from source rather than trying to obtain
+         * a pre-built version of the package
+         */
+        case BUILD_SOURCE  = 'build-source';
     }

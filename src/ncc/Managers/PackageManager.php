@@ -521,7 +521,7 @@
                     ));
 
                     /** @noinspection SlowArrayOperationsInLoopInspection */
-                    $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication));
+                    $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication, $options));
                 }
             }
 
@@ -550,35 +550,45 @@
 
             Console::out(sprintf('Fetching package %s/%s=%s from %s', $input->getVendor(), $input->getPackage(), $input->getVersion(), $input->getRepository()));
 
-            try
+            if(isset($options[InstallPackageOptions::BUILD_SOURCE->value]))
             {
                 Console::outVerbose(sprintf(
-                    'Attempting to fetch a pre-built ncc package for %s=%s from %s',
-                    $input->getPackage(), $input->getVersion(), $input->getRepository()
+                    'Forcing ncc to build package %s/%s=%s from source',
+                    $input->getVendor(), $input->getPackage(), $input->getVersion()
                 ));
-
-                // First try to fetch a pre-built package from the repository
-                $results = $this->repository_manager->getRepository($input->getRepository())->fetchPackage(
-                    $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication, $options
-                );
-
-                $package_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
             }
-            catch(Exception $e)
+            else
             {
-                Console::outVerbose(sprintf(
-                    'Failed to fetch a pre-built ncc package for %s=%s from %s: %s',
-                    $input->getPackage(), $input->getVersion(), $input->getRepository(), $e->getMessage()
-                ));
-
-                // Clean up the package file if it exists
-                if(isset($package_path) && is_file($package_path))
+                try
                 {
-                    ShutdownHandler::declareTemporaryPath($package_path);
-                }
+                    Console::outVerbose(sprintf(
+                        'Attempting to fetch a pre-built ncc package for %s=%s from %s',
+                        $input->getPackage(), $input->getVersion(), $input->getRepository()
+                    ));
 
-                // This is a warning because we can still attempt to build from source
-                unset($results, $package_path);
+                    // First try to fetch a pre-built package from the repository
+                    $results = $this->repository_manager->getRepository($input->getRepository())->fetchPackage(
+                        $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication, $options
+                    );
+
+                    $package_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
+                }
+                catch(Exception $e)
+                {
+                    Console::outVerbose(sprintf(
+                        'Failed to fetch a pre-built ncc package for %s=%s from %s: %s',
+                        $input->getPackage(), $input->getVersion(), $input->getRepository(), $e->getMessage()
+                    ));
+
+                    // Clean up the package file if it exists
+                    if(isset($package_path) && is_file($package_path))
+                    {
+                        ShutdownHandler::declareTemporaryPath($package_path);
+                    }
+
+                    // This is a warning because we can still attempt to build from source
+                    unset($results, $package_path);
+                }
             }
 
             if(!isset($package_path))
@@ -848,7 +858,7 @@
                     }
 
                 default:
-                    throw new NotSupportedException(sprintf('Cannot build from source %s, the project type %s is not supported', $archive, $project_detection->getProjectType()));
+                    throw new NotSupportedException(sprintf('Cannot build from source %s, the project type %s is not supported', $archive, $project_detection->getProjectType()->value));
             }
         }
 

@@ -168,6 +168,11 @@
                 $options[InstallPackageOptions::SKIP_DEPENDENCIES->value] = true;
             }
 
+            if(isset($args['build-source']))
+            {
+                $options[InstallPackageOptions::BUILD_SOURCE->value] = true;
+            }
+
             if($authentication !== null)
             {
                 $entry = (new CredentialManager())->getVault()?->getEntry($authentication);
@@ -560,6 +565,7 @@
                 new CliHelpSection(['install', '-p', '--skip-dependencies'], 'Installs a specified ncc package but skips the installation of dependencies'),
                 new CliHelpSection(['install', '-p', '--reinstall'], 'Installs a specified ncc package, reinstall if already installed'),
                 new CliHelpSection(['install', '--prefer-static', '--static'], 'Installs a static version of the package from the remote repository if available'),
+                new CliHelpSection(['install', '--build-source'], 'Forces ncc to build the packages from source rather than trying to use a pre-built binary'),
                 new CliHelpSection(['uninstall', '--package', '-p'], 'Uninstalls a specified ncc package'),
                 new CliHelpSection(['uninstall', '--package', '-p', '--version', '-v'], 'Uninstalls a specified ncc package version'),
                 new CliHelpSection(['uninstall-all'], 'Uninstalls all packages'),
