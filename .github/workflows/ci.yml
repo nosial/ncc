@@ -90,7 +90,7 @@ jobs:
 
       - name: Test NCC installation
         run: |
-          ls -l
+          ls -l build
           sudo php build/INSTALL --auto
 
   upload-release:
