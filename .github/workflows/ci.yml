@@ -49,6 +49,12 @@ jobs:
         id: find-ncc-dir
         run: echo "NCC_DIR=$(find build/ -type d -name 'ncc_*' | head -n 1)" >> $GITHUB_ENV
 
+      - name: Upload NCC build directory
+        uses: actions/upload-artifact@v3
+        with:
+          name: ncc-build
+          path: ${{ env.NCC_DIR }}
+
       - name: Create redist.zip
         run: zip -r redist.zip ${{ env.NCC_DIR }}
 
