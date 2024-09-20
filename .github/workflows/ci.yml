@@ -84,4 +84,4 @@ jobs:
 
       - name: Test NCC installation
         run: |
-          php ncc-build/INSTALL --auto
+          php /home/runner/work/ncc/ncc/build/INSTALL --auto
