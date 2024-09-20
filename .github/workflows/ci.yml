@@ -84,9 +84,4 @@ jobs:
 
       - name: Test NCC installation
         run: |
-          NCC_DIR=$(find build/ -type d -name 'ncc_*' | head -n 1)
-          if [ -z "$NCC_DIR" ]; then
-            echo "NCC build directory not found"
-            exit 1
-          fi
-          php $NCC_DIR/INSTALL --auto
+          php ncc-build/INSTALL --auto
