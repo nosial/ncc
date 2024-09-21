@@ -118,6 +118,9 @@ jobs:
           name: ncc-deb
           path: .
 
+      - name: Set DEB_FILE environment variable
+        run: echo "DEB_FILE=$(find . -type f -name '*.deb' | head -n 1)" >> $GITHUB_ENV
+
       - name: Upload redist.zip to release
         uses: softprops/action-gh-release@v1
         with:
