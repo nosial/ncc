@@ -101,7 +101,7 @@
 
                 if(isset($args['v']))
                 {
-                    if(Resolver::resolveScope() !== Scopes::SYSTEM)
+                    if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
                     {
                         Console::outError('Insufficient permissions, cannot modify configuration values', true, 1);
                         return 1;

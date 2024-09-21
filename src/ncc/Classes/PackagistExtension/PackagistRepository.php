@@ -35,8 +35,8 @@
     use ncc\Interfaces\RepositoryInterface;
     use ncc\Objects\RepositoryConfiguration;
     use ncc\Objects\RepositoryResult;
-    use ncc\ThirdParty\composer\Semver\Comparator;
-    use ncc\ThirdParty\composer\Semver\Semver;
+    use ncc\ThirdParty\composer\semver\Comparator;
+    use ncc\ThirdParty\composer\semver\Semver;
     use ncc\Utilities\Console;
     use ncc\Utilities\Resolver;
     use ncc\Utilities\RuntimeCache;
@@ -47,9 +47,9 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST->value, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
         {
-            if($version === Versions::LATEST)
+            if($version === Versions::LATEST->value)
             {
                 $version = self::getLatestVersion($repository, $vendor, $project);
             }
@@ -80,7 +80,7 @@
 
                 curl_setopt_array($curl, [
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                     CURLOPT_HTTPHEADER => $headers
                 ]);
 
@@ -99,14 +99,14 @@
                 throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $vendor, $project, $version));
             }
 
-            return new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE, $version);
+            return new RepositoryResult($response['package']['versions'][$version]['dist']['url'], RepositoryResultType::SOURCE->value, $version);
         }
 
         /**
          * @inheritDoc
          * @throws NotSupportedException
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST->value, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
         {
             throw new NotSupportedException('Fetching ncc packages from Packagist is not supported');
         }
@@ -147,7 +147,7 @@
 
                 curl_setopt_array($curl, [
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                    CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                     CURLOPT_HTTPHEADER => $headers
                 ]);
 
@@ -178,23 +178,21 @@
         {
             $versions = self::getVersions($repository, $vendor, $project);
 
-            /** @noinspection KeysFragmentationWithArrayFunctionsInspection */
+            // Filter out pre-release versions such as alpha, beta, rc, dev
             $versions = array_filter($versions, static function($version)
             {
                 return !preg_match('/-alpha|-beta|-rc|dev/i', $version);
             });
 
-            usort($versions, static function($a, $b)
-            {
-                return Comparator::lessThanOrEqualTo($a, $b) ? 1 : -1;
-            });
+            // Sort versions in descending order using Semver::rsort
+            $versions = Semver::rsort($versions);
 
-            if($versions[0] === null)
+            if (!isset($versions[0]))
             {
                 throw new NetworkException(sprintf('Failed to resolve latest version for %s/%s', $vendor, $project));
             }
 
-            return $versions[0];
+            return $versions[0]; // The first version in the sorted array is the latest
         }
 
         /**

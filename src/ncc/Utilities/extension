@@ -24,7 +24,7 @@
              * @param array $options
              * @return string
              */
-            function import(string $package, string $version=Versions::LATEST, array $options=[]): string
+            function import(string $package, string $version=Versions::LATEST->value, array $options=[]): string
             {
                 try
                 {

@@ -116,7 +116,6 @@
                 $repository = Repository::fromArray($repository);
             }
 
-
             return new self($source, $repository);
         }
     }

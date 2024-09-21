@@ -22,7 +22,7 @@
 
     namespace ncc\Enums\Options;
 
-    final class ComponentDecodeOptions
+    enum ComponentDecodeOptions : string
     {
-        public const AS_FILE = 'as_file';
+        case AS_FILE = 'as_file';
     }

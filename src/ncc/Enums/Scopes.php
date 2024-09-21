@@ -22,9 +22,9 @@
 
     namespace ncc\Enums;
 
-    final class Scopes
+    enum Scopes : string
     {
-        public const USER = 'USER';
+        case USER = 'USER';
 
-        public const SYSTEM = 'SYSTEM';
+        case SYSTEM = 'SYSTEM';
     }

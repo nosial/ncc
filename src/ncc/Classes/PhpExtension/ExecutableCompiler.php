@@ -41,7 +41,7 @@
          * @inheritDoc
          * @throws BuildException
          */
-        public function build(string $build_configuration = BuildConfigurationValues::DEFAULT, array $options=[]): string
+        public function build(string $build_configuration = BuildConfigurationValues::DEFAULT->value, array $options=[]): string
         {
             $configuration = $this->getProjectManager()->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -50,14 +50,14 @@
                 $configuration->setOptions(array_merge($configuration->getOptions(), $options));
             }
 
-            if(!isset($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION]))
+            if(!isset($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION->value]))
             {
                 throw new BuildException(sprintf("Unable to compile the binary, the build configuration '%s' does not have a ncc_configuration.", $build_configuration));
             }
 
             // Build the ncc package first
             Console::outVerbose('Building ncc package.');
-            $ncc_package = parent::build($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION]);
+            $ncc_package = parent::build($configuration->getOptions()[BuildConfigurationOptions::NCC_CONFIGURATION->value]);
 
             // Prepare the ncc package for compilation
             $hex_dump_file = PathFinder::getCachePath() . DIRECTORY_SEPARATOR . $this->getProjectManager()->getProjectConfiguration()->getAssembly()->getName() . '.c';
@@ -72,11 +72,11 @@
             // Prepare the gcc command
             $gcc_path = (new ExecutableFinder())->find('gcc');
 
-            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]))
             {
                 $binary_path = ConstantCompiler::compileConstants(
                     $this->getProjectManager()->getProjectConfiguration(),
-                    $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
+                    $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]
                 );
             }
             else

@@ -63,7 +63,7 @@
         {
             $this->name = $name;
             $this->source = $source;
-            $this->version = $version ?? Versions::LATEST;
+            $this->version = $version ?? Versions::LATEST->value;
         }
 
         /**
@@ -115,7 +115,7 @@
          */
         public function getVersion(): string
         {
-            return $this->version ?? Versions::LATEST;
+            return $this->version ?? Versions::LATEST->value;
         }
 
         /**
@@ -127,7 +127,7 @@
          */
         public function setVersion(?string $version): void
         {
-            $this->version = ($version ?? Versions::LATEST);
+            $this->version = ($version ?? Versions::LATEST->value);
         }
 
         /**
@@ -140,7 +140,7 @@
                 throw new ConfigurationException(sprintf('Invalid dependency name "%s"', $this->name));
             }
 
-            if($this->version !== Versions::LATEST && !Validate::version($this->version))
+            if($this->version !== Versions::LATEST->value && !Validate::version($this->version))
             {
                 throw new ConfigurationException(sprintf('Invalid dependency version "%s"', $this->version));
             }

@@ -22,39 +22,39 @@
 
     namespace ncc\Enums;
 
-    final class ConsoleColors
+    enum ConsoleColors : string
     {
-        public const DEFAULT = "\e[39m";
+        case DEFAULT = "\e[39m";
 
-        public const BLACK = "\e[30m";
+        case BLACK = "\e[30m";
 
-        public const RED = "\e[31m";
+        case RED = "\e[31m";
 
-        public const GREEN = "\e[32m";
+        case GREEN = "\e[32m";
 
-        public const YELLOW = "\e[33m";
+        case YELLOW = "\e[33m";
 
-        public const BLUE = "\e[34m";
+        case BLUE = "\e[34m";
 
-        public const MAGENTA = "\e[35m";
+        case MAGENTA = "\e[35m";
 
-        public const CYAN = "\e[36m";
+        case CYAN = "\e[36m";
 
-        public const LIGHT_GREY = "\e[37m";
+        case LIGHT_GREY = "\e[37m";
 
-        public const DARK_GREY = "\e[90m";
+        case DARK_GREY = "\e[90m";
 
-        public const LIGHT_RED = "\e[91m";
+        case LIGHT_RED = "\e[91m";
 
-        public const LIGHT_GREEN = "\e[92m";
+        case LIGHT_GREEN = "\e[92m";
 
-        public const LIGHT_YELLOW = "\e[93m";
+        case LIGHT_YELLOW = "\e[93m";
 
-        public const LIGHT_BLUE = "\e[94m";
+        case LIGHT_BLUE = "\e[94m";
 
-        public const LIGHT_MAGENTA = "\e[95m";
+        case LIGHT_MAGENTA = "\e[95m";
 
-        public const LIGHT_CYAN = "\e[96m";
+        case LIGHT_CYAN = "\e[96m";
 
-        public const WHITE = "\e[97m";
+        case WHITE = "\e[97m";
     }

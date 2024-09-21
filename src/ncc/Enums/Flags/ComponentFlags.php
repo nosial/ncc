@@ -22,23 +22,15 @@
 
     namespace ncc\Enums\Flags;
 
-    final class ComponentFlags
+    enum ComponentFlags : string
     {
         /**
          * Indicates that the component is the AST of a PHP file encoded with msgpack.
          */
-        public const PHP_AST = 'php_ast';
+        case PHP_AST = 'php_ast';
 
         /**
          * Indicates that the component is a PHP file encoded with base64.
          */
-        public const PHP_B64 = 'php_b64';
-
-        /**
-         * All the possible flags of a component
-         */
-        public const ALL = [
-            self::PHP_AST,
-            self::PHP_B64
-        ];
+        case PHP_B64 = 'php_b64';
     }

@@ -25,6 +25,7 @@
 
     namespace ncc\Classes;
 
+    use InvalidArgumentException;
     use ncc\Enums\Flags\PackageFlags;
     use ncc\Enums\PackageDirectory;
     use ncc\Enums\PackageStructure;
@@ -108,9 +109,9 @@
             $this->temp_file = @fopen($this->temporary_path, 'wb'); // Create a temporary data file
             $this->package_file = @fopen($file_path, 'wb');
             $this->headers = [
-                PackageStructure::FILE_VERSION => PackageStructureVersions::_2_0,
-                PackageStructure::FLAGS => [],
-                PackageStructure::DIRECTORY => []
+                PackageStructure::FILE_VERSION->value => PackageStructureVersions::_2_0->value,
+                PackageStructure::FLAGS->value => [],
+                PackageStructure::DIRECTORY->value => []
             ];
 
             if($this->temp_file === false || $this->package_file === false)
@@ -126,7 +127,7 @@
          */
         public function getFileVersion(): string
         {
-            return (string)$this->headers[PackageStructure::FILE_VERSION];
+            return (string)$this->headers[PackageStructure::FILE_VERSION->value];
         }
 
         /**
@@ -137,7 +138,7 @@
          */
         public function setFileVersion(string $version): void
         {
-            $this->headers[PackageStructure::FILE_VERSION] = $version;
+            $this->headers[PackageStructure::FILE_VERSION->value] = $version;
         }
 
         /**
@@ -147,13 +148,13 @@
          */
         public function getFlags(): array
         {
-            return (array)$this->headers[PackageStructure::FLAGS];
+            return (array)$this->headers[PackageStructure::FLAGS->value];
         }
 
         /**
          * Sets the package flags
          *
-         * @param array $flags
+         * @param string[]|PackageFlags[] $flags
          * @return void
          * @throws IOException
          */
@@ -164,26 +165,47 @@
                 throw new IOException('Cannot set flags after data has been written to the package');
             }
 
-            $this->headers[PackageStructure::FLAGS] = $flags;
+            foreach($flags as $flag)
+            {
+                if(is_string($flag))
+                {
+                    $flag = PackageFlags::tryFrom($flag);
+                    if($flag === null)
+                    {
+                        throw new InvalidArgumentException(sprintf('Unexpected flag: %s', $flag));
+                    }
+                }
+
+                $this->headers[PackageStructure::FLAGS->value] = $flag->value;
+            }
         }
 
         /**
          * Adds a flag to the package
          *
-         * @param string $flag
+         * @param PackageFlags|string $flag
          * @return void
          * @throws IOException
          */
-        public function addFlag(string $flag): void
+        public function addFlag(PackageFlags|string $flag): void
         {
+            if(is_string($flag))
+            {
+                $flag = PackageFlags::tryFrom($flag);
+                if($flag === null)
+                {
+                    throw new InvalidArgumentException(sprintf('Unexpected flag: %s', $flag));
+                }
+            }
+
             if($this->data_written)
             {
                 throw new IOException('Cannot add a flag after data has been written to the package');
             }
 
-            if(!in_array($flag, $this->headers[PackageStructure::FLAGS], true))
+            if(!in_array($flag, $this->headers[PackageStructure::FLAGS->value], true))
             {
-                $this->headers[PackageStructure::FLAGS][] = $flag;
+                $this->headers[PackageStructure::FLAGS->value][] = $flag->value;
             }
         }
 
@@ -194,14 +216,23 @@
          * @return void
          * @throws IOException
          */
-        public function removeFlag(string $flag): void
+        public function removeFlag(PackageFlags|string $flag): void
         {
+            if(is_string($flag))
+            {
+                $flag = PackageFlags::tryFrom($flag);
+                if($flag === null)
+                {
+                    throw new InvalidArgumentException(sprintf('Unexpected flag: %s', $flag));
+                }
+            }
+
             if($this->data_written)
             {
                 throw new IOException('Cannot remove a flag after data has been written to the package');
             }
 
-            $this->headers[PackageStructure::FLAGS] = array_diff($this->headers[PackageStructure::FLAGS], [$flag]);
+            $this->headers[PackageStructure::FLAGS->value] = array_diff($this->headers[PackageStructure::FLAGS->value], [$flag->value]);
         }
 
         /**
@@ -213,22 +244,22 @@
          */
         public function add(string $name, string $data): array
         {
-            if(isset($this->headers[PackageStructure::DIRECTORY][$name]))
+            if(isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
             {
-                return explode(':', $this->headers[PackageStructure::DIRECTORY][$name]);
+                return explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
             }
 
-            if(in_array(PackageFlags::COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+            if(in_array(PackageFlags::COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
             {
-                if(in_array(PackageFlags::LOW_COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+                if(in_array(PackageFlags::LOW_COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
                 {
                     $data = gzcompress($data, 1);
                 }
-                else if(in_array(PackageFlags::MEDIUM_COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+                else if(in_array(PackageFlags::MEDIUM_COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
                 {
                     $data = gzcompress($data, 6);
                 }
-                else if(in_array(PackageFlags::HIGH_COMPRESSION, $this->headers[PackageStructure::FLAGS], true))
+                else if(in_array(PackageFlags::HIGH_COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
                 {
                     $data = gzcompress($data, 9);
                 }
@@ -239,7 +270,7 @@
             }
 
             $pointer = sprintf("%d:%d", ftell($this->temp_file), strlen($data));
-            $this->headers[PackageStructure::DIRECTORY][$name] = $pointer;
+            $this->headers[PackageStructure::DIRECTORY->value][$name] = $pointer;
             $this->data_written = true;
             fwrite($this->temp_file, $data);
 
@@ -256,12 +287,12 @@
          */
         public function addPointer(string $name, int $offset, int $length): void
         {
-            if(isset($this->headers[PackageStructure::DIRECTORY][$name]))
+            if(isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
             {
                 return;
             }
 
-            $this->headers[PackageStructure::DIRECTORY][$name] = sprintf("%d:%d", $offset, $length);
+            $this->headers[PackageStructure::DIRECTORY->value][$name] = sprintf("%d:%d", $offset, $length);
         }
 
         /**
@@ -272,7 +303,7 @@
          */
         public function setAssembly(Assembly $assembly): array
         {
-            return $this->add(sprintf('@%s', PackageDirectory::ASSEMBLY), ZiProto::encode($assembly->toArray(true)));
+            return $this->add(sprintf('@%s', PackageDirectory::ASSEMBLY->value), ZiProto::encode($assembly->toArray(true)));
         }
 
         /**
@@ -283,7 +314,7 @@
          */
         public function setMetadata(Metadata $metadata): array
         {
-            return $this->add(sprintf('@%s', PackageDirectory::METADATA), ZiProto::encode($metadata->toArray(true)));
+            return $this->add(sprintf('@%s', PackageDirectory::METADATA->value), ZiProto::encode($metadata->toArray(true)));
         }
 
         /**
@@ -294,7 +325,7 @@
          */
         public function setInstaller(Installer $installer): array
         {
-            return $this->add(sprintf('@%s', PackageDirectory::INSTALLER), ZiProto::encode($installer->toArray(true)));
+            return $this->add(sprintf('@%s', PackageDirectory::INSTALLER->value), ZiProto::encode($installer->toArray(true)));
         }
 
         /**
@@ -305,7 +336,7 @@
          */
         public function addDependencyConfiguration(Dependency $dependency): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::DEPENDENCIES, $dependency->getName()), ZiProto::encode($dependency->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::DEPENDENCIES->value, $dependency->getName()), ZiProto::encode($dependency->toArray(true)));
         }
 
         /**
@@ -316,7 +347,7 @@
          */
         public function addExecutionUnit(ExecutionUnit $unit): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS, $unit->getExecutionPolicy()->getName()), ZiProto::encode($unit->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $unit->getExecutionPolicy()->getName()), ZiProto::encode($unit->toArray(true)));
         }
 
         /**
@@ -327,7 +358,7 @@
          */
         public function addComponent(Component $component): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::COMPONENTS, $component->getName()), ZiProto::encode($component->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::COMPONENTS->value, $component->getName()), ZiProto::encode($component->toArray(true)));
         }
 
         /**
@@ -338,7 +369,7 @@
          */
         public function addResource(Resource $resource): array
         {
-            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES, $resource->getName()), ZiProto::encode($resource->toArray(true)));
+            return $this->add(sprintf('@%s:%s', PackageDirectory::RESOURCES->value, $resource->getName()), ZiProto::encode($resource->toArray(true)));
         }
 
         /**
@@ -351,7 +382,7 @@
          */
         public function mapClass(string $class, int $offset, int $length): void
         {
-            $this->addPointer(sprintf('@%s:%s', PackageDirectory::CLASS_POINTER, $class), $offset, $length);
+            $this->addPointer(sprintf('@%s:%s', PackageDirectory::CLASS_POINTER->value, $class), $offset, $length);
         }
 
         /**
@@ -372,10 +403,10 @@
 
                 switch((int)substr(explode(':', $name, 2)[0], 1))
                 {
-                    case PackageDirectory::METADATA:
-                    case PackageDirectory::ASSEMBLY:
-                    case PackageDirectory::INSTALLER:
-                    case PackageDirectory::EXECUTION_UNITS:
+                    case PackageDirectory::METADATA->value:
+                    case PackageDirectory::ASSEMBLY->value:
+                    case PackageDirectory::INSTALLER->value:
+                    case PackageDirectory::EXECUTION_UNITS->value:
                         Console::outDebug(sprintf('Skipping %s', $name));
                         break;
 

@@ -22,25 +22,15 @@
 
     namespace ncc\Enums;
 
-    final class Versions
+    enum Versions : string
     {
         /**
          * The current version of the credentials store file format
          */
-        public const CREDENTIALS_STORE_VERSION = '1.0.0';
-
-        /**
-         * The current version of the package structure file format
-         */
-        public const PACKAGE_STRUCTURE_VERSION = '2.0';
-
-        /**
-         * The current version of the package lock structure file format
-         */
-        public const PACKAGE_LOCK_VERSION = '2.0.0';
+        case CREDENTIALS_STORE_VERSION = '1.0.0';
 
         /**
          * Generic version of the package structure file format (latest)
          */
-        public const LATEST = 'latest';
+        case LATEST = 'latest';
     }

@@ -22,25 +22,25 @@
 
     namespace ncc\Enums\Options;
 
-    final class InitializeProjectOptions
+    enum InitializeProjectOptions : string
     {
         /**
          * A custom path to the project's source directory
          */
-        public const PROJECT_SRC_PATH = 'PROJECT_SRC_PATH';
+        case PROJECT_SRC_PATH = 'PROJECT_SRC_PATH';
 
         /**
          * A boolean option that indicates whether to overwrite the project file if it already exists
          */
-        public const OVERWRITE_PROJECT_FILE = 'OVERWRITE_PROJECT_FILE';
+        case OVERWRITE_PROJECT_FILE = 'OVERWRITE_PROJECT_FILE';
 
         /**
          * Composer Only, used to define the package's real version
          */
-        public const COMPOSER_PACKAGE_VERSION = 'COMPOSER_PACKAGE_VERSION';
+        case COMPOSER_PACKAGE_VERSION = 'COMPOSER_PACKAGE_VERSION';
 
         /**
          * Composer Only, used to define the package's update source
          */
-        public const COMPOSER_REMOTE_SOURCE = 'COMPOSER_REMOTE_SOURCE';
+        case COMPOSER_REMOTE_SOURCE = 'COMPOSER_REMOTE_SOURCE';
     }

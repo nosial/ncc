@@ -32,27 +32,21 @@
         /**
          * @var string
          */
-        private $project_file_path;
+        private string $project_file_path;
 
         /**
-         * @see ProjectType
-         * @var string
+         * @var ProjectType
          */
-        private $project_type;
+        private ProjectType $project_type;
 
         /**
          * ProjectDetectionResults Constructor
          *
          * @param string $project_file_path
-         * @param string $project_type
+         * @param ProjectType $project_type
          */
-        public function __construct(string $project_file_path, string $project_type)
+        public function __construct(string $project_file_path, ProjectType $project_type)
         {
-            if(!in_array($project_type, ProjectType::ALL))
-            {
-                throw new InvalidArgumentException(sprintf('Invalid project type "%s"', $project_type));
-            }
-
             $this->project_file_path = $project_file_path;
             $this->project_type = $project_type;
         }
@@ -70,9 +64,9 @@
         /**
          * Returns the detected project type
          *
-         * @return string
+         * @return ProjectType
          */
-        public function getProjectType(): string
+        public function getProjectType(): ProjectType
         {
             return $this->project_type;
         }

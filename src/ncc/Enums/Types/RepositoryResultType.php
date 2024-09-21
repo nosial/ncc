@@ -22,9 +22,9 @@
 
     namespace ncc\Enums\Types;
 
-    final class RepositoryResultType
+    enum RepositoryResultType : string
     {
-        public const SOURCE = 'source';
+        case SOURCE = 'source';
 
-        public const PACKAGE = 'package';
+        case PACKAGE = 'package';
     }

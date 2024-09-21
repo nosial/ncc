@@ -39,7 +39,6 @@
     use ncc\Objects\Vault\Password\AccessToken;
     use ncc\Objects\Vault\Password\UsernamePassword;
     use ncc\Utilities\Console;
-    use ncc\Utilities\Resolver;
     use ncc\Utilities\RuntimeCache;
     use RuntimeException;
 
@@ -48,7 +47,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             try
             {
@@ -65,7 +64,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version = Versions::LATEST->value, ?AuthenticationType $authentication = null, array $options=[]): RepositoryResult
         {
             return self::getReleasePackage($repository, $vendor, $project, $version, $authentication, $options);
         }
@@ -103,16 +102,9 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            $resolved_host = Resolver::getResolveOption($endpoint);
-
-            if($resolved_host !== null)
-            {
-                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
-            }
-
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -169,7 +161,7 @@
          */
         private static function getTagArchive(RepositoryConfiguration $repository, string $group, string $project, string $tag, ?AuthenticationInterface $authentication = null): RepositoryResult
         {
-            if($tag === Versions::LATEST)
+            if($tag === Versions::LATEST->value)
             {
                 $tag = self::getLatestTag($repository, $group, $project, $authentication);
             }
@@ -191,17 +183,10 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            $resolved_host = Resolver::getResolveOption($endpoint);
-
-            if($resolved_host !== null)
-            {
-                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
-            }
-
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_NOBODY => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers,
                 CURLOPT_FOLLOWLOCATION => true
             ]);
@@ -222,7 +207,7 @@
                 throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
-            $result =  new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            $result =  new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE->value, $tag);
             curl_close($curl);
             RuntimeCache::set($endpoint, $result);
 
@@ -262,16 +247,9 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            $resolved_host = Resolver::getResolveOption($endpoint);
-
-            if($resolved_host !== null)
-            {
-                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
-            }
-
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -329,7 +307,7 @@
         private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null, array $options=[]): RepositoryResult
         {
             /** @noinspection DuplicatedCode */
-            if($release === Versions::LATEST)
+            if($release === Versions::LATEST->value)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
@@ -353,18 +331,7 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            $resolved_host = Resolver::getResolveOption($endpoint);
-
-            if($resolved_host !== null)
-            {
-                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
-            }
-
-            curl_setopt_array($curl, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
-                CURLOPT_HTTPHEADER => $headers
-            ]);
+            curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value, CURLOPT_HTTPHEADER => $headers]);
 
             Console::outDebug(sprintf('Fetching release package for %s/%s/%s from %s', $group, $project, $release, $endpoint));
             $response = self::processHttpResponse($curl, $group, $project);
@@ -374,7 +341,7 @@
                 throw new NetworkException(sprintf('Failed to get release package for %s/%s/%s: No assets found', $group, $project, $release));
             }
 
-            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC]);
+            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC->value]);
             $preferred_asset = null;
             $fallback_asset = null;
 
@@ -396,7 +363,7 @@
             {
                 $asset_url = $target_asset['browser_download_url'];
 
-                $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
+                $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE->value, $release);
 
                 RuntimeCache::set($endpoint, $result);
                 return $result;
@@ -422,7 +389,7 @@
         private static function getReleaseArchive(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication = null): RepositoryResult
         {
             /** @noinspection DuplicatedCode */
-            if($release === Versions::LATEST)
+            if($release === Versions::LATEST->value)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
@@ -446,16 +413,9 @@
                 $headers = self::injectAuthentication($authentication, $curl, $headers);
             }
 
-            $resolved_host = Resolver::getResolveOption($endpoint);
-
-            if($resolved_host !== null)
-            {
-                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
-            }
-
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -465,11 +425,11 @@
 
             if(isset($response['zipball_url']))
             {
-                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE, $release);
+                $result = new RepositoryResult($response['zipball_url'], RepositoryResultType::SOURCE->value, $release);
             }
             elseif(isset($response['tarball_url']))
             {
-                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE, $release);
+                $result = new RepositoryResult($response['tarball_url'], RepositoryResultType::SOURCE->value, $release);
             }
             else
             {
@@ -499,7 +459,7 @@
                         $headers[] = 'Authorization: Bearer ' . $authentication->getAccessToken();
                         break;
                     }
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()->value));
 
                 case AuthenticationType::USERNAME_PASSWORD:
                     if($authentication instanceof UsernamePassword)
@@ -508,7 +468,7 @@
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()->value));
             }
 
             return $headers;

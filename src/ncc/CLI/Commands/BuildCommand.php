@@ -75,7 +75,7 @@
 
             if($output_path !== null)
             {
-                $options[BuildConfigurationOptions::OUTPUT_FILE] = $output_path;
+                $options[BuildConfigurationOptions::OUTPUT_FILE->value] = $output_path;
             }
 
             // Load the project
@@ -89,43 +89,19 @@
                 return 1;
             }
 
-            $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT;
-
-            if($build_configuration === BuildConfigurationValues::ALL)
+            // Build the project
+            try
             {
-                // Build all configurations
-                foreach($project_manager->getProjectConfiguration()->getBuild()->getBuildConfigurations() as $configuration_name)
-                {
-                    Console::out(sprintf('Building configuration \'%s\'', $configuration_name));
-                    try
-                    {
-                        $output = $project_manager->build($configuration_name, $options);
-                    }
-                    catch (Exception $e)
-                    {
-                        Console::outException('Failed to build project', $e, 1);
-                        return 1;
-                    }
-
-                    Console::out($output);
-                }
+                $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT->value;
+                $output = $project_manager->build($build_configuration, $options);
             }
-            else
+            catch (Exception $e)
             {
-                // Build the project
-                try
-                {
-                    $output = $project_manager->build($build_configuration, $options);
-                }
-                catch (Exception $e)
-                {
-                    Console::outException('Failed to build project', $e, 1);
-                    return 1;
-                }
-
-                Console::out($output);
+                Console::outException('Failed to build project', $e, 1);
+                return 1;
             }
 
+            Console::out($output);
             return 0;
         }
 

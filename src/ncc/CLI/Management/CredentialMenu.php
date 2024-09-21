@@ -187,7 +187,7 @@
         {
             $ResolvedScope = Resolver::resolveScope();
 
-            if($ResolvedScope !== Scopes::SYSTEM)
+            if($ResolvedScope !== Scopes::SYSTEM->value)
             {
                 Console::outError('Insufficient permissions to add entries');
             }
@@ -313,7 +313,7 @@
         {
             $ResolvedScope = Resolver::resolveScope();
 
-            if($ResolvedScope !== Scopes::SYSTEM)
+            if($ResolvedScope !== Scopes::SYSTEM->value)
             {
                 Console::outError('Insufficient permissions to remove entries');
             }

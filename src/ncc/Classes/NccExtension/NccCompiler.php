@@ -93,17 +93,17 @@
          * @throws PathNotFoundException
          * @noinspection UnusedFunctionResultInspection
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT->value, array $options=[]): string
         {
             $this->merged_dependencies = [];
             $configuration = $this->project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_configuration);
             $configuration->setOptions(array_merge($configuration->getOptions(), $options));
-            $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]);
+            $static_dependencies = isset($configuration->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES->value]);
 
-            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            if(isset($configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]))
             {
                 $package_path = ConstantCompiler::compileConstants(
-                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]
+                    $this->project_manager->getProjectConfiguration(), $configuration->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]
                 );
             }
             else
@@ -129,7 +129,7 @@
             }
 
             // Debugging information
-            if(Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
+            if(LogLevel::DEBUG->checkLogLevel(Main::getLogLevel()))
             {
                 foreach($this->project_manager->getProjectConfiguration()->getAssembly()->toArray() as $prop => $value)
                 {
@@ -269,25 +269,25 @@
         {
             $package_writer = new PackageWriter($path);
 
-            if(isset($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]))
+            if(isset($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
             {
                 $package_writer->addFlag(PackageFlags::COMPRESSION);
-                switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]))
+                switch(strtolower($build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]))
                 {
-                    case BuildConfigurationOptions\CompressionOptions::HIGH:
+                    case BuildConfigurationOptions\CompressionOptions::HIGH->value:
                         $package_writer->addFlag(PackageFlags::HIGH_COMPRESSION);
                         break;
 
-                    case BuildConfigurationOptions\CompressionOptions::MEDIUM:
+                    case BuildConfigurationOptions\CompressionOptions::MEDIUM->value:
                         $package_writer->addFlag(PackageFlags::MEDIUM_COMPRESSION);
                         break;
 
-                    case BuildConfigurationOptions\CompressionOptions::LOW:
+                    case BuildConfigurationOptions\CompressionOptions::LOW->value:
                         $package_writer->addFlag(PackageFlags::LOW_COMPRESSION);
                         break;
 
                     default:
-                        throw new NotSupportedException(sprintf('The compression level \'%s\' is not supported', $build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION]));
+                        throw new NotSupportedException(sprintf('The compression level \'%s\' is not supported', $build_configuration->getOptions()[BuildConfigurationOptions::COMPRESSION->value]));
                 }
             }
 
@@ -335,28 +335,37 @@
          * @param string $build_configuration
          * @return void
          */
-        public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT): void
+        public function processMetadata(PackageWriter $package_writer, string $build_configuration=BuildConfigurationValues::DEFAULT->value): void
         {
             $metadata = new Metadata($this->project_manager->getProjectConfiguration()->getProject()->getCompiler());
 
             $metadata->addOptions($this->project_manager->getProjectConfiguration()->getBuild()->getOptions($build_configuration));
             $metadata->addOptions($this->project_manager->getProjectConfiguration()->getProject()->getOptions());
+            $metadata->addConstants($this->project_manager->getConstants($build_configuration));
             $metadata->setUpdateSource($this->project_manager->getProjectConfiguration()->getProject()->getUpdateSource());
             $metadata->setMainExecutionPolicy($this->project_manager->getProjectConfiguration()->getBuild()->getMain());
             $metadata->setInstaller($this->project_manager->getProjectConfiguration()->getInstaller());
 
             // Strip out 'output_file' build artifact.
-            if(isset($metadata->getOptions()[BuildConfigurationOptions::OUTPUT_FILE]))
+            if(isset($metadata->getOptions()[BuildConfigurationOptions::OUTPUT_FILE->value]))
             {
-                $metadata->removeOption(BuildConfigurationOptions::OUTPUT_FILE);
+                $metadata->removeOption(BuildConfigurationOptions::OUTPUT_FILE->value);
             }
 
             // Strip out 'static' build artifact, PackageFlags::STATIC_DEPENDENCIES is used instead
             // Making this option redundant.
-            if(isset($metadata->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES]))
+            if(isset($metadata->getOptions()[BuildConfigurationOptions::STATIC_DEPENDENCIES->value]))
             {
-                $metadata->removeOption(BuildConfigurationOptions::STATIC_DEPENDENCIES);
+                $metadata->removeOption(BuildConfigurationOptions::STATIC_DEPENDENCIES->value);
             }
+
+            $compiled_constants = [];
+            foreach($this->project_manager->getConstants() as $constant => $value)
+            {
+                $compiled_constants[$constant] = ConstantCompiler::compileConstants($this->project_manager->getProjectConfiguration(), $value);
+            }
+
+            $metadata->addConstants($compiled_constants);
 
             /** @noinspection UnusedFunctionResultInspection */
             $package_writer->setMetadata($metadata);

@@ -53,12 +53,12 @@
         private static function setPrefix(string $log_level, string $input): string
         {
             $input = match ($log_level) {
-                LogLevel::VERBOSE => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN) . " $input",
-                LogLevel::DEBUG => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA) . " $input",
-                LogLevel::INFO => self::formatColor('INF:', ConsoleColors::WHITE) . " $input",
-                LogLevel::WARNING => self::formatColor('WRN:', ConsoleColors::YELLOW) . " $input",
-                LogLevel::ERROR => self::formatColor('ERR:', ConsoleColors::LIGHT_RED) . " $input",
-                LogLevel::FATAL => self::formatColor('FTL:', ConsoleColors::LIGHT_RED) . " $input",
+                LogLevel::VERBOSE->value => self::formatColor('VRB:', ConsoleColors::LIGHT_CYAN) . " $input",
+                LogLevel::DEBUG->value => self::formatColor('DBG:', ConsoleColors::LIGHT_MAGENTA) . " $input",
+                LogLevel::INFO->value => self::formatColor('INF:', ConsoleColors::WHITE) . " $input",
+                LogLevel::WARNING->value => self::formatColor('WRN:', ConsoleColors::YELLOW) . " $input",
+                LogLevel::ERROR->value => self::formatColor('ERR:', ConsoleColors::LIGHT_RED) . " $input",
+                LogLevel::FATAL->value => self::formatColor('FTL:', ConsoleColors::LIGHT_RED) . " $input",
                 default => self::formatColor('MSG:', ConsoleColors::DEFAULT) . " $input",
             };
 
@@ -109,14 +109,14 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::INFO, Main::getLogLevel()))
+            if(!LogLevel::INFO->checkLogLevel(Main::getLogLevel()))
             {
                 return;
             }
 
-            if(!$no_prefix && Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(!$no_prefix && LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
             {
-                $message = self::setPrefix(LogLevel::INFO, $message);
+                $message = self::setPrefix(LogLevel::INFO->value, $message);
             }
 
             if($newline)
@@ -142,7 +142,7 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::DEBUG, Main::getLogLevel()))
+            if(!LogLevel::DEBUG->checkLogLevel(Main::getLogLevel()))
             {
                 return;
             }
@@ -161,7 +161,7 @@
                 $trace_msg .= ' > ';
             }
 
-            $message = self::setPrefix(LogLevel::DEBUG, $trace_msg . $message);
+            $message = self::setPrefix(LogLevel::DEBUG->value, $trace_msg . $message);
             self::out($message, $newline, true);
         }
 
@@ -179,12 +179,12 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(!LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
             {
                 return;
             }
 
-            self::out(self::setPrefix(LogLevel::VERBOSE, $message), $newline, true);
+            self::out(self::setPrefix(LogLevel::VERBOSE->value, $message), $newline, true);
         }
 
 
@@ -192,11 +192,11 @@
          * Formats the text to have a different color and returns the formatted value
          *
          * @param string $input The input of the text value
-         * @param string $color_code The color code of the escaped character (\e[91m)
+         * @param ConsoleColors $color_code The color code of the escaped character (\e[91m)
          * @param bool $persist If true, the formatting will terminate in the default color
          * @return string
          */
-        public static function formatColor(string $input, string $color_code, bool $persist=true): string
+        public static function formatColor(string $input, ConsoleColors $color_code, bool $persist=true): string
         {
             if(isset(Main::getArgs()['no-color']))
             {
@@ -205,10 +205,10 @@
 
             if($persist)
             {
-                return $color_code . $input . ConsoleColors::DEFAULT;
+                return $color_code->value . $input . ConsoleColors::DEFAULT->value;
             }
 
-            return $color_code . $input;
+            return $color_code->value . $input;
         }
 
         /**
@@ -225,14 +225,14 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::WARNING, Main::getLogLevel()))
+            if(!LogLevel::WARNING->checkLogLevel(Main::getLogLevel()))
             {
                 return;
             }
 
-            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
             {
-                self::out(self::setPrefix(LogLevel::WARNING, $message), $newline, true);
+                self::out(self::setPrefix(LogLevel::WARNING->value, $message), $newline, true);
                 return;
             }
 
@@ -254,18 +254,18 @@
                 return;
             }
 
-            if(!Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
+            if(!LogLevel::ERROR->checkLogLevel(Main::getLogLevel()))
             {
                 return;
             }
 
-            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
             {
-                self::out(self::setPrefix(LogLevel::ERROR, $message), $newline, true);
+                self::out(self::setPrefix(LogLevel::ERROR->value, $message), $newline, true);
             }
             else
             {
-                self::out(self::formatColor(ConsoleColors::RED, 'Error: ') . $message, $newline);
+                self::out(self::formatColor('Error: ', ConsoleColors::RED) . $message, $newline);
             }
 
             if($exit_code !== null)
@@ -289,7 +289,7 @@
                 return;
             }
 
-            if($message !== '' && Resolver::checkLogLevel(LogLevel::ERROR, Main::getLogLevel()))
+            if($message !== '' && LogLevel::ERROR->checkLogLevel(Main::getLogLevel()))
             {
                 self::out(PHP_EOL . self::formatColor('Error: ', ConsoleColors::RED) . $message);
             }
@@ -329,6 +329,12 @@
                 self::out('Stack Trace:');
                 foreach($trace as $item)
                 {
+                    if(!isset($item['file']))
+                    {
+                        self::out(' - ' . self::formatColor(json_encode($item), ConsoleColors::RED));
+                        continue;
+                    }
+
                     self::out( ' - ' . self::formatColor($item['file'], ConsoleColors::RED) . ':' . $item['line']);
                 }
             }

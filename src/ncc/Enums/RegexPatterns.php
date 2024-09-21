@@ -26,27 +26,27 @@
      * @author Zi Xing Narrakas
      * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
      */
-    final class RegexPatterns
+    enum RegexPatterns : string
     {
-        public const UUID = '{^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$}Di';
+        case UUID = '{^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$}Di';
 
-        public const PACKAGE_NAME_FORMAT = '/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$/';
+        case PACKAGE_NAME_FORMAT = '/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$/';
 
-        public const COMPOSER_VERSION_FORMAT = '/^([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/';
+        case COMPOSER_VERSION_FORMAT = '/^([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/';
 
-        public const PYTHON_VERSION_FORMAT = '/^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/';
+        case PYTHON_VERSION_FORMAT = '/^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/';
 
-        public const SEMANTIC_VERSIONING_2 = '/^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/m';
+        case SEMANTIC_VERSIONING_2 = '/^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/m';
 
-        public const UNIX_PATH = '/^(((?:\.\/|\.\.\/|\/)?(?:\.?\w+\/)*)(\.?\w+\.?\w+))$/m';
+        case UNIX_PATH = '/^(((?:\.\/|\.\.\/|\/)?(?:\.?\w+\/)*)(\.?\w+\.?\w+))$/m';
 
-        public const CONSTANT_NAME = '/^([^\x00-\x7F]|[\w_\ \.\+\-]){2,64}$/';
+        case CONSTANT_NAME = '/^([^\x00-\x7F]|[\w_.+]){2,64}$/';
 
-        public const EXECUTION_POLICY_NAME = '/^[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/m';
+        case EXECUTION_POLICY_NAME = '/^[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/m';
 
         /**
          * @author <purplex>
          */
-        public const REMOTE_PACKAGE = '/^(?<vendor>[^\/\n]+)\/(?<package>[^:=\n@]+)(?:=(?<version>[^:@\n]+))?(?::(?<branch>[^@\n]+))?@(?<source>.*)$/m';
+        case REMOTE_PACKAGE = '/^(?<vendor>[^\/\n]+)\/(?<package>[^:=\n@]+)(?:=(?<version>[^:@\n]+))?(?::(?<branch>[^@\n]+))?@(?<source>.*)$/m';
 
     }

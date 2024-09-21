@@ -22,11 +22,7 @@
 
     namespace ncc\Enums;
 
-    final class CompilerExtensions
+    enum CompilerExtensions : string
     {
-        public const PHP = 'php';
-
-        public const ALL = [
-            CompilerExtensions::PHP
-        ];
+        case PHP = 'php';
     }

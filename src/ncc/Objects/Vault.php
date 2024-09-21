@@ -53,7 +53,7 @@
          */
         public function __construct()
         {
-            $this->version = Versions::CREDENTIALS_STORE_VERSION;
+            $this->version = Versions::CREDENTIALS_STORE_VERSION->value;
             $this->entries = [];
         }
 
@@ -180,6 +180,7 @@
                 case AuthenticationType::USERNAME_PASSWORD:
                     $input = ['password' => $password];
                     break;
+
                 case AuthenticationType::ACCESS_TOKEN:
                     $input = ['token' => $password];
                     break;

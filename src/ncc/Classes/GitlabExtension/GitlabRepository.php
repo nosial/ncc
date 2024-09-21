@@ -48,7 +48,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public static function fetchSourceArchive(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             try
             {
@@ -65,7 +65,7 @@
         /**
          * @inheritDoc
          */
-        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public static function fetchPackage(RepositoryConfiguration $repository, string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
         {
             return self::getReleasePackage($repository, $vendor, $project, $version, $authentication, $options);
         }
@@ -114,7 +114,7 @@
             curl_setopt_array($curl, [
                 CURLOPT_URL => $endpoint,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -172,7 +172,7 @@
          */
         private static function getTagArchive(RepositoryConfiguration $repository, string $group, string $project, string $tag, ?AuthenticationInterface $authentication=null): RepositoryResult
         {
-            if($tag === Versions::LATEST)
+            if($tag === Versions::LATEST->value)
             {
                 $tag = self::getLatestTag($repository, $group, $project, $authentication);
             }
@@ -205,7 +205,7 @@
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_NOBODY => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers,
                 CURLOPT_FOLLOWLOCATION => true
             ]);
@@ -225,7 +225,7 @@
                 throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
-            $results = new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE, $tag);
+            $results = new RepositoryResult(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RepositoryResultType::SOURCE->value, $tag);
             RuntimeCache::set($endpoint, $results);
 
             return $results;
@@ -274,7 +274,7 @@
 
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -330,7 +330,7 @@
          */
         private static function getReleasePackage(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null, array $options=[]): RepositoryResult
         {
-            if($release === Versions::LATEST)
+            if($release === Versions::LATEST->value)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
@@ -364,12 +364,12 @@
 
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
             $response = self::processHttpResponse($curl, $group, $project);
-            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC]);
+            $static_preferred = isset($options[InstallPackageOptions::PREFER_STATIC->value]);
             $preferred_asset = null;
             $fallback_asset = null;
 
@@ -393,7 +393,7 @@
 
                 if ($asset_url)
                 {
-                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE, $release);
+                    $result = new RepositoryResult($asset_url, RepositoryResultType::PACKAGE->value, $release);
 
                     RuntimeCache::set($endpoint, $result);
                     return $result;
@@ -422,7 +422,7 @@
         private static function getReleaseArchive(RepositoryConfiguration $repository, string $group, string $project, string $release, ?AuthenticationInterface $authentication=null): RepositoryResult
         {
             /** @noinspection DuplicatedCode */
-            if($release === Versions::LATEST)
+            if($release === Versions::LATEST->value)
             {
                 $release = self::getLatestRelease($repository, $group, $project, $authentication);
             }
@@ -456,7 +456,7 @@
 
             curl_setopt_array($curl, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET,
+                CURLOPT_CUSTOMREQUEST => HttpRequestType::GET->value,
                 CURLOPT_HTTPHEADER => $headers
             ]);
 
@@ -476,11 +476,11 @@
 
                 if($asset['format'] === 'zip')
                 {
-                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE->value, $release);
                 }
                 elseif($asset['format'] === 'tar')
                 {
-                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE, $release);
+                    $results = new RepositoryResult($asset['url'], RepositoryResultType::SOURCE->value, $release);
                 }
                 else
                 {
@@ -507,23 +507,23 @@
         {
             switch($authentication->getAuthenticationType())
             {
-                case AuthenticationType::ACCESS_TOKEN:
+                case AuthenticationType::ACCESS_TOKEN->value:
                     if($authentication instanceof AccessToken)
                     {
                         $headers[] = 'Private-Token: ' . $authentication->getAccessToken();
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Access Token, got %s instead', $authentication->getAuthenticationType()->value));
 
-                case AuthenticationType::USERNAME_PASSWORD:
+                case AuthenticationType::USERNAME_PASSWORD->value:
                     if($authentication instanceof UsernamePassword)
                     {
                         curl_setopt($curl, CURLOPT_USERPWD, $authentication->getUsername() . ':' . $authentication->getPassword());
                         break;
                     }
 
-                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()));
+                    throw new AuthenticationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $authentication->getAuthenticationType()->value));
             }
 
             return $headers;

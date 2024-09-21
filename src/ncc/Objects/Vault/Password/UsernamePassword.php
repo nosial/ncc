@@ -94,7 +94,7 @@
         /**
          * @inheritDoc
          */
-        public function getAuthenticationType(): string
+        public function getAuthenticationType(): AuthenticationType
         {
             return AuthenticationType::USERNAME_PASSWORD;
         }
@@ -115,7 +115,7 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::USERNAME_PASSWORD,
+                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::USERNAME_PASSWORD->value,
                 ($bytecode ? Functions::cbc('username') : 'username') => $this->username,
                 ($bytecode ? Functions::cbc('password') : 'password') => $this->password,
             ];

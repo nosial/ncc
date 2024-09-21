@@ -115,7 +115,7 @@
         public function __construct(string $source_path, ?string $default_configuration=null)
         {
             $this->source_path = $source_path;
-            $this->default_configuration = $default_configuration ?? BuildConfigurationValues::DEFAULT;
+            $this->default_configuration = $default_configuration ?? BuildConfigurationValues::DEFAULT->value;
             $this->exclude_files = [];
             $this->options = [];
             $this->define_constants = [];
@@ -484,7 +484,7 @@
          */
         public function getBuildConfiguration(string $name): BuildConfiguration
         {
-            if($name === BuildConfigurationValues::DEFAULT)
+            if($name === BuildConfigurationValues::DEFAULT->value)
             {
                 $name = $this->default_configuration;
             }

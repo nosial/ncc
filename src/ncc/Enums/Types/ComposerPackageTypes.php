@@ -22,12 +22,12 @@
 
     namespace ncc\Enums\Types;
 
-    final class ComposerPackageTypes
+    enum ComposerPackageTypes : string
     {
         /**
          * This is the default. It will copy the files to `vendor`
          */
-        public const LIBRARY = 'library';
+        case LIBRARY = 'library';
 
         /**
          * This denotes a project rather than a library. For example
@@ -37,7 +37,7 @@
          * to provide listings of projects to initialize when creating
          * a new workspace.
          */
-        public const PROJECT = 'project';
+        case PROJECT = 'project';
 
         /**
          * An empty package that contains requirements and will trigger
@@ -45,11 +45,11 @@
          * anything to the filesystem. As such, it does not require a
          * a dist or source key to be installable
          */
-        public const METAPACKAGE = 'metapackage';
+        case METAPACKAGE = 'metapackage';
 
         /**
          * A package of type `composer-plugin` may provide an installer
          * for other packages that have a custom type.
          */
-        public const COMPOSER_PLUGIN = 'composer-plugin';
+        case COMPOSER_PLUGIN = 'composer-plugin';
     }

@@ -34,6 +34,6 @@
          */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::AUTHENTICATION_EXCEPTION, $previous);
+            parent::__construct($message, ExceptionCodes::AUTHENTICATION_EXCEPTION->value, $previous);
         }
     }

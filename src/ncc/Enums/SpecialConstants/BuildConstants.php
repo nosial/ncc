@@ -22,25 +22,25 @@
 
     namespace ncc\Enums\SpecialConstants;
 
-    final class BuildConstants
+    enum BuildConstants : string
     {
         /**
          * The Unix Timestamp for when the package was compiled
          */
-        public const COMPILE_TIMESTAMP = '%COMPILE_TIMESTAMP%';
+        case COMPILE_TIMESTAMP = '%COMPILE_TIMESTAMP%';
 
         /**
          * The version of NCC that was used to compile the package
          */
-        public const NCC_BUILD_VERSION = '%NCC_BUILD_VERSION%';
+        case NCC_BUILD_VERSION = '%NCC_BUILD_VERSION%';
 
         /**
          * NCC Build Flags exploded into spaces
          */
-        public const NCC_BUILD_FLAGS = '%NCC_BUILD_FLAGS%';
+        case NCC_BUILD_FLAGS = '%NCC_BUILD_FLAGS%';
 
         /**
          * NCC Build Branch
          */
-        public const NCC_BUILD_BRANCH = '%NCC_BUILD_BRANCH%';
+        case NCC_BUILD_BRANCH = '%NCC_BUILD_BRANCH%';
     }

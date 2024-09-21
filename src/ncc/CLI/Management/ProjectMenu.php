@@ -23,6 +23,7 @@
     namespace ncc\CLI\Management;
 
     use Exception;
+    use ncc\Enums\CompilerExtensions;
     use ncc\Enums\ProjectTemplates;
     use ncc\Enums\Scopes;
     use ncc\Managers\CredentialManager;
@@ -102,7 +103,12 @@
 
             if(isset($args['ext']))
             {
-                $compiler_extension = $args['ext'];
+                $compiler_extension = CompilerExtensions::tryFrom($args['ext']);
+                if($compiler_extension === null)
+                {
+                    Console::outError('Invalid compiler extension, please specify a valid compiler extension', true, 1);
+                    return 1;
+                }
             }
             else
             {
@@ -134,7 +140,7 @@
          */
         private static function installProject(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot install packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -292,9 +298,9 @@
             }
 
             Console::out(PHP_EOL . 'Available Templates:');
-            foreach(ProjectTemplates::ALL as $template)
+            foreach(ProjectTemplates::cases() as $template)
             {
-                Console::out('   ' . $template);
+                Console::out('   ' . $template->value);
             }
 
             return 0;

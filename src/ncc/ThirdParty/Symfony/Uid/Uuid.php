@@ -14,7 +14,7 @@ namespace ncc\ThirdParty\Symfony\Uid;
 /**
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
  *
- * @see https://tools.ietf.org/html/rfc4122#appendix-C for details about namespaces
+ * @see https://datatracker.ietf.org/doc/html/rfc9562/#section-6.6 for details about namespaces
  */
 class Uuid extends AbstractUid
 {
@@ -149,9 +149,16 @@ class Uuid extends AbstractUid
 
     public function toBinary(): string
     {
-        return uuid_parse($this->uid);
+        return hex2bin(str_replace('-', '', $this->uid));
     }
 
+    /**
+     * Returns the identifier as a RFC4122 case insensitive string.
+     *
+     * @see https://tools.ietf.org/html/rfc4122#section-3
+     *
+     * @example 09748193-048a-4bfb-b825-8528cf74fdc1 (len=36)
+     */
     public function toRfc4122(): string
     {
         return $this->uid;

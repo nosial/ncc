@@ -1,0 +1,136 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, ctype, common, zip
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git libpq-dev libzip-dev zip make wget gnupg
+
+      - name: Install Phive
+        run: |
+          wget -O phive.phar https://phar.io/releases/phive.phar
+          wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
+          gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
+          gpg --verify phive.phar.asc phive.phar
+          chmod +x phive.phar
+          sudo mv phive.phar /usr/local/bin/phive
+
+      - name: Install PHPAB
+        run: sudo phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+
+      - name: Build project
+        run: make redist
+
+      - name: Find NCC build directory
+        id: find-ncc-dir
+        run: echo "NCC_DIR=$(find build/ -type d -name 'ncc_*' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Upload NCC build directory
+        uses: actions/upload-artifact@v3
+        with:
+          name: ncc-build
+          path: ${{ env.NCC_DIR }}
+
+      - name: Create redist.zip
+        run: zip -r redist.zip ${{ env.NCC_DIR }}
+
+      - name: Upload redist.zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: redist-zip
+          path: redist.zip
+
+      - name: Build Debian package
+        run: make deb
+
+      - name: Find Debian package
+        id: find-deb
+        run: echo "DEB_FILE=$(find build/ -type f -name '*.deb' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v3
+        with:
+          name: ncc-deb
+          path: ${{ env.DEB_FILE }}
+
+  test-install:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download NCC build directory
+        uses: actions/download-artifact@v3
+        with:
+          name: ncc-build
+          path: build
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, ctype, common, zip
+
+      - name: Test NCC installation
+        run: |
+          ls -l build
+          sudo php build/INSTALL --auto
+
+  upload-release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' && github.event.action == 'created'
+    permissions: write-all
+
+    steps:
+      - name: Download redist.zip
+        uses: actions/download-artifact@v3
+        with:
+          name: redist-zip
+          path: .
+
+      - name: Download Debian package
+        uses: actions/download-artifact@v3
+        with:
+          name: ncc-deb
+          path: .
+
+      - name: Set DEB_FILE environment variable
+        run: echo "DEB_FILE=$(find . -type f -name '*.deb' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Upload redist.zip to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: redist.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload ncc.deb to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.DEB_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

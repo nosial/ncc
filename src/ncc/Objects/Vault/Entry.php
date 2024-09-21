@@ -402,8 +402,8 @@
                 {
                     $self->password = match (Functions::array_bc($password, 'authentication_type'))
                     {
-                        AuthenticationType::USERNAME_PASSWORD => UsernamePassword::fromArray($password),
-                        AuthenticationType::ACCESS_TOKEN => AccessToken::fromArray($password)
+                        AuthenticationType::USERNAME_PASSWORD->value => UsernamePassword::fromArray($password),
+                        AuthenticationType::ACCESS_TOKEN->value => AccessToken::fromArray($password)
                     };
                 }
             }

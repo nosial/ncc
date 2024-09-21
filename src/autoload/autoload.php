@@ -13,7 +13,7 @@
         $third_party_path = __DIR__ . DIRECTORY_SEPARATOR . 'ThirdParty' . DIRECTORY_SEPARATOR;
         $target_files = [
             __DIR__ . DIRECTORY_SEPARATOR . 'autoload_spl.php',
-            $third_party_path . 'composer' . DIRECTORY_SEPARATOR . 'semver' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
+            $third_party_path . 'composer' . DIRECTORY_SEPARATOR . 'Semver' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'defuse' . DIRECTORY_SEPARATOR . 'php-encryption' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'jelix' . DIRECTORY_SEPARATOR . 'version' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'nikic' . DIRECTORY_SEPARATOR . 'PhpParser' . DIRECTORY_SEPARATOR . 'autoload_spl.php',

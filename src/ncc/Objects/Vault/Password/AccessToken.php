@@ -67,7 +67,7 @@
         /**
          * @inheritDoc
          */
-        public function getAuthenticationType(): string
+        public function getAuthenticationType(): AuthenticationType
         {
             return AuthenticationType::ACCESS_TOKEN;
         }
@@ -91,7 +91,7 @@
         public function toArray(bool $bytecode=false): array
         {
             return [
-                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::ACCESS_TOKEN,
+                ($bytecode ? Functions::cbc('authentication_type') : 'authentication_type') => AuthenticationType::ACCESS_TOKEN->value,
                 ($bytecode ? Functions::cbc('access_token') : 'access_token') => $this->access_token,
             ];
         }

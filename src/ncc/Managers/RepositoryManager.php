@@ -109,7 +109,7 @@
          */
         public function addRepository(RepositoryConfiguration $source, bool $update=true): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to add a new repository');
             }
@@ -119,7 +119,7 @@
                 throw new InvalidArgumentException(sprintf('The remote source \'%s\' already exists', $source->getName()));
             }
 
-            Console::outVerbose(sprintf('Adding repository \'%s\' as %s (type: %s)', $source->getHost(), $source->getName(), $source->getType()));
+            Console::outVerbose(sprintf('Adding repository \'%s\' as %s (type: %s)', $source->getHost(), $source->getName(), $source->getType()->value));
             $this->repositories[] = $source;
 
             if($update)
@@ -160,7 +160,7 @@
          */
         public function removeRepository(string $name, bool $update=true): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to delete a repository');
             }
@@ -195,7 +195,7 @@
          */
         public function updateDatabase(): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to update the repository database');
             }
@@ -221,7 +221,7 @@
          */
         public static function initializeDatabase(array $default_repositories=[]): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must be running as root to initialize the repository database');
             }

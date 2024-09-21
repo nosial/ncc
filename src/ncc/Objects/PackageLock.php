@@ -35,10 +35,12 @@
 
     class PackageLock implements BytecodeObjectInterface
     {
+        private const string PACKAGE_LOCK_VERSION = '2.0.0';
+
         /**
          * The version of package lock file structure
          *
-         * @var string
+         * @var Versions
          */
         private $package_lock_version;
 
@@ -59,11 +61,11 @@
         /**
          * Public Constructor
          */
-        public function __construct(array $entries=[], string $package_lock_version=Versions::PACKAGE_LOCK_VERSION, ?int $last_updated_timestamp=null)
+        public function __construct(array $entries=[], ?int $last_updated_timestamp=null)
         {
             $this->entries = $entries;
-            $this->package_lock_version = $package_lock_version;
-            $this->last_updated_timestamp = $last_updated_timestamp ?? time();
+            $this->package_lock_version = self::PACKAGE_LOCK_VERSION;
+            $this->last_updated_timestamp = $last_updated_timestamp ? null : time();
         }
 
         /**
@@ -93,7 +95,7 @@
          */
         private function update(): void
         {
-            $this->package_lock_version = Versions::PACKAGE_LOCK_VERSION;
+            $this->package_lock_version = self::PACKAGE_LOCK_VERSION;
             $this->last_updated_timestamp = time();
         }
 
@@ -280,7 +282,7 @@
             }, $entries_array);
 
 
-            $package_lock_version = Functions::array_bc($data, 'package_lock_version') ?? Versions::PACKAGE_LOCK_VERSION;
+            $package_lock_version = Functions::array_bc($data, 'package_lock_version') ?? self::PACKAGE_LOCK_VERSION;
             $last_updated_timestamp = Functions::array_bc($data, 'last_updated_timestamp') ?? time();
 
             if($package_lock_version === null)
@@ -288,6 +290,6 @@
                 throw new ConfigurationException('Package lock version is missing');
             }
 
-            return new self($entries, $package_lock_version, $last_updated_timestamp);
+            return new self($entries, $last_updated_timestamp);
         }
     }

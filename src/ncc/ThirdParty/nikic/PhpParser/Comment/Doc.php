@@ -2,6 +2,5 @@
 
 namespace ncc\ThirdParty\nikic\PhpParser\Comment;
 
-class Doc extends \ncc\ThirdParty\nikic\PhpParser\Comment
-{
+class Doc extends \ncc\ThirdParty\nikic\PhpParser\Comment {
 }

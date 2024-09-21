@@ -96,6 +96,12 @@
                 $path = substr($path, 0, -1);
             }
 
+            if(is_file($path))
+            {
+                // We can assume the user is trying to load a project file
+                $path = dirname($path);
+            }
+
             // Detect if the folder exists or not
             if(!is_dir($path))
             {
@@ -154,20 +160,20 @@
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
-        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT, array $options=[]): string
+        public function build(string $build_configuration=BuildConfigurationValues::DEFAULT->value, array $options=[]): string
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
-            return match (strtolower($this->project_configuration->getProject()->getCompiler()->getExtension()))
+            return match ($this->project_configuration->getProject()->getCompiler()->getExtension())
             {
                 CompilerExtensions::PHP => match (strtolower($configuration->getBuildType()))
                 {
-                    BuildOutputType::NCC_PACKAGE => (new NccCompiler($this))->build($build_configuration, $options),
-                    BuildOutputType::EXECUTABLE => (new ExecutableCompiler($this))->build($build_configuration, $options),
+                    BuildOutputType::NCC_PACKAGE->value => (new NccCompiler($this))->build($build_configuration, $options),
+                    BuildOutputType::EXECUTABLE->value => (new ExecutableCompiler($this))->build($build_configuration, $options),
                     default => throw new BuildException(sprintf('php cannot produce the build type \'%s\'', $configuration->getBuildType())),
                 },
 
-                default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension())),
+                default => throw new NotSupportedException(sprintf('The compiler extension \'%s\' is not supported', $this->project_configuration->getProject()->getCompiler()->getExtension()->value)),
             };
         }
 
@@ -185,11 +191,11 @@
         {
             switch(strtolower($template_name))
             {
-                case ProjectTemplates::PHP_CLI:
+                case ProjectTemplates::PHP_CLI->value:
                     CliTemplate::applyTemplate($this);
                     break;
 
-                case ProjectTemplates::PHP_LIBRARY:
+                case ProjectTemplates::PHP_LIBRARY->value:
                     LibraryTemplate::applyTemplate($this);
                     break;
 
@@ -203,15 +209,14 @@
          *
          * @param AuthenticationInterface|null $authentication
          * @return array Array of installed packages
-         * @throws OperationException
-         * @throws IOException
          * @throws ConfigurationException
+         * @throws IOException
+         * @throws OperationException
          * @throws PathNotFoundException
-         * @throws NotSupportedException
          */
         public function installDependencies(?AuthenticationInterface $authentication=null): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('Unable to install dependencies, you must be running as root');
             }
@@ -252,16 +257,12 @@
          * Returns an array of file extensions for the components that are part of this project
          *
          * @return array
-         * @throws NotSupportedException
          */
         public function getComponentFileExtensions(): array
         {
             return match ($this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
             {
-                CompilerExtensions::PHP => ComponentFileExtensions::PHP,
-                default => throw new NotSupportedException(
-                    sprintf('The compiler extension \'%s\' is not supported', $this->getProjectConfiguration()->getProject()->getCompiler()->getExtension())
-                ),
+                CompilerExtensions::PHP => ['*.php', '*.php3', '*.php4', '*.php5', '*.phtml']
             };
         }
 
@@ -275,7 +276,7 @@
          * @throws IOException
          * @throws PathNotFoundException
          */
-        public function getExecutionUnits(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getExecutionUnits(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $execution_units = [];
 
@@ -299,9 +300,8 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws NotSupportedException
          */
-        public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getComponents(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -315,9 +315,8 @@
          *
          * @param string $build_configuration
          * @return array
-         * @throws NotSupportedException
          */
-        public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getResources(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
 
@@ -334,14 +333,10 @@
          * @param string $build_configuration
          * @return array
          */
-        public function getRuntimeConstants(string $build_configuration=BuildConfigurationValues::DEFAULT): array
+        public function getConstants(string $build_configuration=BuildConfigurationValues::DEFAULT->value): array
         {
             $configuration = $this->project_configuration->getBuild()->getBuildConfiguration($build_configuration);
-
-            return array_merge(
-                $configuration->getDefineConstants(),
-                $this->project_configuration->getBuild()->getDefineConstants()
-            );
+            return array_merge($configuration->getDefineConstants(), $this->project_configuration->getBuild()->getDefineConstants());
         }
 
         /**
@@ -361,7 +356,7 @@
          * @param string $project_path The directory for the project to be initialized in
          * @param string $name The name of the project eg; ProjectLib
          * @param string $package The standard package name eg; com.example.project
-         * @param string $compiler The compiler to use for this project
+         * @param CompilerExtensions $extension The compiler to use for this project
          * @param array $options An array of options to use when initializing the project
          * @return ProjectManager
          * @throws ConfigurationException
@@ -369,7 +364,7 @@
          * @throws NotSupportedException
          * @throws PathNotFoundException
          */
-        public static function initializeProject(string $project_path, string $name, string $package, string $compiler, array $options=[]): ProjectManager
+        public static function initializeProject(string $project_path, string $name, string $package, CompilerExtensions $extension, array $options=[]): ProjectManager
         {
             if(str_ends_with($project_path, DIRECTORY_SEPARATOR))
             {
@@ -378,7 +373,7 @@
 
             if(is_file($project_path . DIRECTORY_SEPARATOR . 'project.json'))
             {
-                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE]))
+                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE->value]))
                 {
                     throw new IOException('A project has already been initialized in \'' . $project_path . DIRECTORY_SEPARATOR . 'project.json' . '\'');
                 }
@@ -387,7 +382,7 @@
                 unlink($project_path . DIRECTORY_SEPARATOR . 'project.json');
             }
 
-            $project_src = $options[InitializeProjectOptions::PROJECT_SRC_PATH] ?? ('src' . DIRECTORY_SEPARATOR . $name);
+            $project_src = $options[InitializeProjectOptions::PROJECT_SRC_PATH->value] ?? ('src' . DIRECTORY_SEPARATOR . $name);
             if(str_ends_with($project_src, DIRECTORY_SEPARATOR))
             {
                 $project_src = substr($project_src, 0, -1);
@@ -406,17 +401,17 @@
 
             // Generate the Debug & Release build configurations
             $debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug',
-                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . '.ncc'
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE->value . '.ncc'
             );
             $debug_configuration->setDefinedConstant('DEBUG', '1');
             $build->addBuildConfiguration(new ProjectConfiguration\Build\BuildConfiguration('release',
-                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . '.ncc'
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE->value . '.ncc'
             ));
             $build->addBuildConfiguration($debug_configuration);
             $build->setDefaultConfiguration('release');
 
             $project_configuration = new ProjectConfiguration(
-                new ProjectConfiguration\Project($compiler),
+                new ProjectConfiguration\Project($extension),
                 new ProjectConfiguration\Assembly($name, $package),
                 $build
             );
@@ -455,7 +450,7 @@
 
             if(is_file($project_file))
             {
-                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE]))
+                if(!isset($options[InitializeProjectOptions::OVERWRITE_PROJECT_FILE->value]))
                 {
                     throw new IOException('A project has already been initialized in \'' . $project_file . '\'');
                 }
@@ -464,7 +459,7 @@
                 unlink($project_file);
             }
 
-            if(!isset($options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION]))
+            if(!isset($options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION->value]))
             {
                 throw new OperationException('Unable to initialize project from composer.json without a version option');
             }
@@ -485,11 +480,11 @@
                 throw new IOException(sprintf('Project source directory "%s" was not created', $project_src));
             }
 
-            $project = new ProjectConfiguration\Project(new ProjectConfiguration\Compiler(CompilerExtensions::PHP));
+            $project = new ProjectConfiguration\Project(CompilerExtensions::PHP);
             $assembly = new ProjectConfiguration\Assembly(
                 Resolver::composerName($composer_json->getName()),
                 Resolver::composerNameToPackage($composer_json->getName()),
-                $options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION]
+                $options[InitializeProjectOptions::COMPOSER_PACKAGE_VERSION->value]
             );
             $assembly->setDescription($composer_json->getDescription());
 
@@ -610,44 +605,44 @@
                     $required_files[$index] = Functions::removeBasename($file, $project_path);
                 }
 
-                $build->setOption(BuildConfigurationOptions::REQUIRE_FILES, $required_files);
+                $build->setOption(BuildConfigurationOptions::REQUIRE_FILES->value, $required_files);
             }
 
             // Generate debug build configuration
             $ncc_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_ncc',
-                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE->value
             );
-            $ncc_debug_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
+            $ncc_debug_configuration->setBuildType(BuildOutputType::NCC_PACKAGE->value);
             $ncc_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($ncc_debug_configuration);
 
             $executable_debug_configuration = new ProjectConfiguration\Build\BuildConfiguration('debug_executable',
-                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
-            $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE);
-            $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug_ncc');
+            $executable_debug_configuration->setBuildType(BuildOutputType::EXECUTABLE->value);
+            $executable_debug_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'debug_ncc');
             $executable_debug_configuration->setDependencies($require_dev);
             $build->addBuildConfiguration($executable_debug_configuration);
 
             // Generate release build configuration
             $ncc_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_ncc',
-                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE . 'ncc'
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_PACKAGE->value . 'ncc'
             );
-            $ncc_release_configuration->setBuildType(BuildOutputType::NCC_PACKAGE);
+            $ncc_release_configuration->setBuildType(BuildOutputType::NCC_PACKAGE->value);
             $build->addBuildConfiguration($ncc_release_configuration);
 
             $executable_release_configuration = new ProjectConfiguration\Build\BuildConfiguration('release_executable',
-                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
-            $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release_ncc');
-            $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE);
+            $executable_release_configuration->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'release_ncc');
+            $executable_release_configuration->setBuildType(BuildOutputType::EXECUTABLE->value);
             $build->addBuildConfiguration($executable_release_configuration);
 
             // Create an update source for the project
-            if(isset($options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE]))
+            if(isset($options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE->value]))
             {
                 $project->setUpdateSource(new ProjectConfiguration\UpdateSource(
-                    $options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE],
+                    $options[InitializeProjectOptions::COMPOSER_REMOTE_SOURCE->value],
                     (new RepositoryManager())->getRepository('packagist')->getProjectRepository()
                 ));
             }
@@ -680,14 +675,7 @@
                 $path = substr($path, 0, -1);
             }
 
-            if($path === '')
-            {
-                $destination_path .=  DIRECTORY_SEPARATOR . hash('crc32', $project_path);
-            }
-            else
-            {
-                $destination_path .= DIRECTORY_SEPARATOR . hash('crc32', $path);
-            }
+            $destination_path .= DIRECTORY_SEPARATOR . hash('crc32', $project_path);
 
             if(is_file($source_path))
             {

@@ -51,7 +51,7 @@
          */
         public function __construct()
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to access the credentials storage file');
             }
@@ -86,7 +86,7 @@
         {
             Console::outVerbose(sprintf('Saving credentials store to %s', PathFinder::getCredentialStorage()));
 
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to modify the credentials storage file');
             }
@@ -103,7 +103,7 @@
          */
         public static function initializeCredentialStorage(): void
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to initialize the credentials storage file');
             }

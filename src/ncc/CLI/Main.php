@@ -50,7 +50,12 @@
         private static $args;
 
         /**
-         * @var string|null
+         * @var array
+         */
+        private static $raw_args;
+
+        /**
+         * @var LogLevel|null
          */
         private static $log_level;
 
@@ -63,6 +68,7 @@
         public static function start(array $argv): int
         {
             self::$args = Resolver::parseArguments(implode(' ', $argv));
+            self::$raw_args = $argv;
 
             if(!isset(self::$args['ncc-cli']))
             {
@@ -91,30 +97,14 @@
 
             if(isset(self::$args['l']) || isset(self::$args['log-level']))
             {
-                switch(strtolower(self::$args['l'] ?? self::$args['log-level']))
-                {
-                    case LogLevel::SILENT:
-                    case LogLevel::FATAL:
-                    case LogLevel::ERROR:
-                    case LogLevel::WARNING:
-                    case LogLevel::INFO:
-                    case LogLevel::DEBUG:
-                    case LogLevel::VERBOSE:
-                        self::$log_level = strtolower(self::$args['l'] ?? self::$args['log-level']);
-                        break;
-
-                    default:
-                        Console::outWarning('Unknown log level: ' . (self::$args['l'] ?? self::$args['log-level']) . ', using \'info\'');
-                        self::$log_level = LogLevel::INFO;
-                        break;
-                }
+               self::$log_level = LogLevel::fromOrDefault(strtolower(self::$args['l'] ?? self::$args['log-level']));
             }
             else
             {
                 self::$log_level = LogLevel::INFO;
             }
 
-            if(Resolver::checkLogLevel(self::$log_level, LogLevel::DEBUG))
+            if(self::$log_level->checkLogLevel(LogLevel::DEBUG))
             {
                 Console::outDebug('Debug logging enabled');
 
@@ -125,12 +115,12 @@
                 Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
             }
 
-            if(in_array(NccBuildFlags::UNSTABLE, NCC_VERSION_FLAGS, true))
+            if(in_array(NccBuildFlags::UNSTABLE->value, NCC_VERSION_FLAGS, true))
             {
                 Console::outWarning('This is an unstable build of ncc, expect some features to not work as expected');
             }
 
-            if(in_array(NccBuildFlags::BETA, NCC_VERSION_FLAGS, true))
+            if(in_array(NccBuildFlags::BETA->value, NCC_VERSION_FLAGS, true))
             {
                 Console::outWarning('This is a beta build of ncc, expect some features to not work as expected');
             }
@@ -230,9 +220,19 @@
         }
 
         /**
-         * @return string
+         * Returns the raw arguments passed to ncc
+         *
+         * @return array
          */
-        public static function getLogLevel(): string
+        public static function getRawArgs(): array
+        {
+            return self::$raw_args;
+        }
+
+        /**
+         * @return LogLevel
+         */
+        public static function getLogLevel(): LogLevel
         {
             if(self::$log_level === null)
             {

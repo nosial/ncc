@@ -22,13 +22,13 @@
 
     namespace ncc\Enums\SpecialConstants;
 
-    final class InstallConstants
+    enum InstallConstants : string
     {
-        public const INSTALL_PATH = '%INSTALL_PATH%';
+        case INSTALL_PATH = '%INSTALL_PATH%';
 
-        public const INSTALL_PATH_BIN = '%INSTALL_PATH.BIN%';
+        case INSTALL_PATH_BIN = '%INSTALL_PATH.BIN%';
 
-        public const INSTALL_PATH_SRC = '%INSTALL_PATH.SRC%';
+        case INSTALL_PATH_SRC = '%INSTALL_PATH.SRC%';
 
-        public const INSTALL_PATH_DATA = '%INSTALL_PATH.DATA%';
+        case INSTALL_PATH_DATA = '%INSTALL_PATH.DATA%';
     }

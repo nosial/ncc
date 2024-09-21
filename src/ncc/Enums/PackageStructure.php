@@ -22,11 +22,11 @@
 
     namespace ncc\Enums;
 
-    final class PackageStructure
+    enum PackageStructure : int
     {
-        public const FILE_VERSION = 0x73746669;
+        case FILE_VERSION = 0x73746669;
 
-        public const FLAGS = 0x73736166;
+        case FLAGS = 0x73736166;
 
-        public const DIRECTORY = 0x6f746365;
+        case DIRECTORY = 0x6f746365;
     }

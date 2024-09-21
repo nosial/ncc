@@ -2,6 +2,5 @@
 
 namespace ncc\ThirdParty\nikic\PhpParser\Node;
 
-abstract class Scalar extends Expr
-{
+abstract class Scalar extends Expr {
 }

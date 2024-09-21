@@ -22,29 +22,65 @@
 
     namespace ncc\Enums;
 
-    final class LogLevel
+    use ncc\Utilities\Validate;
+
+    enum LogLevel : string
     {
-        public const SILENT = 'silent';
+        case SILENT = 'silent';
 
-        public const VERBOSE = 'verbose';
+        case VERBOSE = 'verbose';
 
-        public const DEBUG = 'debug';
+        case DEBUG = 'debug';
 
-        public const INFO = 'info';
+        case INFO = 'info';
 
-        public const WARNING = 'warn';
+        case WARNING = 'warn';
 
-        public const ERROR = 'error';
+        case ERROR = 'error';
 
-        public const FATAL = 'fatal';
+        case FATAL = 'fatal';
 
-        public const ALL = [
-            self::SILENT,
-            self::VERBOSE,
-            self::DEBUG,
-            self::INFO,
-            self::WARNING,
-            self::ERROR,
-            self::FATAL,
-        ];
+        /**
+         * Checks if the current log level permits logging at the specified level.
+         *
+         * @param LogLevel|null $current_level The log level to be checked. If null, the method returns false.
+         * @return bool Returns true if logging is permitted at the specified level, otherwise false.
+         */
+        public function checkLogLevel(?LogLevel $current_level): bool
+        {
+            if ($current_level === null)
+            {
+                return false;
+            }
+
+            return match ($current_level)
+            {
+                LogLevel::DEBUG => in_array($this, [LogLevel::DEBUG, LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::VERBOSE => in_array($this, [LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::INFO => in_array($this, [LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::WARNING => in_array($this, [LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::ERROR => in_array($this, [LogLevel::FATAL, LogLevel::ERROR], true),
+                LogLevel::FATAL => $this === LogLevel::FATAL,
+                default => false,
+            };
+        }
+
+        /**
+         * Converts the given string input to a LogLevel.
+         * If the input is invalid or not found, it defaults to LogLevel::INFO.
+         *
+         * @param string $input The input string to be converted to a LogLevel.
+         * @return LogLevel Returns the corresponding LogLevel for the input string or LogLevel::INFO if not found.
+         */
+        public static function fromOrDefault(string $input): LogLevel
+        {
+            $value = self::tryFrom($input);
+
+            if($value === null)
+            {
+                return self::INFO;
+            }
+
+            return $value;
+        }
     }

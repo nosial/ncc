@@ -5,37 +5,92 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2024-09-20
 
-## [2.0.4] - 2023-10-25
-
-This update introduces minor bug fixes.
+This update introduces a refactored code-base, code quality improvements, and better exception handling.
 
 ### Added
- - Added host resolving in network calls to improve the handling of invalid or unreachable URLs
- - Added the ability to use 'all' as a build configuration when running `ncc build`, to build all build configurations
-   in the project.
+ - Added Test unit tests/ncc/Objects/Package/ComponentTest.php
+ - Added Test unit tests/ncc/Utilities/ResolverTest.php
+ - Added Test unit tests/ncc/Utilities/SecurityTest.php
+ - Added Test unit tests/ncc/Utilities/ValidateTest.php
+ - Add support for runtime constants
 
 ### Changed
- - Update progress bar text to display basename only
- - Updated exception handling in PackageReader
- - Updated the Download function to attempt to retry the download upon an error for at least 3 times.
+ - Convert Versions constants to enum cases
+ - Update Scopes to enum and adjust scope checks
+ - Convert Runners class to enum with string cases
+ - Convert RegexPatterns constants to enum cases
+ - Convert ProjectTemplates constants to enum cases
+ - Convert PackageStructureVersions constants to enum cases
+ - Convert PackageStructure constants to enum cases
+ - Convert PackageDirectory constants to enum cases
+ - Convert LogLevel constants to enum cases
+ - Convert FileDescriptor constants to enum cases
+ - Convert ExceptionCodes constants to enum cases
+ - Convert ConsoleColors constants to enum cases
+ - Convert CompilerExtensions constants to enum cases
+ - Convert RepositoryType constants to enum cases
+ - Convert RepositoryResultType constants to enum cases
+ - Convert ProjectType constants to enum cases
+ - Convert HttpRequestType constants to enum cases
+ - Convert ComposerStabilityTypes constants to enum cases
+ - Convert ComposerPackageTypes constants to enum cases
+ - Convert ComponentDataType constants to enum cases
+ - Convert BuildOutputType constants to enum cases
+ - Convert AuthenticationType constants to enum cases
+ - Convert RuntimeConstants constants to enum cases
+ - Convert InstallConstants constants to enum cases
+ - Convert DateTimeConstants constants to enum cases
+ - Convert BuildConstants constants to enum cases
+ - Convert AssemblyConstants constants to enum cases
+ - Convert ProjectOptions constants to enum cases
+ - Convert InstallPackageOptions constants to enum cases
+ - Convert InitializeProjectOptions constants to enum cases
+ - Convert ComponentDecodeOptions constants to enum cases
+ - Convert BuildConfigurationValues constants to enum cases
+ - Convert BuildConfigurationOptions constants to enum cases
+ - Convert CompressionOptions constants to enum cases
+ - Convert PackageFlags constants to enum cases
+ - Convert NccBuildFlags constants to enum cases
+ - Convert ComponentFlags constants to enum cases
+ - Refactor flag handling to use PackageFlags enum directly
+ - Refactor checkLogLevel to correctly utilize LogLevel cases
+ - Refactor code to improve readability in Resolver.php
+ - Update PHP include paths in project configuration
+ - Refactor logging level checks to use LogLevel enum directly
+ - Refactor log level parsing with enum method
+ - Refactor log level checking to enum method
+ - Updated Symfony/Filesystem from version 6.3.1 to 7.1.2
+ - Refactor ProjectType handling
+ - Validate and enforce repository type enum usage
+ - Updated Composer/Semver to 3.4.3
+ - Rename 'semver' directory to 'Semver' in composer package
+ - Refactor project constants handling in NccCompiler
+ - Updated Symfony/Yaml to version 7.1.4
+ - Updated Symfony/Uid to version 7.1.4
+ - Updated Symfony/Process to version 7.1.3
+ - Updated Symfony/polyfill-ctype to version 1.31.0
+ - Updated Symfony/polyfill-mbstring to version 1.31.0
+ - Updated Symfony/polyfill-uuid to version 1.31.0
+ - Updated nikic/PhpParser to version 5.2.0
 
 ### Fixed
- - Improve build efficiency by preventing duplicate merges
- - Updated file tracking in Runtime class
- - Fixed division by zero in ConsoleProgressBar
- - Fixed issue where progress bar is displayed in VERBOSE mode
- - Set default process timeouts to null
- - Fixed issue where a newline is sometimes added to the end of a download output due to how short the download process
-   was, mitigated the issue by enforcing a "done" update at the end of the download process
- - Fixed issue where all development dependencies were not correctly being added to debug builds in composer projects,
-   instead these dependencies were added globally to the build configuration. This issue was fixed by adding all the
-   development dependencies to the debug build configurations only.
- - Fixed issue when creating a shadow copy of a package, if the universe aligns together and the cosmos unit together to
-   produce a package length exactly to where the end-of-package byte sequence is cut in half, the shadow copy will fail
-   to be created due to the end-of-package byte sequence being cut in half, this issue was fixed by reading the package
-   in chunks to determine the end-of-package byte sequence.
+ - Fixed Division by zero in PackageManager
+ - Fixed runner argument passing for ExecCommand
 
+### Removed
+ - Removed EncoderType enum file, unused.
+ - Removed PackageStandardVersions.php
+ - Removed ConstantReferences.php
+ - Removed HttpStatusCodes.php
+ - Removed CompilerExtensionDefaultVersions.php
+ - Removed RemoteSourceType
+ - Removed DependencySourceType
+ - Removed BuiltinRemoteSourceType
+ - Removed RuntimeImportOptions
+ - Remove ComponentFileExtensions enum
+ - Remove unused import and redundant scope validation method
 
 ## [2.0.3] - 2023-10-17
 
@@ -47,12 +102,12 @@ The changes improve the system's efficiency, error resilience, and user experien
  - Implemented support in the AST traversal for the PHP statements `include`, `include_once`, `require`, and
    `require_once`. These statements are transformed into function calls. With this change, ncc can correctly handle and 
    import files from system packages or direct binary package files.
- - Added new `ConsoleProgressBar` class for UI improvement, improved the CLI Progress Bar inspired by
+ - Added new `ConsoleProgressBar` class for UI improvement, imrpoved the CLI Progress Bar inspired by
    [pacman](https://wiki.archlinux.org/title/pacman)
 
 ### Fixed
  - When finding package versions in the package lock, ncc will try to find a satisfying version rather than the exact
-   version, this is to prevent errors when the package lock contains a version that is not available in the repository.
+   version, this is to prevent[CHANGELOG.md](CHANGELOG.md) errors when the package lock contains a version that is not available in the repository.
  - Fixed issue when registering ncc's extension, when using the INSTALLER, the installation path used in the process
   appears to be incorrect, added a optional parameter to the `registerExtension` method to allow the installer to pass
   the correct installation path.

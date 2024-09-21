@@ -24,5 +24,6 @@
 
     final class CompilerExtensionSupportedVersions
     {
+        // TODO: Cannot convert this to enum, try another way
         public const PHP = ['8.0', '8.1', '8.2'];
     }

@@ -30,6 +30,6 @@
     {
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::INTEGRITY_EXCEPTION, $previous);
+            parent::__construct($message, ExceptionCodes::INTEGRITY_EXCEPTION->value, $previous);
         }
     }

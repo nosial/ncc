@@ -61,23 +61,22 @@
 
             if(self::$user_id_cache === 0)
             {
-                return Scopes::SYSTEM;
+                return Scopes::SYSTEM->value;
             }
 
-            return Scopes::USER;
+            return Scopes::USER->value;
         }
 
         /**
          * Parse arguments
          *
          * @param array|string $message [$message] input arguments
-         * @param int $max_arguments
          * @return array Configs Key/Value
          * @noinspection RegExpRedundantEscape
          * @noinspection RegExpSimplifiable
          * @noinspection PhpMissingParamTypeInspection
          */
-        public static function parseArguments($message=null, int $max_arguments=1000): array
+        public static function parseArguments($message=null): array
         {
             if (is_string($message))
             {
@@ -131,14 +130,28 @@
                 {
                     $configs[$match['unmatched']] = true;
                 }
-
-                if($index >= $max_arguments)
-                {
-                    break;
-                }
             }
 
             return $configs;
+        }
+
+        /**
+         * Split arguments
+         *
+         * @param array $args List of arguments
+         * @param string $arg The argument to split from
+         * @return array Split arguments starting from specified argument
+         */
+        public static function splitArguments(array $args, string $arg): array
+        {
+            $index = array_search($arg, $args);
+
+            if($index === false)
+            {
+                return [];
+            }
+
+            return array_slice($args, $index + 1);
         }
 
         /**
@@ -163,44 +176,6 @@
         public static function resolveConstantHash(string $scope, string $name): string
         {
             return hash('haval128,3', self::resolveFullConstantName($scope, $name));
-        }
-
-        /**
-         * Checks if the input level matches the current level
-         *
-         * @param string|null $input
-         * @param string|null $current_level
-         * @return bool
-         */
-        public static function checkLogLevel(?string $input, ?string $current_level): bool
-        {
-            if($input === null || $current_level === null)
-            {
-                return false;
-            }
-
-            $input = strtolower($input);
-            if(!Validate::checkLogLevel($input))
-            {
-                return false;
-            }
-
-            $current_level = strtolower($current_level);
-            if(!Validate::checkLogLevel($current_level))
-            {
-                return false;
-            }
-
-            return match ($current_level)
-            {
-                LogLevel::DEBUG => in_array($input, [LogLevel::DEBUG, LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::VERBOSE => in_array($input, [LogLevel::VERBOSE, LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::INFO => in_array($input, [LogLevel::INFO, LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::WARNING => in_array($input, [LogLevel::WARNING, LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::ERROR => in_array($input, [LogLevel::FATAL, LogLevel::ERROR], true),
-                LogLevel::FATAL => $input === LogLevel::FATAL,
-                default => false,
-            };
         }
 
         /**
@@ -289,16 +264,17 @@
                 throw new InvalidArgumentException(sprintf('Invalid component prefix "%s"', $file_stub_code));
             }
 
+            // TODO: What the hell is this?
             return match ((int)$file_stub_code)
             {
-                PackageDirectory::METADATA => PackageDirectory::METADATA,
-                PackageDirectory::ASSEMBLY => PackageDirectory::ASSEMBLY,
-                PackageDirectory::EXECUTION_UNITS => PackageDirectory::EXECUTION_UNITS,
-                PackageDirectory::INSTALLER => PackageDirectory::INSTALLER,
-                PackageDirectory::DEPENDENCIES => PackageDirectory::DEPENDENCIES,
-                PackageDirectory::CLASS_POINTER => PackageDirectory::CLASS_POINTER,
-                PackageDirectory::RESOURCES => PackageDirectory::RESOURCES,
-                PackageDirectory::COMPONENTS => PackageDirectory::COMPONENTS,
+                PackageDirectory::METADATA->value => PackageDirectory::METADATA->value,
+                PackageDirectory::ASSEMBLY->value => PackageDirectory::ASSEMBLY->value,
+                PackageDirectory::EXECUTION_UNITS->value => PackageDirectory::EXECUTION_UNITS->value,
+                PackageDirectory::INSTALLER->value => PackageDirectory::INSTALLER->value,
+                PackageDirectory::DEPENDENCIES->value => PackageDirectory::DEPENDENCIES->value,
+                PackageDirectory::CLASS_POINTER->value => PackageDirectory::CLASS_POINTER->value,
+                PackageDirectory::RESOURCES->value => PackageDirectory::RESOURCES->value,
+                PackageDirectory::COMPONENTS->value => PackageDirectory::COMPONENTS->value,
                 default => throw new InvalidArgumentException(sprintf('Invalid component type "%s"', $component_path)),
             };
         }

@@ -22,15 +22,15 @@
 
     namespace ncc\Enums\Options;
 
-    final class BuildConfigurationOptions
+    enum BuildConfigurationOptions : string
     {
-        public const COMPRESSION = 'compression';
+        case COMPRESSION = 'compression';
 
-        public const REQUIRE_FILES = 'require_files';
+        case REQUIRE_FILES = 'require_files';
 
-        public const NCC_CONFIGURATION = 'ncc_configuration';
+        case NCC_CONFIGURATION = 'ncc_configuration';
 
-        public const OUTPUT_FILE = 'output_file';
+        case OUTPUT_FILE = 'output_file';
 
-        public const STATIC_DEPENDENCIES = 'static';
+        case STATIC_DEPENDENCIES = 'static';
     }

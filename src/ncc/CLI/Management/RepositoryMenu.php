@@ -25,6 +25,7 @@
     use Exception;
     use ncc\Enums\ConsoleColors;
     use ncc\Enums\Scopes;
+    use ncc\Enums\Types\RepositoryType;
     use ncc\Managers\RepositoryManager;
     use ncc\Objects\CliHelpSection;
     use ncc\Objects\RepositoryConfiguration;
@@ -141,7 +142,7 @@
          */
         private static function addEntry(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You must be running as root to add a new repository', true, 1);
                 return 1;
@@ -164,6 +165,13 @@
                 return 1;
             }
 
+            $parsed_type = RepositoryType::tryFrom($type);
+            if($parsed_type === null)
+            {
+                Console::outError(sprintf('Unknown repository type \'%s\'.', $type), true, 1);
+                return 1;
+            }
+
             if($host === null)
             {
                 Console::outError(sprintf('Missing required argument \'%s\'.', 'host'), true, 1);
@@ -172,7 +180,7 @@
 
             try
             {
-                (new RepositoryManager())->addRepository(new RepositoryConfiguration($name, $host, $type, $ssl));
+                (new RepositoryManager())->addRepository(new RepositoryConfiguration($name, $host, $parsed_type, $ssl));
             }
             catch(Exception $e)
             {
@@ -230,7 +238,7 @@
          */
         private static function removeEntry(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You must be running as root to remove a repository', true, 1);
                 return 1;

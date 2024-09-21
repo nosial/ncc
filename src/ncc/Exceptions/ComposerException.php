@@ -34,6 +34,6 @@ namespace ncc\Exceptions;
          */
         public function __construct(string $message = "", ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::COMPOSER_EXCEPTION, $previous);
+            parent::__construct($message, ExceptionCodes::COMPOSER_EXCEPTION->value, $previous);
         }
     }

@@ -49,27 +49,27 @@
         public static function applyTemplate(ProjectManager $project_manager): void
         {
             $project_manager->getProjectConfiguration()->addExecutionPolicy(
-                new ExecutionPolicy('main_policy', Runners::PHP, new ExecutionPolicy\Execute('main'))
+                new ExecutionPolicy('main_policy', Runners::PHP->value, new ExecutionPolicy\Execute('main'))
             );
 
             $project_manager->getProjectConfiguration()->getBuild()->setMain('main_policy');
-            $project_manager->getProjectConfiguration()->getProject()->addOption(ProjectOptions::CREATE_SYMLINK, true);
+            $project_manager->getProjectConfiguration()->getProject()->addOption(ProjectOptions::CREATE_SYMLINK->value, true);
 
             // Create the release build configuration
             $release_executable = new BuildConfiguration('release_executable',
-                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+                'build' . DIRECTORY_SEPARATOR . 'release' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
-            $release_executable->setBuildType(BuildOutputType::EXECUTABLE);
-            $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'release');
+            $release_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
+            $release_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'release');
             $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($release_executable);
 
             // Create the debug build configuration
             $debug_executable = new BuildConfiguration('debug_executable',
-                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME
+                'build' . DIRECTORY_SEPARATOR . 'debug' . DIRECTORY_SEPARATOR . AssemblyConstants::ASSEMBLY_NAME->value
             );
             $debug_executable->setDefinedConstant('DEBUG', '1');
-            $debug_executable->setBuildType(BuildOutputType::EXECUTABLE);
-            $debug_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION, 'debug');
+            $debug_executable->setBuildType(BuildOutputType::EXECUTABLE->value);
+            $debug_executable->setOption(BuildConfigurationOptions::NCC_CONFIGURATION->value, 'debug');
             $project_manager->getProjectConfiguration()->getBuild()->addBuildConfiguration($debug_executable);
 
             self::writeProgramTemplate($project_manager);

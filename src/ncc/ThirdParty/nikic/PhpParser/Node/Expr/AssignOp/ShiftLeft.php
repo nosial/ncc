@@ -4,9 +4,8 @@ namespace ncc\ThirdParty\nikic\PhpParser\Node\Expr\AssignOp;
 
 use ncc\ThirdParty\nikic\PhpParser\Node\Expr\AssignOp;
 
-class ShiftLeft extends AssignOp
-{
-    public function getType() : string {
+class ShiftLeft extends AssignOp {
+    public function getType(): string {
         return 'Expr_AssignOp_ShiftLeft';
     }
 }

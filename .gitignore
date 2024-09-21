@@ -8,7 +8,7 @@
 build
 
 # Autoload files
-src/ncc/ThirdParty/composer/semver/autoload_spl.php
+src/ncc/ThirdParty/composer/Semver/autoload_spl.php
 src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
 src/ncc/ThirdParty/jelix/version/autoload_spl.php
 src/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
@@ -29,3 +29,5 @@ src/ncc/autoload.php
 tests/example_project/project.json
 tests/example_project/ncc
 tests/example_project/build
+/.phpunit.result.cache
+/.idea/php-test-framework.xml

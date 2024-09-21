@@ -67,10 +67,10 @@
 
             $input = str_replace(
                 [
-                    AssemblyConstants::ASSEMBLY_NAME,
-                    AssemblyConstants::ASSEMBLY_PACKAGE,
-                    AssemblyConstants::ASSEMBLY_VERSION,
-                    AssemblyConstants::ASSEMBLY_UID
+                    AssemblyConstants::ASSEMBLY_NAME->value,
+                    AssemblyConstants::ASSEMBLY_PACKAGE->value,
+                    AssemblyConstants::ASSEMBLY_VERSION->value,
+                    AssemblyConstants::ASSEMBLY_UID->value
                 ],
                 [
                     $assembly->getName(),
@@ -81,27 +81,27 @@
 
             if($assembly->getDescription() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION, $assembly->getDescription(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_DESCRIPTION->value, $assembly->getDescription(), $input);
             }
 
             if($assembly->getCompany() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY, $assembly->getCompany(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COMPANY->value, $assembly->getCompany(), $input);
             }
 
             if($assembly->getProduct() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT, $assembly->getProduct(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_PRODUCT->value, $assembly->getProduct(), $input);
             }
 
             if($assembly->getCopyright() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT, $assembly->getCopyright(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_COPYRIGHT->value, $assembly->getCopyright(), $input);
             }
 
             if($assembly->getTrademark() !== null)
             {
-                $input = str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK, $assembly->getTrademark(), $input);
+                $input = str_replace(AssemblyConstants::ASSEMBLY_TRADEMARK->value, $assembly->getTrademark(), $input);
             }
             return $input;
         }
@@ -121,10 +121,10 @@
 
             return str_replace(
                 [
-                    BuildConstants::COMPILE_TIMESTAMP,
-                    BuildConstants::NCC_BUILD_VERSION,
-                    BuildConstants::NCC_BUILD_FLAGS,
-                    BuildConstants::NCC_BUILD_BRANCH
+                    BuildConstants::COMPILE_TIMESTAMP->value,
+                    BuildConstants::NCC_BUILD_VERSION->value,
+                    BuildConstants::NCC_BUILD_FLAGS->value,
+                    BuildConstants::NCC_BUILD_BRANCH->value
                 ],
                 [
                     time(),
@@ -150,10 +150,10 @@
 
             return str_replace(
                 [
-                    InstallConstants::INSTALL_PATH,
-                    InstallConstants::INSTALL_PATH_BIN,
-                    InstallConstants::INSTALL_PATH_SRC,
-                    InstallConstants::INSTALL_PATH_DATA
+                    InstallConstants::INSTALL_PATH->value,
+                    InstallConstants::INSTALL_PATH_BIN->value,
+                    InstallConstants::INSTALL_PATH_SRC->value,
+                    InstallConstants::INSTALL_PATH_DATA->value
                 ],
                 [
                     $installation_paths->getInstallationpath(),
@@ -178,36 +178,36 @@
             }
 
             return str_replace([
-                DateTimeConstants::d,
-                DateTimeConstants::D,
-                DateTimeConstants::j,
-                DateTimeConstants::l,
-                DateTimeConstants::N,
-                DateTimeConstants::S,
-                DateTimeConstants::w,
-                DateTimeConstants::z,
-                DateTimeConstants::W,
-                DateTimeConstants::F,
-                DateTimeConstants::m,
-                DateTimeConstants::M,
-                DateTimeConstants::n,
-                DateTimeConstants::t,
-                DateTimeConstants::L,
-                DateTimeConstants::o,
-                DateTimeConstants::Y,
-                DateTimeConstants::y,
-                DateTimeConstants::a,
-                DateTimeConstants::A,
-                DateTimeConstants::B,
-                DateTimeConstants::g,
-                DateTimeConstants::G,
-                DateTimeConstants::h,
-                DateTimeConstants::H,
-                DateTimeConstants::i,
-                DateTimeConstants::s,
-                DateTimeConstants::c,
-                DateTimeConstants::r,
-                DateTimeConstants::u
+                DateTimeConstants::d->value,
+                DateTimeConstants::D->value,
+                DateTimeConstants::j->value,
+                DateTimeConstants::l->value,
+                DateTimeConstants::N->value,
+                DateTimeConstants::S->value,
+                DateTimeConstants::w->value,
+                DateTimeConstants::z->value,
+                DateTimeConstants::W->value,
+                DateTimeConstants::F->value,
+                DateTimeConstants::m->value,
+                DateTimeConstants::M->value,
+                DateTimeConstants::n->value,
+                DateTimeConstants::t->value,
+                DateTimeConstants::L->value,
+                DateTimeConstants::o->value,
+                DateTimeConstants::Y->value,
+                DateTimeConstants::y->value,
+                DateTimeConstants::a->value,
+                DateTimeConstants::A->value,
+                DateTimeConstants::B->value,
+                DateTimeConstants::g->value,
+                DateTimeConstants::G->value,
+                DateTimeConstants::h->value,
+                DateTimeConstants::H->value,
+                DateTimeConstants::i->value,
+                DateTimeConstants::s->value,
+                DateTimeConstants::c->value,
+                DateTimeConstants::r->value,
+                DateTimeConstants::u->value
             ],
             [
                 date('d', $timestamp),
@@ -257,7 +257,7 @@
 
             if(function_exists('getcwd'))
             {
-                $input = str_replace(RuntimeConstants::CWD, getcwd(), $input);
+                $input = str_replace(RuntimeConstants::CWD->value, getcwd(), $input);
             }
             else
             {
@@ -266,7 +266,7 @@
 
             if(function_exists('getmypid'))
             {
-                $input = str_replace(RuntimeConstants::PID, getmypid(), $input);
+                $input = str_replace(RuntimeConstants::PID->value, getmypid(), $input);
             }
             else
             {
@@ -275,7 +275,7 @@
 
             if(function_exists('getmyuid'))
             {
-                $input = str_replace(RuntimeConstants::UID, getmyuid(), $input);
+                $input = str_replace(RuntimeConstants::UID->value, getmyuid(), $input);
             }
             else
             {
@@ -284,7 +284,7 @@
 
             if(function_exists('getmygid'))
             {
-                $input = str_replace(RuntimeConstants::GID, getmygid(), $input);
+                $input = str_replace(RuntimeConstants::GID->value, getmygid(), $input);
             }
             else
             {
@@ -293,7 +293,7 @@
 
             if(function_exists('get_current_user'))
             {
-                $input = str_replace(RuntimeConstants::USER, get_current_user(), $input);
+                $input = str_replace(RuntimeConstants::USER->value, get_current_user(), $input);
             }
             else
             {

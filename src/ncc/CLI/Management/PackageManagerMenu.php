@@ -132,7 +132,7 @@
          */
         private static function installPackage(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot install packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -155,17 +155,22 @@
 
             if(isset($args['reinstall']))
             {
-                $options[InstallPackageOptions::REINSTALL] = true;
+                $options[InstallPackageOptions::REINSTALL->value] = true;
             }
 
             if(isset($args['prefer-static']) || isset($args['static']))
             {
-                $options[InstallPackageOptions::PREFER_STATIC] = true;
+                $options[InstallPackageOptions::PREFER_STATIC->value] = true;
             }
 
             if(isset($args['skip-dependencies']))
             {
-                $options[InstallPackageOptions::SKIP_DEPENDENCIES] = true;
+                $options[InstallPackageOptions::SKIP_DEPENDENCIES->value] = true;
+            }
+
+            if(isset($args['build-source']))
+            {
+                $options[InstallPackageOptions::BUILD_SOURCE->value] = true;
             }
 
             if($authentication !== null)
@@ -199,7 +204,7 @@
                 $authentication_entry = $entry->getPassword();
             }
 
-            if(preg_match(RegexPatterns::REMOTE_PACKAGE, $package) === 1)
+            if(preg_match(RegexPatterns::REMOTE_PACKAGE->value, $package) === 1)
             {
                 $package_input = RemotePackageInput::fromString($package);
 
@@ -388,7 +393,7 @@
          */
         private static function uninstallPackage($args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot uninstall packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -419,7 +424,7 @@
          */
         private static function uninstallAllPackages(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot uninstall all packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -455,7 +460,7 @@
          */
         private static function fixBrokenPackages(array $args): int
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 Console::outError('You cannot fix broken packages in a user scope, please run this command as root', true, 1);
                 return 1;
@@ -560,6 +565,7 @@
                 new CliHelpSection(['install', '-p', '--skip-dependencies'], 'Installs a specified ncc package but skips the installation of dependencies'),
                 new CliHelpSection(['install', '-p', '--reinstall'], 'Installs a specified ncc package, reinstall if already installed'),
                 new CliHelpSection(['install', '--prefer-static', '--static'], 'Installs a static version of the package from the remote repository if available'),
+                new CliHelpSection(['install', '--build-source'], 'Forces ncc to build the packages from source rather than trying to use a pre-built binary'),
                 new CliHelpSection(['uninstall', '--package', '-p'], 'Uninstalls a specified ncc package'),
                 new CliHelpSection(['uninstall', '--package', '-p', '--version', '-v'], 'Uninstalls a specified ncc package version'),
                 new CliHelpSection(['uninstall-all'], 'Uninstalls all packages'),

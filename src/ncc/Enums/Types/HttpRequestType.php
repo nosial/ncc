@@ -22,10 +22,10 @@
 
     namespace ncc\Enums\Types;
 
-    final class HttpRequestType
+    enum HttpRequestType : string
     {
-        public const GET = 'GET';
-        public const POST = 'POST';
-        public const PUT = 'PUT';
-        public const DELETE = 'DELETE';
+        case GET = 'GET';
+        case POST = 'POST';
+        case PUT = 'PUT';
+        case DELETE = 'DELETE';
     }

@@ -22,11 +22,11 @@
 
     namespace ncc\Enums\SpecialConstants;
 
-    final class RuntimeConstants
+    enum RuntimeConstants : string
     {
-        public const CWD = '%CWD%';
-        public const PID = '%PID%';
-        public const UID = '%UID%';
-        public const GID = '%GID%';
-        public const USER = '%USER%';
+        case CWD = '%CWD%';
+        case PID = '%PID%';
+        case UID = '%UID%';
+        case GID = '%GID%';
+        case USER = '%USER%';
     }

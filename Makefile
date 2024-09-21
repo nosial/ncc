@@ -18,7 +18,7 @@ DEBIAN_PACKAGE_BUILD_PATH := $(BUILD_PATH)/ncc_$(BUILD_VERSION)_all.deb
 
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
-    composer/semver \
+    composer/Semver \
     defuse/php-encryption \
     jelix/version \
     nikic/PhpParser \

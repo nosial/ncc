@@ -151,7 +151,7 @@
          */
         public function install(string|PackageReader $input, ?AuthenticationInterface $authentication=null, array $options=[]): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to install packages');
             }
@@ -169,7 +169,7 @@
             }
 
             // If the input is a remote package, we can assume it's a remote package input
-            if(preg_match(RegexPatterns::REMOTE_PACKAGE, $input) === 1)
+            if(preg_match(RegexPatterns::REMOTE_PACKAGE->value, $input) === 1)
             {
                 return $this->installRemotePackage(RemotePackageInput::fromString($input), $authentication, $options);
             }
@@ -188,7 +188,7 @@
          */
         public function uninstall(string $package_name, ?string $version=null): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to uninstall packages');
             }
@@ -206,7 +206,7 @@
                 {
                     Console::outVerbose(sprintf(
                         'Removing symlink for %s=%s at %s',
-                        $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST)->getVersion(),
+                        $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST->value)->getVersion(),
                         PathFinder::findBinPath() . DIRECTORY_SEPARATOR  . strtolower($package_name)
                     ));
 
@@ -216,7 +216,7 @@
                     }
                     catch(Exception $e)
                     {
-                        throw new IOException(sprintf('Failed to resolve symlink for %s=%s: %s', $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST)->getVersion(), $e->getMessage()), $e);
+                        throw new IOException(sprintf('Failed to resolve symlink for %s=%s: %s', $package_name, $this->package_lock->getEntry($package_name)->getVersion(Versions::LATEST->value)->getVersion(), $e->getMessage()), $e);
                     }
 
                     if(is_file($symlink_path))
@@ -285,7 +285,7 @@
          */
         public function uninstallAll(): array
         {
-            if(Resolver::resolveScope() !== Scopes::SYSTEM)
+            if(Resolver::resolveScope() !== Scopes::SYSTEM->value)
             {
                 throw new OperationException('You must have root privileges to uninstall packages');
             }
@@ -405,7 +405,7 @@
             Console::out(sprintf('Installing package %s=%s', $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()));
             if($this->package_lock->entryExists($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()))
             {
-                if(!isset($options[InstallPackageOptions::REINSTALL]))
+                if(!isset($options[InstallPackageOptions::REINSTALL->value]))
                 {
                     Console::outVerbose(sprintf(
                         'Package %s=%s is already installed, skipping',
@@ -453,7 +453,7 @@
                 throw new IOException(sprintf('Failed to add package to package lock file due to an exception: %s', $e->getMessage()), $e);
             }
 
-            if($package_reader->getMetadata()->getOption(ProjectOptions::CREATE_SYMLINK) === null)
+            if($package_reader->getMetadata()->getOption(ProjectOptions::CREATE_SYMLINK->value) === null)
             {
                 // Remove the symlink if it exists
                 if($this->package_lock->getEntry($package_reader->getAssembly()->getPackage())->isSymlinkRegistered())
@@ -505,7 +505,7 @@
 
             $this->saveLock();
 
-            if(!isset($options[InstallPackageOptions::SKIP_DEPENDENCIES]))
+            if(!isset($options[InstallPackageOptions::SKIP_DEPENDENCIES->value]))
             {
                 foreach($this->checkRequiredDependencies($package_reader) as $dependency)
                 {
@@ -521,7 +521,7 @@
                     ));
 
                     /** @noinspection SlowArrayOperationsInLoopInspection */
-                    $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication));
+                    $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication, $options));
                 }
             }
 
@@ -550,35 +550,45 @@
 
             Console::out(sprintf('Fetching package %s/%s=%s from %s', $input->getVendor(), $input->getPackage(), $input->getVersion(), $input->getRepository()));
 
-            try
+            if(isset($options[InstallPackageOptions::BUILD_SOURCE->value]))
             {
                 Console::outVerbose(sprintf(
-                    'Attempting to fetch a pre-built ncc package for %s=%s from %s',
-                    $input->getPackage(), $input->getVersion(), $input->getRepository()
+                    'Forcing ncc to build package %s/%s=%s from source',
+                    $input->getVendor(), $input->getPackage(), $input->getVersion()
                 ));
-
-                // First try to fetch a pre-built package from the repository
-                $results = $this->repository_manager->getRepository($input->getRepository())->fetchPackage(
-                    $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication, $options
-                );
-
-                $package_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
             }
-            catch(Exception $e)
+            else
             {
-                Console::outVerbose(sprintf(
-                    'Failed to fetch a pre-built ncc package for %s=%s from %s: %s',
-                    $input->getPackage(), $input->getVersion(), $input->getRepository(), $e->getMessage()
-                ));
-
-                // Clean up the package file if it exists
-                if(isset($package_path) && is_file($package_path))
+                try
                 {
-                    ShutdownHandler::declareTemporaryPath($package_path);
-                }
+                    Console::outVerbose(sprintf(
+                        'Attempting to fetch a pre-built ncc package for %s=%s from %s',
+                        $input->getPackage(), $input->getVersion(), $input->getRepository()
+                    ));
 
-                // This is a warning because we can still attempt to build from source
-                unset($results, $package_path);
+                    // First try to fetch a pre-built package from the repository
+                    $results = $this->repository_manager->getRepository($input->getRepository())->fetchPackage(
+                        $input->getVendor(), $input->getPackage(), $input->getVersion(), $authentication, $options
+                    );
+
+                    $package_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
+                }
+                catch(Exception $e)
+                {
+                    Console::outVerbose(sprintf(
+                        'Failed to fetch a pre-built ncc package for %s=%s from %s: %s',
+                        $input->getPackage(), $input->getVersion(), $input->getRepository(), $e->getMessage()
+                    ));
+
+                    // Clean up the package file if it exists
+                    if(isset($package_path) && is_file($package_path))
+                    {
+                        ShutdownHandler::declareTemporaryPath($package_path);
+                    }
+
+                    // This is a warning because we can still attempt to build from source
+                    unset($results, $package_path);
+                }
             }
 
             if(!isset($package_path))
@@ -598,8 +608,8 @@
 
                     $archive_path = $this->downloadFile($results->getUrl(), PathFinder::getCachePath());
                     $package_path = $this->buildFromSource($archive_path, [
-                        InitializeProjectOptions::COMPOSER_PACKAGE_VERSION => $results->getVersion(),
-                        InitializeProjectOptions::COMPOSER_REMOTE_SOURCE => $input->toString()
+                        InitializeProjectOptions::COMPOSER_PACKAGE_VERSION->value => $results->getVersion(),
+                        InitializeProjectOptions::COMPOSER_REMOTE_SOURCE->value => $input->toString()
                     ]);
                 }
                 catch(Exception $e)
@@ -663,16 +673,16 @@
             $progress_bar->increaseValue(1, true);
             foreach($package_reader->getComponents() as $component_name)
             {
-                $progress_bar->setMiscText(basename($component_name), true);
+                $progress_bar->setMiscText($component_name);
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting component %s to %s', $component_name, $bin_path . DIRECTORY_SEPARATOR . $component_name));
                 }
 
                 IO::fwrite(
                     $bin_path . DIRECTORY_SEPARATOR . $component_name,
-                    $package_reader->getComponent($component_name)->getData([ComponentDecodeOptions::AS_FILE]), 0755
+                    $package_reader->getComponent($component_name)->getData([ComponentDecodeOptions::AS_FILE->value]), 0755
                 );
 
                 //Console::inlineProgressBar(++$current_step, $total_steps);
@@ -681,9 +691,9 @@
 
             foreach($package_reader->getResources() as $resource_name)
             {
-                $progress_bar->setMiscText(basename($resource_name), true);
+                $progress_bar->setMiscText($resource_name);
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting resource %s to %s', $resource_name, $bin_path . DIRECTORY_SEPARATOR . $resource_name));
                 }
@@ -701,7 +711,7 @@
             {
                 $progress_bar->setMiscText($unit);
 
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     Console::outVerbose(sprintf('Extracting execution unit %s to %s', $unit, $package_path . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $package_reader->getExecutionUnit($unit)->getExecutionPolicy()->getName() . '.unit'));
                 }
@@ -726,7 +736,7 @@
             if($package_reader->getInstaller() !== null)
             {
                 $progress_bar->setMiscText('installer');
-                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER, ZiProto::encode($package_reader->getInstaller()?->toArray(true)));
+                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::INSTALLER->value, ZiProto::encode($package_reader->getInstaller()?->toArray(true)));
             }
             //Console::inlineProgressBar(++$current_step, $total_steps);
             $progress_bar->increaseValue(1, true);
@@ -734,23 +744,23 @@
             if(count($class_map) > 0)
             {
                 $progress_bar->setMiscText('class map');
-                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP, ZiProto::encode($class_map));
+                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::CLASS_MAP->value, ZiProto::encode($class_map));
             }
             //Console::inlineProgressBar(++$current_step, $total_steps);
             $progress_bar->increaseValue(1, true);
 
-            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY, ZiProto::encode($package_reader->getAssembly()->toArray(true)));
-            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::METADATA, ZiProto::encode($package_reader->getMetadata()->toArray(true)));
+            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::ASSEMBLY->value, ZiProto::encode($package_reader->getAssembly()->toArray(true)));
+            IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value, ZiProto::encode($package_reader->getMetadata()->toArray(true)));
 
             if($package_reader->getMetadata()->getUpdateSource() !== null)
             {
-                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::UPDATE, ZiProto::encode($package_reader->getMetadata()->getUpdateSource()?->toArray(true)));
+                IO::fwrite($package_path . DIRECTORY_SEPARATOR . FileDescriptor::UPDATE->value, ZiProto::encode($package_reader->getMetadata()->getUpdateSource()?->toArray(true)));
             }
             //Console::inlineProgressBar(++$current_step, $total_steps);
             $progress_bar->increaseValue(1, true);
 
             $progress_bar->setMiscText('creating shadowcopy', true);
-            $package_reader->saveCopy($package_path . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE);
+            $package_reader->saveCopy($package_path . DIRECTORY_SEPARATOR . FileDescriptor::SHADOW_PACKAGE->value);
             //Console::inlineProgressBar(++$current_step, $total_steps);
 
             $progress_bar->setMiscText('done', true);
@@ -804,8 +814,8 @@
                     try
                     {
                         $package_path = (new ProjectManager($project_detection->getProjectFilePath()))->build(
-                            BuildConfigurationValues::DEFAULT,
-                            [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
+                            BuildConfigurationValues::DEFAULT->value,
+                            [BuildConfigurationOptions::OUTPUT_FILE->value => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
                         );
 
                         ShutdownHandler::declareTemporaryPath($source_directory);
@@ -828,8 +838,8 @@
                     {
                         $project_manager = ProjectManager::initializeFromComposer(dirname($project_detection->getProjectFilePath()), $options);
                         $package_path = $project_manager->build(
-                            BuildConfigurationValues::DEFAULT,
-                            [BuildConfigurationOptions::OUTPUT_FILE => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
+                            BuildConfigurationValues::DEFAULT->value,
+                            [BuildConfigurationOptions::OUTPUT_FILE->value => PathFinder::getCachePath() . DIRECTORY_SEPARATOR . hash('sha1', $archive) . '.ncc']
                         );
 
                         ShutdownHandler::declareTemporaryPath($package_path);
@@ -848,7 +858,7 @@
                     }
 
                 default:
-                    throw new NotSupportedException(sprintf('Cannot build from source %s, the project type %s is not supported', $archive, $project_detection->getProjectType()));
+                    throw new NotSupportedException(sprintf('Cannot build from source %s, the project type %s is not supported', $archive, $project_detection->getProjectType()->value));
             }
         }
 
@@ -861,7 +871,7 @@
          * @throws NetworkException
          * @noinspection UnusedFunctionResultInspection
          */
-        private function downloadFile(string $url, string $path, int $retries=3): string
+        private function downloadFile(string $url, string $path): string
         {
             $file_path = basename(parse_url($url, PHP_URL_PATH));
             $curl = curl_init($url);
@@ -886,12 +896,6 @@
             $file_handle = fopen($file_path, 'wb');
             $end = false;
             $progress_bar = new ConsoleProgressBar(sprintf('Downloading %s', $url), 100);
-            $resolved_host = Resolver::getResolveOption($url);
-
-            if($resolved_host !== null)
-            {
-                curl_setopt($curl, CURLOPT_RESOLVE, [$resolved_host]);
-            }
 
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
@@ -902,22 +906,17 @@
             ]);
             curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function ($resource, $download_size, $downloaded)  use ($url, &$end, $progress_bar)
             {
+                if($download_size == 0)
+                {
+                    return;
+                }
+
                 if($download_size === $downloaded && $end)
                 {
                     return;
                 }
 
-                if($download_size === 0)
-                {
-                    return;
-                }
-
-                if($downloaded > $download_size)
-                {
-                    $download_size = $downloaded;
-                }
-
-                if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+                if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
                 {
                     $percentage = round(($downloaded / $download_size) * 100, 2);
                     Console::out(sprintf('Download progress %s (%s/%s) for %s', $percentage, $downloaded, $download_size, $url));
@@ -927,7 +926,6 @@
                     $progress_bar->setMaxValue($download_size);
                     $progress_bar->setValue($downloaded);
                     $progress_bar->setMiscText(sprintf('%s/%s', $downloaded, $download_size));
-
                     $progress_bar->update();
                 }
 
@@ -937,26 +935,15 @@
                 }
             });
 
+            unset($progress_bar);
             curl_exec($curl);
             fclose($file_handle);
 
             if(curl_errno($curl))
             {
                 ShutdownHandler::declareTemporaryPath($file_path);
-
-                if($retries === 0)
-                {
-                    throw new NetworkException(sprintf('Failed to download file from %s: %s', $url, curl_error($curl)));
-                }
-
-                Console::outWarning(sprintf('Failed to download file from %s: %s, retrying', $url, curl_error($curl)));
-                return $this->downloadFile($url, $path, ($retries - 1));
+                throw new NetworkException(sprintf('Failed to download file from %s: %s', $url, curl_error($curl)));
             }
-
-            $progress_bar->setMaxValue(100);
-            $progress_bar->setValue(100);
-            $progress_bar->setMiscText('done', true);
-            unset($progress_bar);
 
             curl_close($curl);
             return $file_path;
