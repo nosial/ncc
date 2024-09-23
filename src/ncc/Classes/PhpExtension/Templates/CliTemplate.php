@@ -74,7 +74,6 @@
 
             self::writeProgramTemplate($project_manager);
             self::writeMainEntryTemplate($project_manager);
-            self::writeMakefileTemplate($project_manager);
 
             $project_manager->save();
         }
@@ -111,24 +110,6 @@
                 $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'main',
                 ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
                     IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'main.php.tpl')
-                )
-            );
-        }
-
-        /**
-         * Writes the Makefile to the project directory
-         *
-         * @param ProjectManager $project_manager
-         * @return void
-         * @throws IOException
-         * @throws PathNotFoundException
-         */
-        private static function writeMakefileTemplate(ProjectManager $project_manager): void
-        {
-            IO::fwrite(
-                $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'Makefile',
-                ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
-                    IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile.tpl')
                 )
             );
         }

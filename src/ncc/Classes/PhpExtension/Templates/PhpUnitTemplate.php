@@ -40,8 +40,11 @@
     class PhpUnitTemplate implements TemplateInterface
     {
         /**
-         * @inheritDoc
-         * @param ProjectManager $project_manager
+         * Applies the necessary templates for the given project.
+         *
+         * @param ProjectManager $project_manager Manager responsible for handling project-related tasks.
+         *
+         * @return void
          */
         public static function applyTemplate(ProjectManager $project_manager): void
         {
@@ -49,6 +52,14 @@
             self::createPhpUnitTemplate($project_manager);
         }
 
+        /**
+         * Creates a PHPUnit template in the specified project directory.
+         *
+         * @param ProjectManager $project_manager The project manager instance containing project configuration and path details.
+         * @return void
+         * @throws IOException
+         * @throws PathNotFoundException
+         */
         private static function createPhpUnitTemplate(ProjectManager $project_manager): void
         {
             IO::fwrite(
@@ -64,6 +75,12 @@
             }
         }
 
+        /**
+         * Creates the PHPUnit bootstrap template file for the given project.
+         *
+         * @param ProjectManager $project_manager The project manager instance handling project configuration and paths.
+         * @return void
+         */
         private static function createPhpUnitBootstrapTemplate(ProjectManager $project_manager): void
         {
             IO::fwrite(

@@ -34,5 +34,23 @@
          */
         case PHP_CLI = 'phpcli';
 
+        /**
+         * A template for generating a Makefile for the PHP project
+         */
+        case PHP_MAKE = 'phpmake';
+
+        /**
+         * A template used for creating PHP Unit testing bootstrap
+         */
         case PHP_UNIT = 'phpunit';
+
+        /**
+         * Template that combines PHP_LIBRARY, PHP_MAKE and PHP_UNIT in one
+         */
+        case PHP_LIBRARY_FULL = 'phplib_full';
+
+        /**
+         * Template that combines PHP_LIBRARY, PHP_MAKE, PHP_UNIT and PHP_CLI in one
+         */
+        case PHP_CLI_FULL = 'phpcli_full';
     }

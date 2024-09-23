@@ -11,10 +11,13 @@ all: build
 build:
 	ncc build --config=$(CONFIG) --log-level $(LOG_LEVEL)
 
-install:
-	ncc package install --package=$(PACKAGE) --skip-dependencies --reinstall -y --log-level $(LOG_LEVEL)
+install: build
+	ncc package install --package=$(PACKAGE) --skip-dependencies --build-source --reinstall -y --log-level $(LOG_LEVEL)
+
+test: build
+	phpunit
 
 clean:
 	rm -rf build
 
-.PHONY: all build install clean
+.PHONY: all build install test clean

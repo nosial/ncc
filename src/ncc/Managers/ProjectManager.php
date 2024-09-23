@@ -30,6 +30,7 @@
     use ncc\Classes\PhpExtension\NccCompiler;
     use ncc\Classes\PhpExtension\Templates\CliTemplate;
     use ncc\Classes\PhpExtension\Templates\LibraryTemplate;
+    use ncc\Classes\PhpExtension\Templates\MakefileTemplate;
     use ncc\Classes\PhpExtension\Templates\PhpUnitTemplate;
     use ncc\Enums\CompilerExtensions;
     use ncc\Enums\Options\BuildConfigurationOptions;
@@ -199,7 +200,24 @@
                     LibraryTemplate::applyTemplate($this);
                     break;
 
+                case ProjectTemplates::PHP_MAKE->value:
+                    MakefileTemplate::applyTemplate($this);
+                    break;
+
                 case ProjectTemplates::PHP_UNIT->value:
+                    PhpUnitTemplate::applyTemplate($this);
+                    break;
+
+                case ProjectTemplates::PHP_LIBRARY_FULL->value:
+                    LibraryTemplate::applyTemplate($this);
+                    MakefileTemplate::applyTemplate($this);
+                    PhpUnitTemplate::applyTemplate($this);
+                    break;
+
+                case ProjectTemplates::PHP_CLI_FULL:
+                    CliTemplate::applyTemplate($this);
+                    LibraryTemplate::applyTemplate($this);
+                    MakefileTemplate::applyTemplate($this);
                     PhpUnitTemplate::applyTemplate($this);
                     break;
 
