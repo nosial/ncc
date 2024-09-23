@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.1] - Ongoing
 
-No changes yet
+This update introduces a couple of new features and quality of life improvements
+
+### Added
+ - Added new PHP template `phpunit` for generating PhpUnit tests for the project.
 
 
 ## [2.1.0] - 2024-09-20
