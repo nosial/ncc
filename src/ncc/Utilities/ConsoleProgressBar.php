@@ -289,7 +289,7 @@
          */
         public function update(): void
         {
-            if(Resolver::checkLogLevel(LogLevel::VERBOSE, Main::getLogLevel()))
+            if(LogLevel::VERBOSE->checkLogLevel(Main::getLogLevel()))
             {
                 return;
             }

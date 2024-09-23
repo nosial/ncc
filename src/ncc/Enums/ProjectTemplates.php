@@ -33,4 +33,6 @@
          * A template that is used to create a PHP CLI application project
          */
         case PHP_CLI = 'phpcli';
+
+        case PHP_UNIT = 'phpunit';
     }

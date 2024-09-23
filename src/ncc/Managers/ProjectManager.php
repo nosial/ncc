@@ -30,8 +30,8 @@
     use ncc\Classes\PhpExtension\NccCompiler;
     use ncc\Classes\PhpExtension\Templates\CliTemplate;
     use ncc\Classes\PhpExtension\Templates\LibraryTemplate;
+    use ncc\Classes\PhpExtension\Templates\PhpUnitTemplate;
     use ncc\Enums\CompilerExtensions;
-    use ncc\Enums\ComponentFileExtensions;
     use ncc\Enums\Options\BuildConfigurationOptions;
     use ncc\Enums\Options\BuildConfigurationValues;
     use ncc\Enums\Options\InitializeProjectOptions;
@@ -197,6 +197,10 @@
 
                 case ProjectTemplates::PHP_LIBRARY->value:
                     LibraryTemplate::applyTemplate($this);
+                    break;
+
+                case ProjectTemplates::PHP_UNIT->value:
+                    PhpUnitTemplate::applyTemplate($this);
                     break;
 
                 default:
