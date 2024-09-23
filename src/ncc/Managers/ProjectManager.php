@@ -29,6 +29,7 @@
     use ncc\Classes\PhpExtension\ExecutableCompiler;
     use ncc\Classes\PhpExtension\NccCompiler;
     use ncc\Classes\PhpExtension\Templates\CliTemplate;
+    use ncc\Classes\PhpExtension\Templates\GitHubWorkflowTemplate;
     use ncc\Classes\PhpExtension\Templates\LibraryTemplate;
     use ncc\Classes\PhpExtension\Templates\MakefileTemplate;
     use ncc\Classes\PhpExtension\Templates\PhpUnitTemplate;
@@ -190,25 +191,25 @@
          */
         public function applyTemplate(string $template_name): void
         {
-            switch(strtolower($template_name))
+            switch(ProjectTemplates::tryFrom(strtolower($template_name)))
             {
-                case ProjectTemplates::PHP_CLI->value:
+                case ProjectTemplates::PHP_CLI:
                     CliTemplate::applyTemplate($this);
                     break;
 
-                case ProjectTemplates::PHP_LIBRARY->value:
+                case ProjectTemplates::PHP_LIBRARY:
                     LibraryTemplate::applyTemplate($this);
                     break;
 
-                case ProjectTemplates::PHP_MAKE->value:
+                case ProjectTemplates::PHP_MAKE:
                     MakefileTemplate::applyTemplate($this);
                     break;
 
-                case ProjectTemplates::PHP_UNIT->value:
+                case ProjectTemplates::PHP_UNIT:
                     PhpUnitTemplate::applyTemplate($this);
                     break;
 
-                case ProjectTemplates::PHP_LIBRARY_FULL->value:
+                case ProjectTemplates::PHP_LIBRARY_FULL:
                     LibraryTemplate::applyTemplate($this);
                     MakefileTemplate::applyTemplate($this);
                     PhpUnitTemplate::applyTemplate($this);
@@ -221,7 +222,17 @@
                     PhpUnitTemplate::applyTemplate($this);
                     break;
 
+                case ProjectTemplates::PHP_GITHUB_CI:
+                    GitHubWorkflowTemplate::applyTemplate($this);
+                    break;
+
                 default:
+                    $suggestion = ProjectTemplates::suggest($template_name);
+                    if($suggestion !== null)
+                    {
+                        throw new NotSupportedException('The given template \'' . $template_name . '\' is not supported, did you mean \'' . $suggestion->value . '\'?');
+                    }
+
                     throw new NotSupportedException('The given template \'' . $template_name . '\' is not supported');
             }
         }

@@ -53,4 +53,40 @@
          * Template that combines PHP_LIBRARY, PHP_MAKE, PHP_UNIT and PHP_CLI in one
          */
         case PHP_CLI_FULL = 'phpcli_full';
+
+        /**
+         * Template that applies a GitHub workflow CI that builds the project, tests the project and creates
+         * automatic builds for releases
+         */
+        case PHP_GITHUB_CI = 'phpci_github';
+
+        /**
+         * Suggests the closest matching `ProjectTemplates` instance based on the given input string.
+         *
+         * @param string $input The input string to compare against.
+         * @return ProjectTemplates|null The closest matching `ProjectTemplates` instance, or null if no close match is found.
+         */
+        public static function suggest(string $input): ?ProjectTemplates
+        {
+            $closest = null;
+            $shortest_distance = -1;
+
+            foreach (self::cases() as $case)
+            {
+                $distance = levenshtein($input, $case->value);
+
+                if ($distance === 0)
+                {
+                    return $case;
+                }
+
+                if ($shortest_distance === -1 || $distance < $shortest_distance)
+                {
+                    $closest = $case;
+                    $shortest_distance = $distance;
+                }
+            }
+
+            return $closest ?: null;
+        }
     }
