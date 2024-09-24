@@ -71,10 +71,9 @@ jobs:
         id: check
         run: |
           if [ -f phpunit.xml ]; then
-            echo "::set-output name=phpunit-exists::true"
+            echo "phpunit-exists=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=phpunit-exists::false"
-          fi
+            echo "phpunit-exists=false" >> $GITHUB_ENV
 
   test:
     needs: [build, check-phpunit]
