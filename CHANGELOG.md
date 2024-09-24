@@ -5,12 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.1] - Ongoing
+## [2.1.1] - 2024-09-24
 
 This update introduces a couple of new features and quality of life improvements
 
 ### Added
- - Added new PHP template `phpunit` for generating PhpUnit tests for the project.
+ - Added new PHP template `phpunit` for generating PhpUnit tests for the project
+ - Added new PHP template `phpmake` for generating a Makefile for the project
+ - Added new PHP template `phplib_full` That combines `phplib`, `phpmake` and `phpunit` templates
+ - Added new PHP template `phpcli_full` That combines `phpcli`, `phplib`, `phpmake` and `phpunit` templates
+ - Added new PHP template `phpci_github` that generates a Github CI workflow for the project
+
+### Changed
+ - The template `phpcli` no longer includes a Makefile, instead use `phpmake` to generate a Makefile for the project
+
+### Fixed
+ - Fixed incorrect enum usage with a logging method call.
 
 
 ## [2.1.0] - 2024-09-20
