@@ -76,8 +76,9 @@ jobs:
             echo "phpunit-exists=false" >> $GITHUB_ENV
           fi
 
-      - name: Print phpunit-exists
-        run: echo "phpunit-exists=$phpunit-exists"
+      - name: Set output
+        id: set-output
+        run: echo "::set-output name=phpunit-exists::$(grep 'phpunit-exists' $GITHUB_ENV | cut -d '=' -f 2)"
 
   test:
     needs: [build, check-phpunit]
