@@ -74,6 +74,7 @@ jobs:
             echo "phpunit-exists=true" >> $GITHUB_ENV
           else
             echo "phpunit-exists=false" >> $GITHUB_ENV
+          fi
 
   test:
     needs: [build, check-phpunit]
