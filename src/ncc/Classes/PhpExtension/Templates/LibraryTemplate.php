@@ -48,8 +48,14 @@
          */
         private static function createClassTemplate(ProjectManager $project_manager): void
         {
+            $class_directory = $project_manager->getProjectSourcePath() . DIRECTORY_SEPARATOR . $project_manager->getProjectConfiguration()->getAssembly()->getName();
+            if(!file_exists($class_directory))
+            {
+                mkdir($class_directory, 0777, true);
+            }
+
             IO::fwrite(
-                $project_manager->getProjectSourcePath() . DIRECTORY_SEPARATOR . $project_manager->getProjectConfiguration()->getAssembly()->getName() . '.php',
+                $class_directory . DIRECTORY_SEPARATOR . $project_manager->getProjectConfiguration()->getAssembly()->getName() . '.php',
                 ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
                     IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'class.php.tpl')
                 )
