@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: php:8.3
-    if: needs.check-phpunit.outputs.phpunit-exists == 'true'
+    if: ${{ needs.check-phpunit.outputs.phpunit-exists == 'true' }}
 
     steps:
       - name: Checkout repository
