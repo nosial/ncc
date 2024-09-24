@@ -64,24 +64,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: php:8.3
+    if: ${{ exists('phpunit.xml') }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Check for phpunit.xml
-        id: file_check
-        run: |
-          if [ -f phpunit.xml ]; then
-            echo "phpunit.xml exists"
-          else
-            echo "phpunit.xml does not exist"
-            exit 0
-          fi
-
-      - name: Skip if no phpunit.xml
-        if: steps.file_check.outcome == 'success' && steps.file_check.conclusion == 'skipped'
-        run: exit 0
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
