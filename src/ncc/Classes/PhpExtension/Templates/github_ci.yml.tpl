@@ -73,14 +73,15 @@ jobs:
         id: file_check
         run: |
           if [ -f phpunit.xml ]; then
-            echo "::set-output name=exists::true"
+            echo "phpunit.xml exists"
           else
-            echo "::set-output name=exists::false"
+            echo "phpunit.xml does not exist"
+            exit 0
           fi
 
       - name: Skip if no phpunit.xml
-        if: steps.file_check.outputs.exists == 'false'
-        run: exit 78
+        if: steps.file_check.outcome == 'success' && steps.file_check.conclusion == 'skipped'
+        run: exit 0
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
