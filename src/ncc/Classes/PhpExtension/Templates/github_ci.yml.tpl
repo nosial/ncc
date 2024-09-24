@@ -59,12 +59,29 @@ jobs:
           name: %ASSEMBLY.NAME%_build
           path: build/release/%ASSEMBLY.PACKAGE%.ncc
 
+  check-phpunit:
+    runs-on: ubuntu-latest
+    outputs:
+      phpunit-exists: ${{ steps.check.outputs.phpunit-exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for phpunit.xml
+        id: check
+        run: |
+          if [ -f phpunit.xml ]; then
+            echo "::set-output name=phpunit-exists::true"
+          else
+            echo "::set-output name=phpunit-exists::false"
+          fi
+
   test:
-    needs: build
+    needs: [build, check-phpunit]
     runs-on: ubuntu-latest
     container:
       image: php:8.3
-    if: ${{ exists('phpunit.xml') }}
+    if: needs.check-phpunit.outputs.phpunit-exists == 'true'
 
     steps:
       - name: Checkout repository
