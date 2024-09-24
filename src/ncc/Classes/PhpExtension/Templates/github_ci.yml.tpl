@@ -66,26 +66,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Check for phpunit.xml
         id: check
         run: |
           if [ -f phpunit.xml ]; then
-            echo "phpunit-exists=true" >> $GITHUB_ENV
+            echo "::set-output name=phpunit-exists::true"
           else
-            echo "phpunit-exists=false" >> $GITHUB_ENV
+            echo "::set-output name=phpunit-exists::false"
           fi
-
-      - name: Set output
-        id: set-output
-        run: echo "::set-output name=phpunit-exists::$(grep 'phpunit-exists' $GITHUB_ENV | cut -d '=' -f 2)"
 
   test:
     needs: [build, check-phpunit]
     runs-on: ubuntu-latest
     container:
       image: php:8.3
-    if: ${{ needs.check-phpunit.outputs.phpunit-exists == 'true' }}
+    if: needs.check-phpunit.outputs.phpunit-exists == 'true'
 
     steps:
       - name: Checkout repository
