@@ -76,6 +76,9 @@ jobs:
             echo "phpunit-exists=false" >> $GITHUB_ENV
           fi
 
+      - name: Print phpunit-exists
+        run: echo "phpunit-exists=$phpunit-exists"
+
   test:
     needs: [build, check-phpunit]
     runs-on: ubuntu-latest
