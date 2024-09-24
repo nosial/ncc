@@ -59,28 +59,32 @@ jobs:
           name: %ASSEMBLY.NAME%_build
           path: build/release/%ASSEMBLY.PACKAGE%.ncc
 
+  check-phpunit:
+    runs-on: ubuntu-latest
+    outputs:
+      phpunit-exists: ${{ steps.check.outputs.phpunit-exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Check for phpunit.xml
+        id: check
+        run: |
+          if [ -f phpunit.xml ]; then
+            echo "phpunit-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "phpunit-exists=false" >> $GITHUB_OUTPUT
+          fi
+
   test:
-    needs: build
+    needs: [build, check-phpunit]
     runs-on: ubuntu-latest
     container:
       image: php:8.3
+    if: needs.check-phpunit.outputs.phpunit-exists == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Check for phpunit.xml
-        id: file_check
-        run: |
-          if [ -f phpunit.xml ]; then
-            echo "::set-output name=exists::true"
-          else
-            echo "::set-output name=exists::false"
-          fi
-
-      - name: Skip if no phpunit.xml
-        if: steps.file_check.outputs.exists == 'false'
-        run: exit 78
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
