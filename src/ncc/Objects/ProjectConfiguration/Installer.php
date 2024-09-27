@@ -85,6 +85,64 @@
         }
 
         /**
+         * Retrieves the pre-installation configuration.
+         *
+         * @return array The pre-installation configuration settings.
+         */
+        public function getPreInstall(): array
+        {
+            return $this->pre_install;
+        }
+
+        /**
+         *
+         * @return array Returns the post-installation steps.
+         */
+        public function getPostInstall(): array
+        {
+            return $this->post_install;
+        }
+
+        /**
+         * Retrieves the list of pre-uninstall tasks.
+         *
+         * @return array The array containing pre-uninstall tasks.
+         */
+        public function getPreUninstall(): array
+        {
+            return $this->pre_uninstall;
+        }
+
+        /**
+         * Retrieves the post-uninstall steps array.
+         *
+         * @return array An array containing the post-uninstall steps.
+         */
+        public function getPostUninstall(): array
+        {
+            return $this->post_uninstall;
+        }
+
+        /**
+         *
+         * @return array The pre-update data array.
+         */
+        public function getPreUpdate(): array
+        {
+            return $this->pre_update;
+        }
+
+        /**
+         * Retrieves the list of post-update actions.
+         *
+         * @return array An array containing post-update actions.
+         */
+        public function getPostUpdate(): array
+        {
+            return $this->post_update;
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(bool $bytecode=false): array
