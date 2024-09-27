@@ -427,7 +427,7 @@
                 $this->uninstall($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion());
             }
 
-            if(count($package_reader->getInstaller()->getPreInstall()) > 0)
+            if($package_reader->getInstaller() !== null && count($package_reader->getInstaller()->getPreInstall()) > 0)
             {
                 foreach ($package_reader->getInstaller()->getPreInstall() as $unit)
                 {
@@ -543,7 +543,7 @@
                 }
             }
 
-            if(count($package_reader->getInstaller()->getPostInstall()) > 0)
+            if($package_reader->getInstaller() !== null && count($package_reader->getInstaller()->getPostInstall()) > 0)
             {
                 foreach ($package_reader->getInstaller()->getPostInstall() as $unit)
                 {
