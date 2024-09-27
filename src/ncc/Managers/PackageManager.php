@@ -28,6 +28,7 @@
     use Exception;
     use InvalidArgumentException;
     use ncc\Classes\ArchiveExtractor;
+    use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\PackageReader;
     use ncc\Classes\ShutdownHandler;
     use ncc\CLI\Main;
@@ -426,6 +427,20 @@
                 $this->uninstall($package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion());
             }
 
+            if(count($package_reader->getInstaller()->getPreInstall()) > 0)
+            {
+                foreach ($package_reader->getInstaller()->getPreInstall() as $unit)
+                {
+                    Console::outVerbose(sprintf('Running pre-install unit: %s', $unit));
+                    if(!$package_reader->executionUnitExists($unit))
+                    {
+                        throw new OperationException(sprintf("Unable to run pre-install unit '%s' because it is not defined in the package", $unit));
+                    }
+
+                    ExecutionUnitRunner::executeFromPackage($package_reader, $unit);
+                }
+            }
+
             $filesystem = new Filesystem();
             $package_path = PathFinder::getPackagesPath() . DIRECTORY_SEPARATOR . sprintf(
                 '%s=%s', $package_reader->getAssembly()->getPackage(), $package_reader->getAssembly()->getVersion()
@@ -525,6 +540,20 @@
 
                     /** @noinspection SlowArrayOperationsInLoopInspection */
                     $installed_packages = array_merge($installed_packages, $this->install($dependency->getSource(), $authentication, $options));
+                }
+            }
+
+            if(count($package_reader->getInstaller()->getPostInstall()) > 0)
+            {
+                foreach ($package_reader->getInstaller()->getPostInstall() as $unit)
+                {
+                    Console::outVerbose(sprintf('Running post-install unit: %s', $unit));
+                    if(!$package_reader->executionUnitExists($unit))
+                    {
+                        throw new OperationException(sprintf("Unable to run post-install unit '%s' because it is not defined in the package", $unit));
+                    }
+
+                    ExecutionUnitRunner::executeFromPackage($package_reader, $unit);
                 }
             }
 

@@ -31,6 +31,7 @@
     use ncc\Classes\PhpExtension\PhpRunner;
     use ncc\Enums\Runners;
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\IntegrityException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
@@ -137,6 +138,7 @@
          * @return int
          * @throws ConfigurationException
          * @throws OperationException
+         * @throws IntegrityException
          */
         public static function executeFromPackage(PackageReader $package_reader, string $policy_name, array $args=[]): int
         {

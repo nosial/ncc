@@ -551,6 +551,17 @@
         }
 
         /**
+         * Checks if an execution unit with the specified name exists in the package.
+         *
+         * @param string $name The name of the execution unit to check.
+         * @return bool True if the execution unit exists, false otherwise.
+         */
+        public function executionUnitExists(string $name): bool
+        {
+            return isset($this->headers[PackageStructure::DIRECTORY->value][sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $name)]);
+        }
+
+        /**
          * Returns an execution unit from the package by pointer
          *
          * @param int $pointer
