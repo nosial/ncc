@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces bug fixes
 
+### Fixed
+ - Fixed incorrect enum usage in RepositoryMenu
+
 
 ## [2.1.1] - 2024-09-24
 
