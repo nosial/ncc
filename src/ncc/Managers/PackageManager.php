@@ -44,6 +44,7 @@
     use ncc\Enums\Types\ProjectType;
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
+    use ncc\Exceptions\IntegrityException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\NotSupportedException;
@@ -112,6 +113,7 @@
          * @param PackageReader $package_reader
          * @return Dependency[]
          * @throws ConfigurationException
+         * @throws IntegrityException
          */
         public function checkRequiredDependencies(PackageReader $package_reader): array
         {
@@ -395,6 +397,7 @@
          * @return array
          * @throws ConfigurationException
          * @throws IOException
+         * @throws IntegrityException
          * @throws OperationException
          * @throws PathNotFoundException
          */
@@ -654,8 +657,8 @@
          * @return void
          * @throws ConfigurationException
          * @throws IOException
-         * @throws NotSupportedException
          * @throws OperationException
+         * @throws IntegrityException
          */
         private function extractPackageContents(PackageReader $package_reader, string $package_path): void
         {
