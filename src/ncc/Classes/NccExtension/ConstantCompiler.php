@@ -24,6 +24,7 @@
 
     use ncc\Enums\SpecialConstants\BuildConstants;
     use ncc\Enums\SpecialConstants\DateTimeConstants;
+    use ncc\Enums\SpecialConstants\GeneralConstants;
     use ncc\Enums\SpecialConstants\InstallConstants;
     use ncc\Enums\SpecialConstants\AssemblyConstants;
     use ncc\Enums\SpecialConstants\RuntimeConstants;
@@ -47,8 +48,28 @@
             $input = self::compileBuildConstants($input);
             $input = self::compileDateTimeConstants($input, time());
             $input = self::compileRuntimeConstants($input);
+            $input = self::compileGeneralConstants($input, $project_configuration);
 
             return $input;
+        }
+
+        public static function compileGeneralConstants(?string $input, ProjectConfiguration $project_configuration): ?string
+        {
+            if($input === null)
+            {
+                return null;
+            }
+
+            return str_replace(
+                [
+                    GeneralConstants::DEFAULT_BUILD_CONFIGURATION->value
+                ],
+                [
+                    $project_configuration->getBuild()->getDefaultConfiguration()
+                ],
+
+                $input
+            );
         }
 
         /**
@@ -70,7 +91,7 @@
                     AssemblyConstants::ASSEMBLY_NAME->value,
                     AssemblyConstants::ASSEMBLY_PACKAGE->value,
                     AssemblyConstants::ASSEMBLY_VERSION->value,
-                    AssemblyConstants::ASSEMBLY_UID->value
+                    AssemblyConstants::ASSEMBLY_UID->value,
                 ],
                 [
                     $assembly->getName(),
