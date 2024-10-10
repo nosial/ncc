@@ -34,6 +34,7 @@
     use ncc\Enums\Versions;
     use ncc\Exceptions\ConfigurationException;
     use ncc\Exceptions\ImportException;
+    use ncc\Exceptions\IntegrityException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\NotSupportedException;
     use ncc\Exceptions\OperationException;
@@ -77,18 +78,26 @@
          * This method may exit the program without returning a value
          *
          * @param string $package
+         * @param array $arguments
          * @return mixed
          * @throws ConfigurationException
          * @throws IOException
+         * @throws IntegrityException
          * @throws NotSupportedException
-         * @throws PathNotFoundException
          * @throws OperationException
+         * @throws PathNotFoundException
          */
         public static function execute(string $package, array $arguments=[]): int
         {
             if(!self::isImported($package))
             {
                 throw new InvalidArgumentException(sprintf('Package %s is not imported', $package));
+            }
+
+            if(self::$imported_packages[$package]?->getMetadata()?->getMainExecutionPolicy() === null)
+            {
+                Console::out('The package does not have a main execution policy, skipping execution');
+                return 0;
             }
 
             if(self::$imported_packages[$package] instanceof PackageReader)
@@ -294,7 +303,7 @@
          * @return string
          * @throws ConfigurationException
          * @throws ImportException
-         * @throws NotSupportedException
+         * @throws IntegrityException
          * @throws OperationException
          */
         private static function importFromPackage(string $package_path): string
@@ -513,6 +522,7 @@
          * @throws IOException
          * @throws OperationException
          * @throws PathNotFoundException
+         * @throws IntegrityException
          */
         private static function acquireFile(string $path, ?string $package=null): string
         {
