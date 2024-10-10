@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.4] - Ongoing
 
-New Update
+This update introduces minor bug fixes & improvements
+
+### Fixed
+ - ncc will now correctly handle package execution where the main unit is not defined in the package instead of
+   throwing an exception.
+
 
 
 ## [2.1.3] - 2024-09-27
