@@ -29,4 +29,9 @@
          * The project's default build configuration
          */
         case DEFAULT_BUILD_CONFIGURATION = '%DEFAULT_BUILD_CONFIGURATION%';
+
+        /**
+         * Configurable build output path
+         */
+        case BUILD_OUTPUT_PATH = '%BUILD_OUTPUT_PATH%';
     }

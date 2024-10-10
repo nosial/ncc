@@ -22,6 +22,7 @@
 
     namespace ncc\Classes\NccExtension;
 
+    use InvalidArgumentException;
     use ncc\Enums\SpecialConstants\BuildConstants;
     use ncc\Enums\SpecialConstants\DateTimeConstants;
     use ncc\Enums\SpecialConstants\GeneralConstants;
@@ -53,23 +54,64 @@
             return $input;
         }
 
+
+        /**
+         * Compiles general constants from the given input string based on the provided project configuration.
+         *
+         * @param string|null $input The input string containing constants to be compiled.
+         * @param ProjectConfiguration $project_configuration The project configuration used to resolve constants.
+         * @return string|null The input string with constants replaced, or null if the input was null.
+         */
         public static function compileGeneralConstants(?string $input, ProjectConfiguration $project_configuration): ?string
         {
-            if($input === null)
+            if ($input === null)
             {
                 return null;
             }
 
-            return str_replace(
+            // Replace %DEFAULT_BUILD_CONFIGURATION%
+            $input = str_replace(
                 [
                     GeneralConstants::DEFAULT_BUILD_CONFIGURATION->value
                 ],
                 [
                     $project_configuration->getBuild()->getDefaultConfiguration()
                 ],
-
                 $input
             );
+
+            if (str_starts_with($input, GeneralConstants::BUILD_OUTPUT_PATH->value))
+            {
+                $build_name = null;
+                if (preg_match('/' . preg_quote(GeneralConstants::BUILD_OUTPUT_PATH->value, '/') . ':(\S+)/', $input, $matches))
+                {
+                    $build_name = $matches[1];
+                }
+
+                if ($build_name === null)
+                {
+                    Console::outWarning(sprintf("Cannot compile constant %s because it's not valid, usage: %%CONSTANT%%:<name>", $input));
+                }
+                else
+                {
+                    try
+                    {
+                        $output_path = $project_configuration->getBuild()->getBuildConfiguration($build_name)->getOutput();
+                        $input = preg_replace(
+                            '/' . preg_quote(GeneralConstants::BUILD_OUTPUT_PATH->value, '/') . ':\S+/',
+                            $output_path,
+                            $input,
+                            1
+                        );
+                    }
+                    catch (InvalidArgumentException $e)
+                    {
+                        Console::outError(sprintf("Cannot compile constant %s because it does not point to an existing build configuration name", $input));
+                    }
+                }
+            }
+
+            return $input;
         }
 
         /**

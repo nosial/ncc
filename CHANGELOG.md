@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This update introduces minor bug fixes & improvements
 
 ### Added
- - Added new constant '%DEFAULT_BUILD_CONFIGURATION%' which points to the project's default build configuration
+ - Added new constant `%DEFAULT_BUILD_CONFIGURATION%` which points to the project's default build configuration
+ - Added new dynamic constant `%BUILD_OUTPUT_PATH%` which can be used as `%BUILD_OUTPUT_PATH%:release` to show the
+   output path of a specific build configuration
 
 ### Fixed
  - ncc will now correctly handle package execution where the main unit is not defined in the package instead of
