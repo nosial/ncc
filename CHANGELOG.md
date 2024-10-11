@@ -14,6 +14,9 @@ This update introduces minor bug fixes & improvements
  - Added new dynamic constant `%BUILD_OUTPUT_PATH%` which can be used as `%BUILD_OUTPUT_PATH%:release` to show the
    output path of a specific build configuration
 
+### Changed
+ - Refactor phpmake template to support dynamic build targets
+
 ### Fixed
  - ncc will now correctly handle package execution where the main unit is not defined in the package instead of
    throwing an exception.

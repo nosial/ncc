@@ -42,20 +42,37 @@ class MakefileTemplate
     }
 
     /**
-     * Writes the Makefile to the project directory
+     * Writes the Makefile template for the given project.
      *
-     * @param ProjectManager $project_manager
-     * @return void
-     * @throws IOException
-     * @throws PathNotFoundException
+     * @param ProjectManager $project_manager The project manager containing project configurations.
+     * @throws IOException If there is an error reading or writing files.
+     * @throws PathNotFoundException If a required file path is not found.
      */
     private static function writeMakefileTemplate(ProjectManager $project_manager): void
     {
+        $makefile_template = IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile.tpl');
+        $builds = [];
+
+        foreach($project_manager->getProjectConfiguration()->getBuild()->getBuildConfigurations() as $build_name)
+        {
+            $builds[$build_name] = str_replace('%TPL_BUILD_NAME%', $build_name, IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'make_build.tpl'));
+        }
+
+        $default_build = $project_manager->getProjectConfiguration()->getBuild()->getDefaultConfiguration();
+        $makefile_template = str_replace('%TPL_DEFAULT_BUILD_CONFIGURATION%', $default_build, $makefile_template);
+        $makefile_template = str_replace('%TPL_DEFAULT_BUILD_PATH%', $project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($default_build)->getOutput(), $makefile_template);
+        $makefile_template = str_replace('%TPL_BUILD_NAMES%', implode(' ', array_keys($builds)), $makefile_template);
+
+        $build_template = '';
+        foreach($builds as $name => $template)
+        {
+            $build_template .= $template . PHP_EOL;
+        }
+
+        $makefile_template = str_replace('%TPL_BUILDS%', $build_template, $makefile_template);
         IO::fwrite(
             $project_manager->getProjectPath() . DIRECTORY_SEPARATOR . 'Makefile',
-            ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
-                IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile.tpl')
-            )
+            ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(), $makefile_template)
         );
     }
 }

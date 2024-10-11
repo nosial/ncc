@@ -1,23 +1,21 @@
 # Variables
-CONFIG ?= release
+DEFAULT_CONFIGURATION ?= %TPL_DEFAULT_BUILD_CONFIGURATION%
 LOG_LEVEL = debug
-OUTDIR = build/$(CONFIG)
-PACKAGE = $(OUTDIR)/%ASSEMBLY.PACKAGE%.ncc
 
 # Default Target
-all: build
+all: %TPL_BUILD_NAMES%
 
 # Build Steps
-build:
-	ncc build --config=$(CONFIG) --log-level $(LOG_LEVEL)
+%TPL_BUILDS%
 
-install: build
-	ncc package install --package=$(PACKAGE) --skip-dependencies --build-source --reinstall -y --log-level $(LOG_LEVEL)
+install: %TPL_DEFAULT_BUILD_CONFIGURATION%
+	ncc package install --package=%TPL_DEFAULT_BUILD_PATH% --skip-dependencies --build-source --reinstall -y --log-level $(LOG_LEVEL)
 
-test: build
+test: %TPL_DEFAULT_BUILD_CONFIGURATION%
+	[ -f phpunit.xml ] || { echo "phpunit.xml not found"; exit 1; }
 	phpunit
 
 clean:
 	rm -rf build
 
-.PHONY: all build install test clean
+.PHONY: all install test clean %TPL_BUILD_NAMES%
