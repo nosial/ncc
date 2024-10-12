@@ -13,6 +13,7 @@ This update introduces minor bug fixes & improvements
  - Added new constant `%DEFAULT_BUILD_CONFIGURATION%` which points to the project's default build configuration
  - Added new dynamic constant `%BUILD_OUTPUT_PATH%` which can be used as `%BUILD_OUTPUT_PATH%:release` to show the
    output path of a specific build configuration
+ - Refactor CI templates to support dynamic build targets
 
 ### Changed
  - Refactor phpmake template to support dynamic build targets

@@ -58,11 +58,60 @@ class GitHubWorkflowTemplate
             mkdir($ci_dir, 0777, true);
         }
 
-        IO::fwrite(
-            $ci_dir . DIRECTORY_SEPARATOR . 'ncc_workflow.yml',
-            ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(),
-                IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'github_ci.yml.tpl')
-            )
+        $template =  IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'github_ci.yml.tpl');
+        $default_configuration = $project_manager->getProjectConfiguration()->getBuild()->getDefaultConfiguration();
+        $builds = [];
+        $releases = [];
+        $downloads = [];
+        foreach($project_manager->getProjectConfiguration()->getBuild()->getBuildConfigurations() as $build_name)
+        {
+            $build_template = IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'github_ci_build.yml.tpl');
+            $build_template = str_replace('%TPL_BUILD_NAME%', $build_name, $build_template);
+            $build_template = str_replace('%TPL_BUILD_OUTPUT%',
+                $project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_name)->getOutput(),
+                $build_template
+            );
+            $builds[$build_name] = $build_template;
+
+            $download_template = IO::fread(__DIR__ . DIRECTORY_SEPARATOR . 'github_ci_download.yml.tpl');
+            $download_template = str_replace('%TPL_BUILD_NAME%', $build_name, $download_template);
+            $downloads[$build_name] = $download_template;
+
+            $release_template = str_repeat(' ', 12) . $build_name . DIRECTORY_SEPARATOR . basename(
+                $project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($build_name)->getOutput()
+            );
+            $releases[$build_name] = $release_template;
+        }
+
+        $build_jobs = '';
+        foreach($builds as $name => $build_template)
+        {
+            $build_jobs .= $build_template . PHP_EOL;
+        }
+
+        $download_jobs = '';
+        foreach($downloads as $name => $download_template)
+        {
+            $download_jobs .= $download_template . PHP_EOL;
+        }
+
+        $release_jobs = '';
+        foreach($releases as $name => $release_template)
+        {
+            $release_jobs .= $release_template . PHP_EOL;
+        }
+
+        $template = str_replace('%TPL_BUILDS%', $build_jobs, $template);
+        $template = str_replace('%TPL_DOWNLOAD_ARTIFACTS%', $download_jobs, $template);
+        $template = str_replace('%TPL_ARTIFACT_FILES%', $release_jobs, $template);
+        $template = str_replace('%TPL_BUILD_NAMES%', implode(', ', array_keys($builds)), $template);
+        $template = str_replace('%TPL_DEFAULT_BUILD_CONFIGURATION%', $default_configuration, $template);
+        $template = str_replace('%TPL_DEFAULT_ARTIFACT_BUILD_OUTPUT%', $default_configuration . DIRECTORY_SEPARATOR . basename(
+                $project_manager->getProjectConfiguration()->getBuild()->getBuildConfiguration($default_configuration)->getOutput()
+        ), $template);
+
+        IO::fwrite($ci_dir . DIRECTORY_SEPARATOR . 'ncc_workflow.yml',
+            ConstantCompiler::compileConstants($project_manager->getProjectConfiguration(), $template)
         );
     }
 }

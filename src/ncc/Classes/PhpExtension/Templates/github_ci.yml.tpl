@@ -9,56 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: php:8.3
+%TPL_BUILDS%
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          apt update -yqq
-          apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
-
-      - name: Install phive
-        run: |
-          wget -O phive.phar https://phar.io/releases/phive.phar
-          wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
-          gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
-          gpg --verify phive.phar.asc phive.phar
-          chmod +x phive.phar
-          mv phive.phar /usr/local/bin/phive
-
-      - name: Install phab
-        run: |
-          phive install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
-
-      - name: Install latest version of NCC
-        run: |
-          git clone https://git.n64.cc/nosial/ncc.git
-          cd ncc
-          make redist
-          NCC_DIR=$(find build/ -type d -name "ncc_*" | head -n 1)
-          if [ -z "$NCC_DIR" ]; then
-            echo "NCC build directory not found"
-            exit 1
-          fi
-          php "$NCC_DIR/INSTALL" --auto
-          cd .. && rm -rf ncc
-
-      - name: Build project
-        run: |
-          ncc build --config release --log-level debug
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: %ASSEMBLY.NAME%_build
-          path: build/release/%ASSEMBLY.PACKAGE%.ncc
-
+  # Checking for phpunit.xml
   check-phpunit:
     runs-on: ubuntu-latest
     outputs:
@@ -74,9 +27,55 @@ jobs:
           else
             echo "phpunit-exists=false" >> $GITHUB_OUTPUT
           fi
+  # Checking for phpdoc.dist.xml
+  check-phpdoc:
+    runs-on: ubuntu-latest
+    outputs:
+      phpdoc-exists: ${{ steps.check.outputs.phpdoc-exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Check for phpdoc.dist.xml
+        id: check
+        run: |
+          if [ -f phpdoc.dist.xml ]; then
+            echo "phpdoc-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "phpdoc-exists=false" >> $GITHUB_OUTPUT
+          fi
+  generate-phpdoc:
+    needs: [%TPL_DEFAULT_BUILD_CONFIGURATION%, check-phpdoc]
+    runs-on: ubuntu-latest
+    container:
+      image: php:8.3
+    if: needs.check-phpdoc.outputs.phpdoc-exists == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt update -yqq
+          apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
+
+      - name: Download PHPDocumentor
+        run: |
+          wget https://phpdoc.org/phpDocumentor.phar
+          chmod +x phpDocumentor.phar
+
+      - name: Generate PHPDoc
+        run: |
+          php phpDocumentor.phar -d src -t docs
+
+      - name: Upload PHPDoc
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs
 
   test:
-    needs: [build, check-phpunit]
+    needs: [%TPL_BUILD_NAMES%, check-phpunit]
     runs-on: ubuntu-latest
     container:
       image: php:8.3
@@ -89,8 +88,8 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: %ASSEMBLY.NAME%_build
-          path: %ASSEMBLY.NAME%_build  # Adjust this to download the artifact directly under '%ASSEMBLY.NAME%_build'
+          name: %TPL_DEFAULT_BUILD_CONFIGURATION%
+          path: %TPL_DEFAULT_BUILD_CONFIGURATION%
 
       - name: Install dependencies
         run: |
@@ -128,15 +127,15 @@ jobs:
 
       - name: Install NCC packages
         run: |
-          ncc package install --package="%ASSEMBLY.NAME%_build/%ASSEMBLY.PACKAGE%.ncc" --build-source --reinstall -y --log-level debug
+          ncc package install --package="%TPL_DEFAULT_ARTIFACT_BUILD_OUTPUT%" --build-source --reinstall -y --log-level debug
 
       - name: Run PHPUnit tests
         run: |
           wget https://phar.phpunit.de/phpunit-11.3.phar
           php phpunit-11.3.phar --configuration phpunit.xml
 
-  release:
-    needs: [build, test]
+  upload-artifacts:
+    needs: [%TPL_BUILD_NAMES%, test]
     permissions: write-all
     runs-on: ubuntu-latest
     container:
@@ -147,16 +146,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: %ASSEMBLY.NAME%_build
-          path: %ASSEMBLY.NAME%_build
+%TPL_DOWNLOAD_ARTIFACTS%
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            %ASSEMBLY.NAME%_build/%ASSEMBLY.PACKAGE%.ncc
+%TPL_ARTIFACT_FILES%
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
