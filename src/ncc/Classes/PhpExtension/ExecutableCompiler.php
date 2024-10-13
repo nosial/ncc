@@ -84,6 +84,12 @@
                 $binary_path = ConstantCompiler::compileConstants($this->getProjectManager()->getProjectConfiguration(), $configuration->getOutput());
             }
 
+            // Create the directory recursively if it does not exist
+            if(!is_dir(dirname($binary_path)))
+            {
+                mkdir(dirname($binary_path), 0777, true);
+            }
+
             if($gcc_path === null)
             {
                 throw new BuildException("Unable to find gcc executable, please make sure it is installed and in your PATH environment variable.");

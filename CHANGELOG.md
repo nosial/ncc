@@ -21,6 +21,7 @@ This update introduces minor bug fixes & improvements
 ### Fixed
  - ncc will now correctly handle package execution where the main unit is not defined in the package instead of
    throwing an exception.
+ - Executable Compiler will now correctly create a directory if it does not exist when compiling a package using gcc
 
 
 
