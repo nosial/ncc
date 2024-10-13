@@ -29,6 +29,8 @@
     use ncc\Classes\PhpExtension\ExecutableCompiler;
     use ncc\Classes\PhpExtension\NccCompiler;
     use ncc\Classes\PhpExtension\Templates\CliTemplate;
+    use ncc\Classes\PhpExtension\Templates\CompressedTemplate;
+    use ncc\Classes\PhpExtension\Templates\ExecutableTemplate;
     use ncc\Classes\PhpExtension\Templates\GitHubWorkflowTemplate;
     use ncc\Classes\PhpExtension\Templates\LibraryTemplate;
     use ncc\Classes\PhpExtension\Templates\MakefileTemplate;
@@ -209,10 +211,19 @@
                     PhpUnitTemplate::applyTemplate($this);
                     break;
 
+                case ProjectTemplates::PHP_COMPRESSED:
+                    CompressedTemplate::applyTemplate($this);
+                    break;
+
+                case ProjectTemplates::PHP_EXECUTABLE:
+                    ExecutableTemplate::applyTemplate($this);
+                    break;
+
                 case ProjectTemplates::PHP_LIBRARY_FULL:
                     LibraryTemplate::applyTemplate($this);
                     MakefileTemplate::applyTemplate($this);
                     PhpUnitTemplate::applyTemplate($this);
+                    CompressedTemplate::applyTemplate($this);
                     break;
 
                 case ProjectTemplates::PHP_CLI_FULL:
@@ -220,6 +231,8 @@
                     LibraryTemplate::applyTemplate($this);
                     MakefileTemplate::applyTemplate($this);
                     PhpUnitTemplate::applyTemplate($this);
+                    CompressedTemplate::applyTemplate($this);
+                    ExecutableTemplate::applyTemplate($this);
                     break;
 
                 case ProjectTemplates::PHP_GITHUB_CI:

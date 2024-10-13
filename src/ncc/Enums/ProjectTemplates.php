@@ -45,6 +45,16 @@
         case PHP_UNIT = 'phpunit';
 
         /**
+         * A template that is used to create a PHP executable project
+         */
+        case PHP_COMPRESSED = 'phpgz';
+
+        /**
+         * A template that is used to create a PHP executable project
+         */
+        case PHP_EXECUTABLE = 'phpexe';
+
+        /**
          * Template that combines PHP_LIBRARY, PHP_MAKE and PHP_UNIT in one
          */
         case PHP_LIBRARY_FULL = 'phplib_full';

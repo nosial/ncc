@@ -501,6 +501,25 @@
         }
 
         /**
+         * Checks if a build configuration exists
+         *
+         * @param string $name The name of the build configuration to check
+         * @return bool Returns true if the build configuration exists, false otherwise
+         */
+        public function buildConfigurationExists(string $name): bool
+        {
+            try
+            {
+                $this->getBuildConfiguration($name);
+                return true;
+            }
+            catch(InvalidArgumentException)
+            {
+                return false;
+            }
+        }
+
+        /**
          * @param array $build_configurations
          * @return void
          */

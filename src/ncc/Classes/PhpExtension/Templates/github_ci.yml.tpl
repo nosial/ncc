@@ -68,11 +68,15 @@ jobs:
         run: |
           php phpDocumentor.phar -d src -t docs
 
+      - name: Archive PHPDoc
+        run: |
+          zip -r docs.zip docs
+
       - name: Upload PHPDoc
         uses: actions/upload-artifact@v4
         with:
           name: documentation
-          path: docs
+          path: docs.zip
 
   test:
     needs: [%TPL_BUILD_NAMES%, check-phpunit]
@@ -132,10 +136,44 @@ jobs:
       - name: Run PHPUnit tests
         run: |
           wget https://phar.phpunit.de/phpunit-11.3.phar
-          php phpunit-11.3.phar --configuration phpunit.xml
+          php phpunit-11.3.phar --configuration phpunit.xml --log-junit reports/junit.xml --log-teamcity reports/teamcity --testdox-html reports/testdox.html --testdox-text reports/testdox.txt
 
-  upload-artifacts:
-    needs: [%TPL_BUILD_NAMES%, test]
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: reports
+
+
+  release-documentation:
+    needs: generate-phpdoc
+    permissions: write-all
+    runs-on: ubuntu-latest
+    container:
+      image: php:8.3
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download documentation artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation
+          path: documentation
+
+      - name: Upload documentation artifact
+        uses: softprops/action-gh-release@v1
+        with:
+            files: |
+                documentation/*
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  release-artifacts:
+    needs: [%TPL_BUILD_NAMES%]
     permissions: write-all
     runs-on: ubuntu-latest
     container:
@@ -147,11 +185,3 @@ jobs:
         uses: actions/checkout@v4
 
 %TPL_DOWNLOAD_ARTIFACTS%
-
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-%TPL_ARTIFACT_FILES%
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
