@@ -40,7 +40,7 @@
 
       - name: Build project
         run: |
-          ncc build --config %TPL_BUILD_NAME% --log-level debug
+          ncc build --config %TPL_BUILD_NAME% --build-source --log-level debug
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
