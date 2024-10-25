@@ -31,3 +31,4 @@ tests/example_project/ncc
 tests/example_project/build
 /.phpunit.result.cache
 /.idea/php-test-framework.xml
+/.idea/gbrowser_project.xml
