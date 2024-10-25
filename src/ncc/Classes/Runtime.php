@@ -94,14 +94,14 @@
                 throw new InvalidArgumentException(sprintf('Package %s is not imported', $package));
             }
 
-            if(self::$imported_packages[$package]?->getMetadata()?->getMainExecutionPolicy() === null)
-            {
-                Console::out('The package does not have a main execution policy, skipping execution');
-                return 0;
-            }
-
             if(self::$imported_packages[$package] instanceof PackageReader)
             {
+                if(self::$imported_packages[$package]?->getMetadata()?->getMainExecutionPolicy() === null)
+                {
+                    Console::out('The package does not have a main execution policy, skipping execution');
+                    return 0;
+                }
+
                 return ExecutionUnitRunner::executeFromPackage(
                     self::$imported_packages[$package],
                     self::$imported_packages[$package]->getMetadata()->getMainExecutionPolicy()
