@@ -18,23 +18,23 @@ DEBIAN_PACKAGE_BUILD_PATH := $(BUILD_PATH)/ncc_$(BUILD_VERSION)_all.deb
 
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
-    composer/Semver \
-    defuse/php-encryption \
-    jelix/version \
-    nikic/PhpParser \
-    Symfony/polyfill_ctype \
-    Symfony/polyfill_mbstring \
-    Symfony/polyfill_uuid \
-    Symfony/Process \
-    Symfony/Uid \
-    Symfony/Filesystem \
-    Symfony/Yaml \
-    theseer/DirectoryScanner \
+	composer/Semver \
+	defuse/php-encryption \
+	jelix/version \
+	nikic/PhpParser \
+	Symfony/polyfill_ctype \
+	Symfony/polyfill_mbstring \
+	Symfony/polyfill_uuid \
+	Symfony/Process \
+	Symfony/Uid \
+	Symfony/Filesystem \
+	Symfony/Yaml \
+	theseer/DirectoryScanner \
 )
 
 # Check for necessary binaries
 ifndef PHPCC
-    $(error "PHP binary not found. Please install PHP or check your PATH")
+	$(error "PHP binary not found. Please install PHP or check your PATH")
 endif
 
 # Check if phpab is installed
@@ -153,13 +153,13 @@ clean:
 .PHONY: help
 help:
 	@echo "Available commands:"
-	@echo "  make autoload          - Generate autoload files"
-	@echo "  make redist            - Prepare the project for redistribution"
-	@echo "  make install           - Installs ncc on the system (requires root privileges & php)"
-	@echo "  make tar               - Package the project into a tarball (Generic installer, requires php)"
-	@echo "  make deb               - Package the project into a Debian package"
-	@echo "  make docker-debian     - Build a Debian Docker image"
+	@echo "  make autoload		  - Generate autoload files"
+	@echo "  make redist			- Prepare the project for redistribution"
+	@echo "  make install		   - Installs ncc on the system (requires root privileges & php)"
+	@echo "  make tar			   - Package the project into a tarball (Generic installer, requires php)"
+	@echo "  make deb			   - Package the project into a Debian package"
+	@echo "  make docker-debian	 - Build a Debian Docker image"
 	@echo "  make docker-debian-run - Run the Debian Docker image"
-	@echo "  make docker-alpine     - Build an Alpine Docker image"
+	@echo "  make docker-alpine	 - Build an Alpine Docker image"
 	@echo "  make docker-alpine-run - Run the Alpine Docker image"
-	@echo "  make clean             - Clean the build artifacts"
+	@echo "  make clean			 - Clean the build artifacts"
