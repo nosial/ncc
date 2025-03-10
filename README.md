@@ -14,8 +14,11 @@ This project and many others from Nosial are available on multiple publicly avai
 - [GitHub](https://github.com/nosial/ncc)
 - [Codeberg](https://codeberg.org/nosial/ncc)
 
-Issues & Pull Requests are frequently and to be referenced accordingly in commits and changes, Nosial remains dedicated
-to keep these repositories up to date when possible.
+Issues & Pull Requests are frequently checked and to be referenced accordingly in commits and changes, Nosial remains
+dedicated to keep these repositories up to date when possible.
+
+For questions & discussions see the public Telegram community at [@NosialDiscussions](https://t.me/NosialDiscussions).
+We do encourage community support and discussions, please be respectful and follow the rules of the community.
 
 ## Features
 
