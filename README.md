@@ -6,6 +6,16 @@ Nosial Code Compiler is a package compiler, manager & installer for PHP. Allowin
 versions of php packages on your system that your PHP programs/projects can share and use. Additionally, ncc also allows
 you to create a redistributable package of your PHP program/project in the form of a `.ncc` binary package file.
 
+## Community
+
+This project and many others from Nosial are available on multiple publicly available and free git repositories at
+
+- [n64](https://git.n64.cc/nosial/ncc)
+- [GitHub](https://github.com/nosial/ncc)
+- [Codeberg](https://codeberg.org/nosial/ncc)
+
+Issues & Pull Requests are frequently and to be referenced accordingly in commits and changes, Nosial remains dedicated
+to keep these repositories up to date when possible.
 
 ## Features
 
