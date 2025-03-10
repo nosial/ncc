@@ -62,7 +62,7 @@ basic usage, standards, and much more.
     * [Package Metadata (metadata)](#package-metadata-metadata)
     * [Assembly Information (assembly)](#assembly-information-assembly)
     * [Package Dependencies (dependencies)](#package-dependencies-dependencies)
-    * [Execution Units (execution_units)](#execution-units-executionunits)
+    * [Execution Units (execution_units)](#execution-units-execution_units)
   * [Building Projects (build)](#building-projects-build)
   * [Execute (exec)](#execute-exec)
 * [Project Configuration (package.json)](#project-configuration-packagejson)
