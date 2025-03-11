@@ -68,16 +68,15 @@
             if(count(self::$cleanupPaths) > 0)
             {
                 $filesystem = new Filesystem();
-
                 foreach(self::$cleanupPaths as $path)
                 {
                     try
                     {
-                        //$filesystem->remove($path);
+                        $filesystem->remove($path);
                     }
                     catch(Exception $e)
                     {
-                        // ignore
+                        Console::outWarning('An error occurred while cleaning up temporary path "' . $path . '", ' . $e->getMessage());
                     }
                 }
             }

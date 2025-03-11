@@ -11,6 +11,7 @@ This update introduces a quality of life improvement
 
 ### Changed
  - Refactor variable names for consistency and clarity in ShutdownHandler and PackageWriter classes
+ - Improve error handling in ShutdownHandler by logging warnings for cleanup failures
 
 
 ## [2.1.6] - 2024-10-29
