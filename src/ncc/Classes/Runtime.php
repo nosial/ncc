@@ -56,22 +56,22 @@
         /**
          * @var array
          */
-        private static $imported_packages = [];
+        private static $importedPackages = [];
 
         /**
          * @var array
          */
-        private static $class_map = [];
+        private static $classMap = [];
 
         /**
          * @var PackageManager|null
          */
-        private static $package_manager;
+        private static $packageManager;
 
         /**
          * @var array
          */
-        private static $included_files = [];
+        private static $includedFiles = [];
 
         /**
          * Executes the main execution point of an imported package and returns the evaluated result
@@ -94,23 +94,23 @@
                 throw new InvalidArgumentException(sprintf('Package %s is not imported', $package));
             }
 
-            if(self::$imported_packages[$package] instanceof PackageReader)
+            if(self::$importedPackages[$package] instanceof PackageReader)
             {
-                if(self::$imported_packages[$package]?->getMetadata()?->getMainExecutionPolicy() === null)
+                if(self::$importedPackages[$package]?->getMetadata()?->getMainExecutionPolicy() === null)
                 {
                     Console::out('The package does not have a main execution policy, skipping execution');
                     return 0;
                 }
 
                 return ExecutionUnitRunner::executeFromPackage(
-                    self::$imported_packages[$package],
-                    self::$imported_packages[$package]->getMetadata()->getMainExecutionPolicy()
+                    self::$importedPackages[$package],
+                    self::$importedPackages[$package]->getMetadata()->getMainExecutionPolicy()
                 );
             }
 
-            if(is_string(self::$imported_packages[$package]))
+            if(is_string(self::$importedPackages[$package]))
             {
-                $metadata_path = self::$imported_packages[$package] . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value;
+                $metadata_path = self::$importedPackages[$package] . DIRECTORY_SEPARATOR . FileDescriptor::METADATA->value;
 
                 if(!is_file($metadata_path))
                 {
@@ -118,7 +118,7 @@
                 }
 
                 return ExecutionUnitRunner::executeFromSystem(
-                    self::$imported_packages[$package],
+                    self::$importedPackages[$package],
                     Metadata::fromArray(ZiProto::decode(IO::fread($metadata_path)))->getMainExecutionPolicy(),
                     $arguments
                 );
@@ -193,12 +193,12 @@
             }
 
             $entry = self::getPackageManager()->getPackageLock()->getEntry($package);
-            self::$imported_packages[$package] = $entry->getPath($version);
+            self::$importedPackages[$package] = $entry->getPath($version);
 
-            foreach($entry->getClassMap($version) as $class => $component_name)
+            foreach($entry->getClassMap($version) as $class => $componentName)
             {
-                $component_path = $entry->getPath($version) . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $component_name;
-                self::$class_map[strtolower($class)] = $component_path;
+                $componentPath = $entry->getPath($version) . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $componentName;
+                self::$classMap[strtolower($class)] = $componentPath;
             }
 
             if($entry->getMetadata($version)->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) !== null)
@@ -215,12 +215,12 @@
                         }
 
                         // Get the file contents and prepare it
-                        $evaluated_code = IO::fread($required_file);
+                        $evaluatedCode = IO::fread($required_file);
 
                         // Remove the PHP tags
-                        $evaluated_code = preg_replace('/^<\?php|<\?PHP/', '', $evaluated_code, 1);
+                        $evaluatedCode = preg_replace('/^<\?php|<\?PHP/', '', $evaluatedCode, 1);
                         // Replace __DIR__ with the actual directory that the file is in
-                        $evaluated_code = str_replace('__DIR__', sprintf('"%s"', dirname($required_file)), $evaluated_code);
+                        $evaluatedCode = str_replace('__DIR__', sprintf('"%s"', dirname($required_file)), $evaluatedCode);
 
                         set_error_handler(function ($error_number, $message, $file, $line) use ($item, $package)
                         {
@@ -228,9 +228,9 @@
                         });
 
                         // Evaluate the code
-                        eval($evaluated_code);
+                        eval($evaluatedCode);
                         restore_error_handler();
-                        unset($evaluated_code);
+                        unset($evaluatedCode);
                     }
                     catch (ConfigurationException $e)
                     {
@@ -247,32 +247,32 @@
                 }
             }
 
-            $safe_package_name = strtoupper($entry->getAssembly($version)->getName());
+            $safePackageName = strtoupper($entry->getAssembly($version)->getName());
             foreach($entry->getMetadata($version)->getConstants() as $constant => $value)
             {
-                $constant_full_name = sprintf("%s_%s", $safe_package_name, $constant);
+                $constantFullName = sprintf("%s_%s", $safePackageName, $constant);
 
                 // Skip if already defined.
-                if(defined($constant_full_name))
+                if(defined($constantFullName))
                 {
-                    if(RuntimeCache::get(sprintf("defined_%s", $constant_full_name)))
+                    if(RuntimeCache::get(sprintf("defined_%s", $constantFullName)))
                     {
                         continue;
                     }
 
-                    trigger_error(sprintf('Cannot define constant %s from package %s because the constant is already defined', $constant_full_name, $package), E_USER_WARNING);
+                    trigger_error(sprintf('Cannot define constant %s from package %s because the constant is already defined', $constantFullName, $package), E_USER_WARNING);
                     continue;
                 }
 
-                if(!Validate::constantName($constant_full_name))
+                if(!Validate::constantName($constantFullName))
                 {
                     // trigger warning only
-                    trigger_error(sprintf('Cannot define constant %s from package %s because the constant name is invalid', $constant_full_name, $package), E_USER_WARNING);
+                    trigger_error(sprintf('Cannot define constant %s from package %s because the constant name is invalid', $constantFullName, $package), E_USER_WARNING);
                     continue;
                 }
 
-                RuntimeCache::set(sprintf("defined_%s", $constant_full_name), true);
-                define($constant_full_name, $value);
+                RuntimeCache::set(sprintf("defined_%s", $constantFullName), true);
+                define($constantFullName, $value);
             }
 
             if(isset($entry->getMetadata($version)->getOptions()[PackageFlags::STATIC_DEPENDENCIES->value]))
@@ -280,7 +280,7 @@
                 // Fake import the dependencies
                 foreach($entry->getVersion($version)->getDependencies() as $dependency)
                 {
-                    self::$imported_packages[$dependency->getName()] = $entry->getPath($version);
+                    self::$importedPackages[$dependency->getName()] = $entry->getPath($version);
                 }
             }
             else
@@ -299,83 +299,83 @@
         /**
          * Imports a package from a package file
          *
-         * @param string $package_path
+         * @param string $packagePath
          * @return string
          * @throws ConfigurationException
          * @throws ImportException
          * @throws IntegrityException
          * @throws OperationException
          */
-        private static function importFromPackage(string $package_path): string
+        private static function importFromPackage(string $packagePath): string
         {
             try
             {
-                $package_reader = new PackageReader($package_path);
+                $packageReader = new PackageReader($packagePath);
             }
             catch(Exception $e)
             {
-                throw new RuntimeException(sprintf('Failed to import package from file "%s" due to an exception: %s', $package_path, $e->getMessage()), 0, $e);
+                throw new RuntimeException(sprintf('Failed to import package from file "%s" due to an exception: %s', $packagePath, $e->getMessage()), 0, $e);
             }
 
             // Check if the package is already imported
-            if(in_array($package_reader->getAssembly()->getPackage(), self::$imported_packages, true))
+            if(in_array($packageReader->getAssembly()->getPackage(), self::$importedPackages, true))
             {
-                $package_name = $package_reader->getAssembly()->getPackage();
-                unset($package_reader);
-                return $package_name;
+                $packageName = $packageReader->getAssembly()->getPackage();
+                unset($packageReader);
+                return $packageName;
             }
 
             // Import the package
-            $package_name = $package_reader->getAssembly()->getPackage();
-            self::$imported_packages[$package_name] = $package_reader;
+            $packageName = $packageReader->getAssembly()->getPackage();
+            self::$importedPackages[$packageName] = $packageReader;
 
             // Register the autoloader
-            foreach($package_reader->getClassMap() as $value)
+            foreach($packageReader->getClassMap() as $value)
             {
-                self::$class_map[strtolower($value)] = static function() use ($value, $package_name)
+                self::$classMap[strtolower($value)] = static function() use ($value, $packageName)
                 {
-                    return self::$imported_packages[$package_name]->getComponentByClass($value)->getData();
+                    return self::$importedPackages[$packageName]->getComponentByClass($value)->getData();
                 };
             }
 
             // Import the required files
-            if($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) !== null)
+            if($packageReader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) !== null)
             {
-                foreach($package_reader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) as $item)
+                foreach($packageReader->getMetadata()->getOption(BuildConfigurationOptions::REQUIRE_FILES->value) as $item)
                 {
                     try
                     {
-                        eval($package_reader->getComponent($item)->getData());
+                        eval($packageReader->getComponent($item)->getData());
                     }
                     catch(ConfigurationException $e)
                     {
-                        throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $package_name, $e->getMessage()), $e);
+                        throw new ImportException(sprintf('Failed to import "%s" from %s: %s', $item, $packageName, $e->getMessage()), $e);
                     }
                 }
             }
 
-            if($package_reader->getFlag(PackageFlags::STATIC_DEPENDENCIES->value))
+            if($packageReader->getFlag(PackageFlags::STATIC_DEPENDENCIES->value))
             {
                 // Fake import the dependencies
-                foreach($package_reader->getDependencies() as $dependency_name)
+                foreach($packageReader->getDependencies() as $dependency_name)
                 {
-                    $dependency = $package_reader->getDependency($dependency_name);
-                    self::$imported_packages[$dependency->getName()] = $package_reader;
+                    $dependency = $packageReader->getDependency($dependency_name);
+                    self::$importedPackages[$dependency->getName()] = $packageReader;
                 }
             }
             else
             {
                 // Import dependencies recursively
-                foreach($package_reader->getDependencies() as $dependency)
+                foreach($packageReader->getDependencies() as $dependency)
                 {
-                    $dependency = $package_reader->getDependency($dependency);
+                    $dependency = $packageReader->getDependency($dependency);
 
                     /** @noinspection UnusedFunctionResultInspection */
                     self::import($dependency->getName(), $dependency->getVersion());
                 }
             }
 
-            return $package_reader->getAssembly()->getPackage();
+            return $packageReader->getAssembly()->getPackage();
         }
 
         /**
@@ -386,7 +386,7 @@
          */
         public static function isImported(string $package): bool
         {
-            return isset(self::$imported_packages[$package]);
+            return isset(self::$importedPackages[$package]);
         }
 
         /**
@@ -396,7 +396,7 @@
          */
         public static function getImportedPackages(): array
         {
-            return array_keys(self::$imported_packages);
+            return array_keys(self::$importedPackages);
         }
 
         /**
@@ -407,20 +407,20 @@
         {
             $class = strtolower($class);
 
-            if(!isset(self::$class_map[$class]))
+            if(!isset(self::$classMap[$class]))
             {
                 return;
             }
 
-            if(is_callable(self::$class_map[$class]))
+            if(is_callable(self::$classMap[$class]))
             {
-                eval(self::$class_map[$class]());
+                eval(self::$classMap[$class]());
                 return;
             }
 
-            if(is_string(self::$class_map[$class]) && is_file(self::$class_map[$class]))
+            if(is_string(self::$classMap[$class]) && is_file(self::$classMap[$class]))
             {
-                require_once self::$class_map[$class];
+                require_once self::$classMap[$class];
             }
         }
 
@@ -429,12 +429,12 @@
          */
         private static function getPackageManager(): PackageManager
         {
-            if(self::$package_manager === null)
+            if(self::$packageManager === null)
             {
-                self::$package_manager = new PackageManager();
+                self::$packageManager = new PackageManager();
             }
 
-            return self::$package_manager;
+            return self::$packageManager;
         }
 
         /**
@@ -444,7 +444,7 @@
          */
         public static function runtimeGetIncludedFiles(): array
         {
-            return array_merge(get_included_files(), self::$included_files);
+            return array_merge(get_included_files(), self::$includedFiles);
         }
 
         /**
@@ -493,20 +493,20 @@
             {
                 print(ob_get_clean());
 
-                $exception_stack = null;
+                $exceptionStack = null;
                 foreach ($exceptions as $e)
                 {
-                    if($exception_stack === null)
+                    if($exceptionStack === null)
                     {
-                        $exception_stack = $e;
+                        $exceptionStack = $e;
                     }
                     else
                     {
-                        $exception_stack = new Exception($exception_stack->getMessage(), $exception_stack->getCode(), $e);
+                        $exceptionStack = new Exception($exceptionStack->getMessage(), $exceptionStack->getCode(), $e);
                     }
                 }
 
-                throw new RuntimeException('An exception occurred while evaluating the code', 0, $exception_stack);
+                throw new RuntimeException('An exception occurred while evaluating the code', 0, $exceptionStack);
             }
 
             print(ob_get_clean());
@@ -526,7 +526,7 @@
          */
         private static function acquireFile(string $path, ?string $package=null): string
         {
-            $cwd_checked = false; // sanity check to prevent checking the cwd twice
+            $CwdChecked = false; // sanity check to prevent checking the cwd twice
 
             // Check if the file is absolute
             if(is_file($path))
@@ -536,29 +536,29 @@
             }
 
             // Since $package is not null, let's try to acquire the file from the package
-            if($package !== null && isset(self::$imported_packages[$package]))
+            if($package !== null && isset(self::$importedPackages[$package]))
             {
-                $base_path = basename($path);
+                $basePath = basename($path);
 
-                if(self::$imported_packages[$package] instanceof PackageReader)
+                if(self::$importedPackages[$package] instanceof PackageReader)
                 {
-                    $acquired_file = self::$imported_packages[$package]->find($base_path);
+                    $acquiredFile = self::$importedPackages[$package]->find($basePath);
                     Console::outDebug(sprintf('Acquired file "%s" from package "%s"', $path, $package));
 
-                    return match (Resolver::componentType($acquired_file))
+                    return match (Resolver::componentType($acquiredFile))
                     {
-                        PackageDirectory::RESOURCES->value => self::$imported_packages[$package]->getResource(Resolver::componentName($acquired_file))->getData(),
-                        PackageDirectory::COMPONENTS->value => self::$imported_packages[$package]->getComponent(Resolver::componentName($acquired_file))->getData([ComponentDecodeOptions::AS_FILE->value]),
+                        PackageDirectory::RESOURCES->value => self::$importedPackages[$package]->getResource(Resolver::componentName($acquiredFile))->getData(),
+                        PackageDirectory::COMPONENTS->value => self::$importedPackages[$package]->getComponent(Resolver::componentName($acquiredFile))->getData([ComponentDecodeOptions::AS_FILE->value]),
                         default => throw new IOException(sprintf('Unable to acquire file "%s" from package "%s" because it is not a resource or component', $path, $package)),
                     };
                 }
 
-                if(is_dir(self::$imported_packages[$package]))
+                if(is_dir(self::$importedPackages[$package]))
                 {
-                    $base_path = basename($path);
-                    foreach(IO::scan(self::$imported_packages[$package]) as $file)
+                    $basePath = basename($path);
+                    foreach(IO::scan(self::$importedPackages[$package]) as $file)
                     {
-                        if(str_ends_with($file, $base_path))
+                        if(str_ends_with($file, $basePath))
                         {
                             Console::outDebug(sprintf('Acquired file "%s" from package "%s"', $path, $package));
                             return IO::fread($file);
@@ -568,29 +568,29 @@
             }
 
             // If not, let's try the include_path
-            foreach(explode(PATH_SEPARATOR, get_include_path()) as $file_path)
+            foreach(explode(PATH_SEPARATOR, get_include_path()) as $filePath)
             {
-                if($file_path === '.' && !$cwd_checked)
+                if($filePath === '.' && !$CwdChecked)
                 {
-                    $cwd_checked = true;
-                    $file_path = getcwd();
+                    $CwdChecked = true;
+                    $filePath = getcwd();
                 }
 
-                if(is_file($file_path . DIRECTORY_SEPARATOR . $path))
+                if(is_file($filePath . DIRECTORY_SEPARATOR . $path))
                 {
                     Console::outDebug(sprintf('Acquired file "%s" from include_path', $path));
-                    return IO::fread($file_path . DIRECTORY_SEPARATOR . $path);
+                    return IO::fread($filePath . DIRECTORY_SEPARATOR . $path);
                 }
 
-                if(is_file($file_path . DIRECTORY_SEPARATOR . basename($path)))
+                if(is_file($filePath . DIRECTORY_SEPARATOR . basename($path)))
                 {
                     Console::outDebug(sprintf('Acquired file "%s" from include_path (using basename)', $path));
-                    return IO::fread($file_path . DIRECTORY_SEPARATOR . basename($path));
+                    return IO::fread($filePath . DIRECTORY_SEPARATOR . basename($path));
                 }
             }
 
             // Check the current working directory
-            if(!$cwd_checked)
+            if(!$CwdChecked)
             {
                 if(is_file(getcwd() . DIRECTORY_SEPARATOR . $path))
                 {
@@ -607,11 +607,11 @@
 
             // Check the calling script's directory
             $called_script_directory = dirname(debug_backtrace()[0]['file']);
-            $file_path = $called_script_directory . DIRECTORY_SEPARATOR . $path;
-            if(is_file($file_path))
+            $filePath = $called_script_directory . DIRECTORY_SEPARATOR . $path;
+            if(is_file($filePath))
             {
                 Console::outDebug(sprintf('Acquired file "%s" from calling script\'s directory', $path));
-                return IO::fread($file_path);
+                return IO::fread($filePath);
             }
 
             throw new IOException(sprintf('Unable to acquire file "%s" because it does not exist', $path));
@@ -628,7 +628,7 @@
         {
             try
             {
-                $acquired_file = self::acquireFile($path, $package);
+                $acquiredFile = self::acquireFile($path, $package);
             }
             catch(Exception $e)
             {
@@ -639,19 +639,19 @@
                 return;
             }
 
-            $acquired_name = $path;
+            $acquiredName = $path;
 
             if(!is_file($path))
             {
-                $acquired_name = hash('crc32', $acquired_file);
+                $acquiredName = hash('crc32', $acquiredFile);
             }
 
-            if(!in_array($acquired_name, self::$included_files, true))
+            if(!in_array($acquiredName, self::$includedFiles, true))
             {
-                self::$included_files[] = sprintf('virtual(%s)', $acquired_name);
+                self::$includedFiles[] = sprintf('virtual(%s)', $acquiredName);
             }
 
-            self::extendedEvaluate($acquired_file);
+            self::extendedEvaluate($acquiredFile);
         }
 
         /**
@@ -682,7 +682,7 @@
         {
             try
             {
-                $acquired_file = self::acquireFile($path, $package);
+                $acquiredFile = self::acquireFile($path, $package);
             }
             catch(Exception $e)
             {
@@ -691,19 +691,19 @@
                     throw new RuntimeException(sprintf('Failed to acquire file "%s" at runtime: %s', $path, $e->getMessage()), $e->getCode(), $e);
             }
 
-            $acquired_name = $path;
+            $requiredName = $path;
 
             if(!is_file($path))
             {
-                $acquired_name = hash('crc32', $acquired_file);
+                $requiredName = hash('crc32', $acquiredFile);
             }
 
-            if(!in_array($acquired_name, self::$included_files, true))
+            if(!in_array($requiredName, self::$includedFiles, true))
             {
-                self::$included_files[] = sprintf('virtual(%s)', $acquired_name);
+                self::$includedFiles[] = sprintf('virtual(%s)', $requiredName);
             }
 
-            self::extendedEvaluate($acquired_file);
+            self::extendedEvaluate($acquiredFile);
         }
 
         /**

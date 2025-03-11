@@ -47,32 +47,32 @@
         /**
          * @var int
          */
-        private $package_offset;
+        private $packageOffset;
 
         /**
          * @var int
          */
-        private $package_length;
+        private $packageLength;
 
         /**
          * @var int
          */
-        private $header_offset;
+        private $headerOffset;
 
         /**
          * @var int
          */
-        private $header_length;
+        private $headerLength;
 
         /**
          * @var int
          */
-        private $data_offset;
+        private $dataOffset;
 
         /**
          * @var int
          */
-        private $data_length;
+        private $dataLength;
 
         /**
          * @var array
@@ -82,12 +82,12 @@
         /**
          * @var resource
          */
-        private $package_file;
+        private $packageFile;
 
         /**
          * @var string
          */
-        private $package_path;
+        private $packagePath;
 
         /**
          * @var array
@@ -107,10 +107,10 @@
                 throw new IOException(sprintf('File \'%s\' does not exist', $file_path));
             }
 
-            $this->package_path = $file_path;
-            $this->package_file = fopen($file_path, 'rb');
+            $this->packagePath = $file_path;
+            $this->packageFile = fopen($file_path, 'rb');
 
-            if($this->package_file === false)
+            if($this->packageFile === false)
             {
                 throw new IOException(sprintf('Failed to open file \'%s\'', $file_path));
             }
@@ -122,41 +122,41 @@
             // End of data: \xFF\xAA\x55\xF0
 
             // First find the offset of the package by searching for the magic bytes "ncc_pkg"
-            $this->package_offset = 0;
-            while(!feof($this->package_file))
+            $this->packageOffset = 0;
+            while(!feof($this->packageFile))
             {
-                $buffer = fread($this->package_file, 1024);
+                $buffer = fread($this->packageFile, 1024);
                 $buffer_length = strlen($buffer);
-                $this->package_offset += $buffer_length;
+                $this->packageOffset += $buffer_length;
 
                 if (($position = strpos($buffer, "ncc_pkg")) !== false)
                 {
-                    $this->package_offset -= $buffer_length - $position;
-                    $this->package_length = 7; // ncc_pkg
-                    $this->header_offset = $this->package_offset + 7;
+                    $this->packageOffset -= $buffer_length - $position;
+                    $this->packageLength = 7; // ncc_pkg
+                    $this->headerOffset = $this->packageOffset + 7;
                     break;
                 }
             }
 
             // Check for sanity reasons
-            if($this->package_offset === null || $this->package_length === null)
+            if($this->packageOffset === null || $this->packageLength === null)
             {
                 throw new IOException(sprintf('File \'%s\' is not a valid package file (missing magic bytes)', $file_path));
             }
 
             // Seek the header until the end of headers byte sequence (1F 1F 1F 1F)
-            fseek($this->package_file, $this->header_offset);
-            while (!feof($this->package_file))
+            fseek($this->packageFile, $this->headerOffset);
+            while (!feof($this->packageFile))
             {
-                $this->headers .= fread($this->package_file, 1024);
+                $this->headers .= fread($this->packageFile, 1024);
 
                 // Search for the position of "1F 1F 1F 1F" within the buffer
                 if (($position = strpos($this->headers, "\x1F\x1F\x1F\x1F")) !== false)
                 {
                     $this->headers = substr($this->headers, 0, $position);
-                    $this->header_length = strlen($this->headers);
-                    $this->package_length += $this->header_length + 4;
-                    $this->data_offset = $this->header_offset + $this->header_length + 4;
+                    $this->headerLength = strlen($this->headers);
+                    $this->packageLength += $this->headerLength + 4;
+                    $this->dataOffset = $this->headerOffset + $this->headerLength + 4;
                     break;
                 }
 
@@ -181,19 +181,19 @@
             }
 
             // Seek the data until the end of the package (FF AA 55 F0)
-            fseek($this->package_file, $this->data_offset);
+            fseek($this->packageFile, $this->dataOffset);
             $buffer = '';
-            while(!feof($this->package_file))
+            while(!feof($this->packageFile))
             {
-                $current_chunk = fread($this->package_file, 1024);
-                $this->data_length += strlen($current_chunk);
+                $current_chunk = fread($this->packageFile, 1024);
+                $this->dataLength += strlen($current_chunk);
                 $buffer .= $current_chunk;
 
                 // If we detect the end-of-data byte sequence
                 if (($position = strpos($buffer, "\xFF\xAA\x55\xF0")) !== false)
                 {
-                    $this->data_length -= strlen($buffer) - $position;
-                    $this->package_length += $this->data_length + 4;
+                    $this->dataLength -= strlen($buffer) - $position;
+                    $this->packageLength += $this->dataLength + 4;
                     break;
                 }
 
@@ -206,7 +206,7 @@
 
             }
 
-            if($this->data_length === null || $this->data_length === 0)
+            if($this->dataLength === null || $this->dataLength === 0)
             {
                 throw new IOException(sprintf('File \'%s\' is not a valid package file (missing end of package)', $file_path));
             }
@@ -275,18 +275,18 @@
         {
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
             {
-                throw new RuntimeException(sprintf('File \'%s\' not found in package \'%s\'', $name, $this->package_path));
+                throw new RuntimeException(sprintf('File \'%s\' not found in package \'%s\'', $name, $this->packagePath));
             }
 
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
-            fseek($this->package_file, ($this->data_offset + (int)$location[0]));
+            fseek($this->packageFile, ($this->dataOffset + (int)$location[0]));
 
             if(in_array(PackageFlags::COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
             {
-                return gzuncompress(fread($this->package_file, (int)$location[1]));
+                return gzuncompress(fread($this->packageFile, (int)$location[1]));
             }
 
-            return fread($this->package_file, (int)$location[1]);
+            return fread($this->packageFile, (int)$location[1]);
         }
 
         /**
@@ -299,7 +299,7 @@
         {
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
             {
-                throw new RuntimeException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->package_path));
+                throw new RuntimeException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->packagePath));
             }
 
             $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
@@ -326,8 +326,8 @@
          */
         public function getByPointer(int $pointer, int $length): string
         {
-            fseek($this->package_file, ($this->header_length + $pointer));
-            return fread($this->package_file, $length);
+            fseek($this->packageFile, ($this->headerLength + $pointer));
+            return fread($this->packageFile, $length);
         }
 
         /**
@@ -348,7 +348,7 @@
 
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
             {
-                throw new ConfigurationException(sprintf('Assembly object not found in package \'%s\'', $this->package_path));
+                throw new ConfigurationException(sprintf('Assembly object not found in package \'%s\'', $this->packagePath));
             }
 
             try
@@ -357,7 +357,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode assembly from package \'%s\' using ZiProto: %s', $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode assembly from package \'%s\' using ZiProto: %s', $this->packagePath, $e->getMessage()), $e);
             }
 
             $this->cache[$directory] = $assembly;
@@ -382,7 +382,7 @@
 
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
             {
-                throw new ConfigurationException(sprintf('Metadata object not found in package \'%s\'', $this->package_path));
+                throw new ConfigurationException(sprintf('Metadata object not found in package \'%s\'', $this->packagePath));
             }
 
             try
@@ -391,7 +391,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode metadata from package \'%s\' using ZiProto: %s', $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode metadata from package \'%s\' using ZiProto: %s', $this->packagePath, $e->getMessage()), $e);
             }
 
             foreach($this->getFlags() as $flag)
@@ -429,7 +429,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode installer from package \'%s\' using ZiProto: %s', $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode installer from package \'%s\' using ZiProto: %s', $this->packagePath, $e->getMessage()), $e);
             }
 
             $this->cache[$directory] = $installer;
@@ -470,7 +470,7 @@
             $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$dependency_name]))
             {
-                throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package \'%s\'', $name, $this->package_path));
+                throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package \'%s\'', $name, $this->packagePath));
             }
 
             try
@@ -479,7 +479,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode dependency \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode dependency \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -499,7 +499,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode dependency from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode dependency from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -537,7 +537,7 @@
             $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$execution_unit_name]))
             {
-                throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package \'%s\'', $name, $this->package_path));
+                throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package \'%s\'', $name, $this->packagePath));
             }
 
             try
@@ -546,7 +546,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode execution unit \'%s\' from package file \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode execution unit \'%s\' from package file \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -577,7 +577,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode execution unit from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode execution unit from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -636,7 +636,7 @@
             $component_name = sprintf('@%s:%s', PackageDirectory::COMPONENTS->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$component_name]))
             {
-                throw new ConfigurationException(sprintf('Component \'%s\' not found in package \'%s\'', $name, $this->package_path));
+                throw new ConfigurationException(sprintf('Component \'%s\' not found in package \'%s\'', $name, $this->packagePath));
             }
 
             try
@@ -645,7 +645,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode component \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode component \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -665,7 +665,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode component from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode component from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -682,7 +682,7 @@
             $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER->value, $class);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$class_name]))
             {
-                throw new ConfigurationException(sprintf('Class map \'%s\' not found in package \'%s\'', $class, $this->package_path));
+                throw new ConfigurationException(sprintf('Class map \'%s\' not found in package \'%s\'', $class, $this->packagePath));
             }
 
             try
@@ -691,7 +691,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode component from class pointer \'%s\' from package \'%s\' using ZiProto: %s', $class, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode component from class pointer \'%s\' from package \'%s\' using ZiProto: %s', $class, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -729,7 +729,7 @@
             $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES->value, $name);
             if(!isset($this->headers[PackageStructure::DIRECTORY->value][$resource_name]))
             {
-                throw new ConfigurationException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->package_path));
+                throw new ConfigurationException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->packagePath));
             }
 
             try
@@ -738,7 +738,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode resource \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode resource \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -758,7 +758,7 @@
             }
             catch(Exception $e)
             {
-                throw new IntegrityException(sprintf('Failed to decode resource from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->package_path, $e->getMessage()), $e);
+                throw new IntegrityException(sprintf('Failed to decode resource from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
             }
         }
 
@@ -788,7 +788,7 @@
          */
         public function getPackageOffset(): int
         {
-            return $this->package_offset;
+            return $this->packageOffset;
         }
 
         /**
@@ -796,7 +796,7 @@
          */
         public function getPackageLength(): int
         {
-            return $this->package_length;
+            return $this->packageLength;
         }
 
         /**
@@ -804,7 +804,7 @@
          */
         public function getHeaderOffset(): int
         {
-            return $this->header_offset;
+            return $this->headerOffset;
         }
 
         /**
@@ -812,7 +812,7 @@
          */
         public function getHeaderLength(): int
         {
-            return $this->header_length;
+            return $this->headerLength;
         }
 
         /**
@@ -820,7 +820,7 @@
          */
         public function getDataOffset(): int
         {
-            return $this->data_offset;
+            return $this->dataOffset;
         }
 
         /**
@@ -828,7 +828,7 @@
          */
         public function getDataLength(): int
         {
-            return $this->data_length;
+            return $this->dataLength;
         }
 
         /**
@@ -842,12 +842,12 @@
         {
             $checksum = hash($hash, '', $binary);
 
-            fseek($this->package_file, $this->package_offset);
-            $bytes_left = $this->package_length;
+            fseek($this->packageFile, $this->packageOffset);
+            $bytes_left = $this->packageLength;
 
             while ($bytes_left > 0)
             {
-                $buffer = fread($this->package_file, min(1024, $bytes_left));
+                $buffer = fread($this->packageFile, min(1024, $bytes_left));
                 $buffer_length = strlen($buffer);
                 $bytes_left -= $buffer_length;
                 $checksum = hash($hash, ($checksum . $buffer), $binary);
@@ -875,13 +875,13 @@
                 throw new IOException(sprintf('Failed to open file \'%s\'', $path));
             }
 
-            fseek($this->package_file, $this->package_offset);
-            $remaining_bytes = $this->package_length;
+            fseek($this->packageFile, $this->packageOffset);
+            $remaining_bytes = $this->packageLength;
 
             while($remaining_bytes > 0)
             {
                 $bytes_to_read = min($remaining_bytes, 4096);
-                $data = fread($this->package_file, $bytes_to_read);
+                $data = fread($this->packageFile, $bytes_to_read);
 
                 if ($data === false)
                 {
@@ -911,9 +911,9 @@
          */
         public function __destruct()
         {
-            if(is_resource($this->package_file))
+            if(is_resource($this->packageFile))
             {
-                fclose($this->package_file);
+                fclose($this->packageFile);
             }
         }
     }

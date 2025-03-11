@@ -53,70 +53,70 @@
         /**
          * @var resource
          */
-        private $temp_file;
+        private $tempFile;
 
         /**
          * @var resource
          */
-        private $package_file;
+        private $packageFile;
 
         /**
          * @var string;
          */
-        private $temporary_path;
+        private $temporaryPath;
 
         /**
          * @var bool
          */
-        private $data_written;
+        private $dataWritten;
 
         /**
          * PackageWriter constructor.
          *
          * @throws IOException
          */
-        public function __construct(string $file_path, bool $overwrite=true)
+        public function __construct(string $filePath, bool $overwrite=true)
         {
-            if(!$overwrite && is_file($file_path))
+            if(!$overwrite && is_file($filePath))
             {
-                throw new IOException(sprintf('File \'%s\' already exists', $file_path));
+                throw new IOException(sprintf('File \'%s\' already exists', $filePath));
             }
 
-            if(is_file($file_path))
+            if(is_file($filePath))
             {
-                unlink($file_path);
+                unlink($filePath);
             }
 
-            if(is_file($file_path . '.tmp'))
+            if(is_file($filePath . '.tmp'))
             {
-                unlink($file_path . '.tmp');
+                unlink($filePath . '.tmp');
             }
 
             // Create the parent directory if it doesn't exist
-            if(!is_dir(dirname($file_path)))
+            if(!is_dir(dirname($filePath)))
             {
-                if (!mkdir($concurrentDirectory = dirname($file_path), 0777, true) && !is_dir($concurrentDirectory))
+                if (!mkdir($concurrentDirectory = dirname($filePath), 0777, true) && !is_dir($concurrentDirectory))
                 {
                     throw new IOException(sprintf('Directory "%s" was not created', $concurrentDirectory));
                 }
             }
 
-            touch($file_path);
-            touch($file_path . '.tmp');
+            touch($filePath);
+            touch($filePath . '.tmp');
 
-            $this->data_written = false;
-            $this->temporary_path = $file_path . '.tmp';
-            $this->temp_file = @fopen($this->temporary_path, 'wb'); // Create a temporary data file
-            $this->package_file = @fopen($file_path, 'wb');
+            $this->dataWritten = false;
+            $this->temporaryPath = $filePath . '.tmp';
+            $this->tempFile = @fopen($this->temporaryPath, 'wb'); // Create a temporary data file
+            $this->packageFile = @fopen($filePath, 'wb');
             $this->headers = [
                 PackageStructure::FILE_VERSION->value => PackageStructureVersions::_2_0->value,
                 PackageStructure::FLAGS->value => [],
                 PackageStructure::DIRECTORY->value => []
             ];
 
-            if($this->temp_file === false || $this->package_file === false)
+            if($this->tempFile === false || $this->packageFile === false)
             {
-                throw new IOException(sprintf('Failed to open file \'%s\'', $file_path));
+                throw new IOException(sprintf('Failed to open file \'%s\'', $filePath));
             }
         }
 
@@ -160,7 +160,7 @@
          */
         public function setFlags(array $flags): void
         {
-            if($this->data_written)
+            if($this->dataWritten)
             {
                 throw new IOException('Cannot set flags after data has been written to the package');
             }
@@ -198,7 +198,7 @@
                 }
             }
 
-            if($this->data_written)
+            if($this->dataWritten)
             {
                 throw new IOException('Cannot add a flag after data has been written to the package');
             }
@@ -227,7 +227,7 @@
                 }
             }
 
-            if($this->data_written)
+            if($this->dataWritten)
             {
                 throw new IOException('Cannot remove a flag after data has been written to the package');
             }
@@ -269,10 +269,10 @@
                 }
             }
 
-            $pointer = sprintf("%d:%d", ftell($this->temp_file), strlen($data));
+            $pointer = sprintf("%d:%d", ftell($this->tempFile), strlen($data));
             $this->headers[PackageStructure::DIRECTORY->value][$name] = $pointer;
-            $this->data_written = true;
-            fwrite($this->temp_file, $data);
+            $this->dataWritten = true;
+            fwrite($this->tempFile, $data);
 
             return explode(':', $pointer);
         }
@@ -395,7 +395,7 @@
         public function merge(PackageReader $reader): void
         {
             $progress_bar = new ConsoleProgressBar(sprintf('Merging %s', $reader->getAssembly()->getPackage()), count($reader->getDirectory()));
-            $processed_resources = [];
+            $processedResources = [];
 
             foreach($reader->getDirectory() as $name => $pointer)
             {
@@ -411,15 +411,15 @@
                         break;
 
                     default:
-                        if(isset($processed_resources[$pointer]))
+                        if(isset($processedResources[$pointer]))
                         {
                             Console::outDebug(sprintf('Merging %s as a pointer', $name));
-                            $this->addPointer($name, (int)$processed_resources[$pointer][0], (int)$processed_resources[$pointer][1]);
+                            $this->addPointer($name, (int)$processedResources[$pointer][0], (int)$processedResources[$pointer][1]);
                             break;
                         }
 
                         Console::outDebug(sprintf('Merging %s', $name));
-                        $processed_resources[$pointer] = $this->add($name, $reader->get($name));
+                        $processedResources[$pointer] = $this->add($name, $reader->get($name));
                 }
 
                 $progress_bar->increaseValue(1, true);
@@ -437,34 +437,34 @@
          */
         public function close(): void
         {
-            if(!is_resource($this->package_file) || !is_resource($this->temp_file))
+            if(!is_resource($this->packageFile) || !is_resource($this->tempFile))
             {
                 throw new IOException('Package is already closed');
             }
 
             // Close the temporary data file
-            fclose($this->temp_file);
+            fclose($this->tempFile);
 
             // Write the magic bytes "ncc_pkg" to the package and the header
-            fwrite($this->package_file,  'ncc_pkg');
-            fwrite($this->package_file, ZiProto::encode($this->headers));
-            fwrite($this->package_file, "\x1F\x1F\x1F\x1F");
+            fwrite($this->packageFile,  'ncc_pkg');
+            fwrite($this->packageFile, ZiProto::encode($this->headers));
+            fwrite($this->packageFile, "\x1F\x1F\x1F\x1F");
 
             // Copy the temporary data file to the package
-            $temp_file = fopen($this->temporary_path, 'rb');
-            stream_copy_to_stream($temp_file, $this->package_file);
+            $temp_file = fopen($this->temporaryPath, 'rb');
+            stream_copy_to_stream($temp_file, $this->packageFile);
 
             // End the package by writing the end-of-package delimiter (0xFFAA55F0)
-            fwrite($this->package_file, "\xFF\xAA\x55\xF0");
+            fwrite($this->packageFile, "\xFF\xAA\x55\xF0");
 
             // Close the file handles
-            fclose($this->package_file);
+            fclose($this->packageFile);
             fclose($temp_file);
 
-            unlink($this->temporary_path);
+            unlink($this->temporaryPath);
 
-            $this->package_file = null;
-            $this->temp_file = null;
+            $this->packageFile = null;
+            $this->tempFile = null;
         }
 
         /**
@@ -482,14 +482,14 @@
             }
             finally
             {
-                if(is_resource($this->package_file))
+                if(is_resource($this->packageFile))
                 {
-                    fclose($this->package_file);
+                    fclose($this->packageFile);
                 }
 
-                if(is_resource($this->temp_file))
+                if(is_resource($this->tempFile))
                 {
-                    fclose($this->temp_file);
+                    fclose($this->tempFile);
                 }
             }
         }

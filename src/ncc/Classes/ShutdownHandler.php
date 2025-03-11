@@ -29,7 +29,6 @@
     use ncc\ThirdParty\Symfony\Filesystem\Filesystem;
     use ncc\Utilities\Console;
     use ncc\Utilities\Functions;
-    use ncc\Utilities\RuntimeCache;
 
     class ShutdownHandler
     {
@@ -41,7 +40,7 @@
         /**
          * @var array
          */
-        private static $cleanup_paths = [];
+        private static $cleanupPaths = [];
 
         /**
          * Registers the shutdown handler
@@ -66,11 +65,11 @@
          */
         public static function shutdown(): void
         {
-            if(count(self::$cleanup_paths) > 0)
+            if(count(self::$cleanupPaths) > 0)
             {
                 $filesystem = new Filesystem();
 
-                foreach(self::$cleanup_paths as $path)
+                foreach(self::$cleanupPaths as $path)
                 {
                     try
                     {
@@ -101,9 +100,9 @@
          */
         public static function declareTemporaryPath(string $path): void
         {
-            if(!in_array($path, self::$cleanup_paths, true))
+            if(!in_array($path, self::$cleanupPaths, true))
             {
-                self::$cleanup_paths[] = $path;
+                self::$cleanupPaths[] = $path;
             }
         }
     }

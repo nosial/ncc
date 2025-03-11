@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces a quality of life improvement
 
+### Changed
+ - Refactor variable names for consistency and clarity in ShutdownHandler and PackageWriter classes
+
 
 ## [2.1.6] - 2024-10-29
 
