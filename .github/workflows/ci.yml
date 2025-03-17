@@ -83,7 +83,7 @@ jobs:
 
     steps:
       - name: Download NCC build directory
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ncc-build
           path: build
@@ -107,13 +107,13 @@ jobs:
 
     steps:
       - name: Download redist.zip
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: redist-zip
           path: .
 
       - name: Download Debian package
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ncc-deb
           path: .
