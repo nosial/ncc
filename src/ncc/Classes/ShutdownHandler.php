@@ -65,21 +65,21 @@
          */
         public static function shutdown(): void
         {
-            if(count(self::$cleanupPaths) > 0)
-            {
-                $filesystem = new Filesystem();
-                foreach(self::$cleanupPaths as $path)
-                {
-                    try
-                    {
-                        $filesystem->remove($path);
-                    }
-                    catch(Exception $e)
-                    {
-                        Console::outWarning('An error occurred while cleaning up temporary path "' . $path . '", ' . $e->getMessage());
-                    }
-                }
-            }
+            //if(count(self::$cleanupPaths) > 0)
+            //{
+            //    $filesystem = new Filesystem();
+            //    foreach(self::$cleanupPaths as $path)
+            //    {
+            //        try
+            //        {
+            //            $//filesystem->remove($path);
+            //        }
+            //        catch(Exception $e)
+            //        {
+            //            Console::outWarning('An error occurred while cleaning up temporary path "' . $path . '", ' . $e->getMessage());
+            //        }
+            //    }
+            //}
 
             try
             {
