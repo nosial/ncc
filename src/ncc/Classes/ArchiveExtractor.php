@@ -29,6 +29,7 @@
     use ncc\Utilities\Console;
     use PharData;
     use RuntimeException;
+    use ValueError;
     use ZipArchive;
 
     class ArchiveExtractor
@@ -126,6 +127,13 @@
                 }
             }
 
-            $zip_archive->close();
+            try
+            {
+                $zip_archive->close();
+            }
+            catch(ValueError $e)
+            {
+                Console::outWarning('An error occurred while closing the zip archive, ' . $e->getMessage());
+            }
         }
     }
