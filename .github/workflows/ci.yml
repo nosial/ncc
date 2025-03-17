@@ -50,7 +50,7 @@ jobs:
         run: echo "NCC_DIR=$(find build/ -type d -name 'ncc_*' | head -n 1)" >> $GITHUB_ENV
 
       - name: Upload NCC build directory
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ncc-build
           path: ${{ env.NCC_DIR }}
@@ -59,7 +59,7 @@ jobs:
         run: zip -r redist.zip ${{ env.NCC_DIR }}
 
       - name: Upload redist.zip
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: redist-zip
           path: redist.zip
@@ -72,7 +72,7 @@ jobs:
         run: echo "DEB_FILE=$(find build/ -type f -name '*.deb' | head -n 1)" >> $GITHUB_ENV
 
       - name: Upload Debian package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ncc-deb
           path: ${{ env.DEB_FILE }}
