@@ -1,0 +1,186 @@
+name: Build and Release Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'release/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    strategy:
+      matrix:
+        dockerfile:
+          - name: "alpine"
+            file: "Dockerfile"
+            suffix: ""
+          - name: "debian"
+            file: "Dockerfile.debian"
+            suffix: "-debian"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            suffix=${{ matrix.dockerfile.suffix }},onlatest=true
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=ncc
+            org.opencontainers.image.description=ncc's official Docker image (${{ matrix.dockerfile.name }})
+            org.opencontainers.image.vendor=Nosial
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile.file }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PHP_VERSION=8.3
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.dockerfile.suffix }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            echo "## Changes since $PREVIOUS_TAG" > changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> changelog.md
+          else
+            echo "## Initial Release" > changelog.md
+            echo "" >> changelog.md
+            echo "First release of ncc Docker images." >> changelog.md
+          fi
+          
+          echo "" >> changelog.md
+          echo "## Docker Images" >> changelog.md
+          echo "" >> changelog.md
+          echo "This release includes the following Docker images:" >> changelog.md
+          echo "" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}\` (Alpine-based)" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}-debian\` (Debian-based)" >> changelog.md
+          echo "" >> changelog.md
+          echo "### Usage" >> changelog.md
+          echo "" >> changelog.md
+          echo "\`\`\`bash" >> changelog.md
+          echo "# Pull the Alpine image" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
+          echo "" >> changelog.md
+          echo "# Pull the Debian image" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}-debian" >> changelog.md
+          echo "\`\`\`" >> changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-scan:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+
+    strategy:
+      matrix:
+        dockerfile:
+          - name: "alpine"
+            suffix: ""
+          - name: "debian"
+            suffix: "-debian"
+
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}${{ matrix.dockerfile.suffix }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.dockerfile.name }}.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-${{ matrix.dockerfile.name }}.sarif'
