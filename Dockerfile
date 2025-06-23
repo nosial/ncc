@@ -19,7 +19,7 @@
 #
 
 # Build-time args
-ARG PHP_VERSION=8.2
+ARG PHP_VERSION=8.3
 
 # Builder stage: downloads necessary files and serves them on a silver platter.
 FROM php:${PHP_VERSION}-fpm AS builder
