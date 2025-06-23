@@ -1,17 +1,3 @@
-#   Copyright 2022-2023 Nosial - All Rights Reserved.
-#
-#   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-#   documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
-#   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
-#   permit persons to whom the Software is furnished to do so, subject to the following conditions:
-#
-#   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
-#   Software.
-#
-#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-#   WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-#   COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-#   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 #   ncc in Docker
 #
@@ -46,7 +32,7 @@ RUN cd /tmp/ncc && make redist
 
 
 # Main stage: Copies build files and installs all dependencies
-FROM php:${PHP_VERSION}-fpm-alpine AS production
+FROM php:${PHP_VERSION}-fpm AS production
 
 # OSI labels
 LABEL maintainer="Netkas <netkas@nosial.net>"
@@ -58,8 +44,8 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 COPY --from=builder /tmp/ncc_build/. .
 
 # Install some stuff the default image doesn't come with
-RUN apk update && \
-    apk add --no-cache git libpq libzip zip make wget gnupg gcc
+RUN apt-get update -yqq && \
+    apt-get install -yqq git libpq-dev libzip-dev zip make wget gnupg gcc -yqq
 
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
 	install-php-extensions zip xsl

@@ -1,0 +1,132 @@
+name: Build and Release Docker Images
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 'release/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+      - develop
+
+env:
+  REGISTRY: git.n64.cc
+  IMAGE_NAME: ${{ github.repository }}
+  PAT_USER: glitchkill
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install regctl
+        uses: https://github.com/regclient/actions/regctl-installer@main
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=ncc
+            org.opencontainers.image.description=ncc's official Docker image
+            org.opencontainers.image.vendor=Nosial
+
+      - name: Build image
+        id: build
+        uses: https://github.com/redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64, linux/arm64/v8
+          containerfiles: |
+            ./Dockerfile
+          build-args: |
+            PHP_VERSION=8.3
+
+      - name: regctl login
+        uses: https://github.com/regclient/actions/regctl-login@main
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.PAT_USER }}
+          password: ${{ secrets.PAT_IMAGE_PUSH }}
+
+      - name: Push to registry
+        run: |
+          podman save --quiet -o image.tar "$REGISTRY/$IMAGE_NAME"
+          regctl image import "$REGISTRY/$IMAGE_NAME" image.tar
+
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            echo "## Changes since $PREVIOUS_TAG" > changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> changelog.md
+          else
+            echo "## Initial Release" > changelog.md
+            echo "" >> changelog.md
+            echo "First release of ncc Docker images." >> changelog.md
+          fi
+          
+          echo "" >> changelog.md
+          echo "## Docker Images" >> changelog.md
+          echo "" >> changelog.md
+          echo "This release includes the following Docker image:" >> changelog.md
+          echo "" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}\`" >> changelog.md
+          echo "" >> changelog.md
+          echo "### Usage" >> changelog.md
+          echo "" >> changelog.md
+          echo "\`\`\`bash" >> changelog.md
+          echo "# Pull the image" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
+          echo "\`\`\`" >> changelog.md
+
+      - name: Create GitHub Release
+        uses: https://github.com/softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
