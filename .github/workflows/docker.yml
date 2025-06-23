@@ -34,9 +34,6 @@ jobs:
           - name: "alpine"
             file: "Dockerfile"
             suffix: ""
-          - name: "debian"
-            file: "Dockerfile.debian"
-            suffix: "-debian"
 
     steps:
       - name: Checkout repository
