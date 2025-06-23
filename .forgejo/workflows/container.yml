@@ -15,7 +15,7 @@ on:
 
 env:
   REGISTRY: git.n64.cc
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: nosial/ncc
   PAT_USER: glitchkill
 
 jobs:
