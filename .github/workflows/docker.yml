@@ -55,7 +55,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
-            latest=auto
+            latest=false
             suffix=${{ matrix.dockerfile.suffix }},onlatest=true
           tags: |
             type=ref,event=branch
@@ -128,17 +128,17 @@ jobs:
           echo "" >> changelog.md
           echo "This release includes the following Docker images:" >> changelog.md
           echo "" >> changelog.md
-          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}\` (Alpine-based)" >> changelog.md
-          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}-debian\` (Debian-based)" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:${GITHUB_REF#refs/tags/v}\` (Version tag)" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:latest\` (Latest from master)" >> changelog.md
           echo "" >> changelog.md
           echo "### Usage" >> changelog.md
           echo "" >> changelog.md
           echo "\`\`\`bash" >> changelog.md
-          echo "# Pull the Alpine image" >> changelog.md
+          echo "# Pull the version-specific image" >> changelog.md
           echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
           echo "" >> changelog.md
-          echo "# Pull the Debian image" >> changelog.md
-          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}-debian" >> changelog.md
+          echo "# Pull the latest image" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:latest" >> changelog.md
           echo "\`\`\`" >> changelog.md
 
       - name: Create GitHub Release
