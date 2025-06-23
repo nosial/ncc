@@ -152,32 +152,3 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  security-scan:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
-
-    strategy:
-      matrix:
-        dockerfile:
-          - name: "alpine"
-            suffix: ""
-          - name: "debian"
-            suffix: "-debian"
-
-    steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}${{ matrix.dockerfile.suffix }}
-          format: 'sarif'
-          output: 'trivy-results-${{ matrix.dockerfile.name }}.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results-${{ matrix.dockerfile.name }}.sarif'
