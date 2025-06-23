@@ -35,7 +35,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
-            latest=auto
+            latest=false
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -110,13 +110,17 @@ jobs:
           echo "" >> changelog.md
           echo "This release includes the following Docker image:" >> changelog.md
           echo "" >> changelog.md
-          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}\`" >> changelog.md
+          echo "- \`git.n64.cc/nosial/ncc:${GITHUB_REF#refs/tags/v}\` (Version tag)" >> changelog.md
+          echo "- \`git.n64.cc/nosial/ncc:latest\` (Latest from master)" >> changelog.md
           echo "" >> changelog.md
           echo "### Usage" >> changelog.md
           echo "" >> changelog.md
           echo "\`\`\`bash" >> changelog.md
-          echo "# Pull the image" >> changelog.md
-          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
+          echo "# Pull the version-specific image" >> changelog.md
+          echo "docker pull git.n64.cc/nosial/ncc:${{ steps.tag.outputs.tag }}" >> changelog.md
+          echo "" >> changelog.md
+          echo "# Pull the latest image" >> changelog.md
+          echo "docker pull git.n64.cc/nosial/ncc:latest" >> changelog.md
           echo "\`\`\`" >> changelog.md
 
       - name: Create GitHub Release
