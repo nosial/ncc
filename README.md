@@ -97,7 +97,7 @@ We are committed to maintaining a welcoming and inclusive environment for all co
 
 # Copyright
 
-- Copyright (c) 2022-2023, Nosial—All Rights Reserved
+- Copyright (c) 2022-2025, Nosial—All Rights Reserved
 
 
 # Licenses
