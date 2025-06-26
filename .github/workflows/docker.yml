@@ -34,6 +34,9 @@ jobs:
           - name: "alpine"
             file: "Dockerfile"
             suffix: ""
+          - name: "fpm"
+            file: "Dockerfile"
+            suffix: "-fpm"
 
     steps:
       - name: Checkout repository
@@ -83,6 +86,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             PHP_VERSION=8.3
+            FPM_ENABLED=${{ matrix.dockerfile.suffix }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
@@ -128,17 +132,24 @@ jobs:
           echo "" >> changelog.md
           echo "This release includes the following Docker images:" >> changelog.md
           echo "" >> changelog.md
+          echo "### Vanilla Version" >> changelog.md
           echo "- \`ghcr.io/${{ github.repository }}:${GITHUB_REF#refs/tags/v}\` (Version tag)" >> changelog.md
           echo "- \`ghcr.io/${{ github.repository }}:latest\` (Latest from master)" >> changelog.md
+          echo "" >> changelog.md
+          echo "### PHP-FPM Version" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:${GITHUB_REF#refs/tags/v}-fpm\` (Version tag with FPM)" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:fpm-latest\` (Latest FPM from master)" >> changelog.md
           echo "" >> changelog.md
           echo "### Usage" >> changelog.md
           echo "" >> changelog.md
           echo "\`\`\`bash" >> changelog.md
-          echo "# Pull the version-specific image" >> changelog.md
+          echo "# Pull the vanilla version" >> changelog.md
           echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
-          echo "" >> changelog.md
-          echo "# Pull the latest image" >> changelog.md
           echo "docker pull ghcr.io/${{ github.repository }}:latest" >> changelog.md
+          echo "" >> changelog.md
+          echo "# Pull the PHP-FPM version" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}-fpm" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:fpm-latest" >> changelog.md
           echo "\`\`\`" >> changelog.md
 
       - name: Create GitHub Release
@@ -152,3 +163,4 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
