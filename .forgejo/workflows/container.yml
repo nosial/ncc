@@ -105,15 +105,17 @@ jobs:
 
       - name: Push to registry
         run: |
+          tags="${{ steps.meta.outputs.tags }}"
           refs=()
-          for tag in "${{ steps.meta.outputs.tags }}"; do
-            refs += ("${{ steps.build.outputs.image }}:$tag")
+          for tag in $tags; do
+            refs+=("${{ steps.build.outputs.image }}:$tag")
           done
           podman save --quiet -o image.tar "${refs[@]}"
 
+          tags-fpm="${{ steps.meta-fpm.outputs.tags }}"
           refs-fpm=()
-          for tag in "${{ steps.meta-fpm.outputs.tags }}"; do
-            refs-fpm += ("${{ steps.build-fpm.outputs.image }}:$tag")
+          for tag in $tags-fpm; do
+            refs-fpm+=("${{ steps.build-fpm.outputs.image }}:$tag")
           done
           podman save --quiet -o image-fpm.tar "${refs-fpm[@]}"
 
