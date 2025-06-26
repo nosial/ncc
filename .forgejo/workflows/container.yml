@@ -109,6 +109,9 @@ jobs:
           TAGS_FPM: ${{ steps.meta-fpm.outputs.tags }}
           IMAGE: ${{ steps.build.outputs.image }}
         run: |
+          echo "$TAGS"
+          echo "$TAGS_FPM"
+          echo "$IMAGE"
           refs=()
           for tag in $TAGS; do
             refs+=("$IMAGE:$tag")
