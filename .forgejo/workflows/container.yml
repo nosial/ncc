@@ -107,22 +107,18 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
           TAGS_FPM: ${{ steps.meta-fpm.outputs.tags }}
-          IMAGE: ${{ steps.build.outputs.image }}
+          IMAGE: ${{ steps.build.outputs.image-with-tag }}
+          IMAGE_FPM: ${{ steps.build-fpm.outputs.image-with-tag }}
         run: |
-          refs=()
+          podman save --quiet -o image.tar "$IMAGE"
+          podman save --quiet -o image-fpm.tar "$IMAGE_FPM"
+
           for tag in $TAGS; do
-            refs+=("$tag")
+            regctl image import "$tag" image.tar
           done
-          podman save --quiet -o image.tar "${refs[@]}"
-
-          refs_fpm=()
           for tag in $TAGS_FPM; do
-            refs_fpm+=("$tag")
+            regctl image import "$tag" image-fpm.tar
           done
-          podman save --quiet -o image-fpm.tar "${refs_fpm[@]}"
-
-          regctl image import $IMAGE image.tar
-          regctl image import $IMAGE image-fpm.tar
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/v')
