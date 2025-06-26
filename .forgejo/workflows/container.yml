@@ -109,18 +109,15 @@ jobs:
           TAGS_FPM: ${{ steps.meta-fpm.outputs.tags }}
           IMAGE: ${{ steps.build.outputs.image }}
         run: |
-          echo "$TAGS"
-          echo "$TAGS_FPM"
-          echo "$IMAGE"
           refs=()
           for tag in $TAGS; do
-            refs+=("$IMAGE:$tag")
+            refs+=("$tag")
           done
           podman save --quiet -o image.tar "${refs[@]}"
 
           refs_fpm=()
           for tag in $TAGS_FPM; do
-            refs_fpm+=("$IMAGE:$tag")
+            refs_fpm+=("$tag")
           done
           podman save --quiet -o image-fpm.tar "${refs_fpm[@]}"
 
