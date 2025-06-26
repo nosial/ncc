@@ -6,9 +6,10 @@
 
 # Build-time args
 ARG PHP_VERSION=8.3
+ARG FPM_ENABLED=-fpm
 
 # Builder stage: downloads necessary files and serves them on a silver platter.
-FROM php:${PHP_VERSION} AS builder
+FROM php:${PHP_VERSION}-fpm AS builder
 ENV GENERIC_BUILD_PATH=/tmp/ncc_build
 WORKDIR /tmp
 
@@ -32,7 +33,7 @@ RUN cd /tmp/ncc && make redist
 
 
 # Main stage: Copies build files and installs all dependencies
-FROM php:${PHP_VERSION}-fpm AS production
+FROM php:${PHP_VERSION}${FPM_ENABLED} AS production
 
 # OSI labels
 LABEL maintainer="Netkas <netkas@nosial.net>"

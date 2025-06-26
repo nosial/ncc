@@ -21,13 +21,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        variant:
-          - dockerfile: Dockerfile
-            suffix: ""
-          - dockerfile: Dockerfile-fpm
-            suffix: "-fpm"
 
     steps:
       - name: Install regctl
@@ -36,14 +29,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract metadata
+      - name: Extract metadata without FPM
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
-            suffix=${{ matrix.variant.suffix }},onlatest=true
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -52,11 +44,31 @@ jobs:
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
-            org.opencontainers.image.title=ncc${{ matrix.variant.suffix }}
-            org.opencontainers.image.description=ncc's official Docker image${{ matrix.variant.suffix == '-fpm' && ' (PHP-FPM variant)' || '' }}
+            org.opencontainers.image.title=ncc
+            org.opencontainers.image.description=ncc's official Docker image
             org.opencontainers.image.vendor=Nosial
 
-      - name: Build image
+      - name: Extract metadata with FPM
+        id: meta-fpm
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+            suffix=-fpm,onlatest=true
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=ncc
+            org.opencontainers.image.description=ncc's official Docker image (PHP-FPM variant)
+            org.opencontainers.image.vendor=Nosial
+
+      - name: Build image without FPM
         id: build
         uses: https://github.com/redhat-actions/buildah-build@v2
         with:
@@ -65,9 +77,24 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           containerfiles: |
-            ./${{ matrix.variant.dockerfile }}
+            ./Dockerfile
           build-args: |
             PHP_VERSION=8.3
+            FPM_ENABLED=
+
+      - name: Build image with FPM
+        id: build-fpm
+        uses: https://github.com/redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ steps.meta-fpm.outputs.tags }}
+          labels: ${{ steps.meta-fpm.outputs.labels }}
+          platforms: linux/amd64
+          containerfiles: |
+            ./Dockerfile
+          build-args: |
+            PHP_VERSION=8.3
+            FPM_ENABLED=-fpm
 
       - name: regctl login
         uses: https://github.com/regclient/actions/regctl-login@main
@@ -78,8 +105,20 @@ jobs:
 
       - name: Push to registry
         run: |
-          podman save --quiet -o image-${{ matrix.variant.suffix || 'vanilla' }}.tar "$REGISTRY/$IMAGE_NAME"
-          regctl image import "$REGISTRY/$IMAGE_NAME" image-${{ matrix.variant.suffix || 'vanilla' }}.tar
+          refs=()
+          for tag in "${{ steps.meta.outputs.tags }}"; do
+            refs += ("${{ steps.build.outputs.image }}:$tag")
+          done
+          podman save --quiet -o image.tar "${refs[@]}"
+
+          refs-fpm=()
+          for tag in "${{ steps.meta-fpm.outputs.tags }}"; do
+            refs-fpm += ("${{ steps.build-fpm.outputs.image }}:$tag")
+          done
+          podman save --quiet -o image-fpm.tar "${refs-fpm[@]}"
+
+          regctl image import ${{ steps.build.outputs.image }} image.tar
+          regctl image import ${{ steps.build-fpm.outputs.image }} image-fpm.tar
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/v')
