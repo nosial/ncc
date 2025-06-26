@@ -33,10 +33,10 @@ jobs:
         dockerfile:
           - name: "alpine"
             file: "Dockerfile"
-            suffix: ""
+            tag: "latest"
           - name: "fpm"
             file: "Dockerfile"
-            suffix: "-fpm"
+            tag: "fpm"
 
     steps:
       - name: Checkout repository
@@ -59,14 +59,19 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
-            suffix=${{ matrix.dockerfile.suffix }},onlatest=true
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-${{ matrix.dockerfile.tag }},enable=${{ matrix.dockerfile.tag != 'latest' }}
+            type=ref,event=pr,suffix=-${{ matrix.dockerfile.tag }},enable=${{ matrix.dockerfile.tag != 'latest' }}
+            type=semver,pattern={{version}},suffix=-${{ matrix.dockerfile.tag }},enable=${{ matrix.dockerfile.tag != 'latest' }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.dockerfile.tag }},enable=${{ matrix.dockerfile.tag != 'latest' }}
+            type=semver,pattern={{major}},suffix=-${{ matrix.dockerfile.tag }},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.dockerfile.tag != 'latest' }}
+            type=raw,value=${{ matrix.dockerfile.tag }},enable=${{ is_default_branch && matrix.dockerfile.tag != 'latest' }}
+            type=ref,event=branch,enable=${{ matrix.dockerfile.tag == 'latest' }}
+            type=ref,event=pr,enable=${{ matrix.dockerfile.tag == 'latest' }}
+            type=semver,pattern={{version}},enable=${{ matrix.dockerfile.tag == 'latest' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.dockerfile.tag == 'latest' }}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.dockerfile.tag == 'latest' }}
+            type=raw,value=latest,enable=${{ is_default_branch && matrix.dockerfile.tag == 'latest' }}
           labels: |
             org.opencontainers.image.title=ncc
             org.opencontainers.image.description=ncc's official Docker image (${{ matrix.dockerfile.name }})
@@ -86,12 +91,12 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             PHP_VERSION=8.3
-            FPM_ENABLED=${{ matrix.dockerfile.suffix }}
+            FPM_ENABLED=${{ matrix.dockerfile.tag == 'fpm' && '-fpm' || '' }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.dockerfile.suffix }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.dockerfile.tag }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -138,7 +143,7 @@ jobs:
           echo "" >> changelog.md
           echo "### PHP-FPM Version" >> changelog.md
           echo "- \`ghcr.io/${{ github.repository }}:${GITHUB_REF#refs/tags/v}-fpm\` (Version tag with FPM)" >> changelog.md
-          echo "- \`ghcr.io/${{ github.repository }}:fpm-latest\` (Latest FPM from master)" >> changelog.md
+          echo "- \`ghcr.io/${{ github.repository }}:fpm\` (Latest FPM from master)" >> changelog.md
           echo "" >> changelog.md
           echo "### Usage" >> changelog.md
           echo "" >> changelog.md
@@ -149,7 +154,7 @@ jobs:
           echo "" >> changelog.md
           echo "# Pull the PHP-FPM version" >> changelog.md
           echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}-fpm" >> changelog.md
-          echo "docker pull ghcr.io/${{ github.repository }}:fpm-latest" >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:fpm" >> changelog.md
           echo "\`\`\`" >> changelog.md
 
       - name: Create GitHub Release
