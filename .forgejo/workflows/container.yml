@@ -104,23 +104,25 @@ jobs:
           password: ${{ secrets.PAT_IMAGE_PUSH }}
 
       - name: Push to registry
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          TAGS_FPM: ${{ steps.meta-fpm.outputs.tags }}
+          IMAGE: ${{ steps.build.outputs.image }}
         run: |
-          tags="${{ steps.meta.outputs.tags }}"
           refs=()
-          for tag in $tags; do
-            refs+=("${{ steps.build.outputs.image }}:$tag")
+          for tag in $TAGS; do
+            refs+=("$IMAGE:$tag")
           done
           podman save --quiet -o image.tar "${refs[@]}"
 
-          tags-fpm="${{ steps.meta-fpm.outputs.tags }}"
-          refs-fpm=()
-          for tag in $tags-fpm; do
-            refs-fpm+=("${{ steps.build-fpm.outputs.image }}:$tag")
+          refs_fpm=()
+          for tag in $TAGS_FPM; do
+            refs_fpm+=("$IMAGE:$tag")
           done
-          podman save --quiet -o image-fpm.tar "${refs-fpm[@]}"
+          podman save --quiet -o image-fpm.tar "${refs_fpm[@]}"
 
-          regctl image import ${{ steps.build.outputs.image }} image.tar
-          regctl image import ${{ steps.build-fpm.outputs.image }} image-fpm.tar
+          regctl image import $IMAGE image.tar
+          regctl image import $IMAGE image-fpm.tar
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/v')
