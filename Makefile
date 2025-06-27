@@ -154,6 +154,13 @@ clean:
 	rm -f $(SRC_PATH)/ncc/autoload_spl.php
 	rm -f $(addsuffix /autoload_spl.php, $(AUTOLOAD_PATHS))
 
+.PHONY: clean-patches
+clean-patches:
+	@echo "Cleaning patch marker files..."
+	@find $(THIRDPARTY_PATH) -name ".structure_reorganized" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -name ".namespaces_patched" -delete 2>/dev/null || true
+	@echo "Patch markers cleaned. Next make update-dependencies will reprocess all dependencies."
+
 .PHONY: update-dependencies
 update-dependencies:
 	@echo "Updating git submodules to latest tags..."
@@ -173,6 +180,8 @@ update-dependencies:
 		fi && \
 		cd - > /dev/null; \
 	done
+	@echo "Applying pre-patching for folder structure reorganization..."
+	@$(MAKE) pre-patch-structure
 	@echo "Applying namespace patches..."
 	@$(MAKE) patch-namespaces
 	@echo "Updating VERSION files..."
@@ -181,8 +190,254 @@ update-dependencies:
 	@$(MAKE) update-version-json
 	@echo "Dependencies updated successfully!"
 
+.PHONY: pre-patch-structure
+pre-patch-structure:
+	@echo "Pre-patching folder structures for dependencies..."
+	@# Handle composer/Semver (has src folder)
+	@if [ -d "$(THIRDPARTY_PATH)/composer/Semver/src" ] && [ ! -f "$(THIRDPARTY_PATH)/composer/Semver/.structure_reorganized" ]; then \
+		echo "Reorganizing composer/Semver structure..."; \
+		cd "$(THIRDPARTY_PATH)/composer/Semver" && \
+		if [ -d "src" ] && [ -n "$$(find src -name '*.php' 2>/dev/null | head -1)" ]; then \
+			echo "Moving PHP files from src/ to root..."; \
+			cp -r src/* . 2>/dev/null || true; \
+			rm -rf src; \
+			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+			find . -maxdepth 1 -type d -not -name "." -not -name "Composer" -exec rm -rf {} + 2>/dev/null || true; \
+			touch .structure_reorganized; \
+			echo "composer/Semver structure reorganized successfully"; \
+		fi; \
+	elif [ -f "$(THIRDPARTY_PATH)/composer/Semver/.structure_reorganized" ]; then \
+		echo "composer/Semver structure already reorganized, skipping..."; \
+	fi
+	@# Handle defuse/php-encryption (has src folder)
+	@if [ -d "$(THIRDPARTY_PATH)/defuse/php-encryption/src" ] && [ ! -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.structure_reorganized" ]; then \
+		echo "Reorganizing defuse/php-encryption structure..."; \
+		cd "$(THIRDPARTY_PATH)/defuse/php-encryption" && \
+		if [ -d "src" ] && [ -n "$$(find src -name '*.php' 2>/dev/null | head -1)" ]; then \
+			echo "Moving PHP files from src/ to root..."; \
+			cp -r src/* . 2>/dev/null || true; \
+			rm -rf src; \
+			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+			find . -maxdepth 1 -type d -not -name "." -not -name "Defuse" -exec rm -rf {} + 2>/dev/null || true; \
+			touch .structure_reorganized; \
+			echo "defuse/php-encryption structure reorganized successfully"; \
+		fi; \
+	elif [ -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.structure_reorganized" ]; then \
+		echo "defuse/php-encryption structure already reorganized, skipping..."; \
+	fi
+	@# Handle jelix/version (has lib folder)
+	@if [ -d "$(THIRDPARTY_PATH)/jelix/version/lib" ] && [ ! -f "$(THIRDPARTY_PATH)/jelix/version/.structure_reorganized" ]; then \
+		echo "Reorganizing jelix/version structure..."; \
+		cd "$(THIRDPARTY_PATH)/jelix/version" && \
+		if [ -d "lib" ] && [ -n "$$(find lib -name '*.php' 2>/dev/null | head -1)" ]; then \
+			echo "Moving PHP files from lib/ to root..."; \
+			cp -r lib/* . 2>/dev/null || true; \
+			rm -rf lib; \
+			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+			find . -maxdepth 1 -type d -not -name "." -not -name "Jelix" -exec rm -rf {} + 2>/dev/null || true; \
+			touch .structure_reorganized; \
+			echo "jelix/version structure reorganized successfully"; \
+		fi; \
+	elif [ -f "$(THIRDPARTY_PATH)/jelix/version/.structure_reorganized" ]; then \
+		echo "jelix/version structure already reorganized, skipping..."; \
+	fi
+	@# Handle nikic/PhpParser (has lib folder)
+	@if [ -d "$(THIRDPARTY_PATH)/nikic/PhpParser/lib" ] && [ ! -f "$(THIRDPARTY_PATH)/nikic/PhpParser/.structure_reorganized" ]; then \
+		echo "Reorganizing nikic/PhpParser structure..."; \
+		cd "$(THIRDPARTY_PATH)/nikic/PhpParser" && \
+		if [ -d "lib/PhpParser" ] && [ -n "$$(find lib/PhpParser -name '*.php' 2>/dev/null | head -1)" ]; then \
+			echo "Moving PHP files from lib/PhpParser/ to root..."; \
+			cp -r lib/PhpParser/* . 2>/dev/null || true; \
+			rm -rf lib; \
+			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+			find . -maxdepth 1 -type d -not -name "." -not -name "PhpParser" -not -name ".git" -exec rm -rf {} + 2>/dev/null || true; \
+			touch .structure_reorganized; \
+			echo "nikic/PhpParser structure reorganized successfully"; \
+		elif [ -d "lib" ] && [ -n "$$(find lib -name '*.php' 2>/dev/null | head -1)" ]; then \
+			echo "Moving PHP files from lib/ to root..."; \
+			cp -r lib/* . 2>/dev/null || true; \
+			rm -rf lib; \
+			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+			find . -maxdepth 1 -type d -not -name "." -not -name "PhpParser" -not -name ".git" -exec rm -rf {} + 2>/dev/null || true; \
+			touch .structure_reorganized; \
+			echo "nikic/PhpParser structure reorganized successfully"; \
+		fi; \
+	elif [ -f "$(THIRDPARTY_PATH)/nikic/PhpParser/.structure_reorganized" ]; then \
+		echo "nikic/PhpParser structure already reorganized, skipping..."; \
+	fi
+	@# Handle Symfony polyfills that might have src folders
+	@for polyfill in polyfill_ctype polyfill_mbstring polyfill_uuid; do \
+		if [ -d "$(THIRDPARTY_PATH)/Symfony/$$polyfill/src" ] && [ ! -f "$(THIRDPARTY_PATH)/Symfony/$$polyfill/.structure_reorganized" ]; then \
+			echo "Reorganizing Symfony/$$polyfill structure..."; \
+			cd "$(THIRDPARTY_PATH)/Symfony/$$polyfill" && \
+			if [ -d "src" ] && [ -n "$$(find src -name '*.php' 2>/dev/null | head -1)" ]; then \
+				echo "Moving PHP files from src/ to root..."; \
+				cp -r src/* . 2>/dev/null || true; \
+				rm -rf src; \
+				find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+				find . -maxdepth 1 -type d -not -name "." -not -name "Symfony" -exec rm -rf {} + 2>/dev/null || true; \
+				touch .structure_reorganized; \
+				echo "Symfony/$$polyfill structure reorganized successfully"; \
+			fi; \
+		elif [ -f "$(THIRDPARTY_PATH)/Symfony/$$polyfill/.structure_reorganized" ]; then \
+			echo "Symfony/$$polyfill structure already reorganized, skipping..."; \
+		fi; \
+	done
+	@# Handle theseer/DirectoryScanner (has src folder)
+	@if [ -d "$(THIRDPARTY_PATH)/theseer/DirectoryScanner/src" ] && [ ! -f "$(THIRDPARTY_PATH)/theseer/DirectoryScanner/.structure_reorganized" ]; then \
+		echo "Reorganizing theseer/DirectoryScanner structure..."; \
+		cd "$(THIRDPARTY_PATH)/theseer/DirectoryScanner" && \
+		if [ -d "src" ] && [ -n "$$(find src -name '*.php' 2>/dev/null | head -1)" ]; then \
+			echo "Moving PHP files from src/ to root..."; \
+			cp -r src/* . 2>/dev/null || true; \
+			rm -rf src; \
+			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
+			find . -maxdepth 1 -type d -not -name "." -not -name "TheSeer" -exec rm -rf {} + 2>/dev/null || true; \
+			touch .structure_reorganized; \
+			echo "theseer/DirectoryScanner structure reorganized successfully"; \
+		fi; \
+	elif [ -f "$(THIRDPARTY_PATH)/theseer/DirectoryScanner/.structure_reorganized" ]; then \
+		echo "theseer/DirectoryScanner structure already reorganized, skipping..."; \
+	fi
+	@# Clean up common unwanted files from all dependencies
+	@for submodule_path in $(THIRDPARTY_PATH)/composer/Semver $(THIRDPARTY_PATH)/defuse/php-encryption $(THIRDPARTY_PATH)/jelix/version $(THIRDPARTY_PATH)/nikic/PhpParser $(THIRDPARTY_PATH)/Symfony/polyfill_ctype $(THIRDPARTY_PATH)/Symfony/polyfill_mbstring $(THIRDPARTY_PATH)/Symfony/polyfill_uuid $(THIRDPARTY_PATH)/Symfony/Filesystem $(THIRDPARTY_PATH)/Symfony/Process $(THIRDPARTY_PATH)/Symfony/Uid $(THIRDPARTY_PATH)/Symfony/Yaml $(THIRDPARTY_PATH)/theseer/DirectoryScanner; do \
+		if [ -d "$$submodule_path" ]; then \
+			echo "Cleaning unwanted files from $$submodule_path"; \
+			find "$$submodule_path" -type d -name "Tests" -exec rm -rf {} + 2>/dev/null || true; \
+			find "$$submodule_path" -type d -name "test" -exec rm -rf {} + 2>/dev/null || true; \
+			find "$$submodule_path" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true; \
+			find "$$submodule_path" -name "composer.json" -delete 2>/dev/null || true; \
+			find "$$submodule_path" -name "phpunit.xml*" -delete 2>/dev/null || true; \
+			find "$$submodule_path" -name "CHANGELOG*" -delete 2>/dev/null || true; \
+			find "$$submodule_path" -name ".travis.yml" -delete 2>/dev/null || true; \
+			find "$$submodule_path" -name ".github" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		fi; \
+	done
+
 .PHONY: patch-namespaces
 patch-namespaces:
+	@echo "Patching namespaces for all dependencies..."
+
+	@# Patch composer/Semver
+	@if [ -d "$(THIRDPARTY_PATH)/composer/Semver" ] && [ ! -f "$(THIRDPARTY_PATH)/composer/Semver/.namespaces_patched" ]; then \
+		echo "Patching composer/Semver namespaces..."; \
+		find $(THIRDPARTY_PATH)/composer/Semver -name "*.php" -type f | while read file; do \
+			if grep -q "namespace Composer\\Semver" "$$file" 2>/dev/null; then \
+				echo "Patching namespace in $$file"; \
+				sed -i 's/namespace Composer\\Semver/namespace ncc\\ThirdParty\\composer\\Semver/g' "$$file"; \
+			fi; \
+			if grep -q "use Composer\\Semver" "$$file" 2>/dev/null; then \
+				echo "Patching use statements in $$file"; \
+				sed -i 's/use Composer\\Semver/use ncc\\ThirdParty\\composer\\Semver/g' "$$file"; \
+			fi; \
+			if grep -q "Composer\\\\Semver" "$$file" 2>/dev/null; then \
+				echo "Patching string references in $$file"; \
+				sed -i 's/Composer\\\\Semver/ncc\\\\ThirdParty\\\\composer\\\\Semver/g' "$$file"; \
+			fi; \
+		done; \
+		touch "$(THIRDPARTY_PATH)/composer/Semver/.namespaces_patched"; \
+		echo "composer/Semver namespaces patched successfully"; \
+	elif [ -f "$(THIRDPARTY_PATH)/composer/Semver/.namespaces_patched" ]; then \
+		echo "composer/Semver namespaces already patched, skipping..."; \
+	fi
+
+	@# Patch defuse/php-encryption
+	@if [ -d "$(THIRDPARTY_PATH)/defuse/php-encryption" ] && [ ! -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.namespaces_patched" ]; then \
+		echo "Patching defuse/php-encryption namespaces..."; \
+		find $(THIRDPARTY_PATH)/defuse/php-encryption -name "*.php" -type f | while read file; do \
+			if grep -q "namespace Defuse\\Crypto" "$$file" 2>/dev/null; then \
+				echo "Patching namespace in $$file"; \
+				sed -i 's/namespace Defuse\\Crypto/namespace ncc\\ThirdParty\\defuse\\php_encryption/g' "$$file"; \
+			fi; \
+			if grep -q "use Defuse\\Crypto" "$$file" 2>/dev/null; then \
+				echo "Patching use statements in $$file"; \
+				sed -i 's/use Defuse\\Crypto/use ncc\\ThirdParty\\defuse\\php_encryption/g' "$$file"; \
+			fi; \
+			if grep -q "Defuse\\\\Crypto" "$$file" 2>/dev/null; then \
+				echo "Patching string references in $$file"; \
+				sed -i 's/Defuse\\\\Crypto/ncc\\\\ThirdParty\\\\defuse\\\\php_encryption/g' "$$file"; \
+			fi; \
+		done; \
+		touch "$(THIRDPARTY_PATH)/defuse/php-encryption/.namespaces_patched"; \
+		echo "defuse/php-encryption namespaces patched successfully"; \
+	elif [ -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.namespaces_patched" ]; then \
+		echo "defuse/php-encryption namespaces already patched, skipping..."; \
+	fi
+
+	@# Patch jelix/version
+	@echo "Patching jelix/version namespaces..."
+	@find $(THIRDPARTY_PATH)/jelix/version -name "*.php" -type f | while read file; do \
+		if grep -q "namespace Jelix\\Version" "$$file" 2>/dev/null; then \
+			echo "Patching namespace in $$file"; \
+			sed -i 's/namespace Jelix\\Version/namespace ncc\\ThirdParty\\jelix\\version/g' "$$file"; \
+		fi; \
+		if grep -q "use Jelix\\Version" "$$file" 2>/dev/null; then \
+			echo "Patching use statements in $$file"; \
+			sed -i 's/use Jelix\\Version/use ncc\\ThirdParty\\jelix\\version/g' "$$file"; \
+		fi; \
+		if grep -q "Jelix\\\\Version" "$$file" 2>/dev/null; then \
+			echo "Patching string references in $$file"; \
+			sed -i 's/Jelix\\\\Version/ncc\\\\ThirdParty\\\\jelix\\\\version/g' "$$file"; \
+		fi; \
+	done
+
+	@# Patch nikic/PhpParser
+	@echo "Patching nikic/PhpParser namespaces..."
+	@find $(THIRDPARTY_PATH)/nikic/PhpParser -name "*.php" -type f | while read file; do \
+		if grep -q "namespace PhpParser" "$$file" 2>/dev/null; then \
+			echo "Patching namespace in $$file"; \
+			sed -i 's/namespace PhpParser/namespace ncc\\ThirdParty\\nikic\\PhpParser/g' "$$file"; \
+		fi; \
+		if grep -q "use PhpParser" "$$file" 2>/dev/null; then \
+			echo "Patching use statements in $$file"; \
+			sed -i 's/use PhpParser/use ncc\\ThirdParty\\nikic\\PhpParser/g' "$$file"; \
+		fi; \
+		if grep -q "PhpParser\\\\" "$$file" 2>/dev/null; then \
+			echo "Patching string references in $$file"; \
+			sed -i 's/PhpParser\\\\/ncc\\\\ThirdParty\\\\nikic\\\\PhpParser\\\\/g' "$$file"; \
+		fi; \
+	done
+
+	@# Patch Symfony polyfills
+	@echo "Patching Symfony polyfill namespaces..."
+	@for polyfill in polyfill_ctype polyfill_mbstring polyfill_uuid; do \
+		if [ -d "$(THIRDPARTY_PATH)/Symfony/$$polyfill" ]; then \
+			echo "Patching Symfony/$$polyfill..."; \
+			find $(THIRDPARTY_PATH)/Symfony/$$polyfill -name "*.php" -type f | while read file; do \
+				if grep -q "namespace Symfony\\Polyfill" "$$file" 2>/dev/null; then \
+					echo "Patching namespace in $$file"; \
+					sed -i "s/namespace Symfony\\\\Polyfill\\\\Ctype/namespace ncc\\\\ThirdParty\\\\Symfony\\\\polyfill_ctype/g" "$$file"; \
+					sed -i "s/namespace Symfony\\\\Polyfill\\\\Mbstring/namespace ncc\\\\ThirdParty\\\\Symfony\\\\polyfill_mbstring/g" "$$file"; \
+					sed -i "s/namespace Symfony\\\\Polyfill\\\\Uuid/namespace ncc\\\\ThirdParty\\\\Symfony\\\\polyfill_uuid/g" "$$file"; \
+				fi; \
+				if grep -q "use Symfony\\\\Polyfill" "$$file" 2>/dev/null; then \
+					echo "Patching use statements in $$file"; \
+					sed -i "s/use Symfony\\\\Polyfill\\\\Ctype/use ncc\\\\ThirdParty\\\\Symfony\\\\polyfill_ctype/g" "$$file"; \
+					sed -i "s/use Symfony\\\\Polyfill\\\\Mbstring/use ncc\\\\ThirdParty\\\\Symfony\\\\polyfill_mbstring/g" "$$file"; \
+					sed -i "s/use Symfony\\\\Polyfill\\\\Uuid/use ncc\\\\ThirdParty\\\\Symfony\\\\polyfill_uuid/g" "$$file"; \
+				fi; \
+			done; \
+		fi; \
+	done
+
+	@# Patch theseer/DirectoryScanner
+	@echo "Patching theseer/DirectoryScanner namespaces..."
+	@find $(THIRDPARTY_PATH)/theseer/DirectoryScanner -name "*.php" -type f | while read file; do \
+		if grep -q "namespace TheSeer\\DirectoryScanner" "$$file" 2>/dev/null; then \
+			echo "Patching namespace in $$file"; \
+			sed -i 's/namespace TheSeer\\DirectoryScanner/namespace ncc\\ThirdParty\\theseer\\DirectoryScanner/g' "$$file"; \
+		fi; \
+		if grep -q "use TheSeer\\DirectoryScanner" "$$file" 2>/dev/null; then \
+			echo "Patching use statements in $$file"; \
+			sed -i 's/use TheSeer\\DirectoryScanner/use ncc\\ThirdParty\\theseer\\DirectoryScanner/g' "$$file"; \
+		fi; \
+		if grep -q "TheSeer\\\\DirectoryScanner" "$$file" 2>/dev/null; then \
+			echo "Patching string references in $$file"; \
+			sed -i 's/TheSeer\\\\DirectoryScanner/ncc\\\\ThirdParty\\\\theseer\\\\DirectoryScanner/g' "$$file"; \
+		fi; \
+	done
+
+	@# Patch Symfony components (existing logic enhanced)
 	@echo "Patching Symfony component namespaces..."
 	@find $(THIRDPARTY_PATH)/Symfony -name "*.php" -type f | while read file; do \
 		if grep -q "namespace Symfony\\Component" "$$file" 2>/dev/null; then \
@@ -214,23 +469,34 @@ patch-namespaces:
 			sed -i "s/'Symfony\\\\Component\\\\Filesystem'/'ncc\\\\ThirdParty\\\\Symfony\\\\Filesystem'/g" "$$file"; \
 		fi; \
 	done
+
 	@echo "Patching any remaining references in the entire codebase..."
 	@find $(SRC_PATH)/ncc -name "*.php" -type f | while read file; do \
-		if grep -qE "Symfony\\\\Component\\\\(Uid|Process|Yaml|Filesystem)" "$$file" 2>/dev/null; then \
+		if grep -qE "(Composer\\\\Semver|Defuse\\\\Crypto|Jelix\\\\Version|PhpParser|TheSeer\\\\DirectoryScanner|Symfony\\\\Component\\\\(Uid|Process|Yaml|Filesystem)|Symfony\\\\Polyfill)" "$$file" 2>/dev/null; then \
 			echo "Patching references in $$file"; \
+			sed -i 's/Composer\\Semver/ncc\\ThirdParty\\composer\\Semver/g' "$$file"; \
+			sed -i 's/Defuse\\Crypto/ncc\\ThirdParty\\defuse\\php_encryption/g' "$$file"; \
+			sed -i 's/Jelix\\Version/ncc\\ThirdParty\\jelix\\version/g' "$$file"; \
+			sed -i 's/\\PhpParser\\\\/\\ncc\\ThirdParty\\nikic\\PhpParser\\\\/g' "$$file"; \
+			sed -i 's/PhpParser\\\\/ncc\\ThirdParty\\nikic\\PhpParser\\\\/g' "$$file"; \
+			sed -i 's/use PhpParser/use ncc\\ThirdParty\\nikic\\PhpParser/g' "$$file"; \
+			sed -i 's/TheSeer\\DirectoryScanner/ncc\\ThirdParty\\theseer\\DirectoryScanner/g' "$$file"; \
 			sed -i 's/Symfony\\Component\\Uid/ncc\\ThirdParty\\Symfony\\Uid/g' "$$file"; \
 			sed -i 's/Symfony\\Component\\Process/ncc\\ThirdParty\\Symfony\\Process/g' "$$file"; \
 			sed -i 's/Symfony\\Component\\Yaml/ncc\\ThirdParty\\Symfony\\Yaml/g' "$$file"; \
 			sed -i 's/Symfony\\Component\\Filesystem/ncc\\ThirdParty\\Symfony\\Filesystem/g' "$$file"; \
 		fi; \
 	done
+
 	@echo "Removing test and documentation files that may cause issues..."
-	@find $(THIRDPARTY_PATH)/Symfony -type d -name "Tests" -exec rm -rf {} + 2>/dev/null || true
-	@find $(THIRDPARTY_PATH)/Symfony -name "*.md" -delete 2>/dev/null || true
-	@find $(THIRDPARTY_PATH)/Symfony -name "CHANGELOG*" -delete 2>/dev/null || true
-	@find $(THIRDPARTY_PATH)/Symfony -name "LICENSE*" -delete 2>/dev/null || true
-	@find $(THIRDPARTY_PATH)/Symfony -name "composer.json" -delete 2>/dev/null || true
-	@find $(THIRDPARTY_PATH)/Symfony -name "phpunit.xml*" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -type d -name "Tests" -exec rm -rf {} + 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -type d -name "test" -exec rm -rf {} + 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -name "*.md" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -name "CHANGELOG*" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -name "composer.json" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH) -name "phpunit.xml*" -delete 2>/dev/null || true
+
 	@echo "Handling conditional class definitions..."
 	@if [ -f "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php" ]; then \
 		echo "Fixing HashableInterface conditional definition..."; \
@@ -248,6 +514,23 @@ patch-namespaces:
 		echo '' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
 		echo '    public function hash(): string;' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
 		echo '}' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+	fi
+	@# Handle TokenPolyfill conditional class definition
+	@if [ -f "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php" ]; then \
+		echo "Fixing TokenPolyfill conditional class definition..."; \
+		mv "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php" "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php.bak"; \
+		echo '<?php declare(strict_types=1);' > "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo '' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo 'namespace ncc\\ThirdParty\\nikic\\PhpParser\\Internal;' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo '' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo '/**' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo ' * This is a polyfill for the PhpToken class introduced in PHP 8.0. We do not actually polyfill' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo ' * PhpToken, because composer might end up picking a different polyfill implementation, which does' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo ' * not meet our requirements.' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo ' *' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo ' * @internal' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		echo ' */' >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
+		sed -n '18,$$p' "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php.bak" >> "$(THIRDPARTY_PATH)/nikic/PhpParser/Internal/TokenPolyfill.php"; \
 	fi
 
 .PHONY: update-version-files
@@ -274,18 +557,33 @@ update-version-json:
 	@if [ -f "$(SRC_PATH)/ncc/version.json" ]; then \
 		$(PHPCC) -r " \
 		\$$json = json_decode(file_get_contents('$(SRC_PATH)/ncc/version.json'), true); \
-		\$$submodules = ['$(THIRDPARTY_PATH)/Symfony/Uid', '$(THIRDPARTY_PATH)/Symfony/Process', '$(THIRDPARTY_PATH)/Symfony/Yaml']; \
-		foreach (\$$submodules as \$$submodule) { \
-			if (file_exists(\$$submodule . '/VERSION')) { \
-				\$$version = trim(file_get_contents(\$$submodule . '/VERSION')); \
-				\$$componentName = basename(\$$submodule); \
+		\$$dependencies = [ \
+			['$(THIRDPARTY_PATH)/composer/Semver', 'composer', 'Semver'], \
+			['$(THIRDPARTY_PATH)/defuse/php-encryption', 'defuse', 'php-encryption'], \
+			['$(THIRDPARTY_PATH)/jelix/version', 'jelix', 'version'], \
+			['$(THIRDPARTY_PATH)/nikic/PhpParser', 'nikic', 'PhpParser'], \
+			['$(THIRDPARTY_PATH)/Symfony/polyfill_ctype', 'Symfony', 'polyfill_ctype'], \
+			['$(THIRDPARTY_PATH)/Symfony/polyfill_mbstring', 'Symfony', 'polyfill_mbstring'], \
+			['$(THIRDPARTY_PATH)/Symfony/polyfill_uuid', 'Symfony', 'polyfill_uuid'], \
+			['$(THIRDPARTY_PATH)/Symfony/Process', 'Symfony', 'Process'], \
+			['$(THIRDPARTY_PATH)/Symfony/Uid', 'Symfony', 'Uid'], \
+			['$(THIRDPARTY_PATH)/Symfony/Filesystem', 'Symfony', 'Filesystem'], \
+			['$(THIRDPARTY_PATH)/Symfony/Yaml', 'Symfony', 'Yaml'], \
+			['$(THIRDPARTY_PATH)/theseer/DirectoryScanner', 'theseer', 'DirectoryScanner'] \
+		]; \
+		foreach (\$$dependencies as \$$dependency) { \
+			list(\$$path, \$$vendor, \$$package) = \$$dependency; \
+			if (file_exists(\$$path . '/VERSION')) { \
+				\$$version = trim(file_get_contents(\$$path . '/VERSION')); \
 				foreach (\$$json['components'] as &\$$component) { \
-					if (\$$component['vendor'] == 'Symfony' && \$$component['package_name'] == \$$componentName) { \
+					if (\$$component['vendor'] == \$$vendor && \$$component['package_name'] == \$$package) { \
 						\$$component['version'] = \$$version; \
-						echo \"Updated \$$componentName to version \$$version\n\"; \
+						echo \"Updated \$$vendor/\$$package to version \$$version\n\"; \
 						break; \
 					} \
 				} \
+			} else { \
+				echo \"VERSION file not found for \$$vendor/\$$package at \$$path\n\"; \
 			} \
 		} \
 		file_put_contents('$(SRC_PATH)/ncc/version.json', json_encode(\$$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); \
@@ -304,7 +602,8 @@ help:
 	@echo "  make tar			- Package the project into a tarball (Generic installer, requires php)"
 	@echo "  make deb			- Package the project into a Debian package"
 	@echo "  make update-dependencies	- Update git submodules to latest tags and patch namespaces"
-	@echo "  make patch-namespaces		- Patch Symfony component namespaces to ncc\\ThirdParty"
+	@echo "  make pre-patch-structure	- Reorganize dependency folder structures (src/lib to root)"
+	@echo "  make patch-namespaces		- Patch all dependency namespaces to ncc\\ThirdParty"
 	@echo "  make update-version-files	- Create VERSION files for dependencies"
 	@echo "  make update-version-json	- Update version.json with latest dependency versions"
 	@echo "  make docker-debian		- Build a Debian Docker image"
@@ -312,4 +611,5 @@ help:
 	@echo "  make docker-alpine		- Build an Alpine Docker image"
 	@echo "  make docker-alpine-run	- Run the Alpine Docker image"
 	@echo "  make clean			- Clean the build artifacts"
-	@echo "  make update-dependencies - Update third-party dependencies and patches"
+	@echo "  make clean-patches		- Clean patch marker files to force reprocessing dependencies"
+	@echo "  make update-dependencies	- Update third-party dependencies and patches"
