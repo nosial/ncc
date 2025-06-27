@@ -9,7 +9,7 @@ build
 
 # Autoload files
 src/ncc/ThirdParty/composer/Semver/autoload_spl.php
-src/ncc/ThirdParty/defuse/php-encryption/autoload_spl.php
+src/ncc/ThirdParty/defuse/php_encryption/autoload_spl.php
 src/ncc/ThirdParty/jelix/version/autoload_spl.php
 src/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
 src/ncc/ThirdParty/php_parallel_lint/php_console_color/autoload_spl.php

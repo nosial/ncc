@@ -9,7 +9,7 @@
         },
         {
             "vendor": "defuse",
-            "package_name": "php-encryption"
+            "package_name": "php_encryption"
         },
         {
             "vendor": "jelix",

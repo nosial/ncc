@@ -14,7 +14,7 @@
         $target_files = [
             __DIR__ . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'composer' . DIRECTORY_SEPARATOR . 'Semver' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
-            $third_party_path . 'defuse' . DIRECTORY_SEPARATOR . 'php-encryption' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
+            $third_party_path . 'defuse' . DIRECTORY_SEPARATOR . 'php_encryption' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'jelix' . DIRECTORY_SEPARATOR . 'version' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'nikic' . DIRECTORY_SEPARATOR . 'PhpParser' . DIRECTORY_SEPARATOR . 'autoload_spl.php',
             $third_party_path . 'Symfony' . DIRECTORY_SEPARATOR . 'polyfill_ctype' . DIRECTORY_SEPARATOR . 'autoload_spl.php',

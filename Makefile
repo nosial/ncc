@@ -23,7 +23,7 @@ SUBMODULES := $(shell git config --file .gitmodules --get-regexp path | awk '{pr
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
 	composer/Semver \
-	defuse/php-encryption \
+	defuse/php_encryption \
 	jelix/version \
 	nikic/PhpParser \
 	Symfony/polyfill_ctype \
@@ -209,10 +209,10 @@ pre-patch-structure:
 	elif [ -f "$(THIRDPARTY_PATH)/composer/Semver/.structure_reorganized" ]; then \
 		echo "composer/Semver structure already reorganized, skipping..."; \
 	fi
-	@# Handle defuse/php-encryption (has src folder)
-	@if [ -d "$(THIRDPARTY_PATH)/defuse/php-encryption/src" ] && [ ! -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.structure_reorganized" ]; then \
-		echo "Reorganizing defuse/php-encryption structure..."; \
-		cd "$(THIRDPARTY_PATH)/defuse/php-encryption" && \
+	@# Handle defuse/php_encryption (has src folder)
+	@if [ -d "$(THIRDPARTY_PATH)/defuse/php_encryption/src" ] && [ ! -f "$(THIRDPARTY_PATH)/defuse/php_encryption/.structure_reorganized" ]; then \
+		echo "Reorganizing defuse/php_encryption structure..."; \
+		cd "$(THIRDPARTY_PATH)/defuse/php_encryption" && \
 		if [ -d "src" ] && [ -n "$$(find src -name '*.php' 2>/dev/null | head -1)" ]; then \
 			echo "Moving PHP files from src/ to root..."; \
 			cp -r src/* . 2>/dev/null || true; \
@@ -220,10 +220,10 @@ pre-patch-structure:
 			find . -maxdepth 1 -type f -not -name "LICENSE*" -not -name "README*" -not -name "*.md" -not -name "*.php" -delete 2>/dev/null || true; \
 			find . -maxdepth 1 -type d -not -name "." -not -name "Defuse" -exec rm -rf {} + 2>/dev/null || true; \
 			touch .structure_reorganized; \
-			echo "defuse/php-encryption structure reorganized successfully"; \
+			echo "defuse/php_encryption structure reorganized successfully"; \
 		fi; \
-	elif [ -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.structure_reorganized" ]; then \
-		echo "defuse/php-encryption structure already reorganized, skipping..."; \
+	elif [ -f "$(THIRDPARTY_PATH)/defuse/php_encryption/.structure_reorganized" ]; then \
+		echo "defuse/php_encryption structure already reorganized, skipping..."; \
 	fi
 	@# Handle jelix/version (has lib folder)
 	@if [ -d "$(THIRDPARTY_PATH)/jelix/version/lib" ] && [ ! -f "$(THIRDPARTY_PATH)/jelix/version/.structure_reorganized" ]; then \
@@ -300,7 +300,7 @@ pre-patch-structure:
 		echo "theseer/DirectoryScanner structure already reorganized, skipping..."; \
 	fi
 	@# Clean up common unwanted files from all dependencies
-	@for submodule_path in $(THIRDPARTY_PATH)/composer/Semver $(THIRDPARTY_PATH)/defuse/php-encryption $(THIRDPARTY_PATH)/jelix/version $(THIRDPARTY_PATH)/nikic/PhpParser $(THIRDPARTY_PATH)/Symfony/polyfill_ctype $(THIRDPARTY_PATH)/Symfony/polyfill_mbstring $(THIRDPARTY_PATH)/Symfony/polyfill_uuid $(THIRDPARTY_PATH)/Symfony/Filesystem $(THIRDPARTY_PATH)/Symfony/Process $(THIRDPARTY_PATH)/Symfony/Uid $(THIRDPARTY_PATH)/Symfony/Yaml $(THIRDPARTY_PATH)/theseer/DirectoryScanner; do \
+	@for submodule_path in $(THIRDPARTY_PATH)/composer/Semver $(THIRDPARTY_PATH)/defuse/php_encryption $(THIRDPARTY_PATH)/jelix/version $(THIRDPARTY_PATH)/nikic/PhpParser $(THIRDPARTY_PATH)/Symfony/polyfill_ctype $(THIRDPARTY_PATH)/Symfony/polyfill_mbstring $(THIRDPARTY_PATH)/Symfony/polyfill_uuid $(THIRDPARTY_PATH)/Symfony/Filesystem $(THIRDPARTY_PATH)/Symfony/Process $(THIRDPARTY_PATH)/Symfony/Uid $(THIRDPARTY_PATH)/Symfony/Yaml $(THIRDPARTY_PATH)/theseer/DirectoryScanner; do \
 		if [ -d "$$submodule_path" ]; then \
 			echo "Cleaning unwanted files from $$submodule_path"; \
 			find "$$submodule_path" -type d -name "Tests" -exec rm -rf {} + 2>/dev/null || true; \
@@ -341,10 +341,10 @@ patch-namespaces:
 		echo "composer/Semver namespaces already patched, skipping..."; \
 	fi
 
-	@# Patch defuse/php-encryption
-	@if [ -d "$(THIRDPARTY_PATH)/defuse/php-encryption" ] && [ ! -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.namespaces_patched" ]; then \
-		echo "Patching defuse/php-encryption namespaces..."; \
-		find $(THIRDPARTY_PATH)/defuse/php-encryption -name "*.php" -type f | while read file; do \
+	@# Patch defuse/php_encryption
+	@if [ -d "$(THIRDPARTY_PATH)/defuse/php_encryption" ] && [ ! -f "$(THIRDPARTY_PATH)/defuse/php_encryption/.namespaces_patched" ]; then \
+		echo "Patching defuse/php_encryption namespaces..."; \
+		find $(THIRDPARTY_PATH)/defuse/php_encryption -name "*.php" -type f | while read file; do \
 			if grep -q "namespace Defuse\\Crypto" "$$file" 2>/dev/null; then \
 				echo "Patching namespace in $$file"; \
 				sed -i 's/namespace Defuse\\Crypto/namespace ncc\\ThirdParty\\defuse\\php_encryption/g' "$$file"; \
@@ -358,10 +358,10 @@ patch-namespaces:
 				sed -i 's/Defuse\\\\Crypto/ncc\\\\ThirdParty\\\\defuse\\\\php_encryption/g' "$$file"; \
 			fi; \
 		done; \
-		touch "$(THIRDPARTY_PATH)/defuse/php-encryption/.namespaces_patched"; \
-		echo "defuse/php-encryption namespaces patched successfully"; \
-	elif [ -f "$(THIRDPARTY_PATH)/defuse/php-encryption/.namespaces_patched" ]; then \
-		echo "defuse/php-encryption namespaces already patched, skipping..."; \
+		touch "$(THIRDPARTY_PATH)/defuse/php_encryption/.namespaces_patched"; \
+		echo "defuse/php_encryption namespaces patched successfully"; \
+	elif [ -f "$(THIRDPARTY_PATH)/defuse/php_encryption/.namespaces_patched" ]; then \
+		echo "defuse/php_encryption namespaces already patched, skipping..."; \
 	fi
 
 	@# Patch jelix/version
@@ -559,7 +559,7 @@ update-version-json:
 		\$$json = json_decode(file_get_contents('$(SRC_PATH)/ncc/version.json'), true); \
 		\$$dependencies = [ \
 			['$(THIRDPARTY_PATH)/composer/Semver', 'composer', 'Semver'], \
-			['$(THIRDPARTY_PATH)/defuse/php-encryption', 'defuse', 'php-encryption'], \
+			['$(THIRDPARTY_PATH)/defuse/php_encryption', 'defuse', 'php_encryption'], \
 			['$(THIRDPARTY_PATH)/jelix/version', 'jelix', 'version'], \
 			['$(THIRDPARTY_PATH)/nikic/PhpParser', 'nikic', 'PhpParser'], \
 			['$(THIRDPARTY_PATH)/Symfony/polyfill_ctype', 'Symfony', 'polyfill_ctype'], \

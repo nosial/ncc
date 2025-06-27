@@ -589,7 +589,7 @@ features. This is the Mk II of ncc, and it is a major update, so please read the
 
 ### Changed
  - Refactored `\ncc\Objects > PackageLock`
- - Updated `defuse\php-encryption` to version 2.4.0
+ - Updated `defuse\php_encryption` to version 2.4.0
  - Updated `\ncc\Classes > GitClient > cloneRepositor()` to clone submodules recursively by default
  - Updated `\ncc\Classes > GitClient > checkout()` to update submoudles.
  - Updated build system for Gitlab
