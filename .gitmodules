@@ -7,3 +7,27 @@
 [submodule "src/ncc/ThirdParty/Symfony/Yaml"]
 	path = src/ncc/ThirdParty/Symfony/Yaml
 	url = https://github.com/symfony/yaml
+[submodule "src/ncc/ThirdParty/Symfony/polyfill_uuid"]
+	path = src/ncc/ThirdParty/Symfony/polyfill_uuid
+	url = https://github.com/symfony/polyfill-uuid
+[submodule "src/ncc/ThirdParty/Symfony/polyfill_mbstring"]
+	path = src/ncc/ThirdParty/Symfony/polyfill_mbstring
+	url = https://github.com/symfony/polyfill-mbstring
+[submodule "src/ncc/ThirdParty/Symfony/polyfill_ctype"]
+	path = src/ncc/ThirdParty/Symfony/polyfill_ctype
+	url = https://github.com/symfony/polyfill-ctype
+[submodule "src/ncc/ThirdParty/Symfony/Filesystem"]
+	path = src/ncc/ThirdParty/Symfony/Filesystem
+	url = https://github.com/symfony/filesystem
+[submodule "src/ncc/ThirdParty/nikic/PhpParser"]
+	path = src/ncc/ThirdParty/nikic/PhpParser
+	url = https://github.com/nikic/PHP-Parser
+[submodule "src/ncc/ThirdParty/jelix/version"]
+	path = src/ncc/ThirdParty/jelix/version
+	url = https://github.com/jelix/version
+[submodule "src/ncc/ThirdParty/defuse/php-encryption"]
+	path = src/ncc/ThirdParty/defuse/php-encryption
+	url = https://github.com/defuse/php-encryption
+[submodule "src/ncc/ThirdParty/composer/Semver"]
+	path = src/ncc/ThirdParty/composer/Semver
+	url = https://github.com/composer/semver
