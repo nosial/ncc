@@ -1,0 +1,3 @@
+[submodule "src/ncc/ThirdParty/Symfony/Uid"]
+	path = src/ncc/ThirdParty/Symfony/Uid
+	url = https://github.com/symfony/uid
