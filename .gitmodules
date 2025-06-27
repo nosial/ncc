@@ -1,3 +1,9 @@
 [submodule "src/ncc/ThirdParty/Symfony/Uid"]
 	path = src/ncc/ThirdParty/Symfony/Uid
 	url = https://github.com/symfony/uid
+[submodule "src/ncc/ThirdParty/Symfony/Process"]
+	path = src/ncc/ThirdParty/Symfony/Process
+	url = https://github.com/symfony/process
+[submodule "src/ncc/ThirdParty/Symfony/Yaml"]
+	path = src/ncc/ThirdParty/Symfony/Yaml
+	url = https://github.com/symfony/yaml
