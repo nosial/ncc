@@ -210,7 +210,7 @@
 
         try
         {
-            Console::out(Console::formatColor($full_name, ConsoleColors::GREEN) . ' Version: ' . Console::formatColor($component->getVersion(), ConsoleColors::LIGHT_MAGENTA));
+            Console::out(Console::formatColor($full_name, ConsoleColors::GREEN) . ' Version: ' . Console::formatColor(trim($component->getVersion()), ConsoleColors::LIGHT_MAGENTA));
         }
         catch (Exception $e)
         {
