@@ -16,6 +16,10 @@ DEBIAN_SRC_PATH := $(SRC_PATH)/debian
 DEBIAN_BUILD_PATH := $(BUILD_PATH)/debian/ncc_$(BUILD_VERSION)_all
 DEBIAN_PACKAGE_BUILD_PATH := $(BUILD_PATH)/ncc_$(BUILD_VERSION)_all.deb
 
+# Third-party dependency management
+THIRDPARTY_PATH := $(SRC_PATH)/ncc/ThirdParty
+SUBMODULES := $(shell git config --file .gitmodules --get-regexp path | awk '{print $$2}')
+
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
 	composer/Semver \
@@ -150,16 +154,162 @@ clean:
 	rm -f $(SRC_PATH)/ncc/autoload_spl.php
 	rm -f $(addsuffix /autoload_spl.php, $(AUTOLOAD_PATHS))
 
+.PHONY: update-dependencies
+update-dependencies:
+	@echo "Updating git submodules to latest tags..."
+	@for submodule in $(SUBMODULES); do \
+		echo "Processing submodule: $$submodule"; \
+		cd $$submodule && \
+		git reset --hard HEAD && \
+		git clean -fd && \
+		git fetch --tags && \
+		latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
+		if [ -n "$$latest_tag" ]; then \
+			echo "Checking out latest tag: $$latest_tag for $$submodule"; \
+			git checkout $$latest_tag; \
+		else \
+			echo "No tags found for $$submodule, using HEAD"; \
+			git checkout HEAD; \
+		fi && \
+		cd - > /dev/null; \
+	done
+	@echo "Applying namespace patches..."
+	@$(MAKE) patch-namespaces
+	@echo "Updating VERSION files..."
+	@$(MAKE) update-version-files
+	@echo "Updating version.json..."
+	@$(MAKE) update-version-json
+	@echo "Dependencies updated successfully!"
+
+.PHONY: patch-namespaces
+patch-namespaces:
+	@echo "Patching Symfony component namespaces..."
+	@find $(THIRDPARTY_PATH)/Symfony -name "*.php" -type f | while read file; do \
+		if grep -q "namespace Symfony\\Component" "$$file" 2>/dev/null; then \
+			echo "Patching namespace in $$file"; \
+			sed -i 's/namespace Symfony\\Component\\Uid/namespace ncc\\ThirdParty\\Symfony\\Uid/g' "$$file"; \
+			sed -i 's/namespace Symfony\\Component\\Process/namespace ncc\\ThirdParty\\Symfony\\Process/g' "$$file"; \
+			sed -i 's/namespace Symfony\\Component\\Yaml/namespace ncc\\ThirdParty\\Symfony\\Yaml/g' "$$file"; \
+			sed -i 's/namespace Symfony\\Component\\Filesystem/namespace ncc\\ThirdParty\\Symfony\\Filesystem/g' "$$file"; \
+		fi; \
+		if grep -q "use Symfony\\Component" "$$file" 2>/dev/null; then \
+			echo "Patching use statements in $$file"; \
+			sed -i 's/use Symfony\\Component\\Uid/use ncc\\ThirdParty\\Symfony\\Uid/g' "$$file"; \
+			sed -i 's/use Symfony\\Component\\Process/use ncc\\ThirdParty\\Symfony\\Process/g' "$$file"; \
+			sed -i 's/use Symfony\\Component\\Yaml/use ncc\\ThirdParty\\Symfony\\Yaml/g' "$$file"; \
+			sed -i 's/use Symfony\\Component\\Filesystem/use ncc\\ThirdParty\\Symfony\\Filesystem/g' "$$file"; \
+		fi; \
+		if grep -q "Symfony\\\\Component" "$$file" 2>/dev/null; then \
+			echo "Patching string references in $$file"; \
+			sed -i 's/Symfony\\\\Component\\\\Uid/ncc\\\\ThirdParty\\\\Symfony\\\\Uid/g' "$$file"; \
+			sed -i 's/Symfony\\\\Component\\\\Process/ncc\\\\ThirdParty\\\\Symfony\\\\Process/g' "$$file"; \
+			sed -i 's/Symfony\\\\Component\\\\Yaml/ncc\\\\ThirdParty\\\\Symfony\\\\Yaml/g' "$$file"; \
+			sed -i 's/Symfony\\\\Component\\\\Filesystem/ncc\\\\ThirdParty\\\\Symfony\\\\Filesystem/g' "$$file"; \
+		fi; \
+		if grep -qE "(\\\\|')Symfony\\\\Component" "$$file" 2>/dev/null; then \
+			echo "Patching quoted references in $$file"; \
+			sed -i "s/'Symfony\\\\Component\\\\Uid'/'ncc\\\\ThirdParty\\\\Symfony\\\\Uid'/g" "$$file"; \
+			sed -i "s/'Symfony\\\\Component\\\\Process'/'ncc\\\\ThirdParty\\\\Symfony\\\\Process'/g" "$$file"; \
+			sed -i "s/'Symfony\\\\Component\\\\Yaml'/'ncc\\\\ThirdParty\\\\Symfony\\\\Yaml'/g" "$$file"; \
+			sed -i "s/'Symfony\\\\Component\\\\Filesystem'/'ncc\\\\ThirdParty\\\\Symfony\\\\Filesystem'/g" "$$file"; \
+		fi; \
+	done
+	@echo "Patching any remaining references in the entire codebase..."
+	@find $(SRC_PATH)/ncc -name "*.php" -type f | while read file; do \
+		if grep -qE "Symfony\\\\Component\\\\(Uid|Process|Yaml|Filesystem)" "$$file" 2>/dev/null; then \
+			echo "Patching references in $$file"; \
+			sed -i 's/Symfony\\Component\\Uid/ncc\\ThirdParty\\Symfony\\Uid/g' "$$file"; \
+			sed -i 's/Symfony\\Component\\Process/ncc\\ThirdParty\\Symfony\\Process/g' "$$file"; \
+			sed -i 's/Symfony\\Component\\Yaml/ncc\\ThirdParty\\Symfony\\Yaml/g' "$$file"; \
+			sed -i 's/Symfony\\Component\\Filesystem/ncc\\ThirdParty\\Symfony\\Filesystem/g' "$$file"; \
+		fi; \
+	done
+	@echo "Removing test and documentation files that may cause issues..."
+	@find $(THIRDPARTY_PATH)/Symfony -type d -name "Tests" -exec rm -rf {} + 2>/dev/null || true
+	@find $(THIRDPARTY_PATH)/Symfony -name "*.md" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH)/Symfony -name "CHANGELOG*" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH)/Symfony -name "LICENSE*" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH)/Symfony -name "composer.json" -delete 2>/dev/null || true
+	@find $(THIRDPARTY_PATH)/Symfony -name "phpunit.xml*" -delete 2>/dev/null || true
+	@echo "Handling conditional class definitions..."
+	@if [ -f "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php" ]; then \
+		echo "Fixing HashableInterface conditional definition..."; \
+		mv "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php" "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php.bak"; \
+		echo '<?php' > "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo 'namespace ncc\ThirdParty\Symfony\Uid;' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '/**' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo ' * @internal' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo ' */' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo 'interface HashableInterface' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '{' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '    public function equals(mixed $$other): bool;' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '    public function hash(): string;' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+		echo '}' >> "$(THIRDPARTY_PATH)/Symfony/Uid/HashableInterface.php"; \
+	fi
+
+.PHONY: update-version-files
+update-version-files:
+	@echo "Creating VERSION files for dependencies..."
+	@for submodule in $(SUBMODULES); do \
+		if [ -d "$$submodule" ]; then \
+			cd $$submodule && \
+			latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
+			if [ -n "$$latest_tag" ]; then \
+				version=$$(echo "$$latest_tag" | sed 's/^v//g' | sed 's/-.*$$//g'); \
+				echo "$$version" > VERSION; \
+				echo "Created VERSION file for $$submodule with version $$version"; \
+			else \
+				echo "No tags found for $$submodule, skipping VERSION file creation"; \
+			fi && \
+			cd - > /dev/null; \
+		fi; \
+	done
+
+.PHONY: update-version-json
+update-version-json:
+	@echo "Updating version.json with latest dependency versions..."
+	@if [ -f "$(SRC_PATH)/ncc/version.json" ]; then \
+		$(PHPCC) -r " \
+		\$$json = json_decode(file_get_contents('$(SRC_PATH)/ncc/version.json'), true); \
+		\$$submodules = ['$(THIRDPARTY_PATH)/Symfony/Uid', '$(THIRDPARTY_PATH)/Symfony/Process', '$(THIRDPARTY_PATH)/Symfony/Yaml']; \
+		foreach (\$$submodules as \$$submodule) { \
+			if (file_exists(\$$submodule . '/VERSION')) { \
+				\$$version = trim(file_get_contents(\$$submodule . '/VERSION')); \
+				\$$componentName = basename(\$$submodule); \
+				foreach (\$$json['components'] as &\$$component) { \
+					if (\$$component['vendor'] == 'Symfony' && \$$component['package_name'] == \$$componentName) { \
+						\$$component['version'] = \$$version; \
+						echo \"Updated \$$componentName to version \$$version\n\"; \
+						break; \
+					} \
+				} \
+			} \
+		} \
+		file_put_contents('$(SRC_PATH)/ncc/version.json', json_encode(\$$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); \
+		echo \"version.json updated successfully\n\"; \
+		"; \
+	else \
+		echo "version.json not found, skipping update"; \
+	fi
+
 .PHONY: help
 help:
 	@echo "Available commands:"
-	@echo "  make autoload		  - Generate autoload files"
+	@echo "  make autoload			- Generate autoload files"
 	@echo "  make redist			- Prepare the project for redistribution"
-	@echo "  make install		   - Installs ncc on the system (requires root privileges & php)"
-	@echo "  make tar			   - Package the project into a tarball (Generic installer, requires php)"
-	@echo "  make deb			   - Package the project into a Debian package"
-	@echo "  make docker-debian	 - Build a Debian Docker image"
-	@echo "  make docker-debian-run - Run the Debian Docker image"
-	@echo "  make docker-alpine	 - Build an Alpine Docker image"
-	@echo "  make docker-alpine-run - Run the Alpine Docker image"
-	@echo "  make clean			 - Clean the build artifacts"
+	@echo "  make install			- Installs ncc on the system (requires root privileges & php)"
+	@echo "  make tar			- Package the project into a tarball (Generic installer, requires php)"
+	@echo "  make deb			- Package the project into a Debian package"
+	@echo "  make update-dependencies	- Update git submodules to latest tags and patch namespaces"
+	@echo "  make patch-namespaces		- Patch Symfony component namespaces to ncc\\ThirdParty"
+	@echo "  make update-version-files	- Create VERSION files for dependencies"
+	@echo "  make update-version-json	- Update version.json with latest dependency versions"
+	@echo "  make docker-debian		- Build a Debian Docker image"
+	@echo "  make docker-debian-run	- Run the Debian Docker image"
+	@echo "  make docker-alpine		- Build an Alpine Docker image"
+	@echo "  make docker-alpine-run	- Run the Alpine Docker image"
+	@echo "  make clean			- Clean the build artifacts"
+	@echo "  make update-dependencies - Update third-party dependencies and patches"
