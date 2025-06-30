@@ -9,7 +9,7 @@ build
 
 # Autoload files
 src/ncc/ThirdParty/composer/Semver/autoload_spl.php
-src/ncc/ThirdParty/defuse/php_encryption/autoload_spl.php
+src/ncc/ThirdParty/defuse/Crypto/autoload_spl.php
 src/ncc/ThirdParty/jelix/version/autoload_spl.php
 src/ncc/ThirdParty/nikic/PhpParser/autoload_spl.php
 src/ncc/ThirdParty/php_parallel_lint/php_console_color/autoload_spl.php
@@ -32,3 +32,16 @@ tests/example_project/build
 /.phpunit.result.cache
 /.idea/php-test-framework.xml
 /.idea/gbrowser_project.xml
+
+# Submodules, do not commit any of our patches.
+/src/ncc/ThirdParty/composer/Semver/
+/src/ncc/ThirdParty/defuse/Crypto/
+/src/ncc/ThirdParty/jelix/version
+/src/ncc/ThirdParty/Symfony/Filesystem
+/src/ncc/ThirdParty/Symfony/polyfill_ctype
+/src/ncc/ThirdParty/Symfony/polyfill_mbstring
+/src/ncc/ThirdParty/Symfony/polyfill_uuid
+/src/ncc/ThirdParty/Symfony/Process
+/src/ncc/ThirdParty/Symfony/Uid
+/src/ncc/ThirdParty/Symfony/Yaml
+/src/ncc/ThirdParty/theseer/DirectoryScanner
