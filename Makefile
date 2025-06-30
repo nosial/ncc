@@ -436,7 +436,7 @@ patch-namespaces:
 		if grep -qE "(Composer\\\\Semver|Defuse\\\\Crypto|Jelix\\\\Version|PhpParser|TheSeer\\\\DirectoryScanner|Symfony\\\\Component\\\\(Uid|Process|Yaml|Filesystem)|Symfony\\\\Polyfill)" "$$file" 2>/dev/null; then \
 			echo "Patching references in $$file"; \
 			sed -i 's/Composer\\Semver/ncc\\ThirdParty\\composer\\Semver/g' "$$file"; \
-			sed -i 's/Defuse\\Crypto/ncc\\ThirdParty\\defuse\\php_encryption/g' "$$file"; \
+			sed -i 's/Defuse\\Crypto/ncc\\ThirdParty\\defuse\\Crypto/g' "$$file"; \
 			sed -i 's/Jelix\\Version/ncc\\ThirdParty\\jelix\\version/g' "$$file"; \
 			sed -i 's/\\PhpParser\\\\/\\ncc\\ThirdParty\\nikic\\PhpParser\\\\/g' "$$file"; \
 			sed -i 's/PhpParser\\\\/ncc\\ThirdParty\\nikic\\PhpParser\\\\/g' "$$file"; \
