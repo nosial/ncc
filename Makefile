@@ -167,6 +167,7 @@ update-dependencies:
 	@for submodule in $(SUBMODULES); do \
 		echo "Processing submodule: $$submodule"; \
 		cd $$submodule && \
+		original_branch=$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ""); \
 		git reset --hard HEAD && \
 		git clean -fd && \
 		git fetch --tags && \
@@ -175,8 +176,7 @@ update-dependencies:
 			echo "Checking out latest tag: $$latest_tag for $$submodule"; \
 			git checkout $$latest_tag; \
 		else \
-			echo "No tags found for $$submodule, using HEAD"; \
-			git checkout HEAD; \
+			echo "No tags found for $$submodule, staying on current branch ($$original_branch)"; \
 		fi && \
 		cd - > /dev/null; \
 	done
