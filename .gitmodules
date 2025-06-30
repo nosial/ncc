@@ -31,3 +31,6 @@
 [submodule "src/ncc/ThirdParty/composer/Semver"]
 	path = src/ncc/ThirdParty/composer/Semver
 	url = https://github.com/composer/semver
+[submodule "src/ncc/ThirdParty/theseer/DirectoryScanner"]
+	path = src/ncc/ThirdParty/theseer/DirectoryScanner
+	url = https://github.com/theseer/DirectoryScanner
