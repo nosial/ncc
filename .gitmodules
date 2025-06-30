@@ -25,9 +25,9 @@
 [submodule "src/ncc/ThirdParty/jelix/version"]
 	path = src/ncc/ThirdParty/jelix/version
 	url = https://github.com/jelix/version
-[submodule "src/ncc/ThirdParty/defuse/php_encryption"]
+[submodule "src/ncc/ThirdParty/defuse/Crypto"]
 	path = src/ncc/ThirdParty/defuse/Crypto
-	url = https://github.com/defuse/php_encryption
+	url = https://github.com/defuse/php-encryption
 [submodule "src/ncc/ThirdParty/composer/Semver"]
 	path = src/ncc/ThirdParty/composer/Semver
 	url = https://github.com/composer/semver
