@@ -164,21 +164,26 @@ clean-patches:
 .PHONY: update-dependencies
 update-dependencies:
 	@echo "Updating git submodules to latest tags..."
-	@for submodule in $(SUBMODULES); do \
+	@current_dir=$$(pwd); \
+	for submodule in $(SUBMODULES); do \
 		echo "Processing submodule: $$submodule"; \
-		cd $$submodule && \
-		git reset --hard HEAD && \
-		git clean -fd && \
-		git fetch --tags && \
-		latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
-		if [ -n "$$latest_tag" ]; then \
-			echo "Checking out latest tag: $$latest_tag for $$submodule"; \
-			git checkout $$latest_tag; \
+		if [ -d "$$submodule" ]; then \
+			cd "$$current_dir/$$submodule" && \
+			git reset --hard HEAD && \
+			git clean -fd && \
+			git fetch --tags && \
+			latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
+			if [ -n "$$latest_tag" ]; then \
+				echo "Checking out latest tag: $$latest_tag for $$submodule"; \
+				git checkout $$latest_tag; \
+			else \
+				echo "No tags found for $$submodule, using HEAD"; \
+				git checkout HEAD; \
+			fi && \
+			cd "$$current_dir"; \
 		else \
-			echo "No tags found for $$submodule, using HEAD"; \
-			git checkout HEAD; \
-		fi && \
-		cd - > /dev/null; \
+			echo "Warning: Submodule directory $$submodule not found, skipping..."; \
+		fi; \
 	done
 	@echo "Applying pre-patching for folder structure reorganization..."
 	@$(MAKE) pre-patch-structure
@@ -497,9 +502,10 @@ patch-namespaces:
 .PHONY: update-version-files
 update-version-files:
 	@echo "Creating VERSION files for dependencies..."
-	@for submodule in $(SUBMODULES); do \
+	@current_dir=$$(pwd); \
+	for submodule in $(SUBMODULES); do \
 		if [ -d "$$submodule" ]; then \
-			cd $$submodule && \
+			cd "$$current_dir/$$submodule" && \
 			latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
 			if [ -n "$$latest_tag" ]; then \
 				version=$$(echo "$$latest_tag" | sed 's/^v//g' | sed 's/-.*$$//g'); \
@@ -508,7 +514,9 @@ update-version-files:
 			else \
 				echo "No tags found for $$submodule, skipping VERSION file creation"; \
 			fi && \
-			cd - > /dev/null; \
+			cd "$$current_dir"; \
+		else \
+			echo "Warning: Submodule directory $$submodule not found, skipping..."; \
 		fi; \
 	done
 
