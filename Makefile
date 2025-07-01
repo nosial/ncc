@@ -18,7 +18,21 @@ DEBIAN_PACKAGE_BUILD_PATH := $(BUILD_PATH)/ncc_$(BUILD_VERSION)_all.deb
 
 # Third-party dependency management
 THIRDPARTY_PATH := $(SRC_PATH)/ncc/ThirdParty
-SUBMODULES := $(shell git config --file .gitmodules --get-regexp path | awk '{print $$2}')
+
+# Git submodules list
+SUBMODULES := \
+	$(THIRDPARTY_PATH)/composer/Semver \
+	$(THIRDPARTY_PATH)/defuse/Crypto \
+	$(THIRDPARTY_PATH)/jelix/version \
+	$(THIRDPARTY_PATH)/nikic/PhpParser \
+	$(THIRDPARTY_PATH)/Symfony/polyfill_ctype \
+	$(THIRDPARTY_PATH)/Symfony/polyfill_mbstring \
+	$(THIRDPARTY_PATH)/Symfony/polyfill_uuid \
+	$(THIRDPARTY_PATH)/Symfony/Process \
+	$(THIRDPARTY_PATH)/Symfony/Uid \
+	$(THIRDPARTY_PATH)/Symfony/Filesystem \
+	$(THIRDPARTY_PATH)/Symfony/Yaml \
+	$(THIRDPARTY_PATH)/theseer/DirectoryScanner
 
 # List of paths for autoloading
 AUTOLOAD_PATHS := $(addprefix $(SRC_PATH)/ncc/ThirdParty/, \
@@ -164,26 +178,21 @@ clean-patches:
 .PHONY: update-dependencies
 update-dependencies:
 	@echo "Updating git submodules to latest tags..."
-	@current_dir=$$(pwd); \
-	for submodule in $(SUBMODULES); do \
+	@for submodule in $(SUBMODULES); do \
 		echo "Processing submodule: $$submodule"; \
-		if [ -d "$$submodule" ]; then \
-			cd "$$current_dir/$$submodule" && \
-			git reset --hard HEAD && \
-			git clean -fd && \
-			git fetch --tags && \
-			latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
-			if [ -n "$$latest_tag" ]; then \
-				echo "Checking out latest tag: $$latest_tag for $$submodule"; \
-				git checkout $$latest_tag; \
-			else \
-				echo "No tags found for $$submodule, using HEAD"; \
-				git checkout HEAD; \
-			fi && \
-			cd "$$current_dir"; \
+		cd $$submodule && \
+		git reset --hard HEAD && \
+		git clean -fd && \
+		git fetch --tags && \
+		latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
+		if [ -n "$$latest_tag" ]; then \
+			echo "Checking out latest tag: $$latest_tag for $$submodule"; \
+			git checkout $$latest_tag; \
 		else \
-			echo "Warning: Submodule directory $$submodule not found, skipping..."; \
-		fi; \
+			echo "No tags found for $$submodule, using HEAD"; \
+			git checkout HEAD; \
+		fi && \
+		cd - > /dev/null; \
 	done
 	@echo "Applying pre-patching for folder structure reorganization..."
 	@$(MAKE) pre-patch-structure
@@ -502,10 +511,9 @@ patch-namespaces:
 .PHONY: update-version-files
 update-version-files:
 	@echo "Creating VERSION files for dependencies..."
-	@current_dir=$$(pwd); \
-	for submodule in $(SUBMODULES); do \
+	@for submodule in $(SUBMODULES); do \
 		if [ -d "$$submodule" ]; then \
-			cd "$$current_dir/$$submodule" && \
+			cd $$submodule && \
 			latest_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
 			if [ -n "$$latest_tag" ]; then \
 				version=$$(echo "$$latest_tag" | sed 's/^v//g' | sed 's/-.*$$//g'); \
@@ -514,9 +522,7 @@ update-version-files:
 			else \
 				echo "No tags found for $$submodule, skipping VERSION file creation"; \
 			fi && \
-			cd "$$current_dir"; \
-		else \
-			echo "Warning: Submodule directory $$submodule not found, skipping..."; \
+			cd - > /dev/null; \
 		fi; \
 	done
 
