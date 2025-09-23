@@ -2,52 +2,9 @@
 
 [![wakatime](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada.svg)](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada)
 
-Nosial Code Compiler is a package compiler, manager & installer for PHP. Allowing you to install and manage multiple
-versions of php packages on your system that your PHP programs/projects can share and use. Additionally, ncc also allows
-you to create a redistributable package of your PHP program/project in the form of a `.ncc` binary package file.
-
-## Community
-
-This project and many others from Nosial are available on multiple publicly available and free git repositories at
-
-- [n64](https://git.n64.cc/nosial/ncc)
-- [GitHub](https://github.com/nosial/ncc)
-- [Codeberg](https://codeberg.org/nosial/ncc)
-
-Issues & Pull Requests are frequently checked and to be referenced accordingly in commits and changes, Nosial remains
-dedicated to keep these repositories up to date when possible.
-
-For questions & discussions see the public Telegram community at [@NosialDiscussions](https://t.me/NosialDiscussions).
-We do encourage community support and discussions, please be respectful and follow the rules of the community.
-
-## Features
-
-- [x] Package Manager
-- [x] Support for repositories such as GitHub, GitLab, GitTea and Packagist
-- [x] Package compiler
-- [x] Execution Handler
-- [x] Import System (*No need for autoloaders!*)
-
-
-## Dependencies
-
-- PHP 8.0 or higher
-- php-mbstring extension
-- php-zip extension
-- php-mbcrypt extension
-- php-ctype extension
-- php-curl extension
-
-
-## Documentation
-
-Extensive documentation for ncc can be found on at [DOCUMENTATION.md](DOCUMENTATION.md), explaining how from how to
-build and install ncc to how to use it, it is highly recommended that you read the documentation before using ncc.
-
-
-## Bugs and issues
-
-If you encounter any bugs or issues with ncc, please report them on the [issue tracker](https://git.n64.cc/nosial/ncc/-/issues).
+This project is undergoing a massive rewrite to be more modular and maintainable. Please be patient as we work to
+improve the project. Versions 2.x.x are considered legacy will continue to receive minor updates and bug fixes, but
+no new features will be added.
 
 
 ## Changelog
