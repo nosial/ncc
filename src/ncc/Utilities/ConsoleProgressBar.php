@@ -342,10 +342,10 @@
             if(strlen($this->title . ' ' . ($this->misc_text ?? '')) > $max_text_length)
             {
                 // Calculate the maximum length of title and misc and assign them new truncated values
-                $new_title_length = floor($max_text_length * strlen($this->title) / (strlen($this->title) + strlen($this->misc_text)));
+                $new_title_length = floor($max_text_length * strlen($this->title) / (strlen($this->title) + strlen($this->misc_text ?? '')));
 
                 $title = substr($this->title, 0, $new_title_length);
-                $misc  = substr($this->misc_text, 0, ($max_text_length - $new_title_length));
+                $misc  = substr($this->misc_text ?? '', 0, ($max_text_length - $new_title_length));
             }
             else
             {

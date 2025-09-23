@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This update introduces a minor bug fix
 
+### Fixed
+ - handle undefined misc_text in ConsoleProgressBar truncation logic due to `substr` and `strlen` in future versions
+   being more strict about types and no longer accepting null values.
+
 
 ## [2.1.8] - 2025-03-17
 
