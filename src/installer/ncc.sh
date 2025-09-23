@@ -1,1 +1,0 @@
-%php_exec %ncc_exec --ncc-cli "$@"
