@@ -1,0 +1,3 @@
+[submodule "dependencies/pal"]
+	path = dependencies/pal
+	url = https://github.com/nosial/pal
