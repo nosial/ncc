@@ -1,3 +1,6 @@
 [submodule "dependencies/pal"]
 	path = dependencies/pal
 	url = https://github.com/nosial/pal
+[submodule "dependencies/LogLib2"]
+	path = dependencies/LogLib2
+	url = https://github.com/nosial/LogLib2
