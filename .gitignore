@@ -1,1 +1,3 @@
 src/ncc/Libraries/*
+target/
+.idea/
