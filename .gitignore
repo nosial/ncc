@@ -1,3 +1,5 @@
 src/ncc/Libraries/*
 target/
 .idea/
+/tests/results/junit.xml
+/.phpunit.result.cache
