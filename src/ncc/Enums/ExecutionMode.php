@@ -20,11 +20,11 @@
      *
      */
 
-    namespace ncc\Objects;
+    namespace ncc\Enums;
 
-    use ncc\Objects\ProjectConfiguration\Assembly;
-
-    class ProjectConfiguration
+    enum ExecutionMode : string
     {
-        private Assembly $assembly;
+        case AUTO = 'auto';
+        case TTY = 'tty';
+        case PTY = 'pty';
     }
