@@ -7,3 +7,12 @@
 [submodule "dependencies/PHP-Parser"]
 	path = dependencies/PHP-Parser
 	url = https://github.com/nikic/PHP-Parser.git
+[submodule "dependencies/deprecation-contracts"]
+	path = dependencies/deprecation-contracts
+	url = https://github.com/symfony/deprecation-contracts
+[submodule "dependencies/polyfill-ctype"]
+	path = dependencies/polyfill-ctype
+	url = https://github.com/symfony/polyfill-ctype
+[submodule "dependencies/yaml"]
+	path = dependencies/yaml
+	url = https://github.com/symfony/yaml
