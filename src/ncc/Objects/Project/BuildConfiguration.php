@@ -120,7 +120,7 @@
         {
             if(!isset($data['name']) || !is_string($data['name']) || trim($data['name']) === '')
             {
-                throw new InvalidPropertyException('build_configurations.?', 'name', 'Build configuration name must be a non-empty string');
+                throw new InvalidPropertyException('build_configurations.?.name', 'Build configuration name must be a non-empty string');
             }
 
             if(!isset($data['output']) || !is_string($data['output']) || trim($data['output']) === '')

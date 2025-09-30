@@ -167,6 +167,31 @@
         }
 
         /**
+         * Returns the license of the project
+         *
+         * @return string|null The project license or null if not set
+         */
+        public function getLicense(): ?string
+        {
+            return $this->license;
+        }
+
+        /**
+         * Sets the license of the project
+         *
+         * @param string|null $license The project license to set or null to unset
+         */
+        public function setLicense(?string $license): void
+        {
+            if($license !== null && trim($license) === '')
+            {
+                $license = null;
+            }
+
+            $this->license = $license;
+        }
+
+        /**
          * Returns the description of the project
          *
          * @return string|null The project description or null if not set
@@ -325,6 +350,8 @@
                 'name' => $this->name,
                 'package' => $this->package,
                 'version' => $this->version,
+                'url' => $this->url,
+                'license' => $this->license,
                 'description' => $this->description,
                 'author' => $this->author,
                 'organization' => $this->organization,
@@ -362,9 +389,14 @@
                 throw new InvalidPropertyException('assembly.version', 'The assembly version is required and must be a valid version');
             }
 
-            if(isset($data['url']) && (!is_string($data['url']) || trim($data['url']) === '') || !Validate::url($data['url']))
+            if(isset($data['url']) && (!is_string($data['url']) || trim($data['url']) === '' || !Validate::url($data['url'])))
             {
                 throw new InvalidPropertyException('assembly.url', 'The assembly URL must be a non-empty string or null');
+            }
+
+            if(isset($data['license']) && (!is_string($data['license']) || trim($data['license']) === ''))
+            {
+                throw new InvalidPropertyException('assembly.license', 'The assembly license must be a non-empty string or null');
             }
 
             if(isset($data['description']) && (!is_string($data['description']) || trim($data['description']) === ''))

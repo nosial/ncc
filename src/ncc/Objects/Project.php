@@ -23,11 +23,13 @@
     namespace ncc\Objects;
 
     use InvalidArgumentException;
+    use ncc\Exceptions\InvalidPropertyException;
     use ncc\Interfaces\SerializableInterface;
+    use ncc\Interfaces\ValidatorInterface;
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\BuildConfiguration;
 
-    class Project implements SerializableInterface
+    class Project implements SerializableInterface, ValidatorInterface
     {
         private string $sourcePath;
         private string $defaultBuild;
@@ -203,7 +205,12 @@
             return $this->dependencies;
         }
 
-
+        /**
+         * Checks if a dependency with the given name exists in the project
+         *
+         * @param string $name The name of the dependency to check
+         * @return bool True if the dependency exists, false otherwise
+         */
         public function dependencyExists(string $name): bool
         {
             foreach($this->dependencies as $dependency)
@@ -217,6 +224,12 @@
             return false;
         }
 
+        /**
+         * Adds a new dependency to the project
+         *
+         * @param PackageSource|string $dependency The dependency to add, either as a PackageSource object or a string
+         * @throws InvalidArgumentException If the dependency already exists
+         */
         public function addDependency(PackageSource|string $dependency): void
         {
             if(is_string($dependency))
@@ -232,6 +245,12 @@
             $this->dependencies[] = $dependency;
         }
 
+        /**
+         * Removes a dependency from the project by its name
+         *
+         * @param string $name The name of the dependency to remove
+         * @throws InvalidArgumentException If the dependency does not exist
+         */
         public function removeDependency(string $name): void
         {
             foreach($this->dependencies as $index => $dependency)
@@ -248,8 +267,9 @@
         }
 
         /**
+         * Sets the dependencies of the project
          *
-         * @param PackageSource[] $dependencies
+         * @param PackageSource[] $dependencies An array of PackageSource objects
          */
         public function setDependencies(array $dependencies): void
         {
@@ -267,6 +287,12 @@
             return $this->buildConfigurations;
         }
 
+        /**
+         * Returns a build configuration by its name
+         *
+         * @param string $name The name of the build configuration to retrieve
+         * @return BuildConfiguration|null The BuildConfiguration object if found, null otherwise
+         */
         public function getBuildConfiguration(string $name): ?BuildConfiguration
         {
             foreach($this->buildConfigurations as $config)
@@ -280,6 +306,12 @@
             return null;
         }
 
+        /**
+         * Checks if a build configuration with the given name exists in the project
+         *
+         * @param string $name The name of the build configuration to check
+         * @return bool True if the build configuration exists, false otherwise
+         */
         public function buildConfigurationExists(string $name): bool
         {
             foreach($this->buildConfigurations as $config)
@@ -293,11 +325,22 @@
             return false;
         }
 
+        /**
+         * Sets the build configurations of the project
+         *
+         * @param BuildConfiguration[] $buildConfigurations An array of BuildConfiguration objects
+         */
         public function setBuildConfigurations(array $buildConfigurations): void
         {
             $this->buildConfigurations = $buildConfigurations;
         }
 
+        /**
+         * Adds a new build configuration to the project
+         *
+         * @param BuildConfiguration $buildConfiguration The BuildConfiguration object to add
+         * @throws InvalidArgumentException If a build configuration with the same name already exists
+         */
         public function addBuildConfiguration(BuildConfiguration $buildConfiguration): void
         {
             if($this->buildConfigurationExists($buildConfiguration->getName()))
@@ -313,10 +356,6 @@
          */
         public function toArray(): array
         {
-            $this->dependencies = array_map(function($item)
-            {
-                return new PackageSource($item);
-            }, $data['dependencies'] ?? []);
             return [
                 'source' => $this->sourcePath,
                 'default_build' => $this->defaultBuild,
@@ -335,5 +374,75 @@
         public static function fromArray(array $data): Project
         {
             return new self($data);
+        }
+
+        public static function validateArray(array $data): void
+        {
+            if(isset($data['source']) && (!is_string($data['source']) || trim($data['source']) === ''))
+            {
+                throw new InvalidPropertyException('source', 'The project source path must be a non-empty string if set');
+            }
+
+            if(isset($data['default_build']) && (!is_string($data['default_build']) || trim($data['default_build']) === ''))
+            {
+                throw new InvalidPropertyException('default_build', 'The default build configuration must be a non-empty string if set');
+            }
+
+            if(isset($data['entry_point']) && (!is_string($data['entry_point']) || trim($data['entry_point']) === ''))
+            {
+                throw new InvalidPropertyException('entry_point', 'The entry point must be a non-empty string if set');
+            }
+
+            if(isset($data['update_source']) && !is_string($data['update_source']))
+            {
+                throw new InvalidPropertyException('update_source', 'The update source must be a string if set');
+            }
+
+            if(isset($data['repository']) && !is_array($data['repository']))
+            {
+                throw new InvalidPropertyException('repository', 'The repository configuration must be an array if set');
+            }
+
+            if(isset($data['assembly']))
+            {
+                if(!is_array($data['assembly']))
+                {
+                    throw new InvalidPropertyException('assembly', 'The assembly configuration must be an array if set');
+                }
+                Assembly::validateArray($data['assembly']);
+            }
+
+            if(isset($data['dependencies']))
+            {
+                if(!is_array($data['dependencies']))
+                {
+                    throw new InvalidPropertyException('dependencies', 'The dependencies must be an array if set');
+                }
+
+                foreach($data['dependencies'] as $index => $dependency)
+                {
+                    if(!is_string($dependency))
+                    {
+                        throw new InvalidPropertyException("dependencies[{$index}]", 'Each dependency must be a string');
+                    }
+                }
+            }
+
+            if(isset($data['build_configurations']))
+            {
+                if(!is_array($data['build_configurations']))
+                {
+                    throw new InvalidPropertyException('build_configurations', 'The build configurations must be an array if set');
+                }
+
+                foreach($data['build_configurations'] as $index => $config)
+                {
+                    if(!is_array($config))
+                    {
+                        throw new InvalidPropertyException("build_configurations[{$index}]", 'Each build configuration must be an array');
+                    }
+                    BuildConfiguration::validateArray($config);
+                }
+            }
         }
     }
