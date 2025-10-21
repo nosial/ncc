@@ -48,7 +48,7 @@
          * @param array $data Associative array with keys: name, package, version, description, author, organization,
          *                    product, copyright, trademark
          */
-        public function __construct(array $data)
+        public function __construct(array $data=[])
         {
             $this->name = $data['name'] ?? 'Project';
             $this->package = $data['package'] ?? 'com.example.project';
@@ -428,5 +428,13 @@
             {
                 throw new InvalidPropertyException('assembly.trademark', 'The assembly trademark must be a non-empty string or null');
             }
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function validate(): void
+        {
+            self::validateArray($this->toArray());
         }
     }
