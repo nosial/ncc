@@ -16,3 +16,9 @@
 [submodule "dependencies/yaml"]
 	path = dependencies/yaml
 	url = https://github.com/symfony/yaml
+[submodule "dependencies/optslib"]
+	path = dependencies/optslib
+	url = https://github.com/nosial/optslib
+[submodule "dependencies/Process"]
+	path = dependencies/Process
+	url = https://github.com/symfony/process
