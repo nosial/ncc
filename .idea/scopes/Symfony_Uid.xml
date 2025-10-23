@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="Symfony\Uid" pattern="file[Nosial Code Compiler]:src/ncc/ThirdParty/Symfony/Uid//*" />
-</component>

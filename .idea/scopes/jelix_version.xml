@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="jelix\version" pattern="file[Nosial Code Compiler]:src/ncc/ThirdParty/jelix/version//*" />
-</component>

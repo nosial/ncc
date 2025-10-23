@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="NCC Source files" pattern="file[Nosial Code Compiler]:src/ncc/Managers//*||file[Nosial Code Compiler]:src/ncc/Enums//*||file[Nosial Code Compiler]:src/ncc/Exceptions//*||file[Nosial Code Compiler]:src/ncc/Runtime//*||file[Nosial Code Compiler]:src/ncc/Extensions//*||file[Nosial Code Compiler]:src/ncc/CLI//*||file[Nosial Code Compiler]:src/ncc/Classes//*||file[Nosial Code Compiler]:src/ncc/Objects//*||file[Nosial Code Compiler]:src/ncc/Interfaces//*||file[Nosial Code Compiler]:src/ncc/Utilities//*||file:src/ncc/ncc.php||file:src/ncc/ncc||file:src/ncc/banner_basic||file:src/ncc/autoload_spl.php||file:src/ncc/autoload.php||file:src/ncc/Runtime.php" />
-</component>
