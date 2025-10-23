@@ -20,17 +20,16 @@
      *
      */
 
-    namespace ncc;
+    namespace ncc\CLI\Commands\Project;
 
-    class Main
+    use ncc\Abstracts\AbstractCommandHandler;
+
+    class ApplyTemplate extends AbstractCommandHandler
     {
         /**
-         * The main execution point for ncc's command-line interface
-         *
-         * @param array $argv Command-line arguments to be passed on
-         * @return int The exit code
+         * @inheritDoc
          */
-        public static function main(array $argv): int
+        public static function handle(array $argv): int
         {
             return 0;
         }
