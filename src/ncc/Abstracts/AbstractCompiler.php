@@ -79,43 +79,16 @@
 
             if(!$this->projectConfiguration->buildConfigurationExists($buildConfiguration))
             {
-                throw new InvalidArgumentException(sprintf('Invalid build configuration "%s"', $buildConfiguration));
+                throw new InvalidArgumentException("Build configuration '$buildConfiguration' does not exist in project configuration");
             }
 
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
             $this->sourcePath = $this->projectPath . DIRECTORY_SEPARATOR . $this->projectConfiguration->getSourcePath();
             $this->outputPath = $this->projectPath . DIRECTORY_SEPARATOR . $this->buildConfiguration->getOutput();
-
-            if(!$this->projectConfiguration->buildConfigurationExists($buildConfiguration))
-            {
-                throw new InvalidArgumentException("Build configuration '$buildConfiguration' does not exist in project configuration");
-            }
-
-            $this->includeComponents = ['*.php'];
-            $this->excludeComponents = [];
-            $this->includeResources = [];
-            $this->excludeResources = ['*.php'];
-
-            if(isset($this->buildConfiguration->getOptions()['include_components']) && is_array($this->buildConfiguration->getOptions()['include_components']))
-            {
-                $this->includeResources = array_merge($this->includeResources, $this->buildConfiguration->getOptions()['include_components']);
-            }
-
-            if(isset($this->buildConfiguration->getOptions()['exclude_components']) && is_array($this->buildConfiguration->getOptions()['exclude_components']))
-            {
-                $this->excludeComponents = array_merge($this->excludeComponents, $this->buildConfiguration->getOptions()['exclude_components']);
-            }
-
-            if(isset($this->buildConfiguration->getOptions()['include_resources']) && is_array($this->buildConfiguration->getOptions()['include_resources']))
-            {
-                $this->includeResources = array_merge($this->includeResources, $this->buildConfiguration->getOptions()['include_resources']);
-            }
-
-            if(isset($this->buildConfiguration->getOptions()['exclude_resources']) && is_array($this->buildConfiguration->getOptions()['exclude_resources']))
-            {
-                $this->excludeResources = array_merge($this->excludeResources, $this->buildConfiguration->getOptions()['exclude_resources']);
-            }
-
+            $this->includeResources = array_merge(['*.php'], $this->buildConfiguration->getIncludedComponents());
+            $this->excludeComponents = $this->buildConfiguration->getExcludedComponents();
+            $this->includeResources = $this->buildConfiguration->getIncludedResources();
+            $this->includeResources = array_merge(['*.php'], $this->buildConfiguration->getExcludedResources());
             $this->requiredExecutionUnits = [];
 
             if($this->projectConfiguration->getEntryPoint() !== null)
