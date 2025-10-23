@@ -3,3 +3,4 @@ target/
 .idea/
 /tests/results/junit.xml
 /.phpunit.result.cache
+dependencies/
