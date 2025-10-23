@@ -1,0 +1,49 @@
+source: src
+default_build: release
+entry_point: main
+update_source: nosial/lib@n64
+pre_compile: compile_rust
+
+repository:
+  name: n64
+  type: github
+  host: git.n64.cc
+  ssl: true
+
+assembly:
+  name: Example Library
+  package: com.example.library
+  version: 1.0.0
+  url: https://example.com/
+  license: MIT
+  description: This is an example library
+  author: John Doe
+  organization: Example Organization
+  product: Example Product
+  copyright: Copyright 2025-2025 Example Company
+  trademark: Example Company
+
+dependencies:
+  - "symfony/process=latest@packagist"
+  - "laravel/framework=latest@github"
+
+execution_units:
+  - name: main
+    type: php
+    mode: auto
+    entry: src/main.php
+    working_directory: ${CWD}
+    arguments:
+      - foo: bar
+      - test
+      - example:sample
+    envrionemnt:
+      - API_ID: <id>
+      - API_HASH: <hash>
+  - name: compile_rust
+    type: system
+    mode: auto
+    entry: rustc
+    arguments:
+      - src/rust/sample.rs
+      - o: src/resources/program
