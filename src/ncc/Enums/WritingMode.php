@@ -22,10 +22,11 @@
 
     namespace ncc\Enums;
 
-    enum RepositoryType : string
+    enum WritingMode : string
     {
-        case GITLAB = 'gitlab';
-        case GITHUB = 'github';
-        case GITEA = 'gitea';
-        case PACKAGIST = 'packagist';
+        case HEADER = 'header';
+        case ASSEMBLY = 'assembly';
+        case EXECUTION_UNITS = 'execution_units';
+        case COMPONENTS = 'components';
+        case RESOURCES = 'resources';
     }

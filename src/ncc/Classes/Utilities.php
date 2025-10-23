@@ -94,4 +94,49 @@
 
             return $cleaned;
         }
+
+        /**
+         * A method to return the absolute path to the project's yml file path. If the given path points ot a project.yml
+         * or project.yaml path, the same value will be returned. If the given path is a directory, it will return the
+         * project.yml or project.yaml file found in that directory. In any other case if no project.yml or project.yaml
+         * file is found, null is returned.
+         *
+         * @param string $path The path to the project.yml file or directory where the file is located in
+         * @return string|null The absolute path to the project configuration file
+         */
+       public static function getProjectConfiguration(string $path): ?string
+       {
+           if (!file_exists($path))
+           {
+               return null;
+           }
+
+           // If $path is a directory, look for project.yml or project.yaml inside it
+           if (is_dir($path))
+           {
+               $ymlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yml';
+               if (is_file($ymlPath))
+               {
+                   return realpath($ymlPath);
+               }
+
+               $yamlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yaml';
+               if (is_file($yamlPath))
+               {
+                   return realpath($yamlPath);
+               }
+
+               return null;
+           }
+
+           // If $path is a file and is named 'project.yml' or 'project.yaml'
+           $filename = basename($path);
+           if (is_file($path) && ($filename === 'project.yml' || $filename === 'project.yaml'))
+           {
+               return realpath($path);
+           }
+
+           return null;
+       }
+
     }

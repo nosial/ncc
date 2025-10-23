@@ -162,4 +162,9 @@
                 throw new InvalidPropertyException('repository.ssl', 'The repository SSL flag must be a boolean value');
             }
         }
+
+        public function validate(): void
+        {
+            // TODO: Implement validate() method.
+        }
     }

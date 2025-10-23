@@ -20,12 +20,33 @@
      *
      */
 
-    namespace ncc\Enums;
+    namespace ncc\Objects\Package;
 
-    enum RepositoryType : string
+    class ResourceReference
     {
-        case GITLAB = 'gitlab';
-        case GITHUB = 'github';
-        case GITEA = 'gitea';
-        case PACKAGIST = 'packagist';
+        private string $path;
+        private int $offset;
+        private int $length;
+
+        public function __construct(array $data)
+        {
+            $this->path = $data['path'] ?? throw new \InvalidArgumentException('The \'path\' property is missing from the resource');
+            $this->offset = $data['offset'] ?? throw new \InvalidArgumentException('The \'offset\' property is missing from the resource');
+            $this->length = $data['length'] ?? throw new \InvalidArgumentException('The \'length\' property is missing from the resource');
+        }
+
+        public function getPath(): string
+        {
+            return $this->path;
+        }
+
+        public function getOffset(): int
+        {
+            return $this->offset;
+        }
+
+        public function getLength(): int
+        {
+            return $this->length;
+        }
     }
