@@ -38,6 +38,7 @@
         private string $workingDirectory;
         private ?array $arguments;
         private ?array $environment;
+        private ?array $requiredFiles;
 
         /**
          * Public Constructor for the Execution Unit
@@ -63,6 +64,7 @@
             $this->workingDirectory = $data['working_directory'] ?? '${CWD}';
             $this->arguments = $data['arguments'] ?? null;
             $this->environment = $data['environment'] ?? null;
+            $this->requiredFiles = $data['required_files'] ?? null;
         }
 
         /**
@@ -132,7 +134,8 @@
         }
 
         /**
-         * Get the entry point of the execution unit.
+         * Get the entry point of the execution unit. When compiled, this property becomes the data to be executed,
+         * otherwise
          *
          * @return string The entry point of the execution unit
          */
@@ -252,6 +255,31 @@
             $this->environment = $environment;
         }
 
+        public function getRequiredFiles(): ?array
+        {
+            return $this->requiredFiles;
+        }
+
+        public function setRequiredFiles(?array $requiredFiles): void
+        {
+            $this->requiredFiles = $requiredFiles;
+        }
+
+        public function addRequiredFile(string $requiredFile): void
+        {
+            if($this->requiredFiles === null)
+            {
+                $this->requiredFiles = [];
+            }
+
+            if(isset($this->requiredFiles[$requiredFile]))
+            {
+                return;
+            }
+
+            $this->requiredFiles[] = $requiredFile;
+        }
+
         /**
          * @inheritDoc
          */
@@ -264,7 +292,8 @@
                 'entry' => $this->entryPoint,
                 'working_directory' => $this->workingDirectory,
                 'arguments' => $this->arguments,
-                'environment' => $this->environment
+                'environment' => $this->environment,
+                'required_files' => $this->requiredFiles
             ];
         }
 
@@ -315,5 +344,13 @@
             {
                 throw new InvalidPropertyException('execution_units.' . $data['name'] . '.environment', 'Property \'environment\' must be an array if set');
             }
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function validate(): void
+        {
+            self::validateArray($this->toArray());
         }
     }
