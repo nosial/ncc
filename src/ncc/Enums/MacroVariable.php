@@ -24,10 +24,33 @@
 
     enum MacroVariable : string
     {
-        case PROJECT_DIRECTORY = '${PROJECT_DIRECTORY}';
+        // Runtime Macros
+        case PROJECT_PATH = '${PROJECT_PATH}';
+        case CURRENT_WORKING_DIRECTORY = '${CWD}';
 
-        public static function handleMacros(string $input, callable $handle): string
+        // Project Macros
+        case ASSEMBLY_NAME = '${ASSEMBLY.NAME}';
+        case ASSEMBLY_PACKAGE = '${ASSEMBLY.PACKAGE}';
+        case ASSEMBLY_VERSION = '${ASSEMBLY.VERSION}';
+        case ASSEMBLY_URL = '${ASSEMBLY.URL}';
+        case ASSEMBLY_LICENSE = '${ASSEMBLY.LICENSE}';
+        case ASSEMBLY_DESCRIPTION = '${ASSEMBLY.DESCRIPTION}';
+        case ASSEMBLY_AUTHOR = '${ASSEMBLY.AUTHOR}';
+        case ASSEMBLY_ORGANIZATION = '${ASSEMBLY.ORGANIZATION}';
+        case ASSEMBLY_PRODUCT = '${ASSEMBLY.PRODUCT}';
+        case ASSEMBLY_COPYRIGHT = '${ASSEMBLY.COPYRIGHT}';
+        case ASSEMBLY_TRADEMARK = '${ASSEMBLY.TRADEMARK}';
+
+        public static function translateMacros(string $input, bool $strict=false, ?callable $handle=null): string
         {
+            // TODO: Implement this method recursively, allow $input to be a textual input containing one or more
+            //       macro variables, such as "${PROJECT_PATH}/build_scripts/test.txt" so that the returning value
+            //       would be complete. If $strict is True, it would throw an exception one or more macros could not
+            //       be translated.
 
+            switch(strtoupper($input))
+            {
+
+            }
         }
     }
