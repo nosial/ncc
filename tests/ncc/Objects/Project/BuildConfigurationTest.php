@@ -1,4 +1,4 @@
-Adde<?php
+<?php
     /*
      * Copyright (c) Nosial 2022-2025, all rights reserved.
      *
