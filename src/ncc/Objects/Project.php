@@ -23,11 +23,18 @@
     namespace ncc\Objects;
 
     use InvalidArgumentException;
+    use ncc\Abstracts\AbstractCompiler;
+    use ncc\Compilers\PackageCompiler;
+    use ncc\Enums\BuildType;
+    use ncc\Exceptions\CompileException;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Interfaces\SerializableInterface;
     use ncc\Interfaces\ValidatorInterface;
+    use ncc\Libraries\Yaml\Yaml;
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\BuildConfiguration;
+    use ncc\Objects\Project\ExecutionUnit;
+    use RuntimeException;
 
     class Project implements SerializableInterface, ValidatorInterface
     {
@@ -35,15 +42,22 @@
         private string $defaultBuild;
         private ?string $entryPoint;
         private ?PackageSource $updateSource;
+        /** @var string|string[]|null */
+        private string|array|null $preCompile;
+        /** @var string|string[]|null */
+        private string|array|null $postCompile;
+        /** @var string|string[]|null */
+        private string|array|null $preInstall;
+        /** @var string|string[]|null */
+        private string|array|null $postInstall;
+
         private ?RepositoryConfiguration $repository;
         private Assembly $assembly;
-        /**
-         * @var PackageSource[]
-         */
-        private array $dependencies;
-        /**
-         * @var BuildConfiguration[]
-         */
+        /** @var PackageSource[] */
+        private ?array $dependencies;
+        /** @var ExecutionUnit[]|null */
+        private ?array $executionUnits;
+        /** @var BuildConfiguration[] */
         private array $buildConfigurations;
 
         /**
@@ -57,21 +71,19 @@
             $this->defaultBuild = $data['default_build'] ?? 'release';
             $this->entryPoint = $data['entry_point'] ?? null;
             $this->updateSource = isset($data['update_source']) ? new PackageSource($data['update_source']) : null;
+            $this->preCompile = $data['pre_compile'] ?? null;
+            $this->postCompile = $data['post_compile'] ?? null;
+            $this->preInstall = $data['pre_install'] ?? null;
+            $this->postInstall = $data['post_install'] ?? null;
             $this->repository = isset($data['repository']) ? RepositoryConfiguration::fromArray($data['repository']) : null;
-            $this->assembly = new Assembly($data['assembly'] ?? []);
-            $this->dependencies = array_map(function($item)
-            {
-                return new PackageSource($item);
-            }, $data['dependencies'] ?? []);
-            $this->buildConfigurations = array_map(function($item)
-            {
-                return new BuildConfiguration($item);
-            }, $data['build_configurations'] ?? []);
-
+            $this->assembly = isset($data['assembly']) ? Assembly::fromArray($data['assembly']) : new Assembly();
+            $this->dependencies = isset($data['dependencies']) ? array_map(function($item) { return new PackageSource($item); }, $data['dependencies']) : null;
+            $this->executionUnits = isset($data['execution_units']) ? array_map(function($item) { return ExecutionUnit::fromArray($item); }, $data['execution_units']) : null;
+            $this->buildConfigurations = isset($data['build_configurations']) ? array_map(function($item) { return BuildConfiguration::fromArray($item); }, $data['build_configurations']) : [];
         }
 
         /**
-         * Returns the current source path of the project
+         * Returns the source path of the project
          *
          * @return string The source path of the project
          */
@@ -81,24 +93,25 @@
         }
 
         /**
-         * Sets the source path of the configuration, this is where the PHP code of the project is retained
+         * Sets the source path of the project
          *
-         * @param string $sourcePath The source path of the project
+         * @param string $path The new source path
+         * @throws InvalidArgumentException If the provided path is an empty string
          */
-        public function setSourcePath(string $sourcePath): void
+        public function setSourcePath(string $path): void
         {
-            if(empty($sourcePath))
+            if(trim($path) === '')
             {
-                throw new InvalidArgumentException('The \'path\' parameter cannot be empty');
+                throw new InvalidArgumentException('The source path cannot be an empty string');
             }
 
-            $this->sourcePath = $sourcePath;
+            $this->sourcePath = $path;
         }
 
         /**
-         * Returns the default build configuration of the project
+         * Returns the default build configuration name
          *
-         * @return string The default build configuration of the project
+         * @return string The default build configuration name
          */
         public function getDefaultBuild(): string
         {
@@ -106,29 +119,30 @@
         }
 
         /**
-         * Sets the default build configuration of the project
+         * Sets the default build configuration name
          *
-         * @param string $defaultBuild The default build configuration of the project
+         * @param string $buildName The new default build configuration name
+         * @throws InvalidArgumentException If the provided build name is an empty string or does not exist
          */
-        public function setDefaultBuild(string $defaultBuild): void
+        public function setDefaultBuild(string $buildName): void
         {
-            if(empty($defaultBuild))
+            if(trim($buildName) === '')
             {
-                throw new InvalidArgumentException('The \'defaultBuild\' parameter cannot be empty');
+                throw new InvalidArgumentException('The default build name cannot be an empty string');
             }
 
-            if(!$this->buildConfigurationExists($defaultBuild))
+            if(!$this->buildConfigurationExists($buildName))
             {
-                throw new InvalidArgumentException('The build configuration \'' . $defaultBuild . '\' does not exist');
+                throw new InvalidArgumentException('The build configuration \'' . $buildName . '\' does not exist');
             }
 
-            $this->defaultBuild = $defaultBuild;
+            $this->defaultBuild = $buildName;
         }
 
         /**
-         * Returns the entry point of the project, if set
+         * Returns the entry point execution unit name
          *
-         * @return string|null The entry point of the project, or null if not set
+         * @return string|null The entry point execution unit name or null if not set
          */
         public function getEntryPoint(): ?string
         {
@@ -136,19 +150,30 @@
         }
 
         /**
-         * Sets the entry point of the project
+         * Sets the entry point execution unit name
          *
-         * @param string|null $entryPoint The entry point of the project, or null to unset it
+         * @param string|null $unitName The new entry point execution unit name or null to unset
+         * @throws InvalidArgumentException If the provided unit name is an empty string or does not exist
          */
-        public function setEntryPoint(?string $entryPoint): void
+        public function setEntryPoint(?string $unitName): void
         {
-            $this->entryPoint = $entryPoint;
+            if($unitName !== null && trim($unitName) === '')
+            {
+                throw new InvalidArgumentException('The entry point cannot be an empty string');
+            }
+
+            if($unitName !== null && !$this->executionUnitExists($unitName))
+            {
+                throw new InvalidArgumentException('The execution unit \'' . $unitName . '\' does not exist');
+            }
+
+            $this->entryPoint = $unitName;
         }
 
         /**
-         * Returns the update source of the project, if set
+         * Returns the update source of the project
          *
-         * @return PackageSource|null The update source of the project, or null if not set
+         * @return PackageSource|null The update source or null if not set
          */
         public function getUpdateSource(): ?PackageSource
         {
@@ -158,17 +183,146 @@
         /**
          * Sets the update source of the project
          *
-         * @param PackageSource|null $updateSource The update source of the project, or null to unset it
+         * @param PackageSource|null $source The new update source or null to unset
          */
-        public function setUpdateSource(?PackageSource $updateSource): void
+        public function setUpdateSource(?PackageSource $source): void
         {
-            $this->updateSource = $updateSource;
+            $this->updateSource = $source;
         }
 
         /**
-         * Returns the repository configuration of the project, if set
+         * Returns the pre-compile execution unit name(s)
          *
-         * @return RepositoryConfiguration|null The repository configuration of the project, or null if not set
+         * @return array|null The pre-compile execution unit name(s) or null if not set
+         */
+        public function getPreCompile(): array|null
+        {
+            if($this->preCompile === null)
+            {
+                return null;
+            }
+
+            if(is_string($this->preCompile))
+            {
+                return [$this->preCompile];
+            }
+
+            return $this->preCompile;
+        }
+
+        /**
+         * Sets the pre-compile execution unit name(s)
+         *
+         * @param string|array|null $unitName The new pre-compile execution unit name(s) or null to unset
+         * @throws InvalidArgumentException If the provided unit name(s) are invalid
+         */
+        public function setPreCompile(string|array|null $unitName): void
+        {
+            $this->validateExecutionUnits($unitName, 'pre-compile');
+            $this->preCompile = $unitName;
+        }
+
+        /**
+         * Returns the post-compile execution unit name(s)
+         *
+         * @return array|null The post-compile execution unit name(s) or null if not set
+         */
+        public function getPostCompile(): array|null
+        {
+            if($this->postCompile === null)
+            {
+                return null;
+            }
+
+            if(is_string($this->postCompile))
+            {
+                return [$this->preCompile];
+            }
+
+            return $this->postCompile;
+        }
+
+        /**
+         * Sets the post-compile execution unit name(s)
+         *
+         * @param string|array|null $unitName The new post-compile execution unit name(s) or null to unset
+         * @throws InvalidArgumentException If the provided unit name(s) are invalid
+         */
+        public function setPostCompile(string|array|null $unitName): void
+        {
+            $this->validateExecutionUnits($unitName, 'post-compile');
+            $this->postCompile = $unitName;
+        }
+
+        /**
+         * Returns the pre-install execution unit name(s)
+         *
+         * @return array|null The pre-install execution unit name(s) or null if not set
+         */
+        public function getPreInstall(): array|null
+        {
+            if($this->preInstall === null)
+            {
+                return null;
+            }
+
+            if(is_string($this->preInstall))
+            {
+                return [$this->preInstall];
+            }
+
+
+            return $this->preInstall;
+        }
+
+        /**
+         * Sets the pre-install execution unit name(s)
+         *
+         * @param string|array|null $unitName The new pre-install execution unit name(s) or null to unset
+         * @throws InvalidArgumentException If the provided unit name(s) are invalid
+         */
+        public function setPreInstall(string|array|null $unitName): void
+        {
+            $this->validateExecutionUnits($unitName, 'pre-install');
+            $this->preInstall = $unitName;
+        }
+
+        /**
+         * Returns the post-install execution unit name(s)
+         *
+         * @return array|null The post-install execution unit name(s) or null if not set
+         */
+        public function getPostInstall(): array|null
+        {
+            if($this->postInstall === null)
+            {
+                return null;
+            }
+
+            if(is_string($this->postInstall))
+            {
+                return [$this->postInstall];
+            }
+
+            return $this->postInstall;
+        }
+
+        /**
+         * Sets the post-install execution unit name(s)
+         *
+         * @param string|array|null $unitName The new post-install execution unit name(s) or null to unset
+         * @throws InvalidArgumentException If the provided unit name(s) are invalid
+         */
+        public function setPostInstall(string|array|null $unitName): void
+        {
+            $this->validateExecutionUnits($unitName, 'post-install');
+            $this->postInstall = $unitName;
+        }
+
+        /**
+         * Returns the repository configuration
+         *
+         * @return RepositoryConfiguration|null The repository configuration or null if not set
          */
         public function getRepository(): ?RepositoryConfiguration
         {
@@ -176,9 +330,9 @@
         }
 
         /**
-         * Sets the repository configuration of the project
+         * Sets the repository configuration
          *
-         * @param RepositoryConfiguration|null $repository The repository configuration of the project, or null to unset it
+         * @param RepositoryConfiguration|null $repository The new repository configuration or null to unset
          */
         public function setRepository(?RepositoryConfiguration $repository): void
         {
@@ -186,9 +340,9 @@
         }
 
         /**
-         * Returns the configurable Assembly property of the project configuration
+         * Returns the assembly information of the project
          *
-         * @return Assembly The Assembly property of the project configuration
+         * @return Assembly The assembly information of the project
          */
         public function getAssembly(): Assembly
         {
@@ -196,50 +350,124 @@
         }
 
         /**
-         * Returns all the dependencies of the project
+         * Validates that the given unit name(s) are valid execution units.
          *
-         * @return PackageSource[] An array of PackageSource objects
+         * @param string|array|null $unitNames
+         * @param string $context Used in error messages (e.g., 'pre-compile')
+         * @throws InvalidArgumentException
          */
-        public function getDependencies(): array
+        private function validateExecutionUnits(string|array|null $unitNames, string $context): void
+        {
+            if ($unitNames === null)
+            {
+                return;
+            }
+
+            if (is_string($unitNames))
+            {
+                $this->validateSingleExecutionUnit($unitNames, $context);
+                return;
+            }
+
+            // It's an array
+            if (!is_array($unitNames))
+            {
+                // This shouldn't happen due to type hint, but kept for safety
+                throw new InvalidArgumentException('Execution unit must be a string, array of strings, or null.');
+            }
+
+            foreach ($unitNames as $index => $unit)
+            {
+                if (!is_string($unit))
+                {
+                    throw new InvalidArgumentException("All execution units must be strings. Invalid value at index {$index}.");
+                }
+
+                $this->validateSingleExecutionUnit($unit, $context);
+            }
+        }
+
+        /**
+         * Validates a single execution unit string.
+         *
+         * @param string $unitName
+         * @param string $context
+         * @throws InvalidArgumentException
+         */
+        private function validateSingleExecutionUnit(string $unitName, string $context): void
+        {
+            if (trim($unitName) === '')
+            {
+                throw new InvalidArgumentException("The {$context} command cannot be an empty string");
+            }
+
+            if (!$this->executionUnitExists($unitName))
+            {
+                throw new InvalidArgumentException("The execution unit '{$unitName}' does not exist");
+            }
+        }
+
+        /**
+         * Returns the build configurations defined in the project
+         *
+         * @return PackageSource[]|null An array of PackageSource objects or null if no dependencies are defined
+         */
+        public function getDependencies(): ?array
         {
             return $this->dependencies;
         }
 
         /**
-         * Checks if a dependency with the given name exists in the project
+         * Returns a specific dependency by its name
          *
-         * @param string $name The name of the dependency to check
-         * @return bool True if the dependency exists, false otherwise
+         * @param string $dependencyName The name of the dependency to retrieve
+         * @return PackageSource|null The PackageSource object if found, or null if not found or no dependencies are defined
          */
-        public function dependencyExists(string $name): bool
+        public function getDependency(string $dependencyName): ?PackageSource
         {
+            if($this->dependencies === null)
+            {
+                return null;
+            }
+
             foreach($this->dependencies as $dependency)
             {
-                if((string)$dependency === $name)
+                if((string)$dependency->getName() === $dependencyName)
                 {
-                    return true;
+                    return $dependency;
                 }
             }
 
-            return false;
+            return null;
+        }
+
+        /**
+         * Checks if a dependency with the given name exists
+         *
+         * @param string $dependencyName The name of the dependency to check
+         * @return bool True if the dependency exists, false otherwise
+         */
+        public function dependencyExists(string $dependencyName): bool
+        {
+            return $this->getDependency($dependencyName) !== null;
         }
 
         /**
          * Adds a new dependency to the project
          *
-         * @param PackageSource|string $dependency The dependency to add, either as a PackageSource object or a string
-         * @throws InvalidArgumentException If the dependency already exists
+         * @param PackageSource $dependency The PackageSource object representing the dependency to add
+         * @throws InvalidArgumentException If a dependency with the same name already exists
          */
-        public function addDependency(PackageSource|string $dependency): void
+        public function addDependency(PackageSource $dependency): void
         {
-            if(is_string($dependency))
+            if($this->dependencies === null)
             {
-                $dependency = new PackageSource($dependency);
+                $this->dependencies = [];
             }
 
-            if($this->dependencyExists((string)$dependency))
+            if($this->dependencyExists($dependency->getName()))
             {
-                throw new InvalidArgumentException('The dependency \'' . (string)$dependency . '\' already exists');
+                throw new InvalidArgumentException('A dependency with the name \'' . (string)$dependency->getName() . '\' already exists');
             }
 
             $this->dependencies[] = $dependency;
@@ -248,37 +476,115 @@
         /**
          * Removes a dependency from the project by its name
          *
-         * @param string $name The name of the dependency to remove
-         * @throws InvalidArgumentException If the dependency does not exist
+         * @param string $dependencyName The name of the dependency to remove
          */
-        public function removeDependency(string $name): void
+        public function removeDependency(string $dependencyName): void
         {
+            if($this->dependencies === null)
+            {
+                return;
+            }
+
             foreach($this->dependencies as $index => $dependency)
             {
-                if((string)$dependency === $name)
+                if((string)$dependency->getName() === $dependencyName)
                 {
-                    unset($this->dependencies[$index]);
-                    $this->dependencies = array_values($this->dependencies);
+                    array_splice($this->dependencies, $index, 1);
                     return;
                 }
             }
-
-            throw new InvalidArgumentException('The dependency \'' . $name . '\' does not exist');
         }
 
         /**
-         * Sets the dependencies of the project
+         * Returns the execution units defined in the project
          *
-         * @param PackageSource[] $dependencies An array of PackageSource objects
+         * @return ExecutionUnit[]|null An array of ExecutionUnit objects or null if no execution units are defined
          */
-        public function setDependencies(array $dependencies): void
+        public function getExecutionUnits(): ?array
         {
-            $this->dependencies = $dependencies;
+            return $this->executionUnits;
         }
 
+        /**
+         * Returns a specific execution unit by its name
+         *
+         * @param string $unitName The name of the execution unit to retrieve
+         * @return ExecutionUnit|null The ExecutionUnit object if found, or null if not found or no execution units are defined
+         */
+        public function getExecutionUnit(string $unitName): ?ExecutionUnit
+        {
+            if($this->executionUnits === null)
+            {
+                return null;
+            }
+
+            foreach($this->executionUnits as $unit)
+            {
+                if($unit->getName() === $unitName)
+                {
+                    return $unit;
+                }
+            }
+
+            return null;
+        }
 
         /**
-         * Returns all the build configurations of the project
+         * Checks if an execution unit with the given name exists
+         *
+         * @param string $unitName The name of the execution unit to check
+         * @return bool True if the execution unit exists, false otherwise
+         */
+        public function executionUnitExists(string $unitName): bool
+        {
+            return $this->getExecutionUnit($unitName) !== null;
+        }
+
+        /**
+         * Adds a new execution unit to the project
+         *
+         * @param ExecutionUnit $unit The ExecutionUnit object representing the execution unit to add
+         * @throws InvalidArgumentException If an execution unit with the same name already exists
+         */
+        public function addExecutionUnit(ExecutionUnit $unit): void
+        {
+            if($this->executionUnits === null)
+            {
+                $this->executionUnits = [];
+            }
+
+            if($this->executionUnitExists($unit->getName()))
+            {
+                throw new InvalidArgumentException('An execution unit with the name \'' . $unit->getName() . '\' already exists');
+            }
+
+            $this->executionUnits[] = $unit;
+        }
+
+        /**
+         * Removes an execution unit from the project by its name
+         *
+         * @param string $unitName The name of the execution unit to remove
+         */
+        public function removeExecutionUnit(string $unitName): void
+        {
+            if($this->executionUnits === null)
+            {
+                return;
+            }
+
+            foreach($this->executionUnits as $index => $unit)
+            {
+                if($unit->getName() === $unitName)
+                {
+                    array_splice($this->executionUnits, $index, 1);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * Returns the build configurations defined in the project
          *
          * @return BuildConfiguration[] An array of BuildConfiguration objects
          */
@@ -288,16 +594,16 @@
         }
 
         /**
-         * Returns a build configuration by its name
+         * Returns a specific build configuration by its name
          *
-         * @param string $name The name of the build configuration to retrieve
-         * @return BuildConfiguration|null The BuildConfiguration object if found, null otherwise
+         * @param string $configName The name of the build configuration to retrieve
+         * @return BuildConfiguration|null The BuildConfiguration object if found, or null if not found
          */
-        public function getBuildConfiguration(string $name): ?BuildConfiguration
+        public function getBuildConfiguration(string $configName): ?BuildConfiguration
         {
             foreach($this->buildConfigurations as $config)
             {
-                if($config->getName() === $name)
+                if($config->getName() === $configName)
                 {
                     return $config;
                 }
@@ -307,48 +613,62 @@
         }
 
         /**
-         * Checks if a build configuration with the given name exists in the project
+         * Checks if a build configuration with the given name exists
          *
-         * @param string $name The name of the build configuration to check
+         * @param string $configName The name of the build configuration to check
          * @return bool True if the build configuration exists, false otherwise
          */
-        public function buildConfigurationExists(string $name): bool
+        public function buildConfigurationExists(string $configName): bool
         {
-            foreach($this->buildConfigurations as $config)
-            {
-                if($config->getName() === $name)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /**
-         * Sets the build configurations of the project
-         *
-         * @param BuildConfiguration[] $buildConfigurations An array of BuildConfiguration objects
-         */
-        public function setBuildConfigurations(array $buildConfigurations): void
-        {
-            $this->buildConfigurations = $buildConfigurations;
+            return $this->getBuildConfiguration($configName) !== null;
         }
 
         /**
          * Adds a new build configuration to the project
          *
-         * @param BuildConfiguration $buildConfiguration The BuildConfiguration object to add
+         * @param BuildConfiguration $config The BuildConfiguration object representing the build configuration to add
          * @throws InvalidArgumentException If a build configuration with the same name already exists
          */
-        public function addBuildConfiguration(BuildConfiguration $buildConfiguration): void
+        public function addBuildConfiguration(BuildConfiguration $config): void
         {
-            if($this->buildConfigurationExists($buildConfiguration->getName()))
+            if($this->buildConfigurationExists($config->getName()))
             {
-                throw new InvalidArgumentException('A build configuration with the name \'' . $buildConfiguration->getName() . '\' already exists');
+                throw new InvalidArgumentException('A build configuration with the name \'' . $config->getName() . '\' already exists');
             }
 
-            $this->buildConfigurations[] = $buildConfiguration;
+            $this->buildConfigurations[] = $config;
+        }
+
+        /**
+         * Removes a build configuration from the project by its name
+         *
+         * @param string $configName The name of the build configuration to remove
+         */
+        public function removeBuildConfiguration(string $configName): void
+        {
+            foreach($this->buildConfigurations as $index => $config)
+            {
+                if($config->getName() === $configName)
+                {
+                    array_splice($this->buildConfigurations, $index, 1);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * Saves the Project configuration to a YAML file
+         *
+         * @param string $filePath The path to the YAML file
+         * @throws RuntimeException If the file cannot be written
+         */
+        public function save(string $filePath): void
+        {
+            $yaml = Yaml::dump($this->toArray(), 4, 2);
+            if(file_put_contents($filePath, $yaml) === false)
+            {
+                throw new RuntimeException('Failed to write project configuration to \'' . $filePath . '\'');
+            }
         }
 
         /**
@@ -361,11 +681,81 @@
                 'default_build' => $this->defaultBuild,
                 'entry_point' => $this->entryPoint,
                 'update_source' => $this->updateSource ? (string)$this->updateSource : null,
+                'pre_compile' => $this->preCompile,
+                'post_compile' => $this->postCompile,
+                'pre_install' => $this->preInstall,
+                'post_install' => $this->postInstall,
                 'repository' => $this->repository?->toArray(),
                 'assembly' => $this->assembly->toArray(),
-                'dependencies' => array_map(function($item) { return (string)$item; }, $this->dependencies),
+                'dependencies' => $this->dependencies ? array_map(function($item) { return (string)$item; }, $this->dependencies) : null,
+                'execution_units' => $this->executionUnits ? array_map(function($item) { return $item->toArray(); }, $this->executionUnits) : null,
                 'build_configurations' => array_map(function($item) { return $item->toArray(); }, $this->buildConfigurations)
             ];
+        }
+
+        /**
+         * Loads a Project configuration from a YAML file
+         *
+         * @param string $filePath The path to the YAML file
+         * @return Project The loaded Project configuration
+         */
+        public static function fromFile(string $filePath): Project
+        {
+            if(!file_exists($filePath) || !is_readable($filePath))
+            {
+                throw new InvalidArgumentException('The file \'' . $filePath . '\' does not exist or is not readable');
+            }
+
+            return new self(Yaml::parse(file_get_contents($filePath)));
+        }
+
+        /**
+         * Creates a compiler from the project's configuration file, the compiler type is based off the provided build
+         * configuration name; if no name is provided then it will choose the default build configuration.
+         *
+         * @param string $filePath The file path to the project's configuration path.
+         * @param string|null $buildConfigurationName Optional. The build configuration to use, if null the default one will be used.
+         * @return AbstractCompiler Returns the Abstract compiler object allowing you to compile the project, the compiler
+         *                          type is based off the build configuration however; still allowing you to run the
+         *                          build() method the same way no matter the compiler
+         * @throws CompileException Thrown if there was an issue creating the compiler for the project
+         */
+        public static function compilerFromFile(string $filePath, ?string $buildConfigurationName=null): AbstractCompiler
+        {
+            $projectConfiguration = self::fromFile($filePath);
+            if($buildConfigurationName === null)
+            {
+                $buildConfigurationName = $projectConfiguration->getDefaultBuild();
+            }
+
+            $buildConfiguration = $projectConfiguration->getBuildConfiguration($buildConfigurationName);
+            return match ($buildConfiguration->getType())
+            {
+                BuildType::NCC_PACKAGE => new PackageCompiler(dirname($filePath), $buildConfigurationName),
+                default => throw new CompileException('Compiler method not implemented yet'),
+            };
+        }
+
+        /**
+         * Creates a new Project configuration with default values
+         *
+         * @param string $name The name of the project
+         * @param string $package The package name of the project
+         * @return Project The newly created Project configuration
+         */
+        public static function createNew(string $name, string $package): Project
+        {
+            return new self([
+                'assembly' => [
+                    'name' => $name,
+                    'version' => '0.1.0',
+                    'package' => $package,
+                ],
+                'build_configurations' => [
+                    BuildConfiguration::defaultDebug()->toArray(),
+                    BuildConfiguration::defaultRelease()->toArray()
+                ]
+            ]);
         }
 
         /**
@@ -376,6 +766,9 @@
             return new self($data);
         }
 
+        /**
+         * @inheritDoc
+         */
         public static function validateArray(array $data): void
         {
             if(isset($data['source']) && (!is_string($data['source']) || trim($data['source']) === ''))
@@ -387,15 +780,47 @@
             {
                 throw new InvalidPropertyException('default_build', 'The default build configuration must be a non-empty string if set');
             }
-
-            if(isset($data['entry_point']) && (!is_string($data['entry_point']) || trim($data['entry_point']) === ''))
+            elseif(!self::validateBuildConfigurationExists($data, $data['default_build']))
             {
-                throw new InvalidPropertyException('entry_point', 'The entry point must be a non-empty string if set');
+                throw new InvalidPropertyException('default_build', 'The default build configuration must point to a valid execution unit');
+            }
+
+            if(isset($data['entry_point']))
+            {
+                if((!is_string($data['entry_point']) || trim($data['entry_point']) === ''))
+                {
+                    throw new InvalidPropertyException('entry_point', 'The entry point must be a non-empty string if set');
+                }
+
+                if(!self::validateExecutionUnitExists($data, $data['entry_point']))
+                {
+                    throw new InvalidPropertyException('entry_point', 'The entry point must point to an existing execution unit');
+                }
             }
 
             if(isset($data['update_source']) && !is_string($data['update_source']))
             {
                 throw new InvalidPropertyException('update_source', 'The update source must be a string if set');
+            }
+
+            if(isset($data['pre_compile']) && !self::validateExecutionUnitExists($data, $data['pre_compile']))
+            {
+                throw new InvalidPropertyException('pre_compile', 'The pre-compile property must point to a valid execution point if it\'s set.');
+            }
+
+            if(isset($data['post_compile']) && !self::validateExecutionUnitExists($data, $data['post_compile']))
+            {
+                throw new InvalidPropertyException('post_compile', 'The post-compile property must point to a valid execution point if it\'s set');
+            }
+
+            if(isset($data['pre_install']) && !self::validateExecutionUnitExists($data, $data['pre_install']))
+            {
+                throw new InvalidPropertyException('pre_install', 'The pre-install property must point to a valid execution point if it\'s set');
+            }
+
+            if(isset($data['post_install']) && !self::validateExecutionUnitExists($data, $data['post_install']))
+            {
+                throw new InvalidPropertyException('post_install', 'The post-install property must point to a valid execution point if it\'s set');
             }
 
             if(isset($data['repository']) && !is_array($data['repository']))
@@ -423,8 +848,26 @@
                 {
                     if(!is_string($dependency))
                     {
-                        throw new InvalidPropertyException("dependencies[{$index}]", 'Each dependency must be a string');
+                        throw new InvalidPropertyException("dependencies[{$index}]", 'Each dependency must be a project source string');
                     }
+                }
+            }
+
+            if(isset($data['execution_units']))
+            {
+                if(!is_array($data['execution_units']))
+                {
+                    throw new InvalidPropertyException('execution_units', 'The execution units property must be an array of execution units if it\'s set');
+                }
+
+                foreach($data['execution_units'] as $index => $unit)
+                {
+                    if(!is_array($unit))
+                    {
+                        throw new InvalidPropertyException("execution_units[{$index}]", 'Each execution unit must be an array');
+                    }
+
+                    ExecutionUnit::validateArray($unit);
                 }
             }
 
@@ -432,7 +875,7 @@
             {
                 if(!is_array($data['build_configurations']))
                 {
-                    throw new InvalidPropertyException('build_configurations', 'The build configurations must be an array if set');
+                    throw new InvalidPropertyException('build_configurations', 'The build configurations property must be an array of build configuration if it\'s set');
                 }
 
                 foreach($data['build_configurations'] as $index => $config)
@@ -441,8 +884,69 @@
                     {
                         throw new InvalidPropertyException("build_configurations[{$index}]", 'Each build configuration must be an array');
                     }
+
                     BuildConfiguration::validateArray($config);
                 }
             }
+        }
+
+        /**
+         * Validates if the execution unit is defined in the arary, returns True if so; False otherwise.
+         *
+         * @param array $data The root of the project configuration array to check
+         * @param string $name The name of the execution unit
+         * @return bool True if the Execution Unit exists, False otherwise.
+         */
+        private static function validateExecutionUnitExists(array $data, string $name): bool
+        {
+            // TODO: Update this! Currently only works for single string, not arrays of strings.
+
+            if(!isset($data['execution_units']) || !is_array($data['execution_units']))
+            {
+                return false;
+            }
+
+            foreach($data['execution_units'] as $unit)
+            {
+                if(isset($unit['name']) && $unit['name'] === $name)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * Validates if the build configuration is defined in the array, returns True if so; False otherwise.
+         *
+         * @param array $data The root of the project configuration array to check
+         * @param string $name The name of the build configuration to check for
+         * @return bool True if the build configuration exists, False otherwise.
+         */
+        private static function validateBuildConfigurationExists(array $data, string $name): bool
+        {
+            if(!isset($data['build_configurations']) || !is_array($data['build_configurations']))
+            {
+                return false;
+            }
+
+            foreach($data['build_configurations'] as $config)
+            {
+                if(isset($config['name']) && $config['name'] === $name)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function validate(): void
+        {
+            self::validateArray($this->toArray());
         }
     }
