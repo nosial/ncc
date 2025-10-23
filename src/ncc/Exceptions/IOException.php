@@ -25,18 +25,10 @@
     use Exception;
     use Throwable;
 
-    class InvalidPropertyException extends Exception
+    class IOException extends Exception
     {
-        /**
-         * InvalidPropertyException constructor.
-         *
-         * @param string $property The name of the invalid property
-         * @param string $message A message describing why the property is invalid
-         * @param int $code The exception code (default: 0)
-         * @param Throwable|null $previous The previous throwable used for exception chaining (default: null)
-         */
-        public function __construct(string $property, string $message, int $code=0 , ?Throwable $previous=null)
+        public function __construct(string $message = "", int $code = 0, ?Throwable $previous = null)
         {
-            parent::__construct("Invalid property '$property': $message", $code, $previous);
+            parent::__construct($message, $code, $previous);
         }
     }
