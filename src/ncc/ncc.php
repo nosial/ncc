@@ -42,6 +42,25 @@
         }
         else
         {
+            // Check if all the extensions are available
+            $required = [
+                'curl',
+                'json',
+                'msgpack',
+                'tokenizer',
+                'phar',
+                'ctype'
+            ];
+
+            foreach($required as $extension)
+            {
+                if(!extension_loaded($extension))
+                {
+                    fwrite(STDERR, "Required PHP extension '$extension' is not loaded. Please install/enable it to use ncc.\n");
+                    exit(1);
+                }
+            }
+
             define('__NCC_CLI__', true);
             exit(Main::main(array_slice($argv, array_search('--ncc-cli', $argv, true) + 1)));
         }
