@@ -25,6 +25,7 @@
     use InvalidArgumentException;
     use ncc\Enums\PackageStructure;
     use ncc\Enums\WritingMode;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageException;
 
     class PackageWriter
@@ -38,6 +39,7 @@
          * @param string $filePath The path to the package file to create or overwrite.
          * @param bool $overwrite Whether to overwrite the file if it already exists. Default is true.
          * @throws PackageException if the file cannot be created or opened.
+         * @throws IOException Thrown if there was an IO error
          */
         public function __construct(string $filePath, bool $overwrite=true)
         {
@@ -53,6 +55,7 @@
 
 
             // Create the file
+            IO::mkdir(dirname($filePath));
             touch($filePath);
             $this->fileHandler = fopen($filePath, 'a+b');
             if($this->fileHandler === false)
