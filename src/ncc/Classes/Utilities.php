@@ -22,6 +22,8 @@
 
     namespace ncc\Classes;
 
+    use ncc\CLI\Logger;
+
     class Utilities
     {
         /**
@@ -108,6 +110,7 @@
        {
            if (!file_exists($path))
            {
+               Logger::getLogger()->debug(sprintf('File %s does not exist', $path));
                return null;
            }
 
@@ -115,12 +118,14 @@
            if (is_dir($path))
            {
                $ymlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yml';
+               Logger::getLogger()->debug(sprintf('Checking path %s', $ymlPath));
                if (is_file($ymlPath))
                {
                    return realpath($ymlPath);
                }
 
                $yamlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yaml';
+               Logger::getLogger()->debug(sprintf('Checking path %s', $yamlPath));
                if (is_file($yamlPath))
                {
                    return realpath($yamlPath);
@@ -131,6 +136,7 @@
 
            // If $path is a file and is named 'project.yml' or 'project.yaml'
            $filename = basename($path);
+           Logger::getLogger()->debug(sprintf('Checking path %s', $filename));
            if (is_file($path) && ($filename === 'project.yml' || $filename === 'project.yaml'))
            {
                return realpath($path);
