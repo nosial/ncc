@@ -41,9 +41,9 @@
         /**
          * @inheritDoc
          */
-        public function __construct(string $projectPath, string $buildConfiguration)
+        public function __construct(string $projectFilePath, string $buildConfiguration)
         {
-            parent::__construct($projectPath, $buildConfiguration);
+            parent::__construct($projectFilePath, $buildConfiguration);
 
             // Package-specific compression attributes
             if(isset($this->getBuildConfiguration()->getOptions()['compression']) && is_bool($this->getBuildConfiguration()->getOptions()['compression']))
@@ -193,7 +193,6 @@
             $header->setEntryPoint($this->getProjectConfiguration()->getEntryPoint());
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
-            $header->setDependencyReferences($this->getDependencyReferences());
 
             return $header;
         }
