@@ -128,7 +128,7 @@
             }
 
             // Set working directory
-            $workingDirectory = MacroVariable::translateMacros($unit->getWorkingDirectory());
+            $workingDirectory = MacroVariable::fromInput($unit->getWorkingDirectory());
             if(!empty($workingDirectory))
             {
                 $process->setWorkingDirectory($workingDirectory);
