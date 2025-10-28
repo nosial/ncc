@@ -24,10 +24,14 @@
 
     use InvalidArgumentException;
     use ncc\Abstracts\AbstractCompiler;
+    use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use ncc\Compilers\PackageCompiler;
     use ncc\Enums\BuildType;
+    use ncc\Enums\MacroVariable;
     use ncc\Exceptions\CompileException;
     use ncc\Exceptions\InvalidPropertyException;
+    use ncc\Exceptions\IOException;
     use ncc\Interfaces\SerializableInterface;
     use ncc\Interfaces\ValidatorInterface;
     use ncc\Libraries\Yaml\Yaml;
@@ -660,15 +664,11 @@
          * Saves the Project configuration to a YAML file
          *
          * @param string $filePath The path to the YAML file
-         * @throws RuntimeException If the file cannot be written
+         * @throws IOException If the file cannot be created
          */
         public function save(string $filePath): void
         {
-            $yaml = Yaml::dump($this->toArray(), 4, 2);
-            if(file_put_contents($filePath, $yaml) === false)
-            {
-                throw new RuntimeException('Failed to write project configuration to \'' . $filePath . '\'');
-            }
+            IO::writeFile($filePath, Yaml::dump($this->toArray(), 4, 2));
         }
 
         /**
@@ -697,16 +697,44 @@
          * Loads a Project configuration from a YAML file
          *
          * @param string $filePath The path to the YAML file
+         * @param bool $macros Optional. Whether to process macros in the YAML file (default: false)
          * @return Project The loaded Project configuration
          */
-        public static function fromFile(string $filePath): Project
+        public static function fromFile(string $filePath, bool $macros=false): Project
         {
             if(!file_exists($filePath) || !is_readable($filePath))
             {
                 throw new InvalidArgumentException('The file \'' . $filePath . '\' does not exist or is not readable');
             }
 
-            return new self(Yaml::parse(file_get_contents($filePath)));
+
+            $results = Yaml::parse(file_get_contents($filePath));
+
+            // If macros are enabled, process them
+            if($macros)
+            {
+                Logger::getLogger()->debug(sprintf('Applying macros to %s', $filePath));
+                $results = MacroVariable::fromArray($results, handle: function($input) use ($results, $filePath){
+                    return match($input)
+                    {
+                        MacroVariable::PROJECT_PATH->value => dirname($filePath),
+                        MacroVariable::ASSEMBLY_NAME->value => $results['assembly']['name'] ?? null,
+                        MacroVariable::ASSEMBLY_PACKAGE->value => $results['assembly']['package'] ?? null,
+                        MacroVariable::ASSEMBLY_VERSION->value => $results['assembly']['version'] ?? null,
+                        MacroVariable::ASSEMBLY_URL->value => $results['assembly']['url'] ?? null,
+                        MacroVariable::ASSEMBLY_LICENSE->value => $results['assembly']['license'] ?? null,
+                        MacroVariable::ASSEMBLY_DESCRIPTION->value => $results['assembly']['description'] ?? null,
+                        MacroVariable::ASSEMBLY_AUTHOR->value => $results['assembly']['author'] ?? null,
+                        MacroVariable::ASSEMBLY_ORGANIZATION->value => $results['assembly']['organization'] ?? null,
+                        MacroVariable::ASSEMBLY_PRODUCT->value => $results['assembly']['product'] ?? null,
+                        MacroVariable::ASSEMBLY_COPYRIGHT->value => $results['assembly']['copyright'] ?? null,
+                        MacroVariable::ASSEMBLY_TRADEMARK->value => $results['assembly']['trademark'] ?? null,
+                        default => $input
+                    };
+                });
+            }
+
+            return new self($results);
         }
 
         /**
@@ -722,13 +750,21 @@
          */
         public static function compilerFromFile(string $filePath, ?string $buildConfigurationName=null): AbstractCompiler
         {
-            $projectConfiguration = self::fromFile($filePath);
+            Logger::getLogger()->debug('Creating compiler from project configuration file: ' . $filePath);
+            $projectConfiguration = self::fromFile($filePath, true);
+
             if($buildConfigurationName === null)
             {
                 $buildConfigurationName = $projectConfiguration->getDefaultBuild();
+                Logger::getLogger()->debug(sprintf('No build configuration name provided, using default build configuration: %s', $buildConfigurationName));
             }
 
             $buildConfiguration = $projectConfiguration->getBuildConfiguration($buildConfigurationName);
+            if($buildConfiguration === null)
+            {
+                throw new CompileException('Could not find the build configuration in the project configuration');
+            }
+
             return match ($buildConfiguration->getType())
             {
                 BuildType::NCC_PACKAGE => new PackageCompiler(dirname($filePath), $buildConfigurationName),
@@ -900,7 +936,6 @@
         private static function validateExecutionUnitExists(array $data, string $name): bool
         {
             // TODO: Update this! Currently only works for single string, not arrays of strings.
-
             if(!isset($data['execution_units']) || !is_array($data['execution_units']))
             {
                 return false;
