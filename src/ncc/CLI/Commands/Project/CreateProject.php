@@ -24,6 +24,8 @@
 
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\Classes\IO;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\Project;
 
     class CreateProject extends AbstractCommandHandler
@@ -47,7 +49,7 @@
 
             if(isset($argv['path']))
             {
-                $projectPath = realpath(rtrim($argv['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $argv['name']);
+                $projectPath = rtrim($argv['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $argv['name'];
             }
             else
             {
@@ -61,23 +63,43 @@
             }
 
             // If the project path does not exist, and it failed to create it, throw an error.
-            if(!@mkdir($projectPath, recursive: true))
+            try
+            {
+                IO::mkdir($projectPath);
+            }
+            catch (IOException $e)
             {
                 Console::error(sprintf('Failed to create path %s', $projectPath));
                 return 1;
             }
 
             $project = Project::createNew($argv['name'], $argv['package']);
-            $sourcePath = $projectPath . DIRECTORY_SEPARATOR . 'project.yml';
+            $sourcePath = $projectPath . DIRECTORY_SEPARATOR . 'src';
 
-            if(!file_exists($sourcePath) && !@mkdir($sourcePath, recursive: true))
+            try
+            {
+                if(!file_exists($sourcePath))
+                {
+                    IO::mkdir($sourcePath);
+                }
+            }
+            catch(IOException $e)
             {
                 Console::error(sprintf('Failed to create source path %s', $sourcePath));
+                return 1;
             }
 
-            $project->save($projectPath . DIRECTORY_SEPARATOR . 'project.yml');
-            Console::out("Project created successfully at: " . $projectPath);
+            try
+            {
+                $project->save($projectPath . DIRECTORY_SEPARATOR . 'project.yml');
+            }
+            catch (IOException $e)
+            {
+                Console::error(sprintf('Failed to create project configuration at %s', $projectPath . DIRECTORY_SEPARATOR . 'project.yml'));
+                return 1;
+            }
 
+            Console::out("Project created successfully at: " . $projectPath);
             return 0;
         }
     }
