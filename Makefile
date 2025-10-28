@@ -52,8 +52,10 @@ target/ncc.phar: target
 	php -d phar.readonly=0 -r " \
 		\$$phar = new Phar('$(TARGET_PHAR)', 0, 'ncc.phar'); \
 		\$$phar->buildFromDirectory('$(TARGET_BUILD)'); \
-		\$$phar->setStub(\$$phar->createDefaultStub('ncc.php')); \
+		\$$stub = \"#!/usr/bin/env php\n\" . \$$phar->createDefaultStub('ncc.php'); \
+		\$$phar->setStub(\$$stub); \
 	"
+	chmod +x $(TARGET_PHAR)
 	cp $(INSTALLER_PATH) $(TARGET_DIR)/install.sh
 	chmod +x $(TARGET_DIR)/install.sh
 
