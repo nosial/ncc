@@ -22,6 +22,7 @@
 
     namespace ncc\CLI;
 
+    use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ProjectCommand;
     use ncc\Libraries\OptsLib\Parse;
 
@@ -54,6 +55,10 @@
             if(isset($argv['project']))
             {
                 return ProjectCommand::handle($argv);
+            }
+            elseif(isset($argv['build']))
+            {
+                return BuildCommand::handle($argv);
             }
             elseif(isset($argv['version']) || isset($argv['v']))
             {
