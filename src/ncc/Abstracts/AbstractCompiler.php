@@ -25,11 +25,13 @@
     use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\FileCollector;
+    use ncc\Classes\IO;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Exceptions\CompileException;
     use ncc\Exceptions\ExecutionUnitException;
     use ncc\Exceptions\InvalidPropertyException;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;
 
@@ -54,19 +56,19 @@
         /**
          * AbstractCompiler constructor.
          *
-         * @param string $projectPath The path to the project configuration file or the project directory.
+         * @param string $projectFilePath The path to the project configuration file or the project directory.
          * @param string $buildConfiguration The build configuration to use.
          */
-        public function __construct(string $projectPath, string $buildConfiguration)
+        public function __construct(string $projectFilePath, string $buildConfiguration)
         {
-            $projectPath = Helper::resolveProjectConfigurationPath($projectPath);
-            if($projectPath === null)
+            $projectFilePath = Helper::resolveProjectConfigurationPath($projectFilePath);
+            if($projectFilePath === null)
             {
                 throw new InvalidArgumentException("No project configuration file found");
             }
 
-            $this->projectPath = $projectPath;
-            $this->projectConfiguration = Project::fromFile($projectPath);
+            $this->projectPath = dirname($projectFilePath);
+            $this->projectConfiguration = Project::fromFile($projectFilePath, true);
 
             try
             {
@@ -85,10 +87,10 @@
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
             $this->sourcePath = $this->projectPath . DIRECTORY_SEPARATOR . $this->projectConfiguration->getSourcePath();
             $this->outputPath = $this->projectPath . DIRECTORY_SEPARATOR . $this->buildConfiguration->getOutput();
-            $this->includeResources = array_merge(['*.php'], $this->buildConfiguration->getIncludedComponents());
+            $this->includeComponents = array_merge(['*.php'], $this->buildConfiguration->getIncludedComponents());
             $this->excludeComponents = $this->buildConfiguration->getExcludedComponents();
             $this->includeResources = $this->buildConfiguration->getIncludedResources();
-            $this->includeResources = array_merge(['*.php'], $this->buildConfiguration->getExcludedResources());
+            $this->excludeResources = array_merge(['*.php'], $this->buildConfiguration->getExcludedResources());
             $this->requiredExecutionUnits = [];
 
             if($this->projectConfiguration->getEntryPoint() !== null)
@@ -320,7 +322,6 @@
         /**
          * Executes the execution units that is required to run in the post-compile stage
          *
-         * @return void
          * @throws ExecutionUnitException Thrown if one or more execution unit(s) failed to run
          */
         protected function postCompile(): void
@@ -346,6 +347,7 @@
          *                                        progress: A float value between 0.0 and 1.0 indicating
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
          * @throws CompileException Thrown if the compiler encounters an error.
+         * @throws IOException thrown if there was an IO error
          */
         protected abstract function compile(?callable $progressCallback=null, bool $overwrite=true): void;
 
@@ -361,6 +363,7 @@
          * @return void
          * @throws CompileException Thrown if the compiler encounters an error.
          * @throws ExecutionUnitException Thrown if one or more execution unit failed to run
+         * @throws IOException Thrown if there was an IO error
          */
         public function build(?callable $progressCallback=null, bool $overwrite=true): void
         {
