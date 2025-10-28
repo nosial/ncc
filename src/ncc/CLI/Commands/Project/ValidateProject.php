@@ -39,7 +39,7 @@
             $projectPath = getcwd();
             if(isset($argv['path']))
             {
-                $projectPath = realpath($argv['path']);
+                $projectPath = $argv['path'];
             }
 
             $projectPath = Helper::resolveProjectConfigurationPath($projectPath);
@@ -49,7 +49,7 @@
                 return 1;
             }
 
-            $projectConfiguration = Project::fromFile($projectPath);
+            $projectConfiguration = Project::fromFile($projectPath, true);
 
             try
             {
