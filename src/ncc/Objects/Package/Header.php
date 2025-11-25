@@ -63,7 +63,14 @@
             $this->entryPoint = $data['entry_point'] ?? null;
             $this->preInstall = $data['pre_install'] ?? null;
             $this->postInstall = $data['post_install'] ?? null;
-            $this->dependencyReferences = $data['dependencies'] ? array_map(function($item){ return DependencyReference::fromArray($item); }, $data['dependencies']) : null;
+            if(isset($data['dependencies']))
+            {
+                $this->dependencyReferences = array_map(function($item){ return DependencyReference::fromArray($item); }, $data['dependencies']);
+            }
+            else
+            {
+                $this->dependencyReferences = [];
+            }
         }
 
         /**
@@ -251,7 +258,7 @@
                 'entry_point' => $this->entryPoint,
                 'pre_install' => $this->preInstall,
                 'post_install' => $this->postInstall,
-                'dependency_references' => $this->dependencyReferences ? array_map(function($item){ $item->toArray(); }, $this->dependencyReferences) : null,
+                'dependencies' => $this->dependencyReferences ? array_map(function($item){ $item->toArray(); }, $this->dependencyReferences) : null,
             ];
         }
 
