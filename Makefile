@@ -10,7 +10,7 @@ DEPENDENCY_PAL = dependencies/pal/src/pal/Autoloader.php
 DEPENDENCY_LOGLIB2 = dependencies/LogLib2/src/LogLib2/*
 DEPENDENCY_OPTSLIB = dependencies/optslib/src/OptsLib/*
 DEPENDENCY_PHP_PARSER = dependencies/PHP-Parser/lib/PhpParser/*
-DEPENDENCY_YAML = dependencies/Yaml
+DEPENDENCY_YAML = dependencies/yaml
 DEPENDENCY_PROCESS = dependencies/Process
 
 .PHONY: build clean dependencies install
