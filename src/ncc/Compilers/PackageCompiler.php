@@ -27,6 +27,7 @@
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
     use ncc\Exceptions\PackageException;
+    use ncc\Objects\Package\DependencyReference;
     use ncc\Objects\Package\Header;
 
     class PackageCompiler extends AbstractCompiler
@@ -188,11 +189,15 @@
         private function createPackageHeader(): Header
         {
             $header = new Header();
+            $static = $this->isStaticallyLinked();
 
             $header->setBuildNumber($this->getBuildNumber());
             $header->setEntryPoint($this->getProjectConfiguration()->getEntryPoint());
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
+            $header->setDependencyReferences(array_map(function ($dependency) use ($static) {
+                return new DependencyReference($dependency, $static);
+            }, $this->getProjectConfiguration()->getDependencies() ?? []));
 
             return $header;
         }
