@@ -198,23 +198,24 @@
         }
 
         /**
-         * Creates a 10-byte size prefix for the given byte size.
+         * Creates a size prefix for the given byte size.
          *
-         * @param int $bytes The size in bytes to create the prefix for.
-         * @return string A 10-byte string representing the size, padded with null bytes.
-         * @throws InvalidArgumentException if the size exceeds the maximum allowed value.
+         * @param int $bytes The size in bytes.
+         * @return string The packed size prefix.
+         * @throws InvalidArgumentException if the size exceeds PHP_INT_MAX or is negative.
          */
         private function createSizePrefix(int $bytes): string
         {
-            // Maximum size that can fit in 10 bytes: 9,999,999,999
-            if ($bytes > 9999999999)
+            if ($bytes > PHP_INT_MAX)
             {
-                throw new InvalidArgumentException("The file is too large for the package, size exceeds maximum allowed bytes (9,999,999,999 bytes)");
+                throw new InvalidArgumentException(sprintf("The file is too large for the package, size exceeds maximum allowed bytes (%d bytes)", PHP_INT_MAX));
+            }
+            elseif($bytes < 0)
+            {
+                throw new InvalidArgumentException("The size cannot be negative");
             }
 
-            // Convert the integer to a string and pad with null bytes to make it 10 bytes
-            $sizeStr = (string)$bytes;
-            return $sizeStr . str_repeat("\x00", (10 - strlen($sizeStr)));
+            return pack('P', $bytes);
         }
 
         /**
