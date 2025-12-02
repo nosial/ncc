@@ -63,6 +63,22 @@
         }
 
         /**
+         * Sets the organization name of the package
+         *
+         * @param string $organization The organization name of the package to set
+         * @throws InvalidArgumentException thrown if the organization name is empty
+         */
+        public function setOrganization(string $organization): void
+        {
+            if(strlen($organization) === 0)
+            {
+                throw new InvalidArgumentException('The organization name cannot be empty otherwise an invalid package source may be formed');
+            }
+
+            $this->organization = $organization;
+        }
+
+        /**
          * Get the name of the package.
          *
          * @return string The name of the package.
@@ -70,6 +86,16 @@
         public function getName(): string
         {
             return $this->name;
+        }
+
+        public function setName(string $name): void
+        {
+            if(strlen($name) === 0)
+            {
+                throw new InvalidArgumentException('The name of the package source cannot be empty');
+            }
+
+            $this->name = $name;
         }
 
         /**
@@ -83,6 +109,29 @@
         }
 
         /**
+         * Sets the version of the package source
+         *
+         * @param string $version The version of the package source to set
+         * @throws InvalidArgumentException thrown if the version is empty or invalid
+         */
+        public function setVersion(string $version): void
+        {
+            // TODO: Validate the version to be a valid SemVer structure.
+            if(strlen($version) === 0)
+            {
+                throw new InvalidArgumentException('The package version cannot be empty, it must be a valid SemVer version or "latest"');
+            }
+
+            if(strtolower($version) === 'latest')
+            {
+                $this->version = 'latest';
+                return;
+            }
+
+            $this->version = $version;
+        }
+
+        /**
          * Get the repository name.
          *
          * @return string The repository name.
@@ -90,6 +139,22 @@
         public function getRepository(): string
         {
             return $this->repository;
+        }
+
+        /**
+         * Sets the repository of the package source
+         *
+         * @param string $repository The repository to set to the package source
+         * @return void
+         */
+        public function setRepository(string $repository): void
+        {
+            if(strlen($repository) === 0)
+            {
+                throw new InvalidArgumentException('The repository name cannot be empty');
+            }
+
+            $this->repository = $repository;
         }
 
         /**
