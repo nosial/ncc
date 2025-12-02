@@ -24,7 +24,9 @@
 
     use ncc\Abstracts\AbstractProjectConverter;
     use ncc\Classes\IO;
+    use ncc\Classes\Utilities;
     use ncc\CLI\Logger;
+    use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
@@ -157,7 +159,7 @@
         {
             if(isset($assembly['name']))
             {
-                $project->getAssembly()->setName($assembly['name']);
+                $project->getAssembly()->setName($this->convertMacros($assembly['name']));
             }
             else
             {
@@ -166,7 +168,7 @@
 
             if(isset($assembly['package']))
             {
-                $project->getAssembly()->setPackage($assembly['package']);
+                $project->getAssembly()->setPackage($this->convertMacros($assembly['package']));
             }
             else
             {
@@ -209,7 +211,7 @@
         {
             if(isset($build['source_path']))
             {
-                $project->setSourcePath($build['source_path']);
+                $project->setSourcePath($this->convertMacros($build['source_path']));
             }
 
             if(isset($build['configurations']))
@@ -249,7 +251,7 @@
 
                 if(isset($legacyConfiguration['output']))
                 {
-                    $convertedArray['output'] = $legacyConfiguration['output'];
+                    $convertedArray['output'] = $this->convertMacros($legacyConfiguration['output']);
                 }
 
                 if(isset($legacyConfiguration['build_type']))
@@ -269,7 +271,10 @@
 
                 if(isset($legacyConfiguration['define_constants']) && is_array($legacyConfiguration['define_constants']))
                 {
-                    $convertedArray['definitions'] = $legacyConfiguration['define_constants'];
+                    $convertedArray['definitions'] = array_map(function ($constantValue)
+                    {
+                        return $this->convertMacros($constantValue);
+                    }, $legacyConfiguration['define_constants']);;
                 }
 
                 // Note: Build configuration dependency configurations are no longer supported.
@@ -367,5 +372,60 @@
             }
 
             return $project;
+        }
+
+        /**
+         * Converts Macros from the legacy format to the currently supported format
+         *
+         * @param string $input The input string of the string to convert
+         * @return string The output of the resulting string
+         */
+        private function convertMacros(string $input): string
+        {
+            return Utilities::replaceString($input, [
+                '%ASSEMBLY.NAME%' => MacroVariable::ASSEMBLY_NAME,
+                '%ASSEMBLY.PACKAGE%' => MacroVariable::ASSEMBLY_PACKAGE,
+                '%ASSEMBLY.DESCRIPTION%' => MacroVariable::ASSEMBLY_DESCRIPTION,
+                '%ASSEMBLY.COMPANY%' => MacroVariable::ASSEMBLY_ORGANIZATION,
+                '%ASSEMBLY.PRODUCT%' => MacroVariable::ASSEMBLY_PRODUCT,
+                '%ASSEMBLY.COPYRIGHT%' => MacroVariable::ASSEMBLY_COPYRIGHT,
+                '%ASSEMBLY.TRADEMARK%' => MacroVariable::ASSEMBLY_TRADEMARK,
+                '%ASSEMBLY.VERSION%' => MacroVariable::ASSEMBLY_VERSION,
+                '%COMPILE_TIMESTAMP%' => MacroVariable::COMPILE_TIMESTAMP,
+                '%d%' => MacroVariable::d,
+                '%D%' => MacroVariable::D,
+                '%j%' => MacroVariable::j,
+                '%l%' => MacroVariable::l,
+                '%N%' => MacroVariable::N,
+                '%S%' => MacroVariable::S,
+                '%w%' => MacroVariable::w,
+                '%z%' => MacroVariable::z,
+                '%W%' => MacroVariable::W,
+                '%F%' => MacroVariable::F,
+                '%m%' => MacroVariable::m,
+                '%M%' => MacroVariable::M,
+                '%n%' => MacroVariable::n,
+                '%t%' => MacroVariable::t,
+                '%L%' => MacroVariable::L,
+                '%o%' => MacroVariable::o,
+                '%Y%' => MacroVariable::Y,
+                '%y%' => MacroVariable::y,
+                '%a%' => MacroVariable::a,
+                '%A%' => MacroVariable::A,
+                '%B%' => MacroVariable::B,
+                '%g%' => MacroVariable::g,
+                '%G%' => MacroVariable::G,
+                '%h%' => MacroVariable::h,
+                '%H%' => MacroVariable::H,
+                '%i%' => MacroVariable::i,
+                '%s%' => MacroVariable::s,
+                '%c%' => MacroVariable::c,
+                '%r%' => MacroVariable::r,
+                '%u%' => MacroVariable::u,
+                '%DEFAULT_BUILD_CONFIGURATION%' => MacroVariable::DEFAULT_BUILD_CONFIGURATION,
+                '%BUILD_OUTPUT_PATH%' => MacroVariable::BUILD_OUTPUT_PATH,
+                '%CWD%' => MacroVariable::CURRENT_WORKING_DIRECTORY,
+                '%PID%' => MacroVariable::PROCESS_ID,
+            ]);
         }
     }
