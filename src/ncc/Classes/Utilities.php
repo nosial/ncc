@@ -145,4 +145,72 @@
            return null;
        }
 
+        /**
+         * Replaces all occurrences of search strings with their corresponding replacement values.
+         * This method implements string replacement without using str_replace.
+         *
+         * @param string $input The input string to perform replacements on
+         * @param array $replace An associative array where keys are strings to find and values are their replacements
+         * @return string The resulting string after all replacements have been applied
+         */
+        public static function replaceString(string $input, array $replace): string
+        {
+            if (empty($replace))
+            {
+                return $input;
+            }
+
+            $result = $input;
+
+            foreach ($replace as $search => $replacement)
+            {
+                if (!is_string($search) || !is_string($replacement))
+                {
+                    continue;
+                }
+
+                if ($search === '')
+                {
+                    continue;
+                }
+
+                $searchLen = strlen($search);
+                $resultLen = strlen($result);
+                $newResult = '';
+                $i = 0;
+
+                while ($i < $resultLen)
+                {
+                    // Check if we found the search string at current position
+                    $found = true;
+                    for ($j = 0; $j < $searchLen; $j++)
+                    {
+                        if ($i + $j >= $resultLen || $result[$i + $j] !== $search[$j])
+                        {
+                            $found = false;
+                            break;
+                        }
+                    }
+
+                    if ($found)
+                    {
+                        // Append the replacement string
+                        $newResult .= $replacement;
+                        // Skip past the search string
+                        $i += $searchLen;
+                    }
+                    else
+                    {
+                        // Append the current character
+                        $newResult .= $result[$i];
+                        $i++;
+                    }
+                }
+
+                $result = $newResult;
+            }
+
+            return $result;
+        }
+
     }
