@@ -25,6 +25,7 @@
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\CLI\Commands\Project\ApplyTemplate;
+    use ncc\CLI\Commands\Project\ConvertProject;
     use ncc\CLI\Commands\Project\CreateProject;
     use ncc\CLI\Commands\Project\ValidateProject;
 
@@ -46,6 +47,10 @@
             elseif(isset($argv['template']))
             {
                 return ApplyTemplate::handle($argv);
+            }
+            elseif(isset($argv['convert']))
+            {
+                return ConvertProject::handle($argv);
             }
             elseif(isset($argv['help']) || isset($argv['h']))
             {
@@ -78,6 +83,7 @@
                 Console::out('  create           Create a new ncc project');
                 Console::out('  validate         Validates a given ncc project and gives inspection results');
                 Console::out('  template         Apply automatic templates to your existing project');
+                Console::out('  convert          Convert an existing project to an ncc project');
                 Console::out(PHP_EOL . 'Use "ncc project [command] --help" for more information about a command.');
                 return;
             }
@@ -107,6 +113,15 @@
                     Console::out('Options:');
                     Console::out('  - name     (Required)   The name of the template to apply');
                     Console::out('  - path     (Optional)   The path to the project, if not specified, the current working directory is used');
+                    break;
+
+                case 'convert':
+                    Console::out('Usage: ncc project convert [--path=path/to/project]');
+                    Console::out('The convert command allows you to convert an existing project from another format (eg; Composer)');
+                    Console::out('to the ncc v3+ project format. Currently supported formats are Composer.' . PHP_EOL);
+                    Console::out('Options:');
+                    Console::out('  - path     (Optional)   The path to the project, if not specified, the current working directory is used');
+                    Console::out('  - format   (Optional)   The format to convert from, ncc automatically detects the format if not specified; currently only "composer" and "legacy" is supported');
                     break;
 
                 default:
