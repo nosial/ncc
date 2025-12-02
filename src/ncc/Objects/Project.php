@@ -25,6 +25,7 @@
     use InvalidArgumentException;
     use ncc\Abstracts\AbstractCompiler;
     use ncc\Classes\IO;
+    use ncc\Classes\Utilities;
     use ncc\CLI\Logger;
     use ncc\Compilers\PackageCompiler;
     use ncc\Enums\BuildType;
@@ -38,7 +39,6 @@
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\BuildConfiguration;
     use ncc\Objects\Project\ExecutionUnit;
-    use RuntimeException;
 
     class Project implements SerializableInterface, ValidatorInterface
     {
@@ -69,7 +69,7 @@
          *
          * @param array $data Project Configuration data as an array representation
          */
-        public function __construct(array $data)
+        public function __construct(array $data=[])
         {
             $this->sourcePath = $data['source'] ?? 'src';
             $this->defaultBuild = $data['default_build'] ?? 'release';
@@ -424,21 +424,26 @@
         /**
          * Returns a specific dependency by its name
          *
-         * @param string $dependencyName The name of the dependency to retrieve
+         * @param PackageSource|string $dependency The name of the dependency to retrieve
          * @return PackageSource|null The PackageSource object if found, or null if not found or no dependencies are defined
          */
-        public function getDependency(string $dependencyName): ?PackageSource
+        public function getDependency(PackageSource|string $dependency): ?PackageSource
         {
+            if($dependency instanceof PackageSource)
+            {
+                $dependency = (string)$dependency->getName();
+            }
+
             if($this->dependencies === null)
             {
                 return null;
             }
 
-            foreach($this->dependencies as $dependency)
+            foreach($this->dependencies as $packageSource)
             {
-                if((string)$dependency->getName() === $dependencyName)
+                if((string)$packageSource->getName() === $dependency)
                 {
-                    return $dependency;
+                    return $packageSource;
                 }
             }
 
@@ -448,22 +453,27 @@
         /**
          * Checks if a dependency with the given name exists
          *
-         * @param string $dependencyName The name of the dependency to check
+         * @param PackageSource|string $dependency The name of the dependency to check
          * @return bool True if the dependency exists, false otherwise
          */
-        public function dependencyExists(string $dependencyName): bool
+        public function dependencyExists(PackageSource|string $dependency): bool
         {
-            return $this->getDependency($dependencyName) !== null;
+            return $this->getDependency($dependency) !== null;
         }
 
         /**
          * Adds a new dependency to the project
          *
-         * @param PackageSource $dependency The PackageSource object representing the dependency to add
+         * @param PackageSource|string $dependency The PackageSource object representing the dependency to add
          * @throws InvalidArgumentException If a dependency with the same name already exists
          */
-        public function addDependency(PackageSource $dependency): void
+        public function addDependency(PackageSource|string $dependency): void
         {
+            if(is_string($dependency))
+            {
+                $dependency = new PackageSource($dependency);
+            }
+
             if($this->dependencies === null)
             {
                 $this->dependencies = [];
@@ -480,18 +490,23 @@
         /**
          * Removes a dependency from the project by its name
          *
-         * @param string $dependencyName The name of the dependency to remove
+         * @param PackageSource|string $dependency The name of the dependency to remove
          */
-        public function removeDependency(string $dependencyName): void
+        public function removeDependency(PackageSource|string $dependency): void
         {
+            if($dependency instanceof PackageSource)
+            {
+                $dependency = (string)$dependency;
+            }
+
             if($this->dependencies === null)
             {
                 return;
             }
 
-            foreach($this->dependencies as $index => $dependency)
+            foreach($this->dependencies as $index => $packageSource)
             {
-                if((string)$dependency->getName() === $dependencyName)
+                if((string)$packageSource->getName() === $dependency)
                 {
                     array_splice($this->dependencies, $index, 1);
                     return;
@@ -668,7 +683,7 @@
          */
         public function save(string $filePath): void
         {
-            IO::writeFile($filePath, Yaml::dump($this->toArray(), 4, 2));
+            IO::writeFile($filePath, Yaml::dump(Utilities::cleanArray($this->toArray()), 4, 2));
         }
 
         /**
