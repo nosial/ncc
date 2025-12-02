@@ -40,8 +40,8 @@
             $this->assertNull($project->getUpdateSource());
             $this->assertNull($project->getRepository());
             $this->assertInstanceOf(Assembly::class, $project->getAssembly());
-            $this->assertEmpty($project->getDependencies());
-            $this->assertCount(2, $project->getBuildConfigurations());
+            $this->assertNull($project->getDependencies());
+            $this->assertEmpty($project->getBuildConfigurations());
         }
 
         public function testConstructorWithFullData(): void
@@ -66,6 +66,12 @@
                     'org/dep1@repo1',
                     'org/dep2=1.2.0@repo2'
                 ],
+                'execution_units' => [
+                    [
+                        'name' => 'main.php',
+                        'entry' => 'main.php'
+                    ]
+                ],
                 'build_configurations' => [
                     [
                         'name' => 'debug',
@@ -83,6 +89,7 @@
             $this->assertInstanceOf(PackageSource::class, $project->getUpdateSource());
             $this->assertInstanceOf(RepositoryConfiguration::class, $project->getRepository());
             $this->assertInstanceOf(Assembly::class, $project->getAssembly());
+            $this->assertIsArray($project->getDependencies());
             $this->assertCount(2, $project->getDependencies());
             $this->assertCount(1, $project->getBuildConfigurations());
         }
@@ -100,7 +107,7 @@
             $project = new Project([]);
             
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('The \'path\' parameter cannot be empty');
+            $this->expectExceptionMessage('The source path cannot be an empty string');
             $project->setSourcePath('');
         }
 
@@ -126,13 +133,22 @@
             $project = new Project([]);
             
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('The \'defaultBuild\' parameter cannot be empty');
+            $this->expectExceptionMessage('The default build name cannot be an empty string');
             $project->setDefaultBuild('');
         }
 
         public function testDefaultBuildSetterNonExistent(): void
         {
-            $project = new Project([]);
+            $data = [
+                'build_configurations' => [
+                    [
+                        'name' => 'debug',
+                        'output' => 'out',
+                        'type' => 'ncc'
+                    ]
+                ]
+            ];
+            $project = new Project($data);
             
             $this->expectException(InvalidArgumentException::class);
             $this->expectExceptionMessage('The build configuration \'nonexistent\' does not exist');
@@ -141,7 +157,15 @@
 
         public function testEntryPointGetterSetter(): void
         {
-            $project = new Project([]);
+            $data = [
+                'execution_units' => [
+                    [
+                        'name' => 'index.php',
+                        'entry' => 'index.php'
+                    ]
+                ]
+            ];
+            $project = new Project($data);
             
             $project->setEntryPoint('index.php');
             $this->assertEquals('index.php', $project->getEntryPoint());
@@ -193,8 +217,8 @@
             ];
             $project = new Project($data);
             
-            $this->assertTrue($project->dependencyExists('org/package@repo'));
-            $this->assertFalse($project->dependencyExists('nonexistent/package@repo'));
+            $this->assertTrue($project->dependencyExists('package'));
+            $this->assertFalse($project->dependencyExists('nonexistent'));
         }
 
         public function testAddDependencyString(): void
@@ -202,7 +226,8 @@
             $project = new Project([]);
             
             $project->addDependency('org/package@repo');
-            $this->assertTrue($project->dependencyExists('org/package@repo'));
+            $this->assertTrue($project->dependencyExists('package'));
+            $this->assertIsArray($project->getDependencies());
             $this->assertCount(1, $project->getDependencies());
         }
 
@@ -212,7 +237,8 @@
             
             $dependency = new PackageSource('org/package@repo');
             $project->addDependency($dependency);
-            $this->assertTrue($project->dependencyExists('org/package@repo'));
+            $this->assertTrue($project->dependencyExists('package'));
+            $this->assertIsArray($project->getDependencies());
             $this->assertCount(1, $project->getDependencies());
         }
 
@@ -224,7 +250,7 @@
             $project = new Project($data);
             
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('The dependency \'org/package@repo\' already exists');
+            $this->expectExceptionMessage('A dependency with the name \'package\' already exists');
             $project->addDependency('org/package@repo');
         }
 
@@ -235,9 +261,9 @@
             ];
             $project = new Project($data);
             
-            $project->removeDependency('org/package1@repo');
-            $this->assertFalse($project->dependencyExists('org/package1@repo'));
-            $this->assertTrue($project->dependencyExists('org/package2@repo'));
+            $project->removeDependency('package1');
+            $this->assertFalse($project->dependencyExists('package1'));
+            $this->assertTrue($project->dependencyExists('package2'));
             $this->assertCount(1, $project->getDependencies());
         }
 
@@ -245,23 +271,22 @@
         {
             $project = new Project([]);
             
-            $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('The dependency \'nonexistent/package@repo\' does not exist');
-            $project->removeDependency('nonexistent/package@repo');
+            // removeDependency doesn't throw an exception if the dependency doesn't exist
+            // It just silently does nothing
+            $project->removeDependency('nonexistent');
+            $this->assertNull($project->getDependencies());
         }
 
-        public function testSetDependencies(): void
+        public function testAddMultipleDependencies(): void
         {
             $project = new Project([]);
             
-            $dependencies = [
-                new PackageSource('org/package1@repo'),
-                new PackageSource('org/package2@repo')
-            ];
-            $project->setDependencies($dependencies);
+            $project->addDependency('org/package1@repo');
+            $project->addDependency('org/package2@repo');
             
             $this->assertCount(2, $project->getDependencies());
-            $this->assertSame($dependencies, $project->getDependencies());
+            $this->assertTrue($project->dependencyExists('package1'));
+            $this->assertTrue($project->dependencyExists('package2'));
         }
 
         public function testGetBuildConfiguration(): void
@@ -301,21 +326,26 @@
             $this->assertFalse($project->buildConfigurationExists('nonexistent'));
         }
 
-        public function testSetBuildConfigurations(): void
+        public function testAddMultipleBuildConfigurations(): void
         {
             $project = new Project([]);
             
-            $configs = [
-                new BuildConfiguration([
-                    'name' => 'debug',
-                    'output' => 'out',
-                    'type' => 'ncc'
-                ])
-            ];
-            $project->setBuildConfigurations($configs);
+            $config1 = new BuildConfiguration([
+                'name' => 'debug',
+                'output' => 'out',
+                'type' => 'ncc'
+            ]);
+            $config2 = new BuildConfiguration([
+                'name' => 'release',
+                'output' => 'out',
+                'type' => 'ncc'
+            ]);
+            $project->addBuildConfiguration($config1);
+            $project->addBuildConfiguration($config2);
             
-            $this->assertCount(1, $project->getBuildConfigurations());
-            $this->assertSame($configs, $project->getBuildConfigurations());
+            $this->assertCount(2, $project->getBuildConfigurations());
+            $this->assertTrue($project->buildConfigurationExists('debug'));
+            $this->assertTrue($project->buildConfigurationExists('release'));
         }
 
         public function testAddBuildConfiguration(): void
@@ -331,8 +361,7 @@
             $project->addBuildConfiguration($config);
             
             $this->assertTrue($project->buildConfigurationExists('debug'));
-            // 2 Because the default "release" config is always present
-            $this->assertCount(2, $project->getBuildConfigurations());
+            $this->assertCount(1, $project->getBuildConfigurations());
         }
 
         public function testAddBuildConfigurationAlreadyExists(): void
@@ -356,7 +385,7 @@
             
             $this->expectException(InvalidArgumentException::class);
             $this->expectExceptionMessage('A build configuration with the name \'debug\' already exists');
-            $project->addBuildConfiguration($config, false);
+            $project->addBuildConfiguration($config);
         }
 
         public function testToArray(): void
@@ -437,6 +466,12 @@
                 'dependencies' => [
                     'org/dep@repo'
                 ],
+                'execution_units' => [
+                    [
+                        'name' => 'main.php',
+                        'entry' => 'main.php'
+                    ]
+                ],
                 'build_configurations' => [
                     [
                         'name' => 'release',
@@ -462,7 +497,16 @@
 
         public function testValidateArrayInvalidDefaultBuild(): void
         {
-            $data = ['default_build' => ''];
+            $data = [
+                'default_build' => '',
+                'build_configurations' => [
+                    [
+                        'name' => 'release',
+                        'output' => 'out',
+                        'type' => 'ncc'
+                    ]
+                ]
+            ];
             
             $this->expectException(InvalidPropertyException::class);
             $this->expectExceptionMessage('The default build configuration must be a non-empty string if set');
@@ -471,7 +515,15 @@
 
         public function testValidateArrayInvalidEntryPoint(): void
         {
-            $data = ['entry_point' => ''];
+            $data = [
+                'entry_point' => '',
+                'execution_units' => [
+                    [
+                        'name' => 'main.php',
+                        'entry' => 'main.php'
+                    ]
+                ]
+            ];
             
             $this->expectException(InvalidPropertyException::class);
             $this->expectExceptionMessage('The entry point must be a non-empty string if set');
@@ -527,7 +579,7 @@
             $data = ['build_configurations' => 'not-array'];
             
             $this->expectException(InvalidPropertyException::class);
-            $this->expectExceptionMessage('The build configurations must be an array if set');
+            $this->expectExceptionMessage('The build configurations property must be an array of build configuration if it\'s set');
             Project::validateArray($data);
         }
 

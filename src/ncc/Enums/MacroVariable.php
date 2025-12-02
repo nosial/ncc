@@ -167,7 +167,7 @@
             }
 
             // Pattern to match macro variables like ${PROJECT_PATH} or ${ASSEMBLY.NAME}
-            $pattern = '/\$\{([A-Z_.]+)}/';
+            $pattern = '/\$\{([A-Za-z_.]+)}/';
             $unresolvedMacros = [];
 
             // Perform replacement recursively

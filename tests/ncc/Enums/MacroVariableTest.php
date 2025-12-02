@@ -32,26 +32,24 @@
          */
         public function testBuiltinMacrosSimpleStrings()
         {
-            // Test DATE macro
-            $result = MacroVariable::fromInput('Today is ${DATE}');
-            $this->assertStringContainsString(date('Y-m-d'), $result);
-            $this->assertStringStartsWith('Today is ', $result);
+            // Test date components using format specifiers
+            $result = MacroVariable::fromInput('Today is ${Y}-${m}-${d}');
+            $this->assertEquals('Today is ' . date('Y-m-d'), $result);
 
-            // Test TIME macro
-            $result = MacroVariable::fromInput('Current time: ${TIME}');
-            $this->assertStringContainsString(':', $result);
-            $this->assertStringStartsWith('Current time: ', $result);
+            // Test TIME macro using format specifiers
+            $result = MacroVariable::fromInput('Current time: ${H}:${i}:${s}');
+            $this->assertEquals('Current time: ' . date('H:i:s'), $result);
 
             // Test YEAR macro
-            $result = MacroVariable::fromInput('Year: ${YEAR}');
+            $result = MacroVariable::fromInput('Year: ${Y}');
             $this->assertEquals('Year: ' . date('Y'), $result);
 
             // Test MONTH macro
-            $result = MacroVariable::fromInput('Month: ${MONTH}');
+            $result = MacroVariable::fromInput('Month: ${m}');
             $this->assertEquals('Month: ' . date('m'), $result);
 
             // Test DAY macro
-            $result = MacroVariable::fromInput('Day: ${DAY}');
+            $result = MacroVariable::fromInput('Day: ${d}');
             $this->assertEquals('Day: ' . date('d'), $result);
         }
 
@@ -60,25 +58,23 @@
          */
         public function testBuiltinMacrosLongStrings()
         {
-            $input = 'This is a long string generated on ${DATE} at ${TIME}. ' .
-                     'The year is ${YEAR}, month is ${MONTH}, and day is ${DAY}. ' .
+            $input = 'This is a long string generated on ${Y}-${m}-${d} at ${H}:${i}:${s}. ' .
+                     'The year is ${Y}, month is ${m}, and day is ${d}. ' .
                      'Current working directory: ${CWD}. ' .
-                     'Full datetime: ${DATETIME}. ' .
-                     'Hour: ${HOUR}, Minute: ${MINUTE}, Second: ${SECOND}.';
+                     'Full datetime: ${c}. ' .
+                     'Hour: ${H}, Minute: ${i}, Second: ${s}.';
 
             $result = MacroVariable::fromInput($input);
 
             // Verify no macros remain
-            $this->assertStringNotContainsString('${DATE}', $result);
-            $this->assertStringNotContainsString('${TIME}', $result);
-            $this->assertStringNotContainsString('${YEAR}', $result);
-            $this->assertStringNotContainsString('${MONTH}', $result);
-            $this->assertStringNotContainsString('${DAY}', $result);
+            $this->assertStringNotContainsString('${Y}', $result);
+            $this->assertStringNotContainsString('${m}', $result);
+            $this->assertStringNotContainsString('${d}', $result);
             $this->assertStringNotContainsString('${CWD}', $result);
-            $this->assertStringNotContainsString('${DATETIME}', $result);
-            $this->assertStringNotContainsString('${HOUR}', $result);
-            $this->assertStringNotContainsString('${MINUTE}', $result);
-            $this->assertStringNotContainsString('${SECOND}', $result);
+            $this->assertStringNotContainsString('${c}', $result);
+            $this->assertStringNotContainsString('${H}', $result);
+            $this->assertStringNotContainsString('${i}', $result);
+            $this->assertStringNotContainsString('${s}', $result);
 
             // Verify expected values are present
             $this->assertStringContainsString(date('Y-m-d'), $result);
@@ -136,7 +132,7 @@
                      'License: ${ASSEMBLY.LICENSE}\n' .
                      'Description: ${ASSEMBLY.DESCRIPTION}\n' .
                      '${ASSEMBLY.COPYRIGHT}\n' .
-                     'Generated on: ${DATE} at ${TIME}';
+                     'Generated on: ${Y}-${m}-${d} at ${H}:${i}:${s}';
 
             $result = MacroVariable::fromInput($input, false, $handler);
 
@@ -148,6 +144,7 @@
             $this->assertStringContainsString('License: MIT', $result);
             $this->assertStringContainsString('Description: An awesome project that does amazing things', $result);
             $this->assertStringContainsString('Copyright (c) 2025 Acme Corp', $result);
+            $this->assertStringContainsString(date('Y-m-d'), $result);
         }
 
         /**
@@ -158,16 +155,16 @@
             $handler = function($macro) {
                 // Try to override a built-in macro
                 return match($macro) {
-                    '${DATE}' => 'CUSTOM_DATE',
+                    '${Y}' => 'CUSTOM_YEAR',
                     '${ASSEMBLY.NAME}' => 'MyProject',
                     default => null
                 };
             };
 
-            // Built-in DATE should NOT be overridden
-            $result = MacroVariable::fromInput('Date: ${DATE}', false, $handler);
-            $this->assertStringContainsString(date('Y-m-d'), $result);
-            $this->assertStringNotContainsString('CUSTOM_DATE', $result);
+            // Built-in Y (year) should NOT be overridden
+            $result = MacroVariable::fromInput('Date: ${Y}', false, $handler);
+            $this->assertEquals('Date: ' . date('Y'), $result);
+            $this->assertStringNotContainsString('CUSTOM_YEAR', $result);
 
             // Custom macro should work
             $result = MacroVariable::fromInput('Name: ${ASSEMBLY.NAME}', false, $handler);
@@ -205,15 +202,15 @@
         public function testTranslateMacrosArraySimple()
         {
             $input = [
-                'date' => 'Today is ${DATE}',
-                'year' => 'Year: ${YEAR}',
+                'date' => 'Today is ${Y}-${m}-${d}',
+                'year' => 'Year: ${Y}',
                 'number' => 42,
                 'boolean' => true
             ];
 
             $result = MacroVariable::fromArray($input);
 
-            $this->assertStringContainsString(date('Y-m-d'), $result['date']);
+            $this->assertEquals('Today is ' . date('Y-m-d'), $result['date']);
             $this->assertEquals('Year: ' . date('Y'), $result['year']);
             $this->assertEquals(42, $result['number']);
             $this->assertTrue($result['boolean']);
@@ -237,18 +234,18 @@
                     'name' => '${ASSEMBLY.NAME}',
                     'version' => '${ASSEMBLY.VERSION}',
                     'metadata' => [
-                        'date' => '${DATE}',
+                        'date' => '${Y}-${m}-${d}',
                         'cwd' => '${CWD}'
                     ]
                 ],
-                'simple' => 'Year: ${YEAR}'
+                'simple' => 'Year: ${Y}'
             ];
 
             $result = MacroVariable::fromArray($input, false, $handler);
 
             $this->assertEquals('TestProject', $result['project']['name']);
             $this->assertEquals('1.0.0', $result['project']['version']);
-            $this->assertStringContainsString(date('Y-m-d'), $result['project']['metadata']['date']);
+            $this->assertEquals(date('Y-m-d'), $result['project']['metadata']['date']);
             $this->assertEquals(getcwd(), $result['project']['metadata']['cwd']);
             $this->assertEquals('Year: ' . date('Y'), $result['simple']);
         }
@@ -259,7 +256,7 @@
         public function testTranslateMacrosArrayStrictMode()
         {
             $input = [
-                'valid' => 'Today is ${DATE}',
+                'valid' => 'Today is ${Y}-${m}-${d}',
                 'invalid' => 'Project: ${ASSEMBLY.NAME}'
             ];
 
@@ -274,7 +271,7 @@
          */
         public function testMultipleMacrosInString()
         {
-            $result = MacroVariable::fromInput('${YEAR}-${MONTH}-${DAY}');
+            $result = MacroVariable::fromInput('${Y}-${m}-${d}');
             $this->assertEquals(date('Y') . '-' . date('m') . '-' . date('d'), $result);
         }
 
@@ -290,11 +287,10 @@
                 };
             };
 
-            $input = 'Generated on ${DATE} with ${CUSTOM.VALUE}';
+            $input = 'Generated on ${Y}-${m}-${d} with ${CUSTOM.VALUE}';
             $result = MacroVariable::fromInput($input, false, $handler);
 
-            $this->assertStringContainsString(date('Y-m-d'), $result);
-            $this->assertStringContainsString('CustomData', $result);
+            $this->assertEquals('Generated on ' . date('Y-m-d') . ' with CustomData', $result);
             $this->assertStringNotContainsString('${', $result);
         }
 
@@ -308,12 +304,12 @@
         }
 
         /**
-         * Test DATETIME macro format
+         * Test DATETIME macro format using c (ISO 8601 format)
          */
         public function testDateTimeMacro()
         {
-            $result = MacroVariable::fromInput('${DATETIME}');
-            // Should match pattern YYYY-MM-DD HH:MM:SS
-            $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result);
+            $result = MacroVariable::fromInput('${c}');
+            // Should match ISO 8601 format (e.g., 2004-02-12T15:19:21+00:00)
+            $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $result);
         }
     }

@@ -683,7 +683,7 @@
          */
         public function save(string $filePath): void
         {
-            IO::writeFile($filePath, Yaml::dump(Utilities::cleanArray($this->toArray()), 4, 2));
+            IO::writeFile($filePath, Yaml::dump(Utilities::cleanArray($this->toArray()), 10, 2));
         }
 
         /**
@@ -831,7 +831,7 @@
             {
                 throw new InvalidPropertyException('default_build', 'The default build configuration must be a non-empty string if set');
             }
-            elseif(!self::validateBuildConfigurationExists($data, $data['default_build']))
+            elseif(isset($data['default_build']) && !self::validateBuildConfigurationExists($data, $data['default_build']))
             {
                 throw new InvalidPropertyException('default_build', 'The default build configuration must point to a valid execution unit');
             }

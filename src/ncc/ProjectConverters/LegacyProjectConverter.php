@@ -28,11 +28,11 @@
     use ncc\CLI\Logger;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;
     use ncc\Objects\RepositoryConfiguration;
-    use RuntimeException;
 
     /**
      * Compatibility layer for converting old project.json format (ncc_production)
@@ -40,6 +40,13 @@
      */
     class LegacyProjectConverter extends AbstractProjectConverter
     {
+        /**
+         * Converts a legacy project.json file to the new Project format
+         *
+         * @param string $filePath The path to the legacy project.json file
+         * @return Project The converted Project object
+         * @throws IOException If the file cannot be read
+         */
         public function convert(string $filePath): Project
         {
             $content = IO::readFile($filePath);
@@ -47,7 +54,7 @@
 
             if (json_last_error() !== JSON_ERROR_NONE)
             {
-                throw new RuntimeException('Failed to parse JSON: ' . json_last_error_msg());
+                throw new IOException('Failed to parse JSON: ' . json_last_error_msg());
             }
 
             $project = new Project();
@@ -74,7 +81,7 @@
 
             if(isset($data['execution_policies']))
             {
-                $convertedResults = $this->convertExecutionPolicies($project, $data['execution_policies']);
+                $convertedResults = $this->convertExecutionPolicies($data['execution_policies']);
                 foreach($convertedResults as $name => $policy)
                 {
                     $project->addExecutionUnit($policy);
@@ -99,6 +106,13 @@
             return $project;
         }
 
+        /**
+         * Applies update source configuration from the legacy format to the project
+         *
+         * @param Project $project The project to apply the update source configuration to
+         * @param array $data The array of update source configuration in the legacy format
+         * @return Project The project with the applied update source configuration
+         */
         private function applyUpdateSource(Project $project, array $data): Project
         {
             if(isset($data['source']))
@@ -154,7 +168,13 @@
             return $project;
         }
 
-
+        /**
+         * Applies assembly configuration from the legacy format to the project
+         *
+         * @param Project $project The project to apply the assembly configuration to
+         * @param array $assembly The array of assembly configuration in the legacy format
+         * @return Project The project with the applied assembly configuration
+         */
         private function applyAssemblyConfiguration(Project $project, array $assembly): Project
         {
             if(isset($assembly['name']))
@@ -207,6 +227,13 @@
             return $project;
         }
 
+        /**
+         * Applies build configuration from the legacy format to the project
+         *
+         * @param Project $project The project to apply the build configuration to
+         * @param array $build The array of build configuration in the legacy format
+         * @return Project The project with the applied build configuration
+         */
         private function applyBuildConfiguration(Project $project, array $build): Project
         {
             if(isset($build['source_path']))
@@ -233,6 +260,12 @@
             return $project;
         }
 
+        /**
+         * Converts build configurations from the legacy format to the currently supported format
+         *
+         * @param array $buildConfigurations The array of build configurations in the legacy format
+         * @return array The converted build configurations
+         */
         private function convertBuildConfigurations(array $buildConfigurations): array
         {
             $results = [];
@@ -274,7 +307,7 @@
                     $convertedArray['definitions'] = array_map(function ($constantValue)
                     {
                         return $this->convertMacros($constantValue);
-                    }, $legacyConfiguration['define_constants']);;
+                    }, $legacyConfiguration['define_constants']);
                 }
 
                 // Note: Build configuration dependency configurations are no longer supported.
@@ -286,7 +319,13 @@
         }
 
 
-        private function convertExecutionPolicies(Project $project, array $executionPolicies): array
+        /**
+         * Converts execution policies from the legacy format to the currently supported format
+         *
+         * @param array $executionPolicies The array of execution policies in the legacy format
+         * @return array The converted execution policies
+         */
+        private function convertExecutionPolicies(array $executionPolicies): array
         {
             $results = [];
 
@@ -312,8 +351,7 @@
 
                 if(isset($policy['execute']['working_directory']))
                 {
-                    // TODO: Implement a backwards compatibility layer for the macros that can be found in these properties
-                    $convertedResult['working_directory'] = $policy['execute']['working_directory'];
+                    $convertedResult['working_directory'] = $this->convertMacros($policy['execute']['working_directory']);
                 }
 
                 // Only `tty` is an option, if it's set we must respect it
@@ -340,7 +378,7 @@
 
                 if(isset($policy['execute']['target']))
                 {
-                    $convertedResult['entry'] = $policy['execute']['target'];
+                    $convertedResult['entry'] = $this->convertMacros($policy['execute']['target']);
                 }
 
                 $results[$convertedResult['name']] = new Project\ExecutionUnit($convertedResult);
@@ -349,6 +387,13 @@
             return $results;
         }
 
+        /**
+         * Applies dependencies from the legacy format to the project
+         *
+         * @param Project $project The project to apply the dependencies to
+         * @param array $dependencies The array of dependencies in the legacy format
+         * @return Project The project with the applied dependencies
+         */
         private function applyDependencies(Project $project, array $dependencies): Project
         {
             foreach($dependencies as $legacyDependency)
@@ -383,49 +428,49 @@
         private function convertMacros(string $input): string
         {
             return Utilities::replaceString($input, [
-                '%ASSEMBLY.NAME%' => MacroVariable::ASSEMBLY_NAME,
-                '%ASSEMBLY.PACKAGE%' => MacroVariable::ASSEMBLY_PACKAGE,
-                '%ASSEMBLY.DESCRIPTION%' => MacroVariable::ASSEMBLY_DESCRIPTION,
-                '%ASSEMBLY.COMPANY%' => MacroVariable::ASSEMBLY_ORGANIZATION,
-                '%ASSEMBLY.PRODUCT%' => MacroVariable::ASSEMBLY_PRODUCT,
-                '%ASSEMBLY.COPYRIGHT%' => MacroVariable::ASSEMBLY_COPYRIGHT,
-                '%ASSEMBLY.TRADEMARK%' => MacroVariable::ASSEMBLY_TRADEMARK,
-                '%ASSEMBLY.VERSION%' => MacroVariable::ASSEMBLY_VERSION,
-                '%COMPILE_TIMESTAMP%' => MacroVariable::COMPILE_TIMESTAMP,
-                '%d%' => MacroVariable::d,
-                '%D%' => MacroVariable::D,
-                '%j%' => MacroVariable::j,
-                '%l%' => MacroVariable::l,
-                '%N%' => MacroVariable::N,
-                '%S%' => MacroVariable::S,
-                '%w%' => MacroVariable::w,
-                '%z%' => MacroVariable::z,
-                '%W%' => MacroVariable::W,
-                '%F%' => MacroVariable::F,
-                '%m%' => MacroVariable::m,
-                '%M%' => MacroVariable::M,
-                '%n%' => MacroVariable::n,
-                '%t%' => MacroVariable::t,
-                '%L%' => MacroVariable::L,
-                '%o%' => MacroVariable::o,
-                '%Y%' => MacroVariable::Y,
-                '%y%' => MacroVariable::y,
-                '%a%' => MacroVariable::a,
-                '%A%' => MacroVariable::A,
-                '%B%' => MacroVariable::B,
-                '%g%' => MacroVariable::g,
-                '%G%' => MacroVariable::G,
-                '%h%' => MacroVariable::h,
-                '%H%' => MacroVariable::H,
-                '%i%' => MacroVariable::i,
-                '%s%' => MacroVariable::s,
-                '%c%' => MacroVariable::c,
-                '%r%' => MacroVariable::r,
-                '%u%' => MacroVariable::u,
-                '%DEFAULT_BUILD_CONFIGURATION%' => MacroVariable::DEFAULT_BUILD_CONFIGURATION,
-                '%BUILD_OUTPUT_PATH%' => MacroVariable::BUILD_OUTPUT_PATH,
-                '%CWD%' => MacroVariable::CURRENT_WORKING_DIRECTORY,
-                '%PID%' => MacroVariable::PROCESS_ID,
+                '%ASSEMBLY.NAME%' => MacroVariable::ASSEMBLY_NAME->value,
+                '%ASSEMBLY.PACKAGE%' => MacroVariable::ASSEMBLY_PACKAGE->value,
+                '%ASSEMBLY.DESCRIPTION%' => MacroVariable::ASSEMBLY_DESCRIPTION->value,
+                '%ASSEMBLY.COMPANY%' => MacroVariable::ASSEMBLY_ORGANIZATION->value,
+                '%ASSEMBLY.PRODUCT%' => MacroVariable::ASSEMBLY_PRODUCT->value,
+                '%ASSEMBLY.COPYRIGHT%' => MacroVariable::ASSEMBLY_COPYRIGHT->value,
+                '%ASSEMBLY.TRADEMARK%' => MacroVariable::ASSEMBLY_TRADEMARK->value,
+                '%ASSEMBLY.VERSION%' => MacroVariable::ASSEMBLY_VERSION->value,
+                '%COMPILE_TIMESTAMP%' => MacroVariable::COMPILE_TIMESTAMP->value,
+                '%d%' => MacroVariable::d->value,
+                '%D%' => MacroVariable::D->value,
+                '%j%' => MacroVariable::j->value,
+                '%l%' => MacroVariable::l->value,
+                '%N%' => MacroVariable::N->value,
+                '%S%' => MacroVariable::S->value,
+                '%w%' => MacroVariable::w->value,
+                '%z%' => MacroVariable::z->value,
+                '%W%' => MacroVariable::W->value,
+                '%F%' => MacroVariable::F->value,
+                '%m%' => MacroVariable::m->value,
+                '%M%' => MacroVariable::M->value,
+                '%n%' => MacroVariable::n->value,
+                '%t%' => MacroVariable::t->value,
+                '%L%' => MacroVariable::L->value,
+                '%o%' => MacroVariable::o->value,
+                '%Y%' => MacroVariable::Y->value,
+                '%y%' => MacroVariable::y->value,
+                '%a%' => MacroVariable::a->value,
+                '%A%' => MacroVariable::A->value,
+                '%B%' => MacroVariable::B->value,
+                '%g%' => MacroVariable::g->value,
+                '%G%' => MacroVariable::G->value,
+                '%h%' => MacroVariable::h->value,
+                '%H%' => MacroVariable::H->value,
+                '%i%' => MacroVariable::i->value,
+                '%s%' => MacroVariable::s->value,
+                '%c%' => MacroVariable::c->value,
+                '%r%' => MacroVariable::r->value,
+                '%u%' => MacroVariable::u->value,
+                '%DEFAULT_BUILD_CONFIGURATION%' => MacroVariable::DEFAULT_BUILD_CONFIGURATION->value,
+                '%BUILD_OUTPUT_PATH%' => MacroVariable::BUILD_OUTPUT_PATH->value,
+                '%CWD%' => MacroVariable::CURRENT_WORKING_DIRECTORY->value,
+                '%PID%' => MacroVariable::PROCESS_ID->value,
             ]);
         }
     }
