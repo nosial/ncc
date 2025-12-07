@@ -23,6 +23,7 @@
     namespace ncc\CLI;
 
     use ncc\CLI\Commands\BuildCommand;
+    use ncc\CLI\Commands\InspectCommand;
     use ncc\CLI\Commands\ProjectCommand;
     use ncc\Libraries\OptsLib\Parse;
 
@@ -59,6 +60,10 @@
             elseif(isset($argv['build']))
             {
                 return BuildCommand::handle($argv);
+            }
+            elseif(isset($argv['inspect']) || isset($argv['ins']))
+            {
+                return InspectCommand::handle($argv);
             }
             elseif(isset($argv['version']) || isset($argv['v']))
             {
