@@ -77,6 +77,7 @@
         // Project Macros
         case PROJECT_PATH = '${PROJECT_PATH}';
         case DEFAULT_BUILD_CONFIGURATION = '${DEFAULT_BUILD_CONFIGURATION}';
+        case SOURCE_PATH = '${SOURCE_PATH}';
 
         // Assembly Macros
         case ASSEMBLY_NAME = '${ASSEMBLY.NAME}';
@@ -140,9 +141,6 @@
                 self::r => date('r', $currentTime),
                 self::u => $currentTime,
 
-                // Runtime Macros
-                self::CURRENT_WORKING_DIRECTORY => getcwd(),
-
                 // No matches
                 default => null
             };
@@ -173,7 +171,6 @@
             // Perform replacement recursively
             $result = preg_replace_callback($pattern, function($matches) use ($handle, &$unresolvedMacros)
             {
-                $macroName = $matches[1]; // The macro name without ${ }
                 $fullMacro = $matches[0]; // The full match including ${ }
 
                 // Always check built-in macros first
