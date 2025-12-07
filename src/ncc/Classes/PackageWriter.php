@@ -32,9 +32,21 @@
     {
         private $fileHandler;
         private WritingMode $writingMode;
+        private bool $sectionStarted;
 
         /**
-         * Constructs a new PackageWriter instance.
+         * Constructs a new PackageWriter instance and initializes the package header.
+         *
+         * The constructor writes the package signature in the following order:
+         * 1. START_PACKAGE marker
+         * 2. MAGIC_BYTES (NCCPKG identifier)
+         * 3. TERMINATE byte
+         * 4. PACKAGE_VERSION marker
+         * 5. Version string (e.g., "1000")
+         * 6. TERMINATE byte
+         *
+         * After initialization, the writer is in HEADER mode but the HEADER section
+         * marker is not written until actual data is provided via writeData().
          *
          * @param string $filePath The path to the package file to create or overwrite.
          * @param bool $overwrite Whether to overwrite the file if it already exists. Default is true.
@@ -53,7 +65,6 @@
                 unlink($filePath);
             }
 
-
             // Create the file
             IO::mkdir(dirname($filePath));
             touch($filePath);
@@ -63,20 +74,23 @@
                 throw new PackageException("Could not open file for writing: " . $filePath);
             }
 
-            // Write the initial signature
-            fwrite($this->fileHandler, PackageStructure::START_PACKAGE->value); // Beginning of package
-            fwrite($this->fileHandler, PackageStructure::MAGIC_BYTES->value); // Magic bytes
-            fwrite($this->fileHandler, PackageStructure::TERMINATE->value); // Terminate
-            // The magic bytes would be "\xA0\x4E\x43\x43\x50\x4B\x47\xE0\xE0"
-
-            // Write the package structure version
-            fwrite($this->fileHandler, PackageStructure::PACKAGE_VERSION->value);
-            fwrite($this->fileHandler, 1000); // Version 1000
+            // Write the package header signature
+            // Format: START_PACKAGE + MAGIC_BYTES + TERMINATE
+            fwrite($this->fileHandler, PackageStructure::START_PACKAGE->value);
+            fwrite($this->fileHandler, PackageStructure::MAGIC_BYTES->value);
             fwrite($this->fileHandler, PackageStructure::TERMINATE->value);
 
-            // Set the writing mode to HEADER since this is the first thing we write after the signature
+            // Write the package structure version
+            // Format: PACKAGE_VERSION + "1000" + TERMINATE
+            fwrite($this->fileHandler, PackageStructure::PACKAGE_VERSION->value);
+            fwrite($this->fileHandler, '1000'); // Version 1000
+            fwrite($this->fileHandler, PackageStructure::TERMINATE->value);
+
+            // Initialize the writing mode to HEADER
+            // Note: The HEADER section marker is NOT written yet - it will be written
+            // only when writeData() is first called to avoid empty section markers
             $this->writingMode = WritingMode::HEADER;
-            fwrite($this->fileHandler, PackageStructure::HEADER->value);
+            $this->sectionStarted = false;
         }
 
         /**
@@ -102,10 +116,28 @@
         /**
          * Writes data to the package in the current writing mode.
          *
+         * For HEADER and ASSEMBLY modes:
+         * - Writes the section marker (if not already written)
+         * - Writes size prefix (packed integer)
+         * - Writes SOFT_TERMINATE
+         * - Writes the data payload
+         * - Writes TERMINATE
+         * - The section can only contain one data block and is automatically ended
+         *
+         * For EXECUTION_UNITS, COMPONENTS, and RESOURCES modes:
+         * - Writes the section marker on first call (if not already written)
+         * - Writes the name (ASCII string)
+         * - Writes SOFT_TERMINATE
+         * - Writes size prefix (packed integer)
+         * - Writes SOFT_TERMINATE
+         * - Writes the data payload
+         * - Writes TERMINATE
+         * - Multiple items can be written in the same section
+         *
          * @param string $data The data to write to the package.
-         * @param string|null $name Optional name for the data, used in certain writing modes.
+         * @param string|null $name The name identifier for the data. Required for EXECUTION_UNITS, COMPONENTS, and RESOURCES modes.
          * @return void
-         * @throws PackageException if the file is not open or if the writing mode is unknown.
+         * @throws PackageException if the file is not open, if name is missing for collection modes, or if the writing mode is unknown.
          */
         public function writeData(string $data, ?string $name=null): void
         {
@@ -116,18 +148,42 @@
 
             switch($this->writingMode)
             {
-                case WritingMode::ASSEMBLY:
                 case WritingMode::HEADER:
-                    fwrite($this->fileHandler, $this->createSizePrefix(strlen($data))); // 10-byte Size prefix
-                    fwrite($this->fileHandler, PackageStructure::SOFT_TERMINATE->value); // Soft terminate
-                    fwrite($this->fileHandler, $data); // The data
-                    fwrite($this->fileHandler, PackageStructure::TERMINATE->value); // Terminate
+                case WritingMode::ASSEMBLY:
+                    // Write the section marker if this is the first data for this section
+                    if(!$this->sectionStarted)
+                    {
+                        fwrite($this->fileHandler, $this->getSectionMarker());
+                        $this->sectionStarted = true;
+                    }
+
+                    // Write data in format: [SIZE][SOFT_TERMINATE][DATA][TERMINATE]
+                    fwrite($this->fileHandler, $this->createSizePrefix(strlen($data)));
+                    fwrite($this->fileHandler, PackageStructure::SOFT_TERMINATE->value);
+                    fwrite($this->fileHandler, $data);
+                    fwrite($this->fileHandler, PackageStructure::TERMINATE->value);
+
+                    // HEADER and ASSEMBLY can only contain one data block, so end the section automatically
                     $this->endSection();
                     break;
 
                 case WritingMode::EXECUTION_UNITS:
                 case WritingMode::COMPONENTS:
                 case WritingMode::RESOURCES:
+                    // Name is required for collection-type sections
+                    if($name === null)
+                    {
+                        throw new PackageException("Name is required for " . $this->writingMode->name . " mode.");
+                    }
+
+                    // Write the section marker if this is the first item in this section
+                    if(!$this->sectionStarted)
+                    {
+                        fwrite($this->fileHandler, $this->getSectionMarker());
+                        $this->sectionStarted = true;
+                    }
+
+                    // Write data in format: [NAME][SOFT_TERMINATE][SIZE][SOFT_TERMINATE][DATA][TERMINATE]
                     fwrite($this->fileHandler, $name);
                     fwrite($this->fileHandler, PackageStructure::SOFT_TERMINATE->value);
                     fwrite($this->fileHandler, $this->createSizePrefix(strlen($data)));
@@ -139,10 +195,17 @@
         }
 
         /**
-         * Ends the current section and prepares to write the next one.
+         * Ends the current section and transitions to the next writing mode.
+         *
+         * This method advances through the section sequence:
+         * HEADER -> ASSEMBLY -> EXECUTION_UNITS -> COMPONENTS -> RESOURCES -> CLOSED
+         *
+         * Important: This does NOT write section markers for the next section.
+         * Section markers are only written when actual data is provided via writeData().
+         * This allows empty sections to be skipped entirely, as per the package specification.
          *
          * @return void
-         * @throws PackageException if the file is not open or if the writing mode is unknown.
+         * @throws PackageException if the file is not open.
          */
         public function endSection(): void
         {
@@ -151,36 +214,42 @@
                 throw new PackageException("File is not open.");
             }
 
+            // Transition to the next section mode without writing the section marker
             switch($this->writingMode)
             {
                 case WritingMode::HEADER:
-                    fwrite($this->fileHandler, PackageStructure::ASSEMBLY->value);
                     $this->writingMode = WritingMode::ASSEMBLY;
+                    $this->sectionStarted = false;
                     break;
 
                 case WritingMode::ASSEMBLY:
-                    fwrite($this->fileHandler, PackageStructure::EXECUTION_UNITS->value);
                     $this->writingMode = WritingMode::EXECUTION_UNITS;
+                    $this->sectionStarted = false;
                     break;
 
                 case WritingMode::EXECUTION_UNITS:
-                    fwrite($this->fileHandler, PackageStructure::COMPONENTS->value);
                     $this->writingMode = WritingMode::COMPONENTS;
+                    $this->sectionStarted = false;
                     break;
 
                 case WritingMode::COMPONENTS:
-                    fwrite($this->fileHandler, PackageStructure::RESOURCES->value);
                     $this->writingMode = WritingMode::RESOURCES;
+                    $this->sectionStarted = false;
                     break;
 
                 case WritingMode::RESOURCES:
+                    // Resources is the last section, so close the package
                     $this->close();
                     break;
             }
         }
 
         /**
-         * Closes the package file, writing the end signature.
+         * Closes the package file, writing the final termination byte.
+         *
+         * This writes the final TERMINATE byte that marks the end of the package
+         * and closes the file handle. This method is idempotent - calling it
+         * multiple times has no adverse effects.
          *
          * @return void
          */
@@ -191,17 +260,37 @@
                 return;
             }
 
-            // Write the end signature and close the file
+            // Write the final termination byte to mark the end of the package
             fwrite($this->fileHandler, PackageStructure::TERMINATE->value);
             fclose($this->fileHandler);
             $this->fileHandler = null;
         }
 
         /**
+         * Gets the PackageStructure marker for the current writing mode.
+         *
+         * @return string The section marker corresponding to the current writing mode.
+         */
+        private function getSectionMarker(): string
+        {
+            return match($this->writingMode)
+            {
+                WritingMode::HEADER => PackageStructure::HEADER->value,
+                WritingMode::ASSEMBLY => PackageStructure::ASSEMBLY->value,
+                WritingMode::EXECUTION_UNITS => PackageStructure::EXECUTION_UNITS->value,
+                WritingMode::COMPONENTS => PackageStructure::COMPONENTS->value,
+                WritingMode::RESOURCES => PackageStructure::RESOURCES->value,
+            };
+        }
+
+        /**
          * Creates a size prefix for the given byte size.
          *
+         * The size is packed as a machine-dependent long integer in little-endian byte order
+         * using PHP's pack() function with the 'P' format (size_t equivalent).
+         *
          * @param int $bytes The size in bytes.
-         * @return string The packed size prefix.
+         * @return string The packed size prefix as a binary string.
          * @throws InvalidArgumentException if the size exceeds PHP_INT_MAX or is negative.
          */
         private function createSizePrefix(int $bytes): string
