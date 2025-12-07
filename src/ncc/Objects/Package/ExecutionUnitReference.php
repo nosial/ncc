@@ -22,20 +22,22 @@
 
     namespace ncc\Objects\Package;
 
-    class ExecutionUnitReference
+    use ncc\Interfaces\ReferenceInterface;
+
+    class ExecutionUnitReference implements ReferenceInterface
     {
         private string $name;
         private int $offset;
-        private int $length;
+        private int $size;
 
-        public function __construct(array $data)
+        public function __construct(string $name, int $offset, int $size)
         {
-            $this->name = $data['name'] ?? throw new \InvalidArgumentException('The \'name\' property is missing from the execution unit reference');
-            $this->offset = $data['offset'] ?? throw new \InvalidArgumentException('The \'offset\' property is missing from the execution unit reference');
-            $this->length = $data['length'] ?? throw new \InvalidArgumentException('The \'length\' property is missing from the execution unit reference');
+            $this->name = $name;
+            $this->offset = $offset;
+            $this->size = $size;
         }
 
-        public function getPath(): string
+        public function getName(): string
         {
             return $this->name;
         }
@@ -45,8 +47,8 @@
             return $this->offset;
         }
 
-        public function getLength(): int
+        public function getSize(): int
         {
-            return $this->length;
+            return $this->size;
         }
     }
