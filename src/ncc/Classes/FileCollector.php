@@ -22,8 +22,13 @@
 
     namespace ncc\Classes;
 
+    use Exception;
+    use FilesystemIterator;
     use InvalidArgumentException;
+    use RecursiveDirectoryIterator;
+    use RecursiveIteratorIterator;
     use RuntimeException;
+    use SplFileInfo;
 
     class FileCollector
     {
@@ -59,14 +64,14 @@
 
             try
             {
-                $iterator = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($realDirectory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::FOLLOW_SYMLINKS),
-                    \RecursiveIteratorIterator::LEAVES_ONLY
+                $iterator = new RecursiveIteratorIterator(
+                    new RecursiveDirectoryIterator($realDirectory, FilesystemIterator::SKIP_DOTS | FilesystemIterator::FOLLOW_SYMLINKS),
+                    RecursiveIteratorIterator::LEAVES_ONLY
                 );
 
                 foreach ($iterator as $file)
                 {
-                    if (!$file instanceof \SplFileInfo || !$file->isFile())
+                    if (!$file instanceof SplFileInfo || !$file->isFile())
                     {
                         continue;
                     }
@@ -95,7 +100,7 @@
                     $collectedFiles[] = $filePath;
                 }
             }
-            catch (\Exception $e)
+            catch (Exception $e)
             {
                 throw new RuntimeException(sprintf('Error while scanning directory \'%s\': %s', $directory, $e->getMessage()), 0, $e);
             }
