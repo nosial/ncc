@@ -103,7 +103,7 @@
         /**
          * @inheritDoc
          */
-        public function compile(?callable $progressCallback=null, bool $overwrite=true): void
+        public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
             try
             {
@@ -142,7 +142,23 @@
                            // Components ca be multiple, write them named
                            foreach($this->getComponents() as $componentFilePath)
                            {
-                               $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
+                               // Check if component is within source path
+                               if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                               {
+                                   // File is inside source path, use relative path
+                                   $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
+                               }
+                               else
+                               {
+                                   // File is outside source path, use just the filename
+                                   $componentName = basename($componentFilePath);
+                               }
+
+                               if(empty($componentName) || $componentName === false)
+                               {
+                                   throw new CompileException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
+                               }
+
                                $componentData = file_get_contents($componentFilePath);
                                if($this->compressionEnabled)
                                {
@@ -160,7 +176,23 @@
                            // Resources can be multiple, write them named.
                            foreach($this->getResources() as $resourceFilePath)
                            {
-                                $resourceName = substr($resourceFilePath, strlen($this->getSourcePath()) + 1);
+                                // Check if resource is within source path
+                                if(str_starts_with($resourceFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                                {
+                                    // File is inside source path, use relative path
+                                    $resourceName = substr($resourceFilePath, strlen($this->getSourcePath()) + 1);
+                                }
+                                else
+                                {
+                                    // File is outside source path, use just the filename
+                                    $resourceName = basename($resourceFilePath);
+                                }
+
+                                if(empty($resourceName) || $resourceName === false)
+                                {
+                                    throw new CompileException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
+                                }
+
                                 $resourceData = file_get_contents($resourceFilePath);
                                 if($this->compressionEnabled)
                                 {
@@ -179,6 +211,8 @@
             {
                 throw new CompileException(sprintf('Failed to open package writer for %s', $this->getOutputPath()), $e->getCode(), $e);
             }
+
+            return $this->getOutputPath();
         }
 
         /**
