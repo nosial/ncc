@@ -26,6 +26,7 @@
     use ncc\Classes\Console;
     use ncc\Exceptions\CompileException;
     use ncc\Exceptions\ExecutionUnitException;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\Project;
 
     class BuildCommand extends AbstractCommandHandler
@@ -51,10 +52,9 @@
 
             try
             {
-                $compiler = Project::compilerFromFile($projectPath);
-                $compiler->build();
+                Console::out(Project::compilerFromFile($projectPath)->build());
             }
-            catch (CompileException | ExecutionUnitException $e)
+            catch (CompileException | ExecutionUnitException | IOException $e)
             {
                 Console::error($e->getMessage());
             }
