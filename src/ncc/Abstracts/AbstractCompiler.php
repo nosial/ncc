@@ -25,9 +25,9 @@
     use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\FileCollector;
-    use ncc\Classes\IO;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
+    use ncc\Enums\MacroVariable;
     use ncc\Exceptions\CompileException;
     use ncc\Exceptions\ExecutionUnitException;
     use ncc\Exceptions\InvalidPropertyException;
@@ -39,22 +39,49 @@
     {
         private string $projectPath;
         private Project $projectConfiguration;
+        /**
+         * @var string[]
+         */
         private array $includeComponents;
+        /**
+         * @var string[]
+         */
         private array $excludeComponents;
+        /**
+         * @var string[]
+         */
         private array $includeResources;
+        /**
+         * @var string[]
+         */
         private array $excludeResources;
         private string $sourcePath;
         private string $outputPath;
         private BuildConfiguration $buildConfiguration;
+        /**
+         * @var string[]
+         */
         private array $components;
+        /**
+         * @var string[]
+         */
         private array $resources;
+        /**
+         * @var string[]
+         */
         private array $requiredExecutionUnits;
+        /**
+         * @var string[]
+         */
         private array $temporaryExecutionUnits;
         private bool $staticallyLinked;
         private string $buildNumber;
 
         /**
-         * AbstractCompiler constructor.
+         * AbstractCompiler constructor. This class is intended to be extended and usd to create different compilers,
+         * the purpose of this class is to set up the compiler for pre-compile while collecting/preparing the information
+         * about the environment so that the implementing compiler can simply grab what resources and information it
+         * may require at compile-time.
          *
          * @param string $projectFilePath The path to the project configuration file or the project directory.
          * @param string $buildConfiguration The build configuration to use.
@@ -235,6 +262,27 @@
             return $this->buildNumber;
         }
 
+        private function applyMacrosFromInput(string $input, bool $strict=false): string
+        {
+            return MacroVariable::fromInput($input, $strict, function($input){
+                return match($input)
+                {
+                    // Note: We don't resolve CWD at this time as it may be needed/preserved depending
+                    //       on the context, everything else should be fine.
+                    MacroVariable::PROCESS_ID->value => '100', //      TODO: Placeholder for now
+                    MacroVariable::USER_ID->value => '200', //         TODO: Placeholder for now
+                    MacroVariable::GLOBAL_ID->value => '300', //       TODO: Placeholder for now
+                    MacroVariable::USER_HOME_PATH->value => '400', //  TODO: Placeholder for now
+
+                    MacroVariable::COMPILE_TIMESTAMP->value => time(),
+                    MacroVariable::NCC_BUILD_VERSION->value => '0.0.0', // TODO: Placeholder for now
+                    MacroVariable::PROJECT_PATH->value => $this->projectPath,
+                    MacroVariable::DEFAULT_BUILD_CONFIGURATION->value => $this->projectConfiguration->getDefaultBuild(),
+                    MacroVariable::SOURCE_PATH->value => $this->sourcePath
+                };
+            });
+        }
+
         /**
          * Refreshes the list of component and resource files based on the current include/exclude patterns and
          * verifies the required execution units are correctly configured.
@@ -260,23 +308,28 @@
                 // Only handle PHP execution units for entry points, since system commands are not part of the project files.
                 if($executionUnit->getType() === ExecutionUnitType::PHP)
                 {
-                    if(!file_exists($this->projectPath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint()))
+                    $entryPointPath = $this->projectPath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
+                    if(!file_exists($entryPointPath))
                     {
                         throw new InvalidArgumentException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
                     }
 
-                    $this->resources[] = realpath($this->projectPath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint());
+                    $this->resources[] = realpath($entryPointPath);
                 }
 
                 // Include all required files for the execution unit.
-                foreach($executionUnit->getRequiredFiles() as $requiredFile)
+                if($executionUnit->getRequiredFiles() !== null)
                 {
-                    if(!file_exists($this->projectPath . DIRECTORY_SEPARATOR . $requiredFile))
+                    foreach($executionUnit->getRequiredFiles() as $requiredFile)
                     {
-                        throw new InvalidArgumentException(sprintf('The required file %s was not found in the project path %s for the execution unit %s', $requiredFile(), $this->projectPath, $executionUnitName));
-                    }
+                        $requiredFilePath = $this->projectPath . DIRECTORY_SEPARATOR . $requiredFile;
+                        if(!file_exists($requiredFilePath))
+                        {
+                            throw new InvalidArgumentException(sprintf('The required file %s was not found in the project path %s for the execution unit %s', $requiredFile, $this->projectPath, $executionUnitName));
+                        }
 
-                    $this->resources[] = realpath($this->projectPath . DIRECTORY_SEPARATOR . $requiredFile);
+                        $this->resources[] = realpath($requiredFilePath);
+                    }
                 }
             }
 
@@ -346,10 +399,11 @@
          *                                        name: The name of what is currently being processed (e.g., file name, module name, etc.).
          *                                        progress: A float value between 0.0 and 1.0 indicating
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
+         * @return string The path to the compiled output file.
          * @throws CompileException Thrown if the compiler encounters an error.
          * @throws IOException thrown if there was an IO error
          */
-        protected abstract function compile(?callable $progressCallback=null, bool $overwrite=true): void;
+        protected abstract function compile(?callable $progressCallback=null, bool $overwrite=true): string;
 
         /**
          * Builds the project in its entirety by executing the compiling operations in order
@@ -360,15 +414,16 @@
          *                                        name: The name of what is currently being processed (e.g., file name, module name, etc.).
          *                                        progress: A float value between 0.0 and 1.0 indicating
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
-         * @return void
+         * @return string The path to the built output file.
          * @throws CompileException Thrown if the compiler encounters an error.
          * @throws ExecutionUnitException Thrown if one or more execution unit failed to run
          * @throws IOException Thrown if there was an IO error
          */
-        public function build(?callable $progressCallback=null, bool $overwrite=true): void
+        public function build(?callable $progressCallback=null, bool $overwrite=true): string
         {
             $this->preCompile();
-            $this->compile();
+            $buildPath = $this->compile(null, $overwrite);
             $this->postCompile();
+            return $buildPath;
         }
     }
