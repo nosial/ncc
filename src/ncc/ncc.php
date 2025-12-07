@@ -1,6 +1,7 @@
 <?php
 
     /** @noinspection PhpDefineCanBeReplacedWithConstInspection */
+
     /*
      * Copyright (c) Nosial 2022-2025, all rights reserved.
      *
@@ -24,13 +25,76 @@
 
     use ncc\CLI\Main;
 
-    if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php'))
+    if(defined('__NCC__'))
     {
-        throw new Exception('Autoloader.php not found, is this project built correctly?');
+        // NCC is already loaded, prevent re-initialization
+        return;
     }
 
+    if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php'))
+    {
+        throw new Exception('Autoloader.php not found, was ncc built correctly?');
+    }
+
+    // Include the autoloader
+    /** @noinspection PhpIncludeInspection */
     require 'Autoloader.php';
-    define('__NCC_DIR__', __DIR__);
+
+    // Define NCC constants
+    define('__NCC_DIR__', __DIR__); // The directory where ncc is located
+    define('__NCC__', true); // Flag to indicate that ncc is loaded
+
+    // Define the core methods
+
+    if(!function_exists('import'))
+    {
+        /**
+         * Imports a package into the runtime environment.
+         *
+         * @param string $packagePath The path to the package file. Can be a .ncc file or a file containing a package.
+         * @noinspection PhpUnused
+         */
+        function import(string $packagePath): void
+        {
+            try
+            {
+                \ncc\Runtime::import($packagePath);
+            }
+            catch (\ncc\Exceptions\ImportException $e)
+            {
+                trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
+            }
+        }
+    }
+
+    if(!function_exists('get_imported'))
+    {
+        /**
+         * Returns an array of imported package names in the runtime environment.
+         *
+         * @return array An array of imported package names.
+         * @noinspection PhpUnused
+         */
+        function get_imported(): array
+        {
+            return \ncc\Runtime::getImportedPackages();
+        }
+    }
+
+    if(!function_exists('is_imported'))
+    {
+        /**
+         * Checks if a package is imported in the runtime environment.
+         *
+         * @param string $packageName The name of the package to check.
+         * @return bool True if the package is imported, false otherwise.
+         * @noinspection PhpUnused
+         */
+        function is_imported(string $packageName): bool
+        {
+            return \ncc\Runtime::isImported($packageName);
+        }
+    }
 
     // Ensure that ncc's CLI mode only runs when executed from the command line
     if(php_sapi_name() === 'cli')
