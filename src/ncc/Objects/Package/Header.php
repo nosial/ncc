@@ -63,9 +63,13 @@
             $this->entryPoint = $data['entry_point'] ?? null;
             $this->preInstall = $data['pre_install'] ?? null;
             $this->postInstall = $data['post_install'] ?? null;
-            if(isset($data['dependencies']))
+            if(isset($data['dependencies']) && is_array($data['dependencies']) && !empty($data['dependencies']))
             {
-                $this->dependencyReferences = array_map(function($item){ return DependencyReference::fromArray($item); }, $data['dependencies']);
+                $this->dependencyReferences = array_map(function($item){
+                    return $item !== null ? DependencyReference::fromArray($item) : null; 
+                }, $data['dependencies']);
+                // Filter out null values
+                $this->dependencyReferences = array_filter($this->dependencyReferences);
             }
             else
             {
