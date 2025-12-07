@@ -22,22 +22,24 @@
 
     namespace ncc\Objects\Package;
 
-    class ComponentReference
-    {
-        private string $path;
-        private int $offset;
-        private int $length;
+    use ncc\Interfaces\ReferenceInterface;
 
-        public function __construct(array $data)
+    class ComponentReference implements ReferenceInterface
+    {
+        private string $name;
+        private int $offset;
+        private int $size;
+
+        public function __construct(string $name, int $offset, int $size)
         {
-            $this->path = $data['path'] ?? throw new \InvalidArgumentException('The \'path\' property is missing from the component');
-            $this->offset = $data['offset'] ?? throw new \InvalidArgumentException('The \'offset\' property is missing from the component');
-            $this->length = $data['length'] ?? throw new \InvalidArgumentException('The \'length\' property is missing from the component');
+            $this->name = $name;
+            $this->offset = $offset;
+            $this->size = $size;
         }
 
-        public function getPath(): string
+        public function getName(): string
         {
-            return $this->path;
+            return $this->name;
         }
 
         public function getOffset(): int
@@ -45,8 +47,8 @@
             return $this->offset;
         }
 
-        public function getLength(): int
+        public function getSize(): int
         {
-            return $this->length;
+            return $this->size;
         }
     }
