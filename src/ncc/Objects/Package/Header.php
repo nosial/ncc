@@ -31,6 +31,7 @@
     class Header implements SerializableInterface
     {
         private array $flags;
+        private bool $compressed;
         private string $buildNumber;
         private ?string $entryPoint;
         /** @var string|string[]|null  */
@@ -62,6 +63,7 @@
 
             $this->entryPoint = $data['entry_point'] ?? null;
             $this->preInstall = $data['pre_install'] ?? null;
+            $this->compressed = $data['compressed'] ?? false;
             $this->postInstall = $data['post_install'] ?? null;
             if(isset($data['dependencies']) && is_array($data['dependencies']) && !empty($data['dependencies']))
             {
@@ -139,6 +141,21 @@
         public function clearFlags(): void
         {
             $this->flags = [];
+        }
+
+        /**
+         * Returns True if the package is compressed, False otherwise
+         *
+         * @return bool True if the package is compressed, False otherwise
+         */
+        public function isCompressed(): bool
+        {
+            return $this->compressed;
+        }
+
+        public function setCompressed(bool $compressed): void
+        {
+            $this->compressed = $compressed;
         }
 
         /**
@@ -258,6 +275,7 @@
         {
             return [
                 'flags' => $this->flags,
+                'compressed' => $this->compressed,
                 'build_number' => $this->buildNumber,
                 'entry_point' => $this->entryPoint,
                 'pre_install' => $this->preInstall,
