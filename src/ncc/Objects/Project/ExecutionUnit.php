@@ -35,7 +35,7 @@
         private ExecutionUnitType $type;
         private ExecutionMode $mode;
         private string $entryPoint;
-        private string $workingDirectory;
+        private ?string $workingDirectory;
         private ?array $arguments;
         private ?array $environment;
         private ?array $requiredFiles;
@@ -61,7 +61,7 @@
             $this->type = ExecutionUnitType::tryFrom($data['type'] ?? '') ?? ExecutionUnitType::PHP;
             $this->mode = ExecutionMode::tryFrom($data['mode'] ?? '') ?? ExecutionMode::AUTO;
             $this->entryPoint = $data['entry'];
-            $this->workingDirectory = $data['working_directory'] ?? '${CWD}';
+            $this->workingDirectory = $data['working_directory'] ?? null;
             $this->arguments = $data['arguments'] ?? null;
             $this->environment = $data['environment'] ?? null;
             $this->requiredFiles = $data['required_files'] ?? null;
@@ -163,9 +163,9 @@
         /**
          * Get the working directory of the execution unit.
          *
-         * @return string The working directory of the execution unit
+         * @return string|null The working directory of the execution unit
          */
-        public function getWorkingDirectory(): string
+        public function getWorkingDirectory(): ?string
         {
             return $this->workingDirectory;
         }
@@ -173,14 +173,13 @@
         /**
          * Set the working directory of the execution unit.
          *
-         * @param string $workingDirectory The new working directory of the execution unit
-         * @throws InvalidArgumentException if the working directory is empty
+         * @param string|null $workingDirectory The new working directory of the execution unit
          */
-        public function setWorkingDirectory(string $workingDirectory): void
+        public function setWorkingDirectory(?string $workingDirectory): void
         {
-            if(empty($workingDirectory))
+            if($workingDirectory !== null && empty($workingDirectory))
             {
-                throw new InvalidArgumentException('The Execution Unit\'s Working Directory cannot be empty!');
+                throw new InvalidArgumentException('The Execution Unit\'s Working Directory cannot be empty if it\'s not null');
             }
 
             $this->workingDirectory = $workingDirectory;
