@@ -38,10 +38,15 @@
          */
         public static function handle(array $argv): int
         {
-            $packagePath = getcwd();
+            $packagePath = null;
             if(isset($argv['path']))
             {
                 $packagePath = realpath($argv['path']);
+            }
+            else
+            {
+                Console::error('No package path specified, use --path to specify a package file to inspect');
+                return 1;
             }
 
             if(!file_exists($packagePath) || !is_file($packagePath))
