@@ -23,8 +23,14 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
+    use ncc\Enums\ExecutionUnitType;
+    use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
+    use ncc\Exceptions\ExecutionUnitException;
+    use ncc\Exceptions\IOException;
     use ncc\Interfaces\ReferenceInterface;
+    use ncc\Libraries\pal\Autoloader;
+    use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\ExecutionUnitReference;
     use ncc\Objects\Package\Header;
@@ -39,16 +45,15 @@
         private string $filePath;
         private $fileHandle;
         private int $startOffset;
-        private ?string $packageVersion = null;
-        private ?Header $header = null;
-        private ?Assembly $assembly = null;
+        private string $packageVersion;
+        private Header $header;
+        private Assembly $assembly;
         /** @var array<string, ExecutionUnitReference> */
         private array $executionUnitReferences = [];
         /** @var array<string, ComponentReference> */
         private array $componentReferences = [];
         /** @var array<string, ResourceReference> */
         private array $resourceReferences = [];
-        private bool $parsed = false;
 
         /**
          * Public constructor for the PackageReader class.
@@ -82,6 +87,48 @@
                 fclose($this->fileHandle);
                 throw new InvalidArgumentException("Could not seek to package start position: " . $this->startOffset);
             }
+
+            // Seek to the package start + skip the START_PACKAGE marker
+            fseek($this->fileHandle, $this->startOffset + strlen(PackageStructure::START_PACKAGE->value) + strlen(PackageStructure::MAGIC_BYTES->value) + strlen(PackageStructure::TERMINATE->value));
+
+            // Read package version
+            $this->packageVersion = $this->readPackageVersion();
+
+            // Read all sections
+            while(!feof($this->fileHandle))
+            {
+                $marker = fread($this->fileHandle, 1);
+                if($marker === false || $marker === '' || $marker === PackageStructure::TERMINATE->value[0])
+                {
+                    break;
+                }
+
+                switch($marker)
+                {
+                    case PackageStructure::HEADER->value:
+                        $this->header = $this->readHeader();
+                        break;
+
+                    case PackageStructure::ASSEMBLY->value:
+                        $this->assembly = $this->readAssembly();
+                        break;
+
+                    case PackageStructure::EXECUTION_UNITS->value:
+                        $this->executionUnitReferences = $this->readExecutionUnitReferences();
+                        break;
+
+                    case PackageStructure::COMPONENTS->value:
+                        $this->componentReferences = $this->readComponentReferences();
+                        break;
+
+                    case PackageStructure::RESOURCES->value:
+                        $this->resourceReferences = $this->readResourceReferences();
+                        break;
+
+                    default:
+                        throw new RuntimeException("Unknown section marker: " . bin2hex($marker));
+                }
+            }
         }
 
         /**
@@ -91,11 +138,6 @@
          */
         public function getPackageVersion(): string
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->packageVersion;
         }
 
@@ -106,11 +148,6 @@
          */
         public function getHeader(): ?Header
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->header;
         }
 
@@ -121,11 +158,6 @@
          */
         public function getAssembly(): ?Assembly
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->assembly;
         }
 
@@ -136,11 +168,6 @@
          */
         public function getExecutionUnitReferences(): array
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->executionUnitReferences;
         }
 
@@ -151,11 +178,6 @@
          */
         public function getComponentReferences(): array
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->componentReferences;
         }
 
@@ -166,11 +188,6 @@
          */
         public function getResourceReferences(): array
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->resourceReferences;
         }
 
@@ -209,6 +226,11 @@
                 throw new RuntimeException("Failed to read component data");
             }
 
+            if($this->header->isCompressed())
+            {
+                $data = gzinflate($data);
+            }
+
             return $data;
         }
 
@@ -227,6 +249,11 @@
                 throw new RuntimeException("Failed to read resource data");
             }
 
+            if($this->header->isCompressed())
+            {
+                $data = gzinflate($data);
+            }
+
             return $data;
         }
 
@@ -238,11 +265,6 @@
          */
         public function findComponent(string $path): ?ComponentReference
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->componentReferences[$path] ?? null;
         }
 
@@ -254,11 +276,6 @@
          */
         public function findResource(string $path): ?ResourceReference
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->resourceReferences[$path] ?? null;
         }
 
@@ -270,11 +287,6 @@
          */
         public function findExecutionUnit(string $name): ?ExecutionUnitReference
         {
-            if(!$this->parsed)
-            {
-                $this->parsePackage();
-            }
-
             return $this->executionUnitReferences[$name] ?? null;
         }
 
@@ -318,6 +330,12 @@
             }
         }
 
+        /**
+         * Finds a reference by name or path.
+         *
+         * @param string $name The name or path to search for.
+         * @return ReferenceInterface|null The found reference or null if not found.
+         */
         public function find(string $name): ?ReferenceInterface
         {
             $reference = $this->findComponent($name);
@@ -333,6 +351,113 @@
             }
 
             return $this->findExecutionUnit($name);
+        }
+
+        /**
+         * @throws IOException
+         * @throws ExecutionUnitException
+         */
+        public function extract(string $outputDirectory): void
+        {
+            // Create the directory if it doesn't exist
+            if(!is_dir($outputDirectory))
+            {
+                mkdir($outputDirectory, 0777, true);
+            }
+
+            // Extract all the references from the package
+            foreach($this->getAllReferences() as $reference)
+            {
+                // Execution Units are to be generated
+                if($reference instanceof ExecutionUnitReference)
+                {
+                    $this->createExecutionUnit($reference, $outputDirectory);
+                    continue;
+                }
+
+                // Everything is just written as-is
+                $outputPath = rtrim($outputDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $reference->getName();
+                if(!is_dir(dirname($outputPath)))
+                {
+                    IO::mkdir(dirname($outputPath));
+                }
+
+                IO::writeFile($outputPath, $this->read($reference));
+            }
+
+            // Generate the autoloader
+            IO::writeFile($outputDirectory . DIRECTORY_SEPARATOR . 'autoload.php', Autoloader::generateAutoloader($outputDirectory, [
+                'relative' => true
+            ]));
+        }
+
+        /**
+         * Creates a shell script to execute the given execution unit.
+         *
+         * @param ExecutionUnitReference $reference The execution unit reference.
+         * @param string $outputDirectory The directory where the script will be created.
+         * @return string The path to the created shell script.
+         * @throws ExecutionUnitException If the shell cannot be found.
+         * @throws IOException If there is an error writing the file.
+         */
+        public function createExecutionUnit(ExecutionUnitReference $reference, string $outputDirectory): string
+        {
+            $executionUnit = $this->readExecutionUnit($reference); // Find the execution unit
+            $outputFile = $outputDirectory . DIRECTORY_SEPARATOR . $executionUnit->getName() . '.sh'; // Declare the output file
+            $shell = (new ExecutableFinder())->find('sh'); // Find the system shell
+
+            if($shell === null)
+            {
+                // If we can't find the shell, we can't proceed because the generated script would not be executable
+                throw new ExecutionUnitException('Unable to locate \'sh\', cannot generate shell script.');
+            }
+
+            // Shell script begins with the first line.
+            $shellScript = "#!{$shell}" . PHP_EOL;
+
+            // Define environment variables
+            if($executionUnit->getEnvironment() !== null && count($executionUnit->getEnvironment()) > 0)
+            {
+                // Define the section for the environment variables
+                $shellScript .= PHP_EOL . "# Environment Variables" . PHP_EOL;
+                foreach($executionUnit->getEnvironment() as $key => $value)
+                {
+                    $shellScript .= "{$key}=\"{$value}\"" . PHP_EOL;
+                }
+                $shellScript .= PHP_EOL;
+            }
+
+            // Change to working directory if specified
+            if($executionUnit->getWorkingDirectory() !== null && $executionUnit->getWorkingDirectory() !== MacroVariable::CURRENT_WORKING_DIRECTORY)
+            {
+                $shellScript .= "cd {$executionUnit->getWorkingDirectory()}". PHP_EOL;
+            }
+
+            // Execute the entry point based on the type
+            switch($executionUnit->getType())
+            {
+                case ExecutionUnitType::PHP:
+                    $bin = (new ExecutableFinder())->find('php');
+                    $shellScript .= "exec {$bin} {$outputDirectory}" . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
+                    break;
+
+                case ExecutionUnitType::SYSTEM:
+                    $bin = (new ExecutableFinder())->find($executionUnit->getEntryPoint());
+                    $shellScript .= "exec {$bin}";
+                    break;
+            }
+
+            if($executionUnit->getArguments() !== null && count($executionUnit->getArguments()) > 0)
+            {
+                $shellScript .= ' ' . implode(' ', $executionUnit->getArguments()) . ' "$@"';
+            }
+            else
+            {
+                $shellScript .= ' "$@"';
+            }
+
+            IO::writeFile($outputFile, $shellScript);
+            return $outputFile;
         }
 
         /**
@@ -385,63 +510,6 @@
             }
 
             throw new InvalidArgumentException("Package signature (START_PACKAGE + MAGIC_BYTES) not found in file: " . $this->filePath);
-        }
-
-        /**
-         * Parses the package structure and builds references to all sections.
-         *
-         * @return void
-         */
-        private function parsePackage(): void
-        {
-            if($this->parsed)
-            {
-                return;
-            }
-
-            // Seek to the package start + skip the START_PACKAGE marker
-            fseek($this->fileHandle, $this->startOffset + strlen(PackageStructure::START_PACKAGE->value) + strlen(PackageStructure::MAGIC_BYTES->value) + strlen(PackageStructure::TERMINATE->value));
-
-            // Read package version
-            $this->packageVersion = $this->readPackageVersion();
-
-            // Read all sections
-            while(!feof($this->fileHandle))
-            {
-                $marker = fread($this->fileHandle, 1);
-                if($marker === false || $marker === '' || $marker === PackageStructure::TERMINATE->value[0])
-                {
-                    break;
-                }
-
-                switch($marker)
-                {
-                    case PackageStructure::HEADER->value:
-                        $this->header = $this->readHeader();
-                        break;
-
-                    case PackageStructure::ASSEMBLY->value:
-                        $this->assembly = $this->readAssembly();
-                        break;
-
-                    case PackageStructure::EXECUTION_UNITS->value:
-                        $this->executionUnitReferences = $this->readExecutionUnitReferences();
-                        break;
-
-                    case PackageStructure::COMPONENTS->value:
-                        $this->componentReferences = $this->readComponentReferences();
-                        break;
-
-                    case PackageStructure::RESOURCES->value:
-                        $this->resourceReferences = $this->readResourceReferences();
-                        break;
-
-                    default:
-                        throw new RuntimeException("Unknown section marker: " . bin2hex($marker));
-                }
-            }
-
-            $this->parsed = true;
         }
 
         /**
