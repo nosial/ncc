@@ -55,13 +55,56 @@ print_error() {
     printf "%s[ERROR]%s %s\n" "${RED}" "${NC}" "$1" >&2
 }
 
-# Check if running as root/sudo
-check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        print_warning "Not running as root. You may need sudo privileges for installation."
-        USE_SUDO="sudo"
-    else
+# Check privileges and determine elevation method
+check_privileges() {
+    if [ "$(id -u)" -eq 0 ]; then
+        # Running as root
         USE_SUDO=""
+        INSTALL_MODE="system"
+        return
+    fi
+    
+    # Not running as root - check for privilege escalation tools
+    if command -v sudo >/dev/null 2>&1; then
+        # Test if sudo actually works without prompting
+        if sudo -n true 2>/dev/null; then
+            USE_SUDO="sudo"
+            INSTALL_MODE="system"
+            print_info "Using sudo for system installation"
+        else
+            # sudo exists but requires password
+            print_warning "Not running as root. Attempting to use sudo..."
+            if sudo -v 2>/dev/null; then
+                USE_SUDO="sudo"
+                INSTALL_MODE="system"
+                print_info "Sudo authentication successful"
+            else
+                print_warning "Sudo authentication failed or not available"
+                USE_SUDO=""
+                INSTALL_MODE="user"
+            fi
+        fi
+    elif command -v doas >/dev/null 2>&1; then
+        # Check for doas (OpenBSD/Alpine alternative to sudo)
+        print_info "Found doas, attempting to use for installation"
+        if doas true 2>/dev/null; then
+            USE_SUDO="doas"
+            INSTALL_MODE="system"
+        else
+            print_warning "doas authentication failed or not available"
+            USE_SUDO=""
+            INSTALL_MODE="user"
+        fi
+    else
+        # No privilege escalation available
+        print_warning "No privilege escalation tool (sudo/doas) found"
+        USE_SUDO=""
+        INSTALL_MODE="user"
+    fi
+    
+    if [ "$INSTALL_MODE" = "user" ]; then
+        print_warning "Will attempt user-space installation"
+        print_info "Installation will be limited to user directories"
     fi
 }
 
@@ -94,7 +137,6 @@ get_php_include_path() {
     print_info "PHP include path: $PHP_INCLUDE_PATH"
     
     # Parse the include path (separated by :)
-    # Skip the first path if it's "." (current directory)
     INSTALL_DIR=""
     IFS=':'
     for path in $PHP_INCLUDE_PATH; do
@@ -103,20 +145,40 @@ get_php_include_path() {
             continue
         fi
         
-        # Check if path exists and is writable (or can be made writable with sudo)
-        if [ -d "$path" ]; then
-            if [ -w "$path" ] || [ -n "$USE_SUDO" ]; then
-                INSTALL_DIR="$path"
-                break
-            fi
+        # Check if path exists and is writable
+        if [ -d "$path" ] && [ -w "$path" ]; then
+            INSTALL_DIR="$path"
+            break
+        fi
+        
+        # If not writable but we have elevation, check if it exists
+        if [ -d "$path" ] && [ -n "$USE_SUDO" ] && [ "$INSTALL_MODE" = "system" ]; then
+            INSTALL_DIR="$path"
+            break
         fi
     done
     unset IFS
     
+    # Fallback to user-space directory if no suitable system directory found
     if [ -z "$INSTALL_DIR" ]; then
-        print_error "Could not determine suitable installation directory"
-        print_error "No writable directory found in PHP include path"
-        exit 1
+        if [ "$INSTALL_MODE" = "user" ]; then
+            # Try common user-space PHP locations
+            USER_PHP_DIR="$HOME/.local/lib/php"
+            if [ ! -d "$USER_PHP_DIR" ]; then
+                print_info "Creating user PHP directory: $USER_PHP_DIR"
+                mkdir -p "$USER_PHP_DIR" || {
+                    print_error "Failed to create user PHP directory"
+                    exit 1
+                }
+            fi
+            INSTALL_DIR="$USER_PHP_DIR"
+            print_warning "Using user-space directory: $INSTALL_DIR"
+            print_info "You may need to add this to your php.ini include_path"
+        else
+            print_error "Could not determine suitable installation directory"
+            print_error "No writable directory found in PHP include path"
+            exit 1
+        fi
     fi
     
     print_info "Selected installation directory: $INSTALL_DIR"
@@ -126,21 +188,57 @@ get_php_include_path() {
 get_bin_path() {
     BIN_DIR=""
     
-    # Preferred bin directories in order
-    PREFERRED_BINS="/usr/local/bin /usr/bin /bin"
-    
-    for dir in $PREFERRED_BINS; do
-        if [ -d "$dir" ]; then
-            if [ -w "$dir" ] || [ -n "$USE_SUDO" ]; then
-                BIN_DIR="$dir"
-                break
+    if [ "$INSTALL_MODE" = "system" ]; then
+        # Preferred system bin directories in order
+        PREFERRED_BINS="/usr/local/bin /usr/bin /bin"
+        
+        for dir in $PREFERRED_BINS; do
+            if [ -d "$dir" ]; then
+                if [ -w "$dir" ] || [ -n "$USE_SUDO" ]; then
+                    BIN_DIR="$dir"
+                    break
+                fi
             fi
+        done
+        
+        if [ -z "$BIN_DIR" ]; then
+            print_warning "No system bin directory accessible"
+            INSTALL_MODE="user"
         fi
-    done
+    fi
     
-    if [ -z "$BIN_DIR" ]; then
-        print_error "Could not find suitable bin directory in PATH"
-        exit 1
+    # User-space fallback
+    if [ "$INSTALL_MODE" = "user" ] || [ -z "$BIN_DIR" ]; then
+        # Try common user bin directories
+        if [ -n "$HOME" ]; then
+            USER_BIN_DIR="$HOME/.local/bin"
+            
+            if [ ! -d "$USER_BIN_DIR" ]; then
+                print_info "Creating user bin directory: $USER_BIN_DIR"
+                mkdir -p "$USER_BIN_DIR" || {
+                    print_error "Failed to create user bin directory"
+                    exit 1
+                }
+            fi
+            
+            BIN_DIR="$USER_BIN_DIR"
+            print_warning "Using user-space bin directory: $BIN_DIR"
+            
+            # Check if it's in PATH
+            case ":$PATH:" in
+                *":$BIN_DIR:"*)
+                    print_info "Directory is already in PATH"
+                    ;;
+                *)
+                    print_warning "Directory is not in PATH!"
+                    print_info "Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
+                    print_info "  export PATH=\"\$PATH:$BIN_DIR\""
+                    ;;
+            esac
+        else
+            print_error "Could not determine user home directory"
+            exit 1
+        fi
     fi
     
     print_info "Selected bin directory: $BIN_DIR"
@@ -299,7 +397,7 @@ main() {
     case "$COMMAND" in
         install|update)
             print_info "Starting ncc installation..."
-            check_root
+            check_privileges
             check_php
             get_php_include_path
             get_bin_path
@@ -308,7 +406,7 @@ main() {
             ;;
         uninstall|remove)
             print_info "Starting ncc uninstallation..."
-            check_root
+            check_privileges
             check_php
             uninstall_ncc
             ;;
