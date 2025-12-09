@@ -56,20 +56,71 @@
          *
          * @return string
          */
-        public static function getDataPath(): string
+        public static function getPackageManagerLocation(): string
         {
-            if (getenv('NCC_DATA_PATH'))
+            // Check if running as root/system on Unix-like systems
+            if (function_exists('posix_geteuid') && posix_geteuid() === 0)
             {
-                return rtrim(getenv('NCC_DATA_PATH'), DIRECTORY_SEPARATOR);
+                return DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
             }
 
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+            // Check if running on Windows as system
+            if (PHP_OS_FAMILY === 'Windows')
             {
-                return self::getUserHome() . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Local' . DIRECTORY_SEPARATOR . 'ncc';
+                // Check if running with elevated privileges
+                $identity = shell_exec('whoami /groups 2>nul | findstr /i "S-1-16-12288" 2>nul');
+                if ($identity !== null && trim($identity) !== '')
+                {
+                    // Get the system drive (usually C:)
+                    $systemDrive = getenv('SystemDrive');
+                    if ($systemDrive === false || $systemDrive === '')
+                    {
+                        $systemDrive = getenv('HOMEDRIVE');
+                        if ($systemDrive === false || $systemDrive === '')
+                        {
+                            $systemDrive = 'C:';
+                        }
+                    }
+                    return $systemDrive . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+                }
+            }
+
+            // User-level location
+            return self::getUserHome() . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+        }
+
+        /**
+         * Returns all possible package locations in order of priority
+         * User-level location is checked first, then system-level
+         *
+         * @return array<string>
+         */
+        public static function getAllPackageLocations(): array
+        {
+            $locations = [];
+
+            // Always include user-level location first
+            $locations[] = self::getUserHome() . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+
+            // Add system-level location
+            if (PHP_OS_FAMILY === 'Windows')
+            {
+                $systemDrive = getenv('SystemDrive');
+                if ($systemDrive === false || $systemDrive === '')
+                {
+                    $systemDrive = getenv('HOMEDRIVE');
+                    if ($systemDrive === false || $systemDrive === '')
+                    {
+                        $systemDrive = 'C:';
+                    }
+                }
+                $locations[] = $systemDrive . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
             }
             else
             {
-                return self::getUserHome() . DIRECTORY_SEPARATOR . '.local' . DIRECTORY_SEPARATOR . 'share' . DIRECTORY_SEPARATOR . 'ncc';
+                $locations[] = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
             }
+
+            return $locations;
         }
     }

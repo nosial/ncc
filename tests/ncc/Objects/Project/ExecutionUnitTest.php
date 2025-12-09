@@ -218,7 +218,7 @@
             $unit = new ExecutionUnit($data);
             
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('The Execution Unit\'s Working Directory cannot be empty!');
+            $this->expectExceptionMessage('The Execution Unit\'s Working Directory cannot be empty if it\'s not null');
             $unit->setWorkingDirectory('');
         }
 
@@ -344,7 +344,7 @@
             $this->assertEquals('php', $result['type']);
             $this->assertEquals('auto', $result['mode']);
             $this->assertEquals('main.php', $result['entry']);
-            $this->assertEquals('${CWD}', $result['working_directory']);
+            $this->assertEquals(null, $result['working_directory']);
             $this->assertNull($result['arguments']);
             $this->assertNull($result['environment']);
         }

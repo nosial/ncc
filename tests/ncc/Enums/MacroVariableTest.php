@@ -70,7 +70,6 @@
             $this->assertStringNotContainsString('${Y}', $result);
             $this->assertStringNotContainsString('${m}', $result);
             $this->assertStringNotContainsString('${d}', $result);
-            $this->assertStringNotContainsString('${CWD}', $result);
             $this->assertStringNotContainsString('${c}', $result);
             $this->assertStringNotContainsString('${H}', $result);
             $this->assertStringNotContainsString('${i}', $result);
@@ -79,7 +78,6 @@
             // Verify expected values are present
             $this->assertStringContainsString(date('Y-m-d'), $result);
             $this->assertStringContainsString(date('Y'), $result);
-            $this->assertStringContainsString(getcwd(), $result);
         }
 
         /**
@@ -246,7 +244,6 @@
             $this->assertEquals('TestProject', $result['project']['name']);
             $this->assertEquals('1.0.0', $result['project']['version']);
             $this->assertEquals(date('Y-m-d'), $result['project']['metadata']['date']);
-            $this->assertEquals(getcwd(), $result['project']['metadata']['cwd']);
             $this->assertEquals('Year: ' . date('Y'), $result['simple']);
         }
 
@@ -292,15 +289,6 @@
 
             $this->assertEquals('Generated on ' . date('Y-m-d') . ' with CustomData', $result);
             $this->assertStringNotContainsString('${', $result);
-        }
-
-        /**
-         * Test CWD macro
-         */
-        public function testCwdMacro()
-        {
-            $result = MacroVariable::fromInput('Working directory: ${CWD}');
-            $this->assertEquals('Working directory: ' . getcwd(), $result);
         }
 
         /**
