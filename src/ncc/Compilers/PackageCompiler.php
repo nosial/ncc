@@ -226,6 +226,7 @@
             $static = $this->isStaticallyLinked();
 
             $header->setBuildNumber($this->getBuildNumber());
+            $header->setCompressed($this->compressionEnabled);
             $header->setEntryPoint($this->getProjectConfiguration()->getEntryPoint());
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
