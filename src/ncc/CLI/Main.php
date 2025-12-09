@@ -23,6 +23,7 @@
     namespace ncc\CLI;
 
     use ncc\CLI\Commands\BuildCommand;
+    use ncc\CLI\Commands\ExtractCommand;
     use ncc\CLI\Commands\InspectCommand;
     use ncc\CLI\Commands\ProjectCommand;
     use ncc\Libraries\OptsLib\Parse;
@@ -64,6 +65,10 @@
             elseif(isset($argv['inspect']) || isset($argv['ins']))
             {
                 return InspectCommand::handle($argv);
+            }
+            elseif(isset($argv['extract']) || isset($argv['ext']))
+            {
+                return ExtractCommand::handle($argv);
             }
             elseif(isset($argv['version']) || isset($argv['v']))
             {
@@ -115,8 +120,9 @@
                 print('Commands:' . PHP_EOL);
                 print('  project           Create and Edit ncc Projects' . PHP_EOL);
                 print('  build             Build the current project' . PHP_EOL);
-                print('  exec              Execution handler for ncc packages' . PHP_EOL);
-                print('  inspect           Inspect a package without installing it' . PHP_EOL);
+                print('  exec              Executes an ncc package if it contains an entrypoint' . PHP_EOL);
+                print('  inspect           Inspect the contents of a ncc package' . PHP_EOL);
+                print('  extract           Extracts the content of a ncc package to a directory as a working PHP component' . PHP_EOL);
                 print(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.' . PHP_EOL);
                 return;
             }
