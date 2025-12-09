@@ -43,7 +43,7 @@
             $this->assertEquals(ExecutionUnitType::PHP, $unit->getType());
             $this->assertEquals(ExecutionMode::AUTO, $unit->getMode());
             $this->assertEquals('main.php', $unit->getEntryPoint());
-            $this->assertEquals('${CWD}', $unit->getWorkingDirectory());
+            $this->assertNull($unit->getWorkingDirectory());
             $this->assertNull($unit->getArguments());
             $this->assertNull($unit->getEnvironment());
         }
