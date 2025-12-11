@@ -233,6 +233,10 @@
             $header->setDependencyReferences(array_map(function ($dependency) use ($static) {
                 return new DependencyReference($dependency, $static);
             }, $this->getProjectConfiguration()->getDependencies() ?? []));
+            if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
+            {
+                $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
+            }
 
             return $header;
         }
