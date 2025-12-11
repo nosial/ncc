@@ -52,57 +52,39 @@
         }
 
         /**
-         * Returns the data path for ncc
+         * Checks if running as root/system user
          *
-         * @return string
+         * @return bool
          */
-        public static function getPackageManagerLocation(): string
+        private static function isSystemUser(): bool
         {
-            // Check if running as root/system on Unix-like systems
+            // Check if running as root on Unix-like systems
             if (function_exists('posix_geteuid') && posix_geteuid() === 0)
             {
-                return DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+                return true;
             }
 
-            // Check if running on Windows as system
+            // Check if running with elevated privileges on Windows
             if (PHP_OS_FAMILY === 'Windows')
             {
-                // Check if running with elevated privileges
                 $identity = shell_exec('whoami /groups 2>nul | findstr /i "S-1-16-12288" 2>nul');
                 if ($identity !== null && trim($identity) !== '')
                 {
-                    // Get the system drive (usually C:)
-                    $systemDrive = getenv('SystemDrive');
-                    if ($systemDrive === false || $systemDrive === '')
-                    {
-                        $systemDrive = getenv('HOMEDRIVE');
-                        if ($systemDrive === false || $systemDrive === '')
-                        {
-                            $systemDrive = 'C:';
-                        }
-                    }
-                    return $systemDrive . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+                    return true;
                 }
             }
 
-            // User-level location
-            return self::getUserHome() . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+            return false;
         }
 
         /**
-         * Returns all possible package locations in order of priority
-         * User-level location is checked first, then system-level
+         * Returns the system-level package manager location
+         * This always returns a valid path regardless of user privileges
          *
-         * @return array<string>
+         * @return string
          */
-        public static function getAllPackageLocations(): array
+        public static function getSystemPackageManagerLocation(): string
         {
-            $locations = [];
-
-            // Always include user-level location first
-            $locations[] = self::getUserHome() . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
-
-            // Add system-level location
             if (PHP_OS_FAMILY === 'Windows')
             {
                 $systemDrive = getenv('SystemDrive');
@@ -114,12 +96,47 @@
                         $systemDrive = 'C:';
                     }
                 }
-                $locations[] = $systemDrive . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+                return $systemDrive . DIRECTORY_SEPARATOR . 'ncc';
             }
-            else
+
+            return DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc';
+        }
+
+        /**
+         * Returns the user-level package manager location
+         * Returns null when running as root/system user
+         *
+         * @return string|null
+         */
+        public static function getUserPackageManagerLocation(): ?string
+        {
+            if (self::isSystemUser())
             {
-                $locations[] = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+                return null;
             }
+
+            return self::getUserHome() . DIRECTORY_SEPARATOR . 'ncc';
+        }
+
+        /**
+         * Returns all possible package locations in order of priority
+         * User-level location is checked first (if applicable), then system-level
+         *
+         * @return array<string>
+         */
+        public static function getAllPackageLocations(): array
+        {
+            $locations = [];
+
+            // Include user-level location first if not running as system user
+            $userLocation = self::getUserPackageManagerLocation();
+            if ($userLocation !== null)
+            {
+                $locations[] = $userLocation;
+            }
+
+            // Always include system-level location
+            $locations[] = self::getSystemPackageManagerLocation();
 
             return $locations;
         }
