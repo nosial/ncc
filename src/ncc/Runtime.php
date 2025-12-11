@@ -217,7 +217,7 @@
         {
             if(self::$systemPackageManager === null)
             {
-                $systemLocation = PathResolver::getSystemPackageManagerLocation();
+                $systemLocation = PathResolver::getDataLocation();
 
                 // Check if we have write access (typically when running as system user)
                 $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
@@ -266,58 +266,6 @@
             return self::getUserPackageManager()?->entryExists($package, $version);
         }
 
-        public static function installPackageFromRemote(PackageSource $packageSource, array $options=[]): void
-        {
-
-        }
-
-        public static function installPackageFromReader(PackageReader $packageReader, array $options=[]): void
-        {
-            // If the 'reinstall' option isn't set, we check if the pcakage is already installed
-            if(!isset($options['reinstall']) && self::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
-            {
-                throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
-            }
-
-            // If the 'skip_dependencies' option isn't set
-            if(!isset($options['skip_dependencies']))
-            {
-                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
-                {
-                    if(!self::getPackageManager()->entryExists($reference->getSource()->getName(), $reference->getSource()->getVersion()))
-                    {
-                        self::installPackageFromRemote($reference->getSource());
-                    }
-                }
-            }
-
-            if(
-                !file_exists(self::getPackageManager()->getPackageLocation()) &&
-                !mkdir(self::getPackageManager()->getPackageLocation(), 0755, true) &&
-                !is_dir(self::getPackageManager()->getPackageLocation())
-            )
-            {
-                throw new RuntimeException(sprintf('Directory "%s" was not created', self::getPackageManager()->getPackageLocation()));
-            }
-
-            $packageInstallationPath = self::getPackageManager()->getPackageLocation() . DIRECTORY_SEPARATOR .
-                sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
-
-            // Remove the orphaned package if it already exists
-            if(file_exists($packageInstallationPath) && !unlink($packageInstallationPath))
-            {
-                throw new IOException(sprintf('Cannot remove orphaned package from "%s"', $packageInstallationPath));
-            }
-
-            // Copy over the package to the package installation path
-            if(!copy($packageReader->getFilePath(), $packageInstallationPath))
-            {
-                throw new IOException(sprintf('Cannot copy package from "%s" to "%s"', $packageReader->getFilePath(), $packageInstallationPath));
-            }
-
-            // Finally add the entry to the package manager
-            self::getPackageManager()->addEntry($packageReader);
-        }
 
         /**
          * Initializes the StreamWrapper if not already initialized.

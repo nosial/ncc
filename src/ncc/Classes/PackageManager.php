@@ -28,10 +28,11 @@
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
+    use ncc\Objects\PackageSource;
 
     class PackageManager
     {
-        private string $directoryPath;
+        private string $dataDirectoryPath;
         private string $packageLockPath;
         /**
          * @var PackageLockEntry[]
@@ -44,21 +45,21 @@
         /**
          * PackageManager constructor.
          *
-         * @param string $directoryPath The directory path where packages are stored
+         * @param string $dataDirectoryPath The directory path where packages are stored
          * @param bool $autoSave If true, automatically save after each write operation (default: true)
          * @throws InvalidArgumentException If the directory path is invalid
          * @throws IOException If the lock file cannot be read
          * @throws PackageException If the lock file contains invalid data
          */
-        public function __construct(string $directoryPath, bool $autoSave=true)
+        public function __construct(string $dataDirectoryPath, bool $autoSave=true)
         {
-            if(empty($directoryPath))
+            if(empty($dataDirectoryPath))
             {
                 throw new InvalidArgumentException('Directory path cannot be empty');
             }
 
-            $this->directoryPath = rtrim($directoryPath, DIRECTORY_SEPARATOR);
-            $this->packageLockPath = $this->directoryPath . DIRECTORY_SEPARATOR . 'lock.json';
+            $this->dataDirectoryPath = rtrim($dataDirectoryPath, DIRECTORY_SEPARATOR);
+            $this->packageLockPath = $this->dataDirectoryPath . DIRECTORY_SEPARATOR . 'lock.json';
             $this->entries = [];
             $this->modified = false;
             $this->autoSave = $autoSave;
@@ -70,13 +71,13 @@
             }
 
             // Check if the directory is writable (for creating new lock file)
-            if(file_exists($this->directoryPath))
+            if(file_exists($this->dataDirectoryPath))
             {
-                return !is_writable($this->directoryPath);
+                return !is_writable($this->dataDirectoryPath);
             }
 
             // Directory doesn't exist, check parent directory
-            $this->readOnly = !is_writable(dirname($this->directoryPath));
+            $this->readOnly = !is_writable(dirname($this->dataDirectoryPath));
 
             if(file_exists($this->packageLockPath))
             {
@@ -151,9 +152,9 @@
          *
          * @return string
          */
-        public function getDirectoryPath(): string
+        public function getDataDirectoryPath(): string
         {
-            return $this->directoryPath;
+            return $this->dataDirectoryPath;
         }
 
         /**
@@ -278,10 +279,10 @@
         {
             if($entry === null)
             {
-                return $this->getDirectoryPath() . DIRECTORY_SEPARATOR . 'packages';
+                return $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages';
             }
 
-            return $this->getDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . $entry;
+            return $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . $entry;
         }
 
         /**
@@ -299,7 +300,7 @@
                 return null;
             }
 
-            $packagePath = $this->getDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . 
+            $packagePath = $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR .
                 $packageName . '=' . $entry->getVersion();
 
             if(!file_exists($packagePath))
@@ -380,6 +381,60 @@
             return $this->readOnly;
         }
 
+
+        public static function installPackageFromRemote(PackageSource $packageSource, array $options=[]): void
+        {
+
+        }
+
+        public function installPackageFromReader(PackageReader $packageReader, array $options=[]): void
+        {
+            // If the 'reinstall' option isn't set, we check if the pcakage is already installed
+            if(!isset($options['reinstall']) && self::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
+            {
+                throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
+            }
+
+            // If the 'skip_dependencies' option isn't set
+            if(!isset($options['skip_dependencies']))
+            {
+                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
+                {
+                    if(!$this->entryExists($reference->getSource()->getName(), $reference->getSource()->getVersion()))
+                    {
+                        $this->installPackageFromRemote($reference->getSource());
+                    }
+                }
+            }
+
+            if(
+                !file_exists($this->getPackageLocation()) &&
+                !mkdir($this->getPackageLocation(), 0755, true) &&
+                !is_dir($this->getPackageLocation())
+            )
+            {
+                throw new IOException(sprintf('Directory "%s" was not created', $this->getPackageLocation()));
+            }
+
+            $packageInstallationPath = $this->getPackageLocation() . DIRECTORY_SEPARATOR .
+                sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+
+            // Remove the orphaned package if it already exists
+            if(file_exists($packageInstallationPath) && !unlink($packageInstallationPath))
+            {
+                throw new IOException(sprintf('Cannot remove orphaned package from "%s"', $packageInstallationPath));
+            }
+
+            // Copy over the package to the package installation path
+            if(!copy($packageReader->getFilePath(), $packageInstallationPath))
+            {
+                throw new IOException(sprintf('Cannot copy package from "%s" to "%s"', $packageReader->getFilePath(), $packageInstallationPath));
+            }
+
+            // Finally add the entry to the package manager
+            $this->addEntry($packageReader);
+        }
+
         /**
          * Save the package lock file
          *
@@ -431,54 +486,6 @@
             }
 
             $this->modified = false;
-        }
-
-        public function installPackageFromReader(PackageReader $packageReader, array $options=[]): void
-        {
-            // If the 'reinstall' option isn't set, we check if the pcakage is already installed
-            if(!isset($options['reinstall']) && self::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
-            {
-                throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
-            }
-
-            // If the 'skip_dependencies' option isn't set
-            if(!isset($options['skip_dependencies']))
-            {
-                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
-                {
-                    if(!self::getPackageManager()->entryExists($reference->getSource()->getName(), $reference->getSource()->getVersion()))
-                    {
-                        self::installPackageFromRemote($reference->getSource());
-                    }
-                }
-            }
-
-            if(
-                !file_exists(self::getPackageManager()->getPackageLocation()) &&
-                !mkdir(self::getPackageManager()->getPackageLocation(), 0755, true) &&
-                !is_dir(self::getPackageManager()->getPackageLocation())
-            )
-            {
-                throw new RuntimeException(sprintf('Directory "%s" was not created', self::getPackageManager()->getPackageLocation()));
-            }
-
-            $packageInstallationPath = self::getPackageManager()->getPackageLocation() . DIRECTORY_SEPARATOR .
-                sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
-
-            // Remove the orphaned package if it already exists
-            if(file_exists($packageInstallationPath) && !unlink($packageInstallationPath))
-            {
-                throw new IOException(sprintf('Cannot remove orphaned package from "%s"', $packageInstallationPath));
-            }
-
-            // Copy over the package to the package installation path
-            if(!copy($packageReader->getFilePath(), $packageInstallationPath))
-            {
-                throw new IOException(sprintf('Cannot copy package from "%s" to "%s"', $packageReader->getFilePath(), $packageInstallationPath));
-            }
-
-            // Finally add the entry to the package manager
-            self::getPackageManager()->addEntry($packageReader);
         }
 
         /**

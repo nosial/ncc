@@ -38,10 +38,10 @@
 
             if($userPackageManager !== null)
             {
-                Console::out("User Level Packages: " . $userPackageManager->getDirectoryPath());
+                Console::out("User Level Packages: " . $userPackageManager->getDataDirectoryPath());
             }
 
-            Console::out('System Packages: ' . $systemPackageManager->getDirectoryPath());
+            Console::out('System Packages: ' . $systemPackageManager->getDataDirectoryPath());
             return 0;
         }
     }

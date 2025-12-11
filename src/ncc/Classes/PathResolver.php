@@ -83,7 +83,7 @@
          *
          * @return string
          */
-        public static function getSystemPackageManagerLocation(): string
+        public static function getDataLocation(): string
         {
             if (PHP_OS_FAMILY === 'Windows')
             {
@@ -136,7 +136,7 @@
             }
 
             // Always include system-level location
-            $locations[] = self::getSystemPackageManagerLocation();
+            $locations[] = self::getDataLocation();
 
             return $locations;
         }
