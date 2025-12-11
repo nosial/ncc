@@ -21,9 +21,15 @@
      */
     namespace ncc;
 
+    use ncc\Classes\PackageManager;
     use ncc\Classes\PackageReader;
+    use ncc\Classes\PathResolver;
     use ncc\Classes\StreamWrapper;
     use ncc\Exceptions\ImportException;
+    use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
+    use ncc\Objects\PackageSource;
+    use RuntimeException;
 
     class Runtime
     {
@@ -31,41 +37,121 @@
          * @var array
          */
         private static array $importedPackages = [];
-
         /**
          * @var bool Flag to track if StreamWrapper has been initialized
          */
         private static bool $streamWrapperInitialized = false;
+        /**
+         * @var PackageManager|null The user-level package manager instance
+         */
+        private static ?PackageManager $userPackageManager = null;
+        /**
+         * @var PackageManager|null The system-level package manager instance
+         */
+        private static ?PackageManager $systemPackageManager = null;
 
         /**
-         * Imports a package into the runtime.
+         * Imports a package into the runtime, this method supports two ways of importing a method
+         *  1. From a file directly
+         *  2. From the package manager
          *
-         * @param string $packagePath The path to the package file. Can be a .ncc file or a file containing a package.
+         * Importing a file directly does not support the $version parameter, hence it will be ignored.
+         * Importing a package from the package manager allows the user of the $version parameter if
+         * a specific version of the package is needed. Otherwise use `latest` to only import the latest
+         * version of the installed package.
+         *
+         * @param string $package The path to the package or the package name
+         * @param string $version The version of the package to import if importing from a package manager
          * @throws ImportException If the package cannot be imported.
          */
-        public static function import(string $packagePath): void
+        public static function import(string $package, string $version='latest'): void
         {
-            // Initialize the StreamWrapper on first import
             self::initializeStreamWrapper();
 
+            try
+            {
+                if(is_file($package))
+                {
+                    $packageReader = self::importFromFile($package);
+                    self::$importedPackages[$packageReader->getAssembly()->getPackage()] = $packageReader;
+                }
+                else
+                {
+                    $packageReader = self::importFromPackageManager($package, $version);
+                }
+            }
+            catch(IOException $e)
+            {
+                throw new ImportException('Fatal error while read the package: ' . $package, $e->getCode(), $e);
+            }
+        }
+
+        /**
+         * Imports a package from the package manager
+         *
+         * @param string $package The package name
+         * @param string $version The version of the package (use 'latest' for the most recent version)
+         * @return PackageReader Returns the PackageReader
+         * @throws ImportException If the package cannot be found or imported
+         */
+        public static function importFromPackageManager(string $package, string $version='latest'): PackageReader
+        {
+            // First check if package is already imported
+            if(isset(self::$importedPackages[$package]))
+            {
+                return self::$importedPackages[$package];
+            }
+
+            // Try user package manager first
+            $userManager = self::getUserPackageManager();
+            if($userManager !== null && $userManager->entryExists($package, $version))
+            {
+                $packagePath = $userManager->getPackagePath($package, $version);
+                $packageReader = self::importFromFile($packagePath);
+                self::$importedPackages[$package] = $packageReader;
+                return $packageReader;
+            }
+
+            // Try system package manager
+            $systemManager = self::getSystemPackageManager();
+            if($systemManager->entryExists($package, $version))
+            {
+                $packagePath = $systemManager->getPackagePath($package, $version);
+                $packageReader = self::importFromFile($packagePath);
+                self::$importedPackages[$package] = $packageReader;
+                return $packageReader;
+            }
+
+            throw new ImportException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
+        }
+
+        /**
+         * Constructs a PackageReader instance based off a package file on disk
+         *
+         * @param string $packagePath The file path to the package
+         * @return PackageReader Returns the PackageReader
+         * @throws IOException Thrown if the file cannot be read/found
+         */
+        private static function importFromFile(string $packagePath): PackageReader
+        {
+            // Initialize the StreamWrapper on first import
             $packagePath = realpath($packagePath);
             if(!file_exists($packagePath))
             {
-                throw new ImportException('Package not found: ' . $packagePath);
+                throw new IOException('Package not found: ' . $packagePath);
             }
 
             if(!is_file($packagePath))
             {
-                throw new ImportException('Package path is not a file: ' . $packagePath);
+                throw new IOException('Package path is not a file: ' . $packagePath);
             }
 
             if(!is_readable($packagePath))
             {
-                throw new ImportException('Package file is not readable: ' . $packagePath);
+                throw new IOException('Package file is not readable: ' . $packagePath);
             }
 
-            $packageReader = new PackageReader($packagePath);
-            self::$importedPackages[$packageReader->getAssembly()->getPackage()] = $packageReader;
+            return new PackageReader($packagePath);
         }
 
         /**
@@ -87,6 +173,150 @@
         public static function isImported(string $packageName): bool
         {
             return isset(self::$importedPackages[$packageName]);
+        }
+
+        /**
+         * Gets the user-level PackageManager instance, initializing it if necessary.
+         * Returns null when running as root/system user.
+         *
+         * @return PackageManager|null The user-level PackageManager instance, or null if running as system user.
+         * @throws RuntimeException If the package manager directory cannot be created.
+         */
+        public static function getUserPackageManager(): ?PackageManager
+        {
+            if(self::$userPackageManager === null)
+            {
+                $userLocation = PathResolver::getUserPackageManagerLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                if(!file_exists($userLocation))
+                {
+                    if(!mkdir($userLocation, 0755, true) && !is_dir($userLocation))
+                    {
+                        throw new RuntimeException(sprintf('Directory "%s" was not created', $userLocation));
+                    }
+                }
+
+                self::$userPackageManager = new PackageManager($userLocation);
+            }
+
+            return self::$userPackageManager;
+        }
+
+        /**
+         * Gets the system-level PackageManager instance, initializing it if necessary.
+         * This always returns a valid PackageManager instance.
+         *
+         * @return PackageManager The system-level PackageManager instance.
+         * @throws RuntimeException If the package manager directory cannot be created (only when running as system user).
+         */
+        public static function getSystemPackageManager(): PackageManager
+        {
+            if(self::$systemPackageManager === null)
+            {
+                $systemLocation = PathResolver::getSystemPackageManagerLocation();
+
+                // Check if we have write access (typically when running as system user)
+                $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
+
+                // If we have write access and directory doesn't exist, create it
+                if($hasWriteAccess && !file_exists($systemLocation))
+                {
+                    if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
+                    {
+                        throw new RuntimeException(sprintf('Directory "%s" was not created', $systemLocation));
+                    }
+                }
+
+                self::$systemPackageManager = new PackageManager($systemLocation);
+            }
+
+            return self::$systemPackageManager;
+        }
+
+        /**
+         * Gets the primary (writable) PackageManager instance.
+         * Returns user-level package manager for regular users,
+         * and system-level package manager for system users (root).
+         *
+         * @return PackageManager The primary PackageManager instance.
+         * @throws RuntimeException If the package manager directory cannot be created.
+         */
+        public static function getPackageManager(): PackageManager
+        {
+            $userManager = self::getUserPackageManager();
+            if($userManager !== null)
+            {
+                return $userManager;
+            }
+
+            return self::getSystemPackageManager();
+        }
+
+        public static function packageInstalled(string $package, string $version): bool
+        {
+            if(self::getSystemPackageManager()->entryExists($package, $version))
+            {
+                return true;
+            }
+
+            return self::getUserPackageManager()?->entryExists($package, $version);
+        }
+
+        public static function installPackageFromRemote(PackageSource $packageSource, array $options=[]): void
+        {
+
+        }
+
+        public static function installPackageFromReader(PackageReader $packageReader, array $options=[]): void
+        {
+            // If the 'reinstall' option isn't set, we check if the pcakage is already installed
+            if(!isset($options['reinstall']) && self::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
+            {
+                throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
+            }
+
+            // If the 'skip_dependencies' option isn't set
+            if(!isset($options['skip_dependencies']))
+            {
+                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
+                {
+                    if(!self::getPackageManager()->entryExists($reference->getSource()->getName(), $reference->getSource()->getVersion()))
+                    {
+                        self::installPackageFromRemote($reference->getSource());
+                    }
+                }
+            }
+
+            if(
+                !file_exists(self::getPackageManager()->getPackageLocation()) &&
+                !mkdir(self::getPackageManager()->getPackageLocation(), 0755, true) &&
+                !is_dir(self::getPackageManager()->getPackageLocation())
+            )
+            {
+                throw new RuntimeException(sprintf('Directory "%s" was not created', self::getPackageManager()->getPackageLocation()));
+            }
+
+            $packageInstallationPath = self::getPackageManager()->getPackageLocation() . DIRECTORY_SEPARATOR .
+                sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+
+            // Remove the orphaned package if it already exists
+            if(file_exists($packageInstallationPath) && !unlink($packageInstallationPath))
+            {
+                throw new IOException(sprintf('Cannot remove orphaned package from "%s"', $packageInstallationPath));
+            }
+
+            // Copy over the package to the package installation path
+            if(!copy($packageReader->getFilePath(), $packageInstallationPath))
+            {
+                throw new IOException(sprintf('Cannot copy package from "%s" to "%s"', $packageReader->getFilePath(), $packageInstallationPath));
+            }
+
+            // Finally add the entry to the package manager
+            self::getPackageManager()->addEntry($packageReader);
         }
 
         /**
