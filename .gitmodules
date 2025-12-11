@@ -22,3 +22,6 @@
 [submodule "dependencies/Process"]
 	path = dependencies/Process
 	url = https://github.com/symfony/process
+[submodule "dependencies/semver"]
+	path = dependencies/semver
+	url = https://github.com/composer/semver.git
