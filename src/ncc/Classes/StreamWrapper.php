@@ -28,14 +28,34 @@
     /**
      * StreamWrapper for accessing imported package contents via the ncc:// protocol.
      *
-     * This wrapper allows reading files from imported NCC packages using URLs in the format:
+     * This wrapper allows reading files from NCC packages using URLs in the format:
      * ncc://package.name/path/to/resource
+     * ncc://package.name=1.0.0/path/to/resource (with specific version)
+     *
+     * Packages are automatically imported from the package manager if not already loaded.
+     * Once imported with a version, the package is always accessible via its name:
+     * ncc://package.name/path/to/resource (regardless of imported version)
+     *
+     * Special package-only imports (no resource path):
+     * ncc://package.name - imports latest version, returns empty content
+     * ncc://package.name=1.0.0 - imports specific version, returns empty content
      *
      * Example usage:
      * ```php
-     * Runtime::import('path/to/package.ncc');
      * StreamWrapper::register();
+     * 
+     * // Auto-imports latest version from package manager
      * $content = file_get_contents('ncc://net.nosial.configlib/ConfigLib/Configuration.php');
+     * 
+     * // Auto-imports specific version
+     * require 'ncc://com.example.package=1.0.0/Main.php';
+     * 
+     * // Package-only import (imports but returns empty content)
+     * require 'ncc://com.example.helpers'; // imports latest
+     * require 'ncc://com.example.helpers=2.1.5'; // imports v2.1.5
+     * 
+     * // After import, always accessible without version
+     * $data = file_get_contents('ncc://com.example.package/data.txt');
      * ```
      *
      * The implementation is designed to have a small memory footprint by reading data
@@ -53,6 +73,10 @@
         private ?string $data = null;
         /** @var resource|null Context passed to stream operations */
         public $context;
+        /** @var array|null List of directory entries for directory operations */
+        private ?array $dirEntries = null;
+        /** @var int Current position in directory listing */
+        private int $dirPosition = 0;
 
         /**
          * Registers the ncc:// stream wrapper.
@@ -116,7 +140,7 @@
                 return false;
             }
 
-            [$packageName, $resourcePath] = $parsed;
+            [$packageName, $resourcePath, $isPackageOnly] = $parsed;
 
             // Get the package reader from Runtime
             if (!Runtime::isImported($packageName))
@@ -130,6 +154,17 @@
 
             $packages = Runtime::getImportedPackages();
             $this->packageReader = $packages[$packageName];
+
+            // Handle package-only reference (e.g., ncc://package.name)
+            if ($isPackageOnly)
+            {
+                // Return empty content for package-only references
+                $this->reference = null;
+                $this->position = 0;
+                $this->data = ''; // Empty PHP file content
+                $opened_path = $path;
+                return true;
+            }
 
             // Find the resource reference
             $this->reference = $this->packageReader->find($resourcePath);
@@ -158,19 +193,22 @@
          */
         public function stream_read(int $count): string
         {
-            if ($this->reference === null)
-            {
-                return '';
-            }
-
             // Lazy load the data only when needed
             if ($this->data === null)
             {
-                $this->data = $this->packageReader->read($this->reference);
-                // If it's an ExecutionUnit, it will return an object, convert to string
-                if (!is_string($this->data))
+                // Package-only reference (no resource path)
+                if ($this->reference === null)
                 {
                     $this->data = '';
+                }
+                else
+                {
+                    $this->data = $this->packageReader->read($this->reference);
+                    // If it's an ExecutionUnit, it will return an object, convert to string
+                    if (!is_string($this->data))
+                    {
+                        $this->data = '';
+                    }
                 }
             }
 
@@ -210,18 +248,21 @@
          */
         public function stream_eof(): bool
         {
-            if ($this->reference === null)
-            {
-                return true;
-            }
-
             // We need to load data to know the size
             if ($this->data === null)
             {
-                $this->data = $this->packageReader->read($this->reference);
-                if (!is_string($this->data))
+                // Package-only reference (no resource path)
+                if ($this->reference === null)
                 {
                     $this->data = '';
+                }
+                else
+                {
+                    $this->data = $this->packageReader->read($this->reference);
+                    if (!is_string($this->data))
+                    {
+                        $this->data = '';
+                    }
                 }
             }
 
@@ -237,18 +278,21 @@
          */
         public function stream_seek(int $offset, int $whence = SEEK_SET): bool
         {
-            if ($this->reference === null)
-            {
-                return false;
-            }
-
             // Load data if not already loaded
             if ($this->data === null)
             {
-                $this->data = $this->packageReader->read($this->reference);
-                if (!is_string($this->data))
+                // Package-only reference (no resource path)
+                if ($this->reference === null)
                 {
                     $this->data = '';
+                }
+                else
+                {
+                    $this->data = $this->packageReader->read($this->reference);
+                    if (!is_string($this->data))
+                    {
+                        $this->data = '';
+                    }
                 }
             }
 
@@ -279,9 +323,15 @@
          */
         public function stream_stat(): array|false
         {
-            if ($this->reference === null)
+            // Handle package-only reference (no resource path)
+            $size = 0;
+            if ($this->reference !== null)
             {
-                return false;
+                $size = $this->reference->getSize();
+            }
+            elseif ($this->data !== null)
+            {
+                $size = strlen($this->data);
             }
 
             // Return minimal stat array
@@ -293,12 +343,12 @@
                 'uid' => 0,
                 'gid' => 0,
                 'rdev' => 0,
-                'size' => $this->reference->getSize(),
+                'size' => $size,
                 'atime' => 0,
                 'mtime' => 0,
                 'ctime' => 0,
                 'blksize' => self::READ_BUFFER_SIZE,
-                'blocks' => ceil($this->reference->getSize() / 512),
+                'blocks' => ceil($size / 512),
             ];
         }
 
@@ -318,7 +368,7 @@
                 return false;
             }
 
-            [$packageName, $resourcePath] = $parsed;
+            [$packageName, $resourcePath, $isPackageOnly] = $parsed;
 
             // Get the package reader from Runtime
             if (!Runtime::isImported($packageName))
@@ -329,11 +379,21 @@
             $packages = Runtime::getImportedPackages();
             $packageReader = $packages[$packageName];
 
-            // Find the resource reference
-            $reference = $packageReader->find($resourcePath);
-            if ($reference === null)
+            // Handle package-only reference
+            $size = 0;
+            if ($isPackageOnly)
             {
-                return false;
+                $size = 0; // Empty content for package-only reference
+            }
+            else
+            {
+                // Find the resource reference
+                $reference = $packageReader->find($resourcePath);
+                if ($reference === null)
+                {
+                    return false;
+                }
+                $size = $reference->getSize();
             }
 
             // Return minimal stat array
@@ -345,12 +405,12 @@
                 'uid' => 0,
                 'gid' => 0,
                 'rdev' => 0,
-                'size' => $reference->getSize(),
+                'size' => $size,
                 'atime' => 0,
                 'mtime' => 0,
                 'ctime' => 0,
                 'blksize' => self::READ_BUFFER_SIZE,
-                'blocks' => ceil($reference->getSize() / 512),
+                'blocks' => ceil($size / 512),
             ];
         }
 
@@ -508,38 +568,117 @@
         }
 
         /**
-         * Open directory handle (not supported for package resources).
+         * Open directory handle for listing contents within a package path.
          *
-         * @param string $path The directory path
+         * @param string $path The directory path in format: ncc://package.name/path/to/dir
          * @param int $options Flags
-         * @return bool Always returns false (directory listing not supported)
+         * @return bool True on success, false on failure
          */
         public function dir_opendir(string $path, int $options): bool
         {
-            // Directory listing not supported for package resources
-            return false;
+            // Parse the URL
+            $parsed = $this->parseUrl($path);
+            if ($parsed === null)
+            {
+                if ($options & STREAM_REPORT_ERRORS)
+                {
+                    trigger_error("Invalid ncc:// URL format: $path", E_USER_WARNING);
+                }
+                return false;
+            }
+
+            [$packageName, $resourcePath, $isPackageOnly] = $parsed;
+
+            // Get the package reader from Runtime
+            if (!Runtime::isImported($packageName))
+            {
+                if ($options & STREAM_REPORT_ERRORS)
+                {
+                    trigger_error("Package not imported: $packageName", E_USER_WARNING);
+                }
+                return false;
+            }
+
+            $packages = Runtime::getImportedPackages();
+            $packageReader = $packages[$packageName];
+
+            // Normalize the resource path (remove trailing slashes)
+            $resourcePath = rtrim($resourcePath, '/');
+            $searchPrefix = $resourcePath === '' ? '' : $resourcePath . '/';
+
+            // Get all references and filter those that match the directory path
+            $allReferences = $packageReader->getAllReferences();
+            $entries = [];
+            $seenDirs = [];
+
+            foreach ($allReferences as $reference)
+            {
+                $refName = $reference->getName();
+
+                // Check if this reference is under the requested path
+                if ($resourcePath === '' || str_starts_with($refName, $searchPrefix))
+                {
+                    // Get the relative path from the search prefix
+                    $relativePath = $resourcePath === '' ? $refName : substr($refName, strlen($searchPrefix));
+
+                    // Check if this is a direct child or in a subdirectory
+                    $slashPos = strpos($relativePath, '/');
+                    if ($slashPos === false)
+                    {
+                        // Direct file in this directory
+                        $entries[] = $relativePath;
+                    }
+                    else
+                    {
+                        // File in subdirectory - add the subdirectory name only once
+                        $dirName = substr($relativePath, 0, $slashPos);
+                        if (!isset($seenDirs[$dirName]))
+                        {
+                            $entries[] = $dirName . '/';
+                            $seenDirs[$dirName] = true;
+                        }
+                    }
+                }
+            }
+
+            // Store the entries and reset position
+            $this->dirEntries = $entries;
+            $this->dirPosition = 0;
+
+            return true;
         }
 
         /**
          * Read entry from directory handle.
          *
-         * @return string|false Always returns false (directory listing not supported)
+         * @return string|false The next entry name, or false if no more entries
          */
         public function dir_readdir(): string|false
         {
-            // Directory listing not supported
-            return false;
+            if ($this->dirEntries === null || $this->dirPosition >= count($this->dirEntries))
+            {
+                return false;
+            }
+
+            $entry = $this->dirEntries[$this->dirPosition];
+            $this->dirPosition++;
+            return $entry;
         }
 
         /**
          * Rewind directory handle.
          *
-         * @return bool Always returns false (directory listing not supported)
+         * @return bool True on success, false on failure
          */
         public function dir_rewinddir(): bool
         {
-            // Directory listing not supported
-            return false;
+            if ($this->dirEntries === null)
+            {
+                return false;
+            }
+
+            $this->dirPosition = 0;
+            return true;
         }
 
         /**
@@ -549,15 +688,21 @@
          */
         public function dir_closedir(): bool
         {
-            // Nothing to close
+            $this->dirEntries = null;
+            $this->dirPosition = 0;
             return true;
         }
 
         /**
          * Parses an ncc:// URL and extracts package name and resource path.
+         * Handles version specifications (e.g., ncc://package.name=1.0.0/resource/path)
+         * and automatically imports packages if not already loaded.
          *
-         * @param string $url The URL to parse (e.g., ncc://package.name/resource/path)
-         * @return array{0: string, 1: string}|null Array of [packageName, resourcePath] or null on failure
+         * Special handling: ncc://package.name and ncc://package.name=version are valid
+         * for require/include statements, returning empty content after importing the package.
+         *
+         * @param string $url The URL to parse (e.g., ncc://package.name/resource/path or ncc://package.name=1.0.0/resource/path)
+         * @return array{0: string, 1: string, 2: bool}|null Array of [packageName, resourcePath, isPackageOnly] or null on failure
          */
         private function parseUrl(string $url): ?array
         {
@@ -573,20 +718,49 @@
                 return null;
             }
 
-            // Split into package name and resource path
+            // Split into package specification and resource path
             $parts = explode('/', $path, 2);
-            if (count($parts) < 2)
+            $packageSpec = $parts[0];
+            $resourcePath = $parts[1] ?? '';
+
+            if (empty($packageSpec))
             {
                 return null;
             }
 
-            [$packageName, $resourcePath] = $parts;
-
-            if (empty($packageName) || empty($resourcePath))
+            // Check if package specification includes version (e.g., package.name=1.0.0)
+            $version = 'latest';
+            if (str_contains($packageSpec, '='))
             {
-                return null;
+                [$packageName, $version] = explode('=', $packageSpec, 2);
+                if (empty($packageName) || empty($version))
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                $packageName = $packageSpec;
             }
 
-            return [$packageName, $resourcePath];
+            // Auto-import the package if not already imported
+            if (!Runtime::isImported($packageName))
+            {
+                try
+                {
+                    Runtime::import($packageName, $version);
+                }
+                catch (\Exception $e)
+                {
+                    // Import failed, return null to trigger error handling in caller
+                    trigger_error("Failed to auto-import package '$packageName' version '$version': " . $e->getMessage(), E_USER_WARNING);
+                    return null;
+                }
+            }
+
+            // If resource path is empty, this is a package-only reference (valid for require/include)
+            $isPackageOnly = empty($resourcePath);
+
+            return [$packageName, $resourcePath, $isPackageOnly];
         }
     }
