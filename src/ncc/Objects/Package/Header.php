@@ -38,6 +38,7 @@
         private string|array|null $preInstall;
         /** @var string|string[]|null  */
         private string|array|null $postInstall;
+        private ?array $definedConstants;
         /**
          * @var DependencyReference[]|null
          */
@@ -65,6 +66,7 @@
             $this->preInstall = $data['pre_install'] ?? null;
             $this->compressed = $data['compressed'] ?? false;
             $this->postInstall = $data['post_install'] ?? null;
+            $this->definedConstants = $data['defined_constants'] ?? null;
             if(isset($data['dependencies']) && is_array($data['dependencies']) && !empty($data['dependencies']))
             {
                 $this->dependencyReferences = array_map(function($item){
@@ -230,6 +232,16 @@
             $this->postInstall = $postInstall;
         }
 
+        public function getDefinedConstants(): array
+        {
+            return $this->definedConstants;
+        }
+
+        public function setDefinedConstants(array $constants): void
+        {
+            $this->definedConstants = $constants;
+        }
+
         public function getDependencyReferences(): array
         {
             return $this->dependencyReferences;
@@ -280,7 +292,7 @@
                 'entry_point' => $this->entryPoint,
                 'pre_install' => $this->preInstall,
                 'post_install' => $this->postInstall,
-                'dependencies' => $this->dependencyReferences ? array_map(function($item){ $item->toArray(); }, $this->dependencyReferences) : null,
+                'dependencies' => $this->dependencyReferences ? array_map(function($item){ return $item->toArray(); }, $this->dependencyReferences) : null,
             ];
         }
 
