@@ -12,6 +12,7 @@ DEPENDENCY_OPTSLIB = dependencies/optslib/src/OptsLib/*
 DEPENDENCY_PHP_PARSER = dependencies/PHP-Parser/lib/PhpParser/*
 DEPENDENCY_YAML = dependencies/yaml
 DEPENDENCY_PROCESS = dependencies/Process
+DEPENDENCY_SEMVER = dependencies/semver/src/*
 
 .PHONY: build clean dependencies install
 
@@ -24,7 +25,8 @@ dependencies: src/ncc/Libraries/pal \
 	src/ncc/Libraries/ctype \
 	src/ncc/Libraries/deprecation-contracts \
 	src/ncc/Libraries/Yaml \
-	src/ncc/Libraries/Process
+	src/ncc/Libraries/Process \
+	src/ncc/Libraries/semver
 
 clean:
 	rm -rf $(TARGET_DIR)
@@ -62,6 +64,8 @@ target/ncc.phar: target
 src/ncc/Libraries/pal:
 	mkdir -p src/ncc/Libraries/pal
 	cp $(DEPENDENCY_PAL) src/ncc/Libraries/pal/Autoloader.php
+	[ -f dependencies/pal/LICENSE ] && cp dependencies/pal/LICENSE src/ncc/Libraries/pal/ || true
+	[ -f dependencies/pal/README.md ] && cp dependencies/pal/README.md src/ncc/Libraries/pal/ || true
 	sed -i 's/namespace pal;/namespace ncc\\Libraries\\pal;/g' src/ncc/Libraries/pal/Autoloader.php
 	sed -i 's/use function pal\\/use function ncc\\Libraries\\pal\\/g' src/ncc/Libraries/pal/Autoloader.php
 	sed -i 's/\\pal\\Autoloader/\\ncc\\Libraries\\pal\\Autoloader/g' src/ncc/Libraries/pal/Autoloader.php
@@ -70,6 +74,8 @@ src/ncc/Libraries/pal:
 src/ncc/Libraries/LogLib2:
 	mkdir -p src/ncc/Libraries/LogLib2
 	cp -r $(DEPENDENCY_LOGLIB2) src/ncc/Libraries/LogLib2/
+	[ -f dependencies/LogLib2/LICENSE ] && cp dependencies/LogLib2/LICENSE src/ncc/Libraries/LogLib2/ || true
+	[ -f dependencies/LogLib2/README.md ] && cp dependencies/LogLib2/README.md src/ncc/Libraries/LogLib2/ || true
 	find src/ncc/Libraries/LogLib2 -name "*.php" -exec sed -i \
 		-e 's/namespace LogLib2;/namespace ncc\\Libraries\\LogLib2;/g' \
 		-e 's/namespace LogLib2\\/namespace ncc\\Libraries\\LogLib2\\/g' \
@@ -80,6 +86,8 @@ src/ncc/Libraries/LogLib2:
 src/ncc/Libraries/OptsLib:
 	mkdir -p src/ncc/Libraries/OptsLib
 	cp -r $(DEPENDENCY_OPTSLIB) src/ncc/Libraries/OptsLib/
+	[ -f dependencies/optslib/LICENSE ] && cp dependencies/optslib/LICENSE src/ncc/Libraries/OptsLib/ || true
+	[ -f dependencies/optslib/README.md ] && cp dependencies/optslib/README.md src/ncc/Libraries/OptsLib/ || true
 	find src/ncc/Libraries/OptsLib -name "*.php" -exec sed -i \
 		-e 's/namespace OptsLib;/namespace ncc\\Libraries\\OptsLib;/g' \
 		-e 's/namespace OptsLib\\/namespace ncc\\Libraries\\OptsLib\\/g' \
@@ -89,6 +97,8 @@ src/ncc/Libraries/OptsLib:
 src/ncc/Libraries/PhpParser:
 	mkdir -p src/ncc/Libraries/PhpParser
 	cp -r $(DEPENDENCY_PHP_PARSER) src/ncc/Libraries/PhpParser/
+	[ -f dependencies/PHP-Parser/LICENSE ] && cp dependencies/PHP-Parser/LICENSE src/ncc/Libraries/PhpParser/ || true
+	[ -f dependencies/PHP-Parser/README.md ] && cp dependencies/PHP-Parser/README.md src/ncc/Libraries/PhpParser/ || true
 	# Transform namespaces and references for PHP-Parser
 	find src/ncc/Libraries/PhpParser -name "*.php" -exec sed -i \
 		-e 's/namespace PhpParser;/namespace ncc\\Libraries\\PhpParser;/g' \
@@ -107,6 +117,8 @@ src/ncc/Libraries/ctype:
 	mkdir -p src/ncc/Libraries/ctype
 	cp dependencies/polyfill-ctype/bootstrap80.php src/ncc/Libraries/ctype/bootstrap.php
 	cp dependencies/polyfill-ctype/Ctype.php src/ncc/Libraries/ctype/Ctype.php
+	[ -f dependencies/polyfill-ctype/LICENSE ] && cp dependencies/polyfill-ctype/LICENSE src/ncc/Libraries/ctype/ || true
+	[ -f dependencies/polyfill-ctype/README.md ] && cp dependencies/polyfill-ctype/README.md src/ncc/Libraries/ctype/ || true
 	find src/ncc/Libraries/ctype -name "*.php" -exec sed -i \
 		-e 's/namespace Symfony\\Polyfill\\Ctype;/namespace ncc\\Libraries\\ctype;/g' \
 		-e 's/namespace Symfony\\Polyfill\\Ctype\\/namespace ncc\\Libraries\\ctype\\/g' \
@@ -116,6 +128,8 @@ src/ncc/Libraries/ctype:
 src/ncc/Libraries/deprecation-contracts:
 	mkdir -p src/ncc/Libraries/deprecation-contracts
 	cp dependencies/deprecation-contracts/function.php src/ncc/Libraries/deprecation-contracts/function.php
+	[ -f dependencies/deprecation-contracts/LICENSE ] && cp dependencies/deprecation-contracts/LICENSE src/ncc/Libraries/deprecation-contracts/ || true
+	[ -f dependencies/deprecation-contracts/README.md ] && cp dependencies/deprecation-contracts/README.md src/ncc/Libraries/deprecation-contracts/ || true
 
 src/ncc/Libraries/Yaml:
 	mkdir -p src/ncc/Libraries/Yaml/Exception
@@ -123,6 +137,8 @@ src/ncc/Libraries/Yaml:
 	cp -r $(DEPENDENCY_YAML)/Exception/* src/ncc/Libraries/Yaml/Exception/
 	cp -r $(DEPENDENCY_YAML)/Tag/* src/ncc/Libraries/Yaml/Tag/
 	cp $(DEPENDENCY_YAML)/*.php src/ncc/Libraries/Yaml/
+	[ -f dependencies/yaml/LICENSE ] && cp dependencies/yaml/LICENSE src/ncc/Libraries/Yaml/ || true
+	[ -f dependencies/yaml/README.md ] && cp dependencies/yaml/README.md src/ncc/Libraries/Yaml/ || true
 	find src/ncc/Libraries/Yaml -name "*.php" -exec sed -i \
 		-e 's/namespace Symfony\\Component\\Yaml;/namespace ncc\\Libraries\\Yaml;/g' \
 		-e 's/namespace Symfony\\Component\\Yaml\\/namespace ncc\\Libraries\\Yaml\\/g' \
@@ -137,8 +153,22 @@ src/ncc/Libraries/Process:
 	cp -r $(DEPENDENCY_PROCESS)/Messenger/* src/ncc/Libraries/Process/Messenger/
 	cp -r $(DEPENDENCY_PROCESS)/Pipes/* src/ncc/Libraries/Process/Pipes/
 	cp $(DEPENDENCY_PROCESS)/*.php src/ncc/Libraries/Process/
+	[ -f dependencies/Process/LICENSE ] && cp dependencies/Process/LICENSE src/ncc/Libraries/Process/ || true
+	[ -f dependencies/Process/README.md ] && cp dependencies/Process/README.md src/ncc/Libraries/Process/ || true
 	find src/ncc/Libraries/Process -name "*.php" -exec sed -i \
 		-e 's/namespace Symfony\\Component\\Process;/namespace ncc\\Libraries\\Process;/g' \
 		-e 's/namespace Symfony\\Component\\Process\\/namespace ncc\\Libraries\\Process\\/g' \
 		-e 's/use Symfony\\Component\\Process\\/use ncc\\Libraries\\Process\\/g' \
+		{} \;
+
+src/ncc/Libraries/semver:
+	mkdir -p src/ncc/Libraries/semver/Constraint
+	cp -r $(DEPENDENCY_SEMVER) src/ncc/Libraries/semver/
+	cp -r dependencies/semver/src/Constraint/* src/ncc/Libraries/semver/Constraint/
+	[ -f dependencies/semver/LICENSE ] && cp dependencies/semver/LICENSE src/ncc/Libraries/semver/ || true
+	[ -f dependencies/semver/README.md ] && cp dependencies/semver/README.md src/ncc/Libraries/semver/ || true
+	find src/ncc/Libraries/semver -name "*.php" -exec sed -i \
+		-e 's/namespace Composer\\Semver;/namespace ncc\\Libraries\\semver;/g' \
+		-e 's/namespace Composer\\Semver\\/namespace ncc\\Libraries\\semver\\/g' \
+		-e 's/use Composer\\Semver\\/use ncc\\Libraries\\semver\\/g' \
 		{} \;
