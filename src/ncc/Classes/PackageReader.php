@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
+    use ncc\CLI\Logger;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
@@ -129,6 +130,11 @@
                         throw new RuntimeException("Unknown section marker: " . bin2hex($marker));
                 }
             }
+        }
+
+        public function getFilePath(): string
+        {
+            return $this->filePath;
         }
 
         /**
@@ -640,7 +646,7 @@
 
             while(true)
             {
-                $peek = $this->peekNextByte();
+                $peek = fread($this->fileHandle, 1);
                 if($this->isEndOfSection($peek))
                 {
                     break;
