@@ -60,7 +60,7 @@
                 }
             }
 
-            if($projectType === ProjectType::NONE)
+            if($projectType === null)
             {
                 Console::error("No project configuration file found to convert");
                 return 1;
