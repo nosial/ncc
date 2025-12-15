@@ -75,56 +75,21 @@ class PathResolverTest extends TestCase
     }
 
     /**
-     * Test that getPackageManagerLocation returns a valid path
+     * Test that getUserPackageManagerLocation returns user path for non-root users
      */
-    public function testGetPackageManagerLocation(): void
-    {
-        $location = PathResolver::getPackageManagerLocation();
-        
-        $this->assertNotEmpty($location, 'Package manager location should not be empty');
-        $this->assertIsString($location, 'Package manager location should be a string');
-        $this->assertStringEndsWith('ncc' . DIRECTORY_SEPARATOR . 'packages', $location, 'Path should end with ncc/packages');
-        $this->assertStringNotContainsString(DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR, $location, 'Path should not contain double separators');
-    }
-
-    /**
-     * Test that getPackageManagerLocation returns system path when running as root
-     */
-    public function testGetPackageManagerLocationAsRoot(): void
-    {
-        // This test only runs on Unix-like systems with posix extension
-        if (!function_exists('posix_geteuid')) {
-            $this->markTestSkipped('posix_geteuid function not available');
-        }
-
-        $location = PathResolver::getPackageManagerLocation();
-        
-        if (posix_geteuid() === 0) {
-            // Running as root
-            $expectedPath = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
-            $this->assertEquals($expectedPath, $location, 'Root should use system-level path');
-        } else {
-            // Running as regular user
-            $home = PathResolver::getUserHome();
-            $expectedPath = $home . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
-            $this->assertEquals($expectedPath, $location, 'Regular user should use user-level path');
-        }
-    }
-
-    /**
-     * Test that getPackageManagerLocation returns user path for non-root users
-     */
-    public function testGetPackageManagerLocationAsUser(): void
+    public function testGetUserPackageManagerLocationAsUser(): void
     {
         // Skip if running as root
         if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
             $this->markTestSkipped('This test should not run as root');
         }
 
-        $location = PathResolver::getPackageManagerLocation();
+        $location = PathResolver::getUserLocation();
         $home = PathResolver::getUserHome();
         
+        $this->assertNotNull($location, 'Non-root user should have a user-level location');
         $this->assertStringStartsWith($home, $location, 'Non-root user should use user-level path');
+        $this->assertStringEndsWith('ncc', $location, 'User location should end with ncc');
     }
 
     /**
@@ -132,16 +97,22 @@ class PathResolverTest extends TestCase
      */
     public function testGetAllPackageLocations(): void
     {
-        $locations = PathResolver::getAllPackageLocations();
+        $locations = PathResolver::getAllLocations();
         
         $this->assertIsArray($locations, 'Should return an array');
         $this->assertNotEmpty($locations, 'Should return at least one location');
-        $this->assertCount(2, $locations, 'Should return exactly 2 locations');
+        
+        // Count depends on whether running as root (1 location) or user (2 locations)
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->assertCount(1, $locations, 'Root should have 1 location');
+        } else {
+            $this->assertCount(2, $locations, 'Non-root should have 2 locations');
+        }
         
         foreach ($locations as $location) {
             $this->assertIsString($location, 'Each location should be a string');
             $this->assertNotEmpty($location, 'Each location should not be empty');
-            $this->assertStringEndsWith('ncc' . DIRECTORY_SEPARATOR . 'packages', $location, 'Each path should end with ncc/packages');
+            $this->assertStringEndsWith('ncc', $location, 'Each path should end with ncc');
             $this->assertStringNotContainsString(DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR, $location, 'Path should not contain double separators');
         }
     }
@@ -151,50 +122,22 @@ class PathResolverTest extends TestCase
      */
     public function testGetAllPackageLocationsOrderPriority(): void
     {
-        $locations = PathResolver::getAllPackageLocations();
+        // Skip if running as root since root won't have user location
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('This test should not run as root');
+        }
+        
+        $locations = PathResolver::getAllLocations();
         $home = PathResolver::getUserHome();
         
         $this->assertStringStartsWith($home, $locations[0], 'First location should be user-level path');
         
         if (PHP_OS_FAMILY === 'Windows') {
-            $this->assertStringContainsString(DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages', $locations[1], 'Second location should be system-level path');
+            $this->assertStringContainsString(DIRECTORY_SEPARATOR . 'ncc', $locations[1], 'Second location should be system-level path');
             $this->assertStringNotStartsWith($home, $locations[1], 'Second location should not be under user home');
         } else {
-            $expectedSystemPath = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc' . DIRECTORY_SEPARATOR . 'packages';
+            $expectedSystemPath = DIRECTORY_SEPARATOR . 'usr' . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'ncc';
             $this->assertEquals($expectedSystemPath, $locations[1], 'Second location should be Unix system path');
         }
-    }
-
-    /**
-     * Test that getAllPackageLocations includes the current package manager location
-     */
-    public function testGetAllPackageLocationsIncludesCurrentLocation(): void
-    {
-        $currentLocation = PathResolver::getPackageManagerLocation();
-        $allLocations = PathResolver::getAllPackageLocations();
-        
-        $this->assertContains($currentLocation, $allLocations, 'All locations should include the current package manager location');
-    }
-
-    /**
-     * Test path consistency across methods
-     */
-    public function testPathConsistencyAcrossMethods(): void
-    {
-        $location = PathResolver::getPackageManagerLocation();
-        $allLocations = PathResolver::getAllPackageLocations();
-        $home = PathResolver::getUserHome();
-        
-        // Ensure no mixed directory separators
-        $this->assertStringNotContainsString('\\/', $location, 'Should not mix forward and back slashes');
-        $this->assertStringNotContainsString('/\\', $location, 'Should not mix forward and back slashes');
-        
-        foreach ($allLocations as $loc) {
-            $this->assertStringNotContainsString('\\/', $loc, 'Should not mix forward and back slashes');
-            $this->assertStringNotContainsString('/\\', $loc, 'Should not mix forward and back slashes');
-        }
-        
-        $this->assertStringNotContainsString('\\/', $home, 'Should not mix forward and back slashes');
-        $this->assertStringNotContainsString('/\\', $home, 'Should not mix forward and back slashes');
     }
 }

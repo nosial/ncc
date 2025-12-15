@@ -30,7 +30,7 @@
          * Parses the package source string into its components: organization, package name, version, and repository.
          * Returns null if the input string is invalid.
          *
-         * @param string $sourceString The source string to parse eg; "organization/name=version@repository".
+         * @param string $sourceString The source string to parse eg; "organization/name=version@repository", "organization/name@repository", "organization/name=version", or "organization/name".
          * @return array|null An associative array with keys 'organization', 'package_name', 'version', and 'repository', or null if invalid.
          */
         public static function parsePackageSource(string $sourceString): ?array
@@ -40,8 +40,8 @@
                 return null;
             }
 
-            // Capture organization and package name separately, but also keep the full package
-            $pattern = '/^(?P<organization>[a-z](?:[a-z0-9._-]*[a-z0-9])?)\/(?P<package_name>[a-z](?:[a-z0-9._-]*[a-z0-9])?)(?:=(?P<version>[^\s@=]*))?@(?P<repository>[a-z](?:[a-z0-9._-]*[a-z0-9])?)$/ix';
+            // Capture organization and package name separately, and optionally version and repository
+            $pattern = '/^(?P<organization>[a-z](?:[a-z0-9._-]*[a-z0-9])?)\/(?P<package_name>[a-z](?:[a-z0-9._-]*[a-z0-9])?)(?:=(?P<version>[^\s@=]*))?(?:@(?P<repository>[a-z](?:[a-z0-9._-]*[a-z0-9])?))?$/ix';
 
             if (!preg_match($pattern, $sourceString, $matches))
             {
@@ -51,8 +51,8 @@
             return [
                 'organization' => $matches['organization'],
                 'package_name' => $matches['package_name'],
-                'version' => (!empty($matches['version'])) ? $matches['version'] : 'latest',
-                'repository' => $matches['repository']
+                'version' => (!empty($matches['version'])) ? $matches['version'] : null,
+                'repository' => (!empty($matches['repository'])) ? $matches['repository'] : null
             ];
         }
 

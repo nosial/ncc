@@ -24,13 +24,15 @@
 
     use InvalidArgumentException;
     use ncc\Classes\Utilities;
+    use ncc\Interfaces\SerializableInterface;
+    use ncc\Libraries\semver\VersionParser;
 
-    class PackageSource
+    class PackageSource implements SerializableInterface
     {
         private string $organization;
         private string $name;
-        private string $version;
-        private string $repository;
+        private ?string $version;
+        private ?string $repository;
 
         /**
          * PackageSource constructor.
@@ -101,9 +103,9 @@
         /**
          * Get the version of the package.
          *
-         * @return string The version of the package.
+         * @return string|null The version of the package, or null if not set.
          */
-        public function getVersion(): string
+        public function getVersion(): ?string
         {
             return $this->version;
         }
@@ -111,21 +113,29 @@
         /**
          * Sets the version of the package source
          *
-         * @param string $version The version of the package source to set
+         * @param string|null $version The version of the package source to set, or null to unset
          * @throws InvalidArgumentException thrown if the version is empty or invalid
          */
-        public function setVersion(string $version): void
+        public function setVersion(?string $version): void
         {
-            // TODO: Validate the version to be a valid SemVer structure.
-            if(strlen($version) === 0)
+            if($version !== null && strlen($version) === 0)
             {
-                throw new InvalidArgumentException('The package version cannot be empty, it must be a valid SemVer version or "latest"');
+                throw new InvalidArgumentException('The package version cannot be empty, it must be a valid SemVer version, "latest", or null');
             }
 
-            if(strtolower($version) === 'latest')
+            if($version !== null && strtolower($version) === 'latest')
             {
                 $this->version = 'latest';
                 return;
+            }
+
+            // Validate the version to be a valid SemVer structure
+            if($version !== null)
+            {
+                if(!(new VersionParser())->isValid($version))
+                {
+                    throw new InvalidArgumentException(sprintf('The package version "%s" is not a valid SemVer version', $version));
+                }
             }
 
             $this->version = $version;
@@ -134,9 +144,9 @@
         /**
          * Get the repository name.
          *
-         * @return string The repository name.
+         * @return string|null The repository name, or null if not set.
          */
-        public function getRepository(): string
+        public function getRepository(): ?string
         {
             return $this->repository;
         }
@@ -144,12 +154,12 @@
         /**
          * Sets the repository of the package source
          *
-         * @param string $repository The repository to set to the package source
+         * @param string|null $repository The repository to set to the package source, or null to unset
          * @return void
          */
-        public function setRepository(string $repository): void
+        public function setRepository(?string $repository): void
         {
-            if(strlen($repository) === 0)
+            if($repository !== null && strlen($repository) === 0)
             {
                 throw new InvalidArgumentException('The repository name cannot be empty');
             }
@@ -158,18 +168,59 @@
         }
 
         /**
+         * Convert the PackageSource object to an associative array.
+         *
+         * @return array The associative array containing package source data.
+         */
+        public function toArray(): array
+        {
+            return [
+                'organization' => $this->organization,
+                'name' => $this->name,
+                'version' => $this->version,
+                'repository' => $this->repository,
+            ];
+        }
+
+        /**
+         * Create a PackageSource object from an associative array.
+         *
+         * @param array $data The associative array containing package source data.
+         * @return PackageSource The created PackageSource object.
+         */
+        public static function fromArray(array $data): PackageSource
+        {
+            $packageSource = new PackageSource("dummy/dummy");
+            $packageSource->setOrganization($data['organization']);
+            $packageSource->setName($data['name']);
+            $packageSource->setVersion($data['version'] ?? null);
+            $packageSource->setRepository($data['repository'] ?? null);
+
+            return $packageSource;
+        }
+
+
+        /**
          * Convert the PackageSource object back to its string representation.
          *
-         * @return string The package string in the format "organization/name=version@repository".
+         * @return string The package string in various formats: "organization/name=version@repository", "organization/name@repository", "organization/name=version", or "organization/name".
          */
         public function __toString(): string
         {
-            if($this->version === 'latest' || empty($this->version))
+            $result = "{$this->organization}/{$this->name}";
+
+            // Add version if not 'latest', not null, and not empty
+            if($this->version !== null && $this->version !== 'latest' && $this->version !== '')
             {
-                // `latest` is redundant, so omit it
-                return "{$this->organization}/{$this->name}@{$this->repository}";
+                $result .= "={$this->version}";
             }
 
-            return "{$this->organization}/{$this->name}={$this->version}@{$this->repository}";
+            // Add repository if set
+            if($this->repository !== null)
+            {
+                $result .= "@{$this->repository}";
+            }
+
+            return $result;
         }
     }

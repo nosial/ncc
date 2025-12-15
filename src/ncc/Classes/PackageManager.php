@@ -29,6 +29,7 @@
     use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\PackageSource;
+    use ncc\Runtime;
 
     class PackageManager
     {
@@ -270,22 +271,6 @@
         }
 
         /**
-         * Get the filesystem location of a package
-         *
-         * @param PackageLockEntry $entry The package lock entry, if null only the packages directory is returned
-         * @return string The absolute path to the package directory
-         */
-        public function getPackageLocation(?PackageLockEntry $entry=null): string
-        {
-            if($entry === null)
-            {
-                return $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages';
-            }
-
-            return $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . $entry;
-        }
-
-        /**
          * Get the filesystem path to a specific package file
          *
          * @param string $packageName The name of the package
@@ -309,6 +294,22 @@
             }
 
             return $packagePath;
+        }
+
+        /**
+         * Get the filesystem location of a package
+         *
+         * @param PackageLockEntry $entry The package lock entry, if null only the packages directory is returned
+         * @return string The absolute path to the package directory
+         */
+        public function getPackagePathFromEntry(?PackageLockEntry $entry=null): string
+        {
+            if($entry === null)
+            {
+                return $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages';
+            }
+
+            return $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . $entry;
         }
 
         /**
@@ -381,42 +382,32 @@
             return $this->readOnly;
         }
 
-
-        public static function installPackageFromRemote(PackageSource $packageSource, array $options=[]): void
-        {
-
-        }
-
-        public function installPackageFromReader(PackageReader $packageReader, array $options=[]): void
+        /**
+         * Install a package using a PackageReader
+         *
+         * @param PackageReader $packageReader The package reader containing package information
+         * @param array $options Installation options (e.g. 'reinstall' => true)
+         * @throws OperationException If the package is already installed and 'reinstall' is not set
+         * @throws IOException If file operations fail during installation
+         */
+        public function install(PackageReader $packageReader, array $options=[]): void
         {
             // If the 'reinstall' option isn't set, we check if the pcakage is already installed
-            if(!isset($options['reinstall']) && self::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
+            if(!isset($options['reinstall']) && Runtime::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
             {
                 throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
             }
 
-            // If the 'skip_dependencies' option isn't set
-            if(!isset($options['skip_dependencies']))
-            {
-                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
-                {
-                    if(!$this->entryExists($reference->getSource()->getName(), $reference->getSource()->getVersion()))
-                    {
-                        $this->installPackageFromRemote($reference->getSource());
-                    }
-                }
-            }
-
             if(
-                !file_exists($this->getPackageLocation()) &&
-                !mkdir($this->getPackageLocation(), 0755, true) &&
-                !is_dir($this->getPackageLocation())
+                !file_exists($this->getPackagePathFromEntry()) &&
+                !mkdir($this->getPackagePathFromEntry(), 0755, true) &&
+                !is_dir($this->getPackagePathFromEntry())
             )
             {
-                throw new IOException(sprintf('Directory "%s" was not created', $this->getPackageLocation()));
+                throw new IOException(sprintf('Directory "%s" was not created', $this->getPackagePathFromEntry()));
             }
 
-            $packageInstallationPath = $this->getPackageLocation() . DIRECTORY_SEPARATOR .
+            $packageInstallationPath = $this->getPackagePathFromEntry() . DIRECTORY_SEPARATOR .
                 sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
 
             // Remove the orphaned package if it already exists

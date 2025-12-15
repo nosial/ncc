@@ -34,7 +34,6 @@
         case NCC = 'project.yml';
         case NCC_V2 = 'project.json';
         case COMPOSER = 'composer.json';
-        case NONE = 'none';
 
         /**
          * Gets the full file path of the project file if it exists in the given path.
@@ -71,16 +70,16 @@
         }
 
         /**
-         * Detects the project type based on the presence of specific files in the given path.
+         * Detects the project path by scanning the directory recursively for project files.
          *
-         * @param string $path The path to check for project files.
-         * @return ProjectType The detected project type.
+         * @param string $path The path to search for project files.
+         * @return string|null The path to the project file if found, null otherwise.
          */
-        public static function detectProjectType(string $path): ProjectType
+        public static function detectProjectPath(string $path): ?string
         {
             foreach (self::cases() as $case)
             {
-                if ($case === self::NONE)
+                if ($case === null)
                 {
                     continue;
                 }
@@ -88,10 +87,36 @@
                 $filePath = $case->getFilePath($path);
                 if ($filePath !== null)
                 {
+                    return $filePath;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Detects the project type based on the presence of specific files in the given path.
+         *
+         * @param string $path The path to check for project files.
+         * @return ProjectType The detected project type.
+         */
+        public static function detectProjectType(string $path): ?ProjectType
+        {
+            $projectPath = self::detectProjectPath($path);
+            if ($projectPath === null)
+            {
+                return null;
+            }
+
+            $filename = basename($projectPath);
+            foreach (self::cases() as $case)
+            {
+                if ($case->value === $filename)
+                {
                     return $case;
                 }
             }
 
-            return self::NONE;
+            return null;
         }
     }

@@ -83,7 +83,7 @@
          *
          * @return string
          */
-        public static function getDataLocation(): string
+        public static function getSystemLocation(): string
         {
             if (PHP_OS_FAMILY === 'Windows')
             {
@@ -108,7 +108,7 @@
          *
          * @return string|null
          */
-        public static function getUserPackageManagerLocation(): ?string
+        public static function getUserLocation(): ?string
         {
             if (self::isSystemUser())
             {
@@ -119,25 +119,34 @@
         }
 
         /**
+         * Returns the temporary package manager location
+         *
+         * @return string
+         */
+        public static function getTmpLocation(): string
+        {
+            return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ncc';
+        }
+
+        /**
          * Returns all possible package locations in order of priority
          * User-level location is checked first (if applicable), then system-level
          *
          * @return array<string>
          */
-        public static function getAllPackageLocations(): array
+        public static function getAllLocations(): array
         {
             $locations = [];
 
             // Include user-level location first if not running as system user
-            $userLocation = self::getUserPackageManagerLocation();
+            $userLocation = self::getUserLocation();
             if ($userLocation !== null)
             {
                 $locations[] = $userLocation;
             }
 
             // Always include system-level location
-            $locations[] = self::getDataLocation();
-
+            $locations[] = self::getSystemLocation();
             return $locations;
         }
     }

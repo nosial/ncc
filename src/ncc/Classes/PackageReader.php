@@ -36,6 +36,7 @@
     use ncc\Objects\Package\ExecutionUnitReference;
     use ncc\Objects\Package\Header;
     use ncc\Objects\Package\ResourceReference;
+    use ncc\Objects\PackageSource;
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\ExecutionUnit;
     use RuntimeException;
@@ -135,6 +136,10 @@
         public function getFilePath(): string
         {
             return $this->filePath;
+        }
+
+        public function getSource(): PackageSource
+        {
         }
 
         /**
