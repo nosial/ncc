@@ -25,3 +25,9 @@
 [submodule "dependencies/semver"]
 	path = dependencies/semver
 	url = https://github.com/composer/semver.git
+[submodule "dependencies/random_compat"]
+	path = dependencies/random_compat
+	url = https://github.com/paragonie/random_compat
+[submodule "dependencies/php-encryption"]
+	path = dependencies/php-encryption
+	url = https://github.com/defuse/php-encryption
