@@ -27,8 +27,6 @@
     use ncc\Classes\StreamWrapper;
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\OperationException;
-    use ncc\Objects\PackageSource;
     use RuntimeException;
 
     class Runtime
@@ -186,7 +184,7 @@
         {
             if(self::$userPackageManager === null)
             {
-                $userLocation = PathResolver::getUserPackageManagerLocation();
+                $userLocation = PathResolver::getUserLocation();
                 if($userLocation === null)
                 {
                     return null;
@@ -217,7 +215,7 @@
         {
             if(self::$systemPackageManager === null)
             {
-                $systemLocation = PathResolver::getDataLocation();
+                $systemLocation = PathResolver::getSystemLocation();
 
                 // Check if we have write access (typically when running as system user)
                 $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
