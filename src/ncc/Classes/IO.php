@@ -55,33 +55,50 @@
          */
         public static function rm(string $path, bool $recursive): void
         {
-            Logger::getLogger()->verbose(sprintf('Removing %s', $path));
-            if($recursive)
+            Logger::getLogger()->verbose(sprintf('Deleting %s', $path));
+
+            if(is_dir($path))
             {
-                $it = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
-                $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
-                foreach($files as $file)
+                if($recursive)
                 {
-                    if($file->isDir())
+                    $it = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
+                    $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+                    foreach($files as $file)
                     {
-                        rmdir($file->getRealPath());
+                        if($file->isDir())
+                        {
+                            if(!@rmdir($file->getRealPath()))
+                            {
+                                throw new IOException(sprintf('Failed to remove directory %s', $file->getRealPath()));
+                            }
+                        }
+                        else
+                        {
+                            if(!@unlink($file->getRealPath()))
+                            {
+                                throw new IOException(sprintf('Failed to remove file %s', $file->getRealPath()));
+                            }
+                        }
                     }
-                    else
+
+                    if(!@rmdir($path))
                     {
-                        unlink($file->getRealPath());
+                        throw new IOException(sprintf('Failed to remove directory %s', $path));
                     }
-                }
-                rmdir($path);
-            }
-            else
-            {
-                if(is_dir($path))
-                {
-                    rmdir($path);
                 }
                 else
                 {
-                    unlink($path);
+                    if(!@rmdir($path))
+                    {
+                        throw new IOException(sprintf('Failed to remove directory %s', $path));
+                    }
+                }
+            }
+            else
+            {
+                if(!@unlink($path))
+                {
+                    throw new IOException(sprintf('Failed to remove file %s', $path));
                 }
             }
         }
@@ -133,5 +150,11 @@
                 throw new IOException(sprintf('Failed to read file %s', $path));
             }
             return $content;
+        }
+
+        public static function santizeName(string $name): string
+        {
+            // Remove any invalid characters from the name
+            return preg_replace('/[<>:"\/|?*\x00-\x1F]/', '_', $name);
         }
     }

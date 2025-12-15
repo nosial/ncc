@@ -1,28 +1,180 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2025, all rights reserved.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
- *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
- *  conditions:
- *
- *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
- *  of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
- *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- *  DEALINGS IN THE SOFTWARE.
- *
- */
+    /*
+     * Copyright (c) Nosial 2022-2025, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
 
-namespace ncc\Classes;
+    namespace ncc\Classes;
 
-class RepositoryManager
-{
+    use InvalidArgumentException;
+    use ncc\Enums\RepositoryType;
+    use ncc\Objects\RepositoryConfiguration;
 
-}
+    class RepositoryManager
+    {
+        private string $dataDirectoryPath;
+        private string $repositoriesPath;
+        /**
+         * @var RepositoryConfiguration[]
+         */
+        private array $entries;
+
+        /**
+         * Public Constructor
+         *
+         * @param string $dataDirectoryPath
+         */
+        public function __construct(string $dataDirectoryPath)
+        {
+            $this->dataDirectoryPath = $dataDirectoryPath;
+            $this->repositoriesPath = $this->dataDirectoryPath . DIRECTORY_SEPARATOR . 'repositories.json';
+            $this->entries = [];
+
+            if(is_file($this->repositoriesPath))
+            {
+                $json = file_get_contents($this->repositoriesPath);
+                $data = json_decode($json, true);
+                if(is_array($data))
+                {
+                    foreach($data as $entry)
+                    {
+                        $repo = RepositoryConfiguration::fromArray($entry);
+                        $this->entries[$repo->getName()] = $repo;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns the data directory path
+         *
+         * @return string
+         */
+        public function getDataDirectoryPath(): string
+        {
+            return $this->dataDirectoryPath;
+        }
+
+        /**
+         * Returns the repositories file path
+         *
+         * @return string
+         */
+        public function getRepositoriesPath(): string
+        {
+            return $this->repositoriesPath;
+        }
+
+        /**
+         * Adds a new repository configuration to the repository manager
+         *
+         * @param string $name The repository name
+         * @param RepositoryType $type The repository type
+         * @param string $host The repository host
+         * @param bool $ssl True if SSL is enabled
+         * @throws InvalidArgumentException Thrown if the repository already exists
+         */
+        public function addRepository(string $name, RepositoryType $type, string $host, bool $ssl): void
+        {
+            if(!isset($this->entries[$name]))
+            {
+                throw new InvalidArgumentException(sprintf("The repository %s already exists", $name));
+            }
+
+            $this->entries[$name] = new RepositoryConfiguration($name, $type, $host, $ssl);
+        }
+
+        /**
+         * Removes a repository from the repository manager
+         *
+         * @param string $name The repository name
+         * @return bool True if the repository was removed, false if it did not exist
+         */
+        public function removeRepository(string $name): bool
+        {
+            if(!isset($this->entries[$name]))
+            {
+                return false;
+            }
+
+            unset($this->entries[$name]);
+            return true;
+        }
+
+        /**
+         * Checks if a repository exists in the repository manager
+         *
+         * @param string $name The repository name
+         * @return bool True if the repository exists, false otherwise
+         */
+        public function repositoryExists(string $name): bool
+        {
+            return isset($this->entries[$name]);
+        }
+
+        /**
+         * Returns a repository configuration by name
+         *
+         * @param string $name The repository name
+         * @return RepositoryConfiguration|null The repository configuration, or null if it does not exist
+         */
+        public function getRepository(string $name): ?RepositoryConfiguration
+        {
+            if(!$this->repositoryExists($name))
+            {
+                return null;
+            }
+
+            return $this->entries[$name];
+        }
+
+        /**
+         * Returns all the repository configurations in the repository manager
+         *
+         * @return RepositoryConfiguration[] All the entries
+         */
+        public function getEntries(): array
+        {
+            return array_values($this->entries);
+        }
+
+        /**
+         * Saves the repository configurations to the repositories file
+         *
+         * @return void
+         */
+        public function save(): void
+        {
+            $data = [];
+            foreach($this->entries as $entry)
+            {
+                $data[] = $entry->toArray();
+            }
+
+            file_put_contents($this->repositoriesPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+
+        /**
+         * Destructor - saves the repository configurations
+         */
+        public function __destruct()
+        {
+            $this->save();
+        }
+    }

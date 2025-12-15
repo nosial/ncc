@@ -1,0 +1,401 @@
+<?php
+    /*
+     * Copyright (c) Nosial 2022-2025, all rights reserved.
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     *  conditions:
+     *
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     *  of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     *  DEALINGS IN THE SOFTWARE.
+     *
+     */
+
+    namespace ncc\RepositoryClients;
+
+    use CurlHandle;
+    use InvalidArgumentException;
+    use JsonException;
+    use ncc\Abstracts\AbstractAuthentication;
+    use ncc\Abstracts\AbstractRepository;
+    use ncc\CLI\Logger;
+    use ncc\Enums\AuthenticationType;
+    use ncc\Enums\RemotePackageType;
+    use ncc\Enums\RepositoryType;
+    use ncc\Exceptions\NetworkException;
+    use ncc\Exceptions\OperationException;
+    use ncc\Objects\Authentication\AccessToken;
+    use ncc\Objects\Authentication\UsernamePassword;
+    use ncc\Objects\RemotePackage;
+    use ncc\Objects\RepositoryConfiguration;
+
+    class GithubRepository extends AbstractRepository
+    {
+        /**
+         * @inheritDoc
+         */
+        public function __construct(RepositoryConfiguration $configuration, ?AbstractAuthentication $authentication=null)
+        {
+            parent::__construct($configuration, $authentication);
+            if($configuration->getType() !== RepositoryType::GITHUB)
+            {
+                throw new InvalidArgumentException(sprintf('Invalid repository type for GithubRepository, expected %s, got %s', RepositoryType::GITHUB->value, $configuration->getType()->value));
+            }
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getTags(string $group, string $project): array
+        {
+            $endpoint = sprintf('%s://%s/repos/%s/%s/tags', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), $group, $project);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+                'User-Agent: ncc'
+            ];
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+
+            $results = [];
+
+            Logger::getLogger()->verbose(sprintf('Fetching tags for %s/%s from %s', $group, $project, $endpoint));
+            foreach(self::processRequest($curl, $group, $project) as $tag)
+            {
+                if(isset($tag['name']))
+                {
+                    $results[] = $tag['name'];
+                }
+            }
+
+            return $results;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getLatestTag(string $group, string $project): string
+        {
+            $tags = $this->getTags($group, $project);
+            if(count($tags) === 0)
+            {
+                throw new OperationException(sprintf('No tags found for %s/%s', $group, $project));
+            }
+
+            return $tags[0];
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getTagArchive(string $group, string $project, string $tag): ?RemotePackage
+        {
+            $endpoint = sprintf('%s://%s/repos/%s/%s/zipball/refs/tags/%s', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), $group, $project, $tag);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'User-Agent: ncc'
+            ];
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_NOBODY => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_FOLLOWLOCATION => true
+            ]);
+
+            Logger::getLogger()->verbose(sprintf('Fetching tag %s for %s/%s from %s', $tag, $group, $project, $endpoint));
+            $response = curl_exec($curl);
+            if($response === false)
+            {
+                throw new NetworkException(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
+            }
+
+            if(curl_getinfo($curl, CURLINFO_HTTP_CODE) === 200)
+            {
+                $result = new RemotePackage(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RemotePackageType::SOURCE_ZIP, $group, $project);
+                curl_close($curl);
+                return $result;
+            }
+
+            return null;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getReleases(string $group, string $project): array
+        {
+            $endpoint = sprintf('%s://%s/repos/%s/%s/releases', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), $group, $project);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+                'User-Agent: ncc'
+            ];
+
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+
+            $results = [];
+            Logger::getLogger()->verbose(sprintf('Fetching releases for %s/%s from %s', $group, $project, $endpoint));
+            foreach(self::processRequest($curl, $group, $project) as $release)
+            {
+                if(isset($release['tag_name']))
+                {
+                    $results[] = $release['tag_name'];
+                }
+            }
+
+            return $results;
+        }
+
+        public function getLatestRelease(string $group, string $project): string
+        {
+            $releases = $this->getReleases($group, $project);
+            if(count($releases) === 0)
+            {
+                throw new OperationException(sprintf('No releases found for %s/%s', $group, $project));
+            }
+
+            return $releases[0];
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getReleaseArchive(string $group, string $project, string $release): ?RemotePackage
+        {
+            $endpoint = sprintf('%s://%s/repos/%s/%s/releases/tags/%s', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), $group, $project, $release);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+                'User-Agent: ncc'
+            ];
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+
+            Logger::getLogger()->verbose(sprintf('Fetching release %s for %s/%s from %s', $release, $group, $project, $endpoint));
+            $response = self::processRequest($curl, $group, $project);
+            if(isset($response['zipball_url']))
+            {
+                return new RemotePackage($response['zipball_url'], RemotePackageType::SOURCE_ZIP, $group, $project);
+            }
+            elseif(isset($response['tarball_url']))
+            {
+                return new RemotePackage($response['tarball_url'], RemotePackageType::SOURCE_TAR, $group, $project);
+            }
+
+            return null;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getReleasePackage(string $group, string $project, string $release): ?RemotePackage
+        {
+            $endpoint = sprintf('%s://%s/repos/%s/%s/releases/tags/%s', $this->getConfiguration()->isSslEnabled() ? 'https' : 'http', $this->getConfiguration()->getHost(), $group, $project, $release);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+                'User-Agent: ncc'
+            ];
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+            Logger::getLogger()->verbose(sprintf('Fetching release %s for %s/%s from %s', $release, $group, $project, $endpoint));
+            $response = self::processRequest($curl, $group, $project);
+            $targetAsset = null;
+
+            foreach($response['assets'] as $asset)
+            {
+                if(preg_match('/\.ncc$/', $asset['name']))
+                {
+                    $targetAsset = $asset;
+                }
+            }
+
+            if($targetAsset !== null)
+            {
+                return new RemotePackage($targetAsset['browser_download_url'], RemotePackageType::NCC, $group, $project);
+            }
+
+            return null;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function getGit(string $group, string $project): ?RemotePackage
+        {
+            $endpoint = sprintf('%s://%s/repos/%s/%s', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), $group, $project);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+                'User-Agent: ncc'
+            ];
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+
+            Logger::getLogger()->verbose(sprintf('Fetching project details for %s/%s from %s', $group, $project, $endpoint));
+            $response = self::processRequest($curl, $group, $project);
+            if(isset($response['git_url']))
+            {
+                return new RemotePackage($response['git_url'], RemotePackageType::SOURCE_GIT, $group, $project);
+            }
+
+            return null;
+        }
+
+        /**
+         * Injects authentication headers into the given cURL request based on the repository's authentication method
+         *
+         * @param CurlHandle $curl The cURL instance to modify
+         * @param array $headers The existing headers to modify
+         * @return array The modified headers with authentication injected
+         * @throws OperationException Thrown if the authentication type is invalid
+         */
+        private function injectAuthentication(CurlHandle $curl, array $headers): array
+        {
+            switch($this->getAuthentication()->getType())
+            {
+                case AuthenticationType::ACCESS_TOKEN:
+                    if($this->getAuthentication() instanceof AccessToken)
+                    {
+                        $headers[] = 'Authorization: Bearer ' . $this->getAuthentication()->getAccessToken();
+                        break;
+                    }
+                    throw new OperationException(sprintf('Invalid authentication type for Access Token, got %s instead', $this->getAuthentication()->getType()->name));
+
+                case AuthenticationType::USERNAME_PASSWORD:
+                    if($this->getAuthentication() instanceof UsernamePassword)
+                    {
+                        curl_setopt($curl, CURLOPT_USERPWD, $this->getAuthentication()->getUsername() . ':' . $this->getAuthentication()->getPassword());
+                        break;
+                    }
+                    throw new OperationException(sprintf('Invalid authentication type for Username/Password, got %s instead', $this->getAuthentication()->getType()->name));
+            }
+
+            return $headers;
+        }
+
+        /**
+         * Processes the HTTP resquest as a general JSON API Request, returning the results as a decoded array
+         *
+         * @param CurlHandle $curl The cURL instance to use
+         * @param string $group Used for error reporting, group name
+         * @param string $project Used for error reporting, project name
+         * @return array The decoded results
+         * @throws NetworkException Thrown if there was a network issue while submitting the request
+         * @throws OperationException Thrown if there was a general operation exception
+         */
+        private function processRequest(CurlHandle $curl, string $group, string $project): array
+        {
+            $retry_count = 0;
+            $response = false;
+
+            while($retry_count < 3 && $response === false)
+            {
+                $response = curl_exec($curl);
+                if($response === false)
+                {
+                    Logger::getLogger()->warning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $group, $project, curl_error($curl), $retry_count + 1));
+                    $retry_count++;
+                }
+            }
+
+            if($response === false)
+            {
+                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
+            }
+
+            switch (curl_getinfo($curl, CURLINFO_HTTP_CODE))
+            {
+                case 200:
+                    break;
+
+                case 401:
+                    throw new OperationException(sprintf('Authentication failed for %s/%s, 401 Unauthorized, invalid/expired access token', $group, $project));
+
+                case 403:
+                    throw new OperationException(sprintf('Authentication failed for %s/%s, 403 Forbidden, insufficient scope', $group, $project));
+
+                case 404:
+                    throw new OperationException(sprintf('Resource not found for %s/%s, server returned 404 Not Found', $group, $project));
+
+                default:
+                    throw new OperationException(sprintf('%s responded with HTTP code %s for %s/%s: %s', curl_getinfo($curl, CURLINFO_HTTP_CODE), $this->getConfiguration()->getName(), $group, $project, $response));
+            }
+
+            try
+            {
+                return json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+            }
+            catch(JsonException $e)
+            {
+                throw new OperationException(sprintf('Failed to parse response from %s/%s: %s', $group, $project, $e->getMessage()), $e->getCode(), $e);
+            }
+        }
+    }
