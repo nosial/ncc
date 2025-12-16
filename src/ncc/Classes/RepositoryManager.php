@@ -101,6 +101,22 @@
         }
 
         /**
+         * Adds a new repository configuration to the repository manager
+         *
+         * @param RepositoryConfiguration $configuration The repository configuration
+         * @throws InvalidArgumentException Thrown if the repository already exists
+         */
+        public function addConfiguration(RepositoryConfiguration $configuration): void
+        {
+            if($this->repositoryExists($configuration->getName()))
+            {
+                throw new InvalidArgumentException(sprintf("The repository %s already exists", $configuration->getName()));
+            }
+
+            $this->entries[$configuration->getName()] = $configuration;
+        }
+
+        /**
          * Removes a repository from the repository manager
          *
          * @param string $name The repository name
