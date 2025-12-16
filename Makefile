@@ -13,6 +13,8 @@ DEPENDENCY_PHP_PARSER = dependencies/PHP-Parser/lib/PhpParser/*
 DEPENDENCY_YAML = dependencies/yaml
 DEPENDENCY_PROCESS = dependencies/Process
 DEPENDENCY_SEMVER = dependencies/semver/src/*
+DEPENDENCY_RANDOM_COMPAT = dependencies/random_compat/lib
+DEPENDENCY_PHP_ENCRYPTION = dependencies/php-encryption/src
 
 .PHONY: build clean dependencies install
 
@@ -26,7 +28,9 @@ dependencies: src/ncc/Libraries/pal \
 	src/ncc/Libraries/deprecation-contracts \
 	src/ncc/Libraries/Yaml \
 	src/ncc/Libraries/Process \
-	src/ncc/Libraries/semver
+	src/ncc/Libraries/semver \
+	src/ncc/Libraries/random_compat \
+	src/ncc/Libraries/PhpEncryption
 
 clean:
 	rm -rf $(TARGET_DIR)
@@ -171,4 +175,25 @@ src/ncc/Libraries/semver:
 		-e 's/namespace Composer\\Semver;/namespace ncc\\Libraries\\semver;/g' \
 		-e 's/namespace Composer\\Semver\\/namespace ncc\\Libraries\\semver\\/g' \
 		-e 's/use Composer\\Semver\\/use ncc\\Libraries\\semver\\/g' \
+		{} \;
+
+src/ncc/Libraries/random_compat:
+	mkdir -p src/ncc/Libraries/random_compat
+	cp -r $(DEPENDENCY_RANDOM_COMPAT)/* src/ncc/Libraries/random_compat/
+	[ -f dependencies/random_compat/LICENSE ] && cp dependencies/random_compat/LICENSE src/ncc/Libraries/random_compat/ || true
+	[ -f dependencies/random_compat/README.md ] && cp dependencies/random_compat/README.md src/ncc/Libraries/random_compat/ || true
+
+src/ncc/Libraries/PhpEncryption:
+	mkdir -p src/ncc/Libraries/PhpEncryption/Exception
+	cp -r $(DEPENDENCY_PHP_ENCRYPTION)/Exception/* src/ncc/Libraries/PhpEncryption/Exception/
+	cp $(DEPENDENCY_PHP_ENCRYPTION)/*.php src/ncc/Libraries/PhpEncryption/
+	[ -f dependencies/php-encryption/LICENSE ] && cp dependencies/php-encryption/LICENSE src/ncc/Libraries/PhpEncryption/ || true
+	[ -f dependencies/php-encryption/README.md ] && cp dependencies/php-encryption/README.md src/ncc/Libraries/PhpEncryption/ || true
+	find src/ncc/Libraries/PhpEncryption -name "*.php" -exec sed -i \
+		-e 's/namespace Defuse\\Crypto;/namespace ncc\\Libraries\\PhpEncryption;/g' \
+		-e 's/namespace Defuse\\Crypto\\/namespace ncc\\Libraries\\PhpEncryption\\/g' \
+		-e 's/use Defuse\\Crypto\\/use ncc\\Libraries\\PhpEncryption\\/g' \
+		-e 's/\\Defuse\\Crypto\\/\\ncc\\Libraries\\PhpEncryption\\/g' \
+		-e "s/'Defuse\\\\\\\\Crypto\\\\\\\\/'ncc\\\\\\\\Libraries\\\\\\\\PhpEncryption\\\\\\\\/g" \
+		-e 's/"Defuse\\\\Crypto\\\\/"ncc\\\\Libraries\\\\PhpEncryption\\\\/g' \
 		{} \;
