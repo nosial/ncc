@@ -24,11 +24,15 @@
 
     use ncc\Interfaces\SerializableInterface;
     use ncc\Objects\PackageSource;
+    use ncc\Objects\RepositoryConfiguration;
 
     class DependencyReference implements SerializableInterface
     {
-        private PackageSource $source;
+        private string $package;
+        private string $version;
         private bool $static;
+        private ?PackageSource $source;
+        private ?RepositoryConfiguration $repository;
 
         /**
          * Public constructor for the dependency reference
@@ -36,25 +40,38 @@
          * @param PackageSource|string $source The source string of the dependency
          * @param bool $static True if the dependency is statically included in the build, False if dynamically linked
          */
-        public function __construct(PackageSource|string $source, bool $static)
+        public function __construct(string $package, string $version, bool $static, PackageSource|string|null $source=null, ?RepositoryConfiguration $repository=null)
         {
             if(is_string($source))
             {
                 $source = new PackageSource($source);
             }
 
-            $this->source = $source;
+            $this->package = $package;
+            $this->version = $version;
             $this->static = $static;
+            $this->source = $source;
+            $this->repository = $repository;
         }
 
         /**
-         * Returns the source of the dependency
+         * Returns the package name of the dependency
          *
-         * @return PackageSource The package source of the dependency
+         * @return string The package name
          */
-        public function getSource(): PackageSource
+        public function getPackage(): string
         {
-            return $this->source;
+            return $this->package;
+        }
+
+        /**
+         * Returns the version constraint of the dependency
+         *
+         * @return string The version constraint
+         */
+        public function getVersion(): string
+        {
+            return $this->version;
         }
 
         /**
@@ -68,13 +85,36 @@
         }
 
         /**
+         * Returns the source of the dependency
+         *
+         * @return PackageSource The package source of the dependency
+         */
+        public function getSource(): PackageSource
+        {
+            return $this->source;
+        }
+
+        /**
+         * Returns the repository configuration of the dependency, or null if none is set
+         *
+         * @return RepositoryConfiguration|null The repository configuration
+         */
+        public function getRepository(): ?RepositoryConfiguration
+        {
+            return $this->repository;
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(): array
         {
             return [
-                'source' => (string)$this->source,
-                'static' => $this->static
+                'package' => $this->package,
+                'version' => $this->version,
+                'static' => $this->static,
+                'source' => (string)$this->source ?? null,
+                'repository' => $this->repository?->toArray() ?? null
             ];
         }
 
@@ -83,7 +123,13 @@
          */
         public static function fromArray(array $data): DependencyReference
         {
-            return new self($data['source'] ?? '', $data['static'] ?? false);
+            $repository = null;
+            if(isset($data['repository']) && is_array($data['repository']))
+            {
+                $repository = RepositoryConfiguration::fromArray($data['repository']);
+            }
+
+            return new self($data['package'], $data['version'], $data['static'] ?? false, $data['source'] ?? null, $repository);
         }
 
         public function __toString(): string
