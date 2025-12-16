@@ -413,7 +413,7 @@
                     $packageSource->setVersion($legacyDependency['version']);
                 }
 
-                $project->addDependency($packageSource);
+                $project->addDependency($legacyDependency['name'], $packageSource);
             }
 
             return $project;
