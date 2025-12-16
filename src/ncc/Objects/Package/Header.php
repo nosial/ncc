@@ -25,6 +25,7 @@
     use InvalidArgumentException;
     use ncc\Interfaces\SerializableInterface;
     use ncc\Objects\PackageSource;
+    use ncc\Objects\RepositoryConfiguration;
     use Random\RandomException;
     use RuntimeException;
 
@@ -34,6 +35,7 @@
         private bool $compressed;
         private string $buildNumber;
         private ?string $entryPoint;
+        private ?string $webEntryPoint;
         /** @var string|string[]|null  */
         private string|array|null $preInstall;
         /** @var string|string[]|null  */
@@ -43,6 +45,8 @@
          * @var DependencyReference[]|null
          */
         private ?array $dependencyReferences;
+        private ?PackageSource $updateSource;
+        private array $repositories;
 
         /**
          * Public constructor for the package header
@@ -63,6 +67,7 @@
             }
 
             $this->entryPoint = $data['entry_point'] ?? null;
+            $this->webEntryPoint = $data['web_entry_point'] ?? null;
             $this->preInstall = $data['pre_install'] ?? null;
             $this->compressed = $data['compressed'] ?? false;
             $this->postInstall = $data['post_install'] ?? null;
@@ -79,6 +84,8 @@
             {
                 $this->dependencyReferences = [];
             }
+            $this->updateSource = isset($data['package_source']) ? new PackageSource($data['package_source']) : null;
+            $this->repositories = isset($data['repositories']) ? array_map(function($item){ return  RepositoryConfiguration::fromArray($item); }, $data['repositories']) : [];
         }
 
         /**
@@ -207,6 +214,16 @@
             $this->entryPoint = $entryPoint;
         }
 
+        public function getWebEntryPoint(): ?string
+        {
+            return $this->webEntryPoint;
+        }
+
+        public function setWebEntryPoint(?string $webEntryPoint): void
+        {
+            $this->webEntryPoint = $webEntryPoint;
+        }
+
         /**
          * Returns the pre-install execution units
          *
@@ -217,36 +234,75 @@
             return $this->preInstall;
         }
 
+        /**
+         * Sets the pre-install execution units
+         *
+         * @param string|array|null $preInstall The names of the execution units to execute pre-intsalling the package
+         * @return void
+         */
         public function setPreInstall(string|array|null $preInstall): void
         {
             $this->preInstall = $preInstall;
         }
 
+        /**
+         * Gets the post-install execution units
+         *
+         * @return string|array|null The names of the execution units to execute post-installing the package
+         */
         public function getPostInstall(): string|array|null
         {
             return $this->postInstall;
         }
 
+        /**
+         * Sets the post-install execution units
+         *
+         * @param string|array|null $postInstall The names of the execution units to execute post-installing the package
+         * @return void
+         */
         public function setPostInstall(string|array|null $postInstall): void
         {
             $this->postInstall = $postInstall;
         }
 
+        /**
+         * Gets the defined constants of the package
+         *
+         * @return array The array of defined constants
+         */
         public function getDefinedConstants(): array
         {
             return $this->definedConstants;
         }
 
+        /**
+         * Sets the defined constants of the package
+         *
+         * @param array $constants The array of defined constants to set
+         * @return void
+         */
         public function setDefinedConstants(array $constants): void
         {
             $this->definedConstants = $constants;
         }
 
+        /**
+         * Gets the dependency references of the header
+         *
+         * @return DependencyReference[] The array of dependency references
+         */
         public function getDependencyReferences(): array
         {
             return $this->dependencyReferences;
         }
 
+        /**
+         * Sets the dependency references of the header
+         *
+         * @param DependencyReference[] $data The array of dependency references to set
+         * @return void
+         */
         public function setDependencyReferences(array $data): void
         {
             foreach($data as $item)
@@ -260,16 +316,22 @@
             $this->dependencyReferences = $data;
         }
 
-        public function addDependencyReference(PackageSource|string $source, bool $static): void
+        public function addDependencyReference(string $package, string $version, bool $static, PackageSource|string|null $source): void
         {
             if($this->dependencyReferenceExists($source))
             {
                 throw new InvalidArgumentException('The dependency reference already exists in the header');
             }
 
-            $this->dependencyReferences[] = new DependencyReference($source, $static);
+            $this->dependencyReferences[] = new DependencyReference($package, $version, $static, $source);
         }
 
+        /**
+         * Checks if a dependency reference exists in the header
+         *
+         * @param PackageSource|string $source The package source or string representation of the package source to check
+         * @return bool True if the dependency reference exists, False otherwise
+         */
         public function dependencyReferenceExists(PackageSource|string $source): bool
         {
             foreach($this->dependencyReferences as $reference)
@@ -283,6 +345,57 @@
             return false;
         }
 
+        /**
+         * Gets the package source of the package
+         *
+         * @return PackageSource|null The package source of the package, or null if not set
+         */
+        public function getUpdateSource(): ?PackageSource
+        {
+            return $this->updateSource;
+        }
+
+        /**
+         * Sets the package source of the package
+         *
+         * @param PackageSource|null $updateSource The package source to set, or null to unset
+         * @return void
+         */
+        public function setUpdateSource(?PackageSource $updateSource): void
+        {
+            $this->updateSource = $updateSource;
+        }
+
+        /**
+         * Gets the repository configuration of the package
+         *
+         * @return array The repository configuration of the package, or null if not set
+         */
+        public function getRepositories(): array
+        {
+            return $this->repositories;
+        }
+
+        /**
+         * Sets the repository configuration of the package
+         *
+         * @param RepositoryConfiguration|array $repositories The repository configuration to set
+         * @return void
+         */
+        public function setRepositories(RepositoryConfiguration|array $repositories): void
+        {
+            if($repositories instanceof RepositoryConfiguration)
+            {
+                $this->repositories[] = $repositories;
+                return;
+            }
+
+            $this->repositories = $repositories;
+        }
+
+        /**
+         * @inheritDoc
+         */
         public function toArray(): array
         {
             return [
@@ -293,9 +406,15 @@
                 'pre_install' => $this->preInstall,
                 'post_install' => $this->postInstall,
                 'dependencies' => $this->dependencyReferences ? array_map(function($item){ return $item->toArray(); }, $this->dependencyReferences) : null,
+                'defined_constants' => $this->definedConstants,
+                'package_source' => $this->updateSource ? (string)$this->updateSource : null,
+                'repositories' => array_map(function($item){ return $item->toArray(); }, $this->repositories)
             ];
         }
 
+        /**
+         * @inheritDoc
+         */
         public static function fromArray(array $data): Header
         {
             return new Header($data);
