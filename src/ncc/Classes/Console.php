@@ -55,6 +55,22 @@
             self::out($message);
         }
 
+        public static function warning(string $message): void
+        {
+            if (self::$ansiColorsEnabled)
+            {
+                $message = "\e[33m" . $message . "\e[0m"; // Yellow color
+            }
+
+            self::out($message);
+        }
+
+        public static function prompt(string $prompt): string
+        {
+            self::out($prompt);
+            return trim(fgets(STDIN));
+        }
+
         /**
          * Prompts the user for a password in a secure way (without echoing input).
          * Tries multiple methods depending on platform and availability:
