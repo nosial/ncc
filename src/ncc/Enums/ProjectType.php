@@ -98,7 +98,7 @@
          * Detects the project type based on the presence of specific files in the given path.
          *
          * @param string $path The path to check for project files.
-         * @return ProjectType The detected project type.
+         * @return ProjectType|null The detected project type.
          */
         public static function detectProjectType(string $path): ?ProjectType
         {
