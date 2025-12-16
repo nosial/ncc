@@ -228,15 +228,19 @@
             $header->setBuildNumber($this->getBuildNumber());
             $header->setCompressed($this->compressionEnabled);
             $header->setEntryPoint($this->getProjectConfiguration()->getEntryPoint());
+            $header->setWebEntryPoint($this->getProjectConfiguration()->getWebEntryPoint());
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
-            $header->setDependencyReferences(array_map(function ($dependency) use ($static) {
-                return new DependencyReference($dependency, $static);
-            }, $this->getProjectConfiguration()->getDependencies() ?? []));
+            //$header->setDependencyReferences(array_map(function ($dependency) use ($static)
+            //{
+            //    return new DependencyReference($dependency, $static);
+            //}, $this->getProjectConfiguration()->getDependencies() ?? []));
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
             }
+            $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
+            $header->setRepositories($this->getProjectConfiguration()->getRepository());
 
             return $header;
         }
