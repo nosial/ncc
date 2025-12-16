@@ -44,8 +44,10 @@
     define('__NCC_DIR__', __DIR__); // The directory where ncc is located
     define('__NCC__', true); // Flag to indicate that ncc is loaded
 
-    // Define the core methods
+    // Register the shutdown handler
+    \ncc\Classes\ShutdownHandler::register();
 
+    // Define the core methods
     if(!function_exists('import'))
     {
         /**
