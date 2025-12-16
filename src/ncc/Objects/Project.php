@@ -45,6 +45,7 @@
         private string $sourcePath;
         private string $defaultBuild;
         private ?string $entryPoint;
+        private ?string $webEntryPoint;
         private ?PackageSource $updateSource;
         /** @var string|string[]|null */
         private string|array|null $preCompile;
@@ -54,10 +55,8 @@
         private string|array|null $preInstall;
         /** @var string|string[]|null */
         private string|array|null $postInstall;
-
-        private ?RepositoryConfiguration $repository;
+        private RepositoryConfiguration|array|null $repository;
         private Assembly $assembly;
-        /** @var PackageSource[] */
         private ?array $dependencies;
         /** @var ExecutionUnit[]|null */
         private ?array $executionUnits;
@@ -74,16 +73,32 @@
             $this->sourcePath = $data['source'] ?? 'src';
             $this->defaultBuild = $data['default_build'] ?? 'release';
             $this->entryPoint = $data['entry_point'] ?? null;
+            $this->webEntryPoint = $data['web_entry_point'] ?? null;
             $this->updateSource = isset($data['update_source']) ? new PackageSource($data['update_source']) : null;
             $this->preCompile = $data['pre_compile'] ?? null;
             $this->postCompile = $data['post_compile'] ?? null;
             $this->preInstall = $data['pre_install'] ?? null;
             $this->postInstall = $data['post_install'] ?? null;
-            $this->repository = isset($data['repository']) ? RepositoryConfiguration::fromArray($data['repository']) : null;
             $this->assembly = isset($data['assembly']) ? Assembly::fromArray($data['assembly']) : new Assembly();
             $this->dependencies = isset($data['dependencies']) ? array_map(function($item) { return new PackageSource($item); }, $data['dependencies']) : null;
             $this->executionUnits = isset($data['execution_units']) ? array_map(function($item) { return ExecutionUnit::fromArray($item); }, $data['execution_units']) : null;
             $this->buildConfigurations = isset($data['build_configurations']) ? array_map(function($item) { return BuildConfiguration::fromArray($item); }, $data['build_configurations']) : [];
+
+            if(isset($data['repository']))
+            {
+                if(isset($data['repository']['name']))
+                {
+                    $this->repository = RepositoryConfiguration::fromArray($data['repository']);
+                }
+                else
+                {
+                    $this->repository = array_map(function($item){ return RepositoryConfiguration::fromArray($item); }, $data['repository']);
+                }
+            }
+            else
+            {
+                $this->repository = null;
+            }
         }
 
         /**
@@ -172,6 +187,26 @@
             }
 
             $this->entryPoint = $unitName;
+        }
+
+        public function getWebEntryPoint(): ?string
+        {
+            return $this->webEntryPoint;
+        }
+
+        public function setWebEntryPoint(?string $unitName): void
+        {
+            if($unitName !== null && trim($unitName) === '')
+            {
+                throw new InvalidArgumentException('The web entry point cannot be an empty string');
+            }
+
+            if($unitName !== null && !$this->executionUnitExists($unitName))
+            {
+                throw new InvalidArgumentException('The execution unit \'' . $unitName . '\' does not exist');
+            }
+
+            $this->webEntryPoint = $unitName;
         }
 
         /**
@@ -418,7 +453,7 @@
          */
         public function getDependencies(): ?array
         {
-            return $this->dependencies;
+            return array_values($this->dependencies);
         }
 
         /**
@@ -429,9 +464,14 @@
          */
         public function getDependency(PackageSource|string $dependency): ?PackageSource
         {
+            if(is_string($dependency) && isset($this->dependencies[$dependency]))
+            {
+                return $this->dependencies[$dependency];
+            }
+
             if($dependency instanceof PackageSource)
             {
-                $dependency = (string)$dependency->getName();
+                $dependency = $dependency->getName();
             }
 
             if($this->dependencies === null)
@@ -467,8 +507,13 @@
          * @param PackageSource|string $dependency The PackageSource object representing the dependency to add
          * @throws InvalidArgumentException If a dependency with the same name already exists
          */
-        public function addDependency(PackageSource|string $dependency): void
+        public function addDependency(string $package, PackageSource|string $dependency): void
         {
+            if(is_string($dependency) && isset($this->dependencies[$package]))
+            {
+                return;
+            }
+
             if(is_string($dependency))
             {
                 $dependency = new PackageSource($dependency);
@@ -484,7 +529,7 @@
                 throw new InvalidArgumentException('A dependency with the name \'' . (string)$dependency->getName() . '\' already exists');
             }
 
-            $this->dependencies[] = $dependency;
+            $this->dependencies[$package] = $dependency;
         }
 
         /**
@@ -504,11 +549,17 @@
                 return;
             }
 
-            foreach($this->dependencies as $index => $packageSource)
+            if(isset($this->dependencies[$dependency]))
+            {
+                unset($this->dependencies[$dependency]);
+                return;
+            }
+
+            foreach($this->dependencies as $packageName => $packageSource)
             {
                 if((string)$packageSource->getName() === $dependency)
                 {
-                    array_splice($this->dependencies, $index, 1);
+                    unset($this->dependencies[$packageName]);
                     return;
                 }
             }
@@ -691,10 +742,23 @@
          */
         public function toArray(): array
         {
+            // Initialize an empty array for the transformed dependencies
+            $dependenciesArray = null;
+
+            if ($this->dependencies)
+            {
+                $dependenciesArray = [];
+                foreach ($this->dependencies as $dependencyName => $dependencyObject)
+                {
+                    $dependenciesArray[$dependencyName] = $dependencyObject->toArray();
+                }
+            }
+
             return [
                 'source' => $this->sourcePath,
                 'default_build' => $this->defaultBuild,
                 'entry_point' => $this->entryPoint,
+                'web_entry_point' => $this->webEntryPoint,
                 'update_source' => $this->updateSource ? (string)$this->updateSource : null,
                 'pre_compile' => $this->preCompile,
                 'post_compile' => $this->postCompile,
@@ -702,7 +766,7 @@
                 'post_install' => $this->postInstall,
                 'repository' => $this->repository?->toArray(),
                 'assembly' => $this->assembly->toArray(),
-                'dependencies' => $this->dependencies ? array_map(function($item) { return (string)$item; }, $this->dependencies) : null,
+                'dependencies' => $dependenciesArray,
                 'execution_units' => $this->executionUnits ? array_map(function($item) { return $item->toArray(); }, $this->executionUnits) : null,
                 'build_configurations' => array_map(function($item) { return $item->toArray(); }, $this->buildConfigurations)
             ];
@@ -846,6 +910,19 @@
                 if(!self::validateExecutionUnitExists($data, $data['entry_point']))
                 {
                     throw new InvalidPropertyException('entry_point', 'The entry point must point to an existing execution unit');
+                }
+            }
+
+            if(isset($data['web_entry_point']))
+            {
+                if((!is_string($data['web_entry_point']) || trim($data['web_entry_point']) === ''))
+                {
+                    throw new InvalidPropertyException('web_entry_point', 'The web entry point must be a non-empty string if set');
+                }
+
+                if(!self::validateExecutionUnitExists($data, $data['web_entry_point']))
+                {
+                    throw new InvalidPropertyException('web_entry_point', 'The web entry point must point to an existing execution unit');
                 }
             }
 
