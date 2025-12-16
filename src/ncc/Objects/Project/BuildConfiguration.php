@@ -27,6 +27,7 @@
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Interfaces\SerializableInterface;
     use ncc\Interfaces\ValidatorInterface;
+    use ncc\Objects\PackageSource;
 
     class BuildConfiguration implements SerializableInterface, ValidatorInterface
     {
@@ -38,6 +39,7 @@
         private array $excludeComponents;
         private array $includeResources;
         private array $excludeResources;
+        private ?array $dependencies;
         private ?array $options;
 
         /**
@@ -51,11 +53,12 @@
             $this->output = $data['output'] ?? 'out';
             $this->type = BuildType::tryFrom($data['type']) ?? BuildType::NCC_PACKAGE;
             $this->definitions = $data['definitions'] ?? [];
-            $this->options = $data['options'] ?? null;
             $this->includeComponents = $data['include_components'] ?? [];
             $this->excludeComponents = $data['exclude_components'] ?? [];
             $this->includeResources = $data['include_resources'] ?? [];
             $this->excludeResources = $data['exclude_resources'] ?? [];
+            $this->dependencies = $data['dependencies'] ?? null;
+            $this->options = $data['options'] ?? null;
         }
 
         /**
@@ -211,6 +214,125 @@
         }
 
         /**
+         * Returns the build configurations defined in the project
+         *
+         * @return PackageSource[]|null An array of PackageSource objects or null if no dependencies are defined
+         */
+        public function getDependencies(): ?array
+        {
+            return array_values($this->dependencies);
+        }
+
+        /**
+         * Returns a specific dependency by its name
+         *
+         * @param PackageSource|string $dependency The name of the dependency to retrieve
+         * @return PackageSource|null The PackageSource object if found, or null if not found or no dependencies are defined
+         */
+        public function getDependency(PackageSource|string $dependency): ?PackageSource
+        {
+            if(is_string($dependency) && isset($this->dependencies[$dependency]))
+            {
+                return $this->dependencies[$dependency];
+            }
+
+            if($dependency instanceof PackageSource)
+            {
+                $dependency = $dependency->getName();
+            }
+
+            if($this->dependencies === null)
+            {
+                return null;
+            }
+
+            foreach($this->dependencies as $packageSource)
+            {
+                if((string)$packageSource->getName() === $dependency)
+                {
+                    return $packageSource;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Checks if a dependency with the given name exists
+         *
+         * @param PackageSource|string $dependency The name of the dependency to check
+         * @return bool True if the dependency exists, false otherwise
+         */
+        public function dependencyExists(PackageSource|string $dependency): bool
+        {
+            return $this->getDependency($dependency) !== null;
+        }
+
+        /**
+         * Adds a new dependency to the project
+         *
+         * @param PackageSource|string $dependency The PackageSource object representing the dependency to add
+         * @throws InvalidArgumentException If a dependency with the same name already exists
+         */
+        public function addDependency(string $package, PackageSource|string $dependency): void
+        {
+            if(is_string($dependency) && isset($this->dependencies[$package]))
+            {
+                return;
+            }
+
+            if(is_string($dependency))
+            {
+                $dependency = new PackageSource($dependency);
+            }
+
+            if($this->dependencies === null)
+            {
+                $this->dependencies = [];
+            }
+
+            if($this->dependencyExists($dependency->getName()))
+            {
+                throw new InvalidArgumentException('A dependency with the name \'' . (string)$dependency->getName() . '\' already exists');
+            }
+
+            $this->dependencies[$package] = $dependency;
+        }
+
+        /**
+         * Removes a dependency from the project by its name
+         *
+         * @param PackageSource|string $dependency The name of the dependency to remove
+         */
+        public function removeDependency(PackageSource|string $dependency): void
+        {
+            if($dependency instanceof PackageSource)
+            {
+                $dependency = (string)$dependency;
+            }
+
+            if($this->dependencies === null)
+            {
+                return;
+            }
+
+            if(isset($this->dependencies[$dependency]))
+            {
+                unset($this->dependencies[$dependency]);
+                return;
+            }
+
+            foreach($this->dependencies as $packageName => $packageSource)
+            {
+                if((string)$packageSource->getName() === $dependency)
+                {
+                    unset($this->dependencies[$packageName]);
+                    return;
+                }
+            }
+        }
+
+        /**
          * Creates a default release build configuration.
          *
          * @return BuildConfiguration The default release build configuration.
@@ -246,11 +368,27 @@
          */
         public function toArray(): array
         {
+            $dependenciesArray = null;
+
+            if ($this->dependencies)
+            {
+                $dependenciesArray = [];
+                foreach ($this->dependencies as $dependencyName => $dependencyObject)
+                {
+                    $dependenciesArray[$dependencyName] = $dependencyObject->toArray();
+                }
+            }
+
             return [
                 'name' => $this->name,
                 'output' => $this->output,
                 'type' => $this->type->value,
                 'definitions' => $this->definitions,
+                'include_components' => $this->includeComponents,
+                'exclude_components' => $this->excludeComponents,
+                'include_resources' => $this->includeResources,
+                'exclude_resources' => $this->excludeResources,
+                'dependencies' => $dependenciesArray,
                 'options' => $this->options
             ];
         }
