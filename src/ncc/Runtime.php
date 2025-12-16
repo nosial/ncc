@@ -21,32 +21,27 @@
      */
     namespace ncc;
 
+    use ncc\Classes\AuthenticationManager;
     use ncc\Classes\PackageManager;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PathResolver;
+    use ncc\Classes\RepositoryManager;
     use ncc\Classes\StreamWrapper;
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
+    use ncc\Objects\RepositoryConfiguration;
     use RuntimeException;
 
     class Runtime
     {
-        /**
-         * @var array
-         */
         private static array $importedPackages = [];
-        /**
-         * @var bool Flag to track if StreamWrapper has been initialized
-         */
         private static bool $streamWrapperInitialized = false;
-        /**
-         * @var PackageManager|null The user-level package manager instance
-         */
         private static ?PackageManager $userPackageManager = null;
-        /**
-         * @var PackageManager|null The system-level package manager instance
-         */
         private static ?PackageManager $systemPackageManager = null;
+        private static ?RepositoryManager $userRepositoryManager = null;
+        private static ?RepositoryManager $systemRepositoryManager = null;
+        private static ?AuthenticationManager $systemAuthenticationManager = null;
+        private static ?AuthenticationManager $userAuthenticationManager = null;
 
         /**
          * Imports a package into the runtime, this method supports two ways of importing a method
@@ -209,18 +204,13 @@
          * This always returns a valid PackageManager instance.
          *
          * @return PackageManager The system-level PackageManager instance.
-         * @throws RuntimeException If the package manager directory cannot be created (only when running as system user).
          */
         public static function getSystemPackageManager(): PackageManager
         {
             if(self::$systemPackageManager === null)
             {
                 $systemLocation = PathResolver::getSystemLocation();
-
-                // Check if we have write access (typically when running as system user)
                 $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
-
-                // If we have write access and directory doesn't exist, create it
                 if($hasWriteAccess && !file_exists($systemLocation))
                 {
                     if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
@@ -254,6 +244,105 @@
             return self::getSystemPackageManager();
         }
 
+        public static function getUserRepositoryManager(): ?RepositoryManager
+        {
+            if(self::$userRepositoryManager === null)
+            {
+                $userLocation = PathResolver::getUserLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                if(!file_exists($userLocation))
+                {
+                    if(!mkdir($userLocation, 0755, true) && !is_dir($userLocation))
+                    {
+                        throw new RuntimeException(sprintf('Directory "%s" was not created', $userLocation));
+                    }
+                }
+
+                self::$userRepositoryManager = new RepositoryManager($userLocation);
+            }
+
+            return self::$userRepositoryManager;
+        }
+
+        public static function getSystemRepositoryManager(): RepositoryManager
+        {
+            if(self::$systemRepositoryManager === null)
+            {
+                $systemLocation = PathResolver::getSystemLocation();
+                $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
+                if($hasWriteAccess && !file_exists($systemLocation))
+                {
+                    if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
+                    {
+                        throw new RuntimeException(sprintf('Directory "%s" was not created', $systemLocation));
+                    }
+                }
+
+                self::$systemRepositoryManager = new RepositoryManager($systemLocation);
+            }
+
+            return self::$systemRepositoryManager;
+        }
+
+        public static function getRepositoryManager(): RepositoryManager
+        {
+            $userManager = self::getUserRepositoryManager();
+            if($userManager !== null)
+            {
+                return $userManager;
+            }
+
+            return self::getUserRepositoryManager();
+        }
+
+        public static function getUserAuthenticationManager(): ?AuthenticationManager
+        {
+            if(self::$userAuthenticationManager === null)
+            {
+                $userLocation = PathResolver::getUserLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                if(!file_exists($userLocation))
+                {
+                    if(!mkdir($userLocation, 0755, true) && !is_dir($userLocation))
+                    {
+                        throw new RuntimeException(sprintf('Directory "%s" was not created', $userLocation));
+                    }
+                }
+
+                self::$userAuthenticationManager = new AuthenticationManager($userLocation);
+            }
+
+            return self::$userAuthenticationManager;
+        }
+
+        public static function getSystemAuthenticationManager(): AuthenticationManager
+        {
+            if(self::$systemAuthenticationManager === null)
+            {
+                $systemLocation = PathResolver::getSystemLocation();
+                $hasWriteAccess = is_writeable(dirname($systemLocation) || (file_exists($systemLocation) && is_writeable($systemLocation)));
+                if($hasWriteAccess && !file_exists($systemLocation))
+                {
+                    if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
+                    {
+                        throw new RuntimeException(sprintf('Directory "%s" was not created', $systemLocation));
+                    }
+                }
+
+                self::$systemAuthenticationManager = new AuthenticationManager($systemLocation);
+            }
+
+            return self::$systemAuthenticationManager;
+        }
+
         public static function packageInstalled(string $package, string $version): bool
         {
             if(self::getSystemPackageManager()->entryExists($package, $version))
@@ -264,6 +353,20 @@
             return self::getUserPackageManager()?->entryExists($package, $version);
         }
 
+        public static function getRepository(string $name): ?RepositoryConfiguration
+        {
+            return self::getSystemRepositoryManager()->getRepository($name) ?? self::getUserRepositoryManager()->getRepository($name);
+        }
+
+        public static function repositoryExists(string $name): bool
+        {
+            if(self::getSystemRepositoryManager()->repositoryExists($name))
+            {
+                return true;
+            }
+
+            return self::getUserRepositoryManager()->repositoryExists($name);
+        }
 
         /**
          * Initializes the StreamWrapper if not already initialized.
