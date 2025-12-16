@@ -25,5 +25,6 @@
     enum ExecutionUnitType : string
     {
         case PHP = 'php';
+        case WEB = 'web';
         case SYSTEM = 'system';
     }
