@@ -23,13 +23,88 @@
     namespace ncc\ProjectConverters;
 
     use ncc\Abstracts\AbstractProjectConverter;
+    use ncc\Classes\IO;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\Project;
 
     class ComposerProjectConverter extends AbstractProjectConverter
     {
         public function convert(string $filePath): Project
         {
-            // TODO: Implement this!
-            return new Project([]);
+            $content = IO::readFile($filePath);
+            $data = json_decode($content, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE)
+            {
+                throw new IOException('Failed to parse JSON: ' . json_last_error_msg());
+            }
+
+            $project = new Project();
+        }
+
+        private function generateAssembly(array $composerData): Project\Assembly
+        {
+            $assembly = new Project\Assembly();
+
+            // Description
+            if(isset($composerData['description']))
+            {
+                $assembly->setDescription($composerData['description']);
+            }
+
+            // Homepage
+            if(isset($composerData['homepage']))
+            {
+                $assembly->setUrl($composerData['homepage']);
+            }
+
+            // Authors
+            if(isset($composerData['authors']) && count($composerData['authors']) > 0)
+            {
+                if(isset($composerData['authors']['name']))
+                {
+                    $assembly->setAuthor(sprintf("%s %s%s",
+                        $composerData['authors']['name'],
+                        ($composerData['authors']['email'] ?' <' . $composerData['authors']['email'] . '>' : ''),
+                        ($composerData['authors']['homepage'] ? ' (' . $composerData['authors']['homepage'] . ')' : '')
+                    ));
+                }
+                else
+                {
+                    $authorString = (string)null;
+                    foreach($composerData['authors'] as $author)
+                    {
+                        if(isset($authorString[0]))
+                        {
+                            $authorString .= ', ';
+                        }
+
+                        $authorString .= sprintf("%s %s%s",
+                            $author['name'],
+                            (isset($author['email']) ? ' <' . $author['email'] . '>' : ''),
+                            (isset($author['homepage']) ? ' (' . $author['homepage'] . ')' : '')
+                        );
+                    }
+
+                    $assembly->setAuthor($authorString);
+                }
+            }
+
+            // License
+            if(isset($composerData['license']))
+            {
+                $assembly->setLicense($composerData['license']);
+            }
+
+
+        }
+
+        private function generatePackageName(string $composerPackageName): string
+        {
+            return sprintf("%s.%s.%s",
+                'com',
+                str_replace('-', '', explode('/', $composerPackageName)[0]),
+                str_replace('-', '', explode('/', $composerPackageName)[1])
+            );
         }
     }
