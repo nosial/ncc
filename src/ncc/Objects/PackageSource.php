@@ -37,11 +37,19 @@
         /**
          * PackageSource constructor.
          *
-         * @param string $sourceString The package string in the format "organization/name=version@repository".
-         * @throws InvalidArgumentException If the package string is invalid.
+         * @param string|null $sourceString The package string in the format "organization/name=version@repository".
          */
-        public function __construct(string $sourceString)
+        public function __construct(?string $sourceString=null)
         {
+            if(is_null($sourceString))
+            {
+                $this->organization = 'organization';
+                $this->name = 'name';
+                $this->version = 'latest';
+                $this->repository = 'repository';
+                return;
+            }
+
             $parsedPackage = Utilities::parsePackageSource($sourceString);
             if($parsedPackage === null)
             {
