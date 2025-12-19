@@ -57,7 +57,7 @@
             $this->excludeComponents = $data['exclude_components'] ?? [];
             $this->includeResources = $data['include_resources'] ?? [];
             $this->excludeResources = $data['exclude_resources'] ?? [];
-            $this->dependencies = $data['dependencies'] ?? null;
+            $this->dependencies = isset($data['dependencies']) ? array_map(function($item) { return is_string($item) ? new PackageSource($item) : $item; }, $data['dependencies']) : null;
             $this->options = $data['options'] ?? null;
         }
 
@@ -164,6 +164,22 @@
         }
 
         /**
+         * Adds an option to the build configuration.
+         *
+         * @param string $key The option key.
+         * @param mixed $value The option value.
+         */
+        public function addOption(string $key, mixed $value): void
+        {
+            if($this->options === null)
+            {
+                $this->options = [];
+            }
+
+            $this->options[$key] = $value;
+        }
+
+        /**
          * Set the options of the build configuration.
          *
          * @param array|null $options The options to set, or null to unset.
@@ -184,6 +200,31 @@
         }
 
         /**
+         * Sets an array of file patterns to include certain component files
+         *
+         * @param string[] $components An array of file patterns to include components
+         */
+        public function setIncludedComponents(array $components): void
+        {
+            $this->includeComponents = $components;
+        }
+
+        /**
+         * Adds a file pattern to include a certain component file
+         *
+         * @param string $component A file pattern to include a component
+         */
+        public function addIncludedComponent(string $component): void
+        {
+            if(!in_array($component, $this->includeComponents, true))
+            {
+                return;
+            }
+
+            $this->includeComponents[] = $component;
+        }
+
+        /**
          * Returns an array of file patterns to exclude certain component files
          *
          * @return string[] An array of file patterns to exclude components
@@ -191,6 +232,31 @@
         public function getExcludedComponents(): array
         {
             return $this->excludeComponents;
+        }
+
+        /**
+         * Sets an array of file patterns to exclude certain component files
+         *
+         * @param string[] $components An array of file patterns to exclude components
+         */
+        public function setExcludedComponents(array $components): void
+        {
+            $this->excludeComponents = $components;
+        }
+
+        /**
+         * Adds a file pattern to exclude a certain component file
+         *
+         * @param string $component A file pattern to exclude a component
+         */
+        public function addExcludedComponent(string $component): void
+        {
+            if(!in_array($component, $this->excludeComponents, true))
+            {
+                return;
+            }
+
+            $this->excludeComponents[] = $component;
         }
 
         /**
@@ -204,6 +270,31 @@
         }
 
         /**
+         * Sets an array of file patterns to include certain resource files
+         *
+         * @param string[] $resources An array of file patterns to include resources
+         */
+        public function setIncludedResources(array $resources): void
+        {
+            $this->includeResources = $resources;
+        }
+
+        /**
+         * Adds a file pattern to include a certain resource file
+         *
+         * @param string $resource A file pattern to include a resource
+         */
+        public function addIncludedResource(string $resource): void
+        {
+            if(!in_array($resource, $this->includeResources, true))
+            {
+                return;
+            }
+
+            $this->includeResources[] = $resource;
+        }
+
+        /**
          * Returns an array of file patterns used to exclude certain resource files
          *
          * @return string[] An array of file patterns to exclude resources
@@ -214,13 +305,38 @@
         }
 
         /**
+         * Sets an array of file patterns to exclude certain resource files
+         *
+         * @param string[] $resources An array of file patterns to exclude resources
+         */
+        public function setExcludedResources(array $resources): void
+        {
+            $this->excludeResources = $resources;
+        }
+
+        /**
+         * Adds a file pattern to exclude a certain resource file
+         *
+         * @param string $resource A file pattern to exclude a resource
+         */
+        public function addExcludedResource(string $resource): void
+        {
+            if(!in_array($resource, $this->excludeResources, true))
+            {
+                return;
+            }
+
+            $this->excludeResources[] = $resource;
+        }
+
+        /**
          * Returns the build configurations defined in the project
          *
-         * @return PackageSource[]|null An array of PackageSource objects or null if no dependencies are defined
+         * @return PackageSource[]|null An array of PackageSource objects keyed by package name, or null if no dependencies are defined
          */
         public function getDependencies(): ?array
         {
-            return array_values($this->dependencies);
+            return $this->dependencies;
         }
 
         /**
@@ -291,7 +407,7 @@
                 $this->dependencies = [];
             }
 
-            if($this->dependencyExists($dependency->getName()))
+            if($this->dependencyExists($package))
             {
                 throw new InvalidArgumentException('A dependency with the name \'' . (string)$dependency->getName() . '\' already exists');
             }
@@ -375,7 +491,7 @@
                 $dependenciesArray = [];
                 foreach ($this->dependencies as $dependencyName => $dependencyObject)
                 {
-                    $dependenciesArray[$dependencyName] = $dependencyObject->toArray();
+                    $dependenciesArray[$dependencyName] = (string)$dependencyObject;
                 }
             }
 
