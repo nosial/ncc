@@ -43,6 +43,14 @@
          */
         public function getFilePath(string $path): ?string
         {
+            // First, check if the file exists in the current directory
+            $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
+            if (file_exists($directFilePath) && is_file($directFilePath))
+            {
+                return $directFilePath;
+            }
+
+            // If not found in current directory, recursively search subdirectories
             foreach ((new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST)) as $file)
             {
                 if ($file->isFile() && $file->getFilename() === $this->value)
