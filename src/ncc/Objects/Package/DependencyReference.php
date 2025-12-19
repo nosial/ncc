@@ -30,17 +30,16 @@
     {
         private string $package;
         private string $version;
-        private bool $static;
         private ?PackageSource $source;
-        private ?RepositoryConfiguration $repository;
 
         /**
          * Public constructor for the dependency reference
          *
-         * @param PackageSource|string $source The source string of the dependency
-         * @param bool $static True if the dependency is statically included in the build, False if dynamically linked
+         * @param string $package The package name of the dependency
+         * @param string $version The version constraint of the dependency
+         * @param PackageSource|string|null $source The source string of the dependency
          */
-        public function __construct(string $package, string $version, bool $static, PackageSource|string|null $source=null, ?RepositoryConfiguration $repository=null)
+        public function __construct(string $package, string $version, PackageSource|string|null $source=null)
         {
             if(is_string($source))
             {
@@ -49,9 +48,7 @@
 
             $this->package = $package;
             $this->version = $version;
-            $this->static = $static;
             $this->source = $source;
-            $this->repository = $repository;
         }
 
         /**
@@ -74,15 +71,6 @@
             return $this->version;
         }
 
-        /**
-         * Returns True if the dependency is statically included in the build, False if dynamically linked
-         *
-         * @return bool True if static, False otherwise.
-         */
-        public function isStatic(): bool
-        {
-            return $this->static;
-        }
 
         /**
          * Returns the source of the dependency
@@ -95,16 +83,6 @@
         }
 
         /**
-         * Returns the repository configuration of the dependency, or null if none is set
-         *
-         * @return RepositoryConfiguration|null The repository configuration
-         */
-        public function getRepository(): ?RepositoryConfiguration
-        {
-            return $this->repository;
-        }
-
-        /**
          * @inheritDoc
          */
         public function toArray(): array
@@ -112,9 +90,7 @@
             return [
                 'package' => $this->package,
                 'version' => $this->version,
-                'static' => $this->static,
                 'source' => (string)$this->source ?? null,
-                'repository' => $this->repository?->toArray() ?? null
             ];
         }
 
@@ -129,7 +105,7 @@
                 $repository = RepositoryConfiguration::fromArray($data['repository']);
             }
 
-            return new self($data['package'], $data['version'], $data['static'] ?? false, $data['source'] ?? null, $repository);
+            return new self($data['package'], $data['version'], $data['source'] ?? null, $repository);
         }
 
         public function __toString(): string
