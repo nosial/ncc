@@ -389,6 +389,16 @@
         }
 
         /**
+         * Sets the assembly information of the project
+         *
+         * @param Assembly $assembly The new assembly information
+         */
+        public function setAssembly(Assembly $assembly): void
+        {
+            $this->assembly = $assembly;
+        }
+
+        /**
          * Validates that the given unit name(s) are valid execution units.
          *
          * @param string|array|null $unitNames
@@ -449,11 +459,11 @@
         /**
          * Returns the build configurations defined in the project
          *
-         * @return PackageSource[]|null An array of PackageSource objects or null if no dependencies are defined
+         * @return array<string,PackageSource>|null An array of PackageSource objects keyed by package name, or null if no dependencies are defined
          */
         public function getDependencies(): ?array
         {
-            return array_values($this->dependencies);
+            return $this->dependencies;
         }
 
         /**
@@ -493,12 +503,17 @@
         /**
          * Checks if a dependency with the given name exists
          *
-         * @param PackageSource|string $dependency The name of the dependency to check
+         * @param string $package
          * @return bool True if the dependency exists, false otherwise
          */
-        public function dependencyExists(PackageSource|string $dependency): bool
+        public function dependencyExists(string $package): bool
         {
-            return $this->getDependency($dependency) !== null;
+            if(isset($this->dependencies[$package]))
+            {
+                return true;
+            }
+
+            return $this->getDependency($package) !== null;
         }
 
         /**
@@ -524,9 +539,9 @@
                 $this->dependencies = [];
             }
 
-            if($this->dependencyExists($dependency->getName()))
+            if($this->dependencyExists($package))
             {
-                throw new InvalidArgumentException('A dependency with the name \'' . (string)$dependency->getName() . '\' already exists');
+                throw new InvalidArgumentException('A dependency with the name \'' . (string)$package . '\' already exists');
             }
 
             $this->dependencies[$package] = $dependency;
@@ -750,7 +765,7 @@
                 $dependenciesArray = [];
                 foreach ($this->dependencies as $dependencyName => $dependencyObject)
                 {
-                    $dependenciesArray[$dependencyName] = $dependencyObject->toArray();
+                    $dependenciesArray[$dependencyName] = (string)$dependencyObject;
                 }
             }
 
