@@ -33,6 +33,7 @@
     {
         private array $flags;
         private bool $compressed;
+        private bool $staticallyLinked;
         private string $buildNumber;
         private ?string $entryPoint;
         private ?string $webEntryPoint;
@@ -66,6 +67,7 @@
                 throw new RuntimeException('No build number for the header was provided and the fallback to generate a random build number has failed', $e->getCode(), $e);
             }
 
+            $this->staticallyLinked = $data['statically_linked'] ?? false;
             $this->entryPoint = $data['entry_point'] ?? null;
             $this->webEntryPoint = $data['web_entry_point'] ?? null;
             $this->preInstall = $data['pre_install'] ?? null;
@@ -165,6 +167,16 @@
         public function setCompressed(bool $compressed): void
         {
             $this->compressed = $compressed;
+        }
+
+        public function isStaticallyLinked(): bool
+        {
+            return $this->staticallyLinked;
+        }
+
+        public function setStaticallyLinked(bool $staticallyLinked): void
+        {
+            $this->staticallyLinked = $staticallyLinked;
         }
 
         /**
@@ -316,14 +328,14 @@
             $this->dependencyReferences = $data;
         }
 
-        public function addDependencyReference(string $package, string $version, bool $static, PackageSource|string|null $source): void
+        public function addDependencyReference(string $package, string $version, PackageSource|string|null $source): void
         {
             if($this->dependencyReferenceExists($source))
             {
-                throw new InvalidArgumentException('The dependency reference already exists in the header');
+                return;
             }
 
-            $this->dependencyReferences[] = new DependencyReference($package, $version, $static, $source);
+            $this->dependencyReferences[] = new DependencyReference($package, $version, $source);
         }
 
         /**
@@ -374,6 +386,29 @@
         public function getRepositories(): array
         {
             return $this->repositories;
+        }
+
+        public function getRepository(string $name): ?RepositoryConfiguration
+        {
+            foreach($this->repositories as $repository)
+            {
+                if($repository->getName() === $name)
+                {
+                    return $repository;
+                }
+            }
+
+            return null;
+        }
+
+        public function getMainRepository(): ?RepositoryConfiguration
+        {
+            if(empty($this->repositories))
+            {
+                return null;
+            }
+
+            return $this->repositories[0];
         }
 
         /**
