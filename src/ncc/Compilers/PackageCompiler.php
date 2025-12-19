@@ -23,12 +23,14 @@
     namespace ncc\Compilers;
 
     use ncc\Abstracts\AbstractCompiler;
+    use ncc\Classes\PackageReader;
     use ncc\Classes\PackageWriter;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
     use ncc\Exceptions\PackageException;
-    use ncc\Objects\Package\DependencyReference;
+    use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\Header;
+    use ncc\Runtime;
 
     class PackageCompiler extends AbstractCompiler
     {
@@ -140,7 +142,7 @@
 
                        case WritingMode::COMPONENTS:
                            // Components ca be multiple, write them named
-                           foreach($this->getComponents() as $componentFilePath)
+                           foreach($this->getSourceComponents() as $componentFilePath)
                            {
                                // Check if component is within source path
                                if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
@@ -168,13 +170,29 @@
                                $packageWriter->writeData($componentData, $componentName);
                            }
 
+                           // If dependency linking is statically linked, we embed the package contents into our compiled package
+                           if($this->isStaticallyLinked())
+                           {
+                               // For each dependency, if we cannot resolve one of these dependencies the build fails
+                               /** @var PackageReader $packageReader */
+                               foreach($this->getDependencyReaders() as $packageReader)
+                               {
+                                   // For each component reference
+                                   /** @var ComponentReference $componentReference */
+                                   foreach($packageReader->getComponentReferences() as $componentName => $componentReference)
+                                   {
+                                       $packageWriter->writeData($componentName, $packageReader->readComponent($componentReference));
+                                   }
+                               }
+                           }
+
                            // Close the section
                            $packageWriter->endSection();
                            break;
 
                        case WritingMode::RESOURCES:
                            // Resources can be multiple, write them named.
-                           foreach($this->getResources() as $resourceFilePath)
+                           foreach($this->getSourceResources() as $resourceFilePath)
                            {
                                 // Check if resource is within source path
                                 if(str_starts_with($resourceFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
@@ -202,6 +220,19 @@
                                 $packageWriter->writeData($resourceData, $resourceName);
                            }
 
+                           if($this->isStaticallyLinked())
+                           {
+                               /** @var PackageReader $packageReader */
+                               foreach($this->getDependencyReaders() as $packageReader)
+                               {
+                                   /** @var ComponentReference $componentReference */
+                                   foreach($packageReader->getResourceReferences() as $resourceName => $resourceReference)
+                                   {
+                                       $packageWriter->writeData($resourceName, $packageReader->readResource($resourceReference));
+                                   }
+                               }
+                           }
+
                            $packageWriter->endSection();
                            break;
                    }
@@ -219,28 +250,40 @@
          * Returns the package's header object built from the project's configuration
          *
          * @return Header THe package's header object
+         * @throws CompileException thrown if a dependency cannot be resolved when statically linking
          */
         private function createPackageHeader(): Header
         {
             $header = new Header();
-            $static = $this->isStaticallyLinked();
 
             $header->setBuildNumber($this->getBuildNumber());
             $header->setCompressed($this->compressionEnabled);
+            $header->setStaticallyLinked($this->getBuildConfiguration()?->getOptions()['static'] ?? false);
             $header->setEntryPoint($this->getProjectConfiguration()->getEntryPoint());
             $header->setWebEntryPoint($this->getProjectConfiguration()->getWebEntryPoint());
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
-            //$header->setDependencyReferences(array_map(function ($dependency) use ($static)
-            //{
-            //    return new DependencyReference($dependency, $static);
-            //}, $this->getProjectConfiguration()->getDependencies() ?? []));
+            $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
+            $header->setRepositories($this->getProjectConfiguration()->getRepository());
+
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
             }
-            $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
-            $header->setRepositories($this->getProjectConfiguration()->getRepository());
+
+            // Process dependencies from both project and build configuration
+            foreach($this->getPackageDependencies() as $packageName => $packageSource)
+            {
+                $packageVersion = Runtime::getPackageEntry($packageName, $packageSource->getVersion() ?? 'latest')?->getVersion() ?? 'latest';
+
+                // Ensure that there are no 'latest' versions when statically linking
+                if($this->isStaticallyLinked() && $packageVersion === 'latest')
+                {
+                    throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
+                }
+
+                $header->addDependencyReference($packageName, $packageVersion, $packageSource);
+            }
 
             return $header;
         }
