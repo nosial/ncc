@@ -251,7 +251,7 @@
             }
             catch(JsonException $e)
             {
-                throw new OperationException(sprintf('Failed to parse response from %s/%s: %s', $vendor, $project, $e->getMessage()), $e);
+                throw new OperationException(sprintf('Failed to parse response from %s/%s: %s', $vendor, $project, $e->getMessage()), $e->getCode(), $e);
             }
         }
     }
