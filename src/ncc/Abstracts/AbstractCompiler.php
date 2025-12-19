@@ -25,6 +25,7 @@
     use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\FileCollector;
+    use ncc\Classes\PackageReader;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
@@ -32,8 +33,12 @@
     use ncc\Exceptions\ExecutionUnitException;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
+    use ncc\Objects\Package\DependencyReference;
+    use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;
+    use ncc\Objects\ResolvedDependency;
 
     abstract class AbstractCompiler
     {
@@ -61,11 +66,11 @@
         /**
          * @var string[]
          */
-        private array $components;
+        private array $sourceComponents;
         /**
          * @var string[]
          */
-        private array $resources;
+        private array $sourceResources;
         /**
          * @var string[]
          */
@@ -74,6 +79,7 @@
          * @var string[]
          */
         private array $temporaryExecutionUnits;
+        private array $packageDependencies;
         private bool $staticallyLinked;
         private string $buildNumber;
 
@@ -85,13 +91,14 @@
          *
          * @param string $projectFilePath The path to the project configuration file or the project directory.
          * @param string $buildConfiguration The build configuration to use.
+         * @throws OperationException Thrown if there was an error setting up the compiler.
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
             $projectFilePath = Helper::resolveProjectConfigurationPath($projectFilePath);
             if($projectFilePath === null)
             {
-                throw new InvalidArgumentException("No project configuration file found");
+                throw new OperationException("No project configuration file found");
             }
 
             $this->projectPath = dirname($projectFilePath);
@@ -103,12 +110,12 @@
             }
             catch(InvalidPropertyException $e)
             {
-                throw new InvalidArgumentException("Project configuration is invalid: " . $e->getMessage(), $e->getCode(), $e);
+                throw new OperationException("Project configuration is invalid: " . $e->getMessage(), $e->getCode(), $e);
             }
 
             if(!$this->projectConfiguration->buildConfigurationExists($buildConfiguration))
             {
-                throw new InvalidArgumentException("Build configuration '$buildConfiguration' does not exist in project configuration");
+                throw new OperationException("Build configuration '$buildConfiguration' does not exist in project configuration");
             }
 
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
@@ -119,6 +126,9 @@
             $this->includeResources = $this->buildConfiguration->getIncludedResources();
             $this->excludeResources = array_merge(['*.php'], $this->buildConfiguration->getExcludedResources());
             $this->requiredExecutionUnits = [];
+            $this->sourceComponents = [];
+            $this->sourceResources = [];
+            $this->packageDependencies = [];
 
             if($this->projectConfiguration->getEntryPoint() !== null)
             {
@@ -154,8 +164,10 @@
                 $this->staticallyLinked = false;
             }
 
+            $this->packageDependencies = array_merge($this->packageDependencies, $this->buildConfiguration->getDependencies() ?? [], $this->projectConfiguration->getDependencies() ?? []);
             $this->refreshFiles();
         }
+
 
         /**
          * Gets the project path.
@@ -212,9 +224,9 @@
          *
          * @return array An array of component file paths.
          */
-        public function getComponents(): array
+        public function getSourceComponents(): array
         {
-            return $this->components;
+            return $this->sourceComponents;
         }
 
         /**
@@ -222,9 +234,9 @@
          *
          * @return array An array of resource file paths.
          */
-        public function getResources(): array
+        public function getSourceResources(): array
         {
-            return $this->resources;
+            return $this->sourceResources;
         }
 
         /**
@@ -273,7 +285,6 @@
                     MacroVariable::USER_ID->value => '200', //         TODO: Placeholder for now
                     MacroVariable::GLOBAL_ID->value => '300', //       TODO: Placeholder for now
                     MacroVariable::USER_HOME_PATH->value => '400', //  TODO: Placeholder for now
-
                     MacroVariable::COMPILE_TIMESTAMP->value => time(),
                     MacroVariable::NCC_BUILD_VERSION->value => '0.0.0', // TODO: Placeholder for now
                     MacroVariable::PROJECT_PATH->value => $this->projectPath,
@@ -281,6 +292,125 @@
                     MacroVariable::SOURCE_PATH->value => $this->sourcePath
                 };
             });
+        }
+
+        /**
+         * Returns the build configurations defined in the project
+         *
+         * @return array<string,PackageSource>|null An array of PackageSource objects keyed by package name, or null if no dependencies are defined
+         */
+        protected function getPackageDependencies(): ?array
+        {
+            return $this->packageDependencies;
+        }
+
+        /**
+         * Returns a specific dependency by its name
+         *
+         * @param PackageSource|string $dependency The name of the dependency to retrieve
+         * @return PackageSource|null The PackageSource object if found, or null if not found or no dependencies are defined
+         */
+        protected function getDependency(PackageSource|string $dependency): ?PackageSource
+        {
+            if(is_string($dependency) && isset($this->packageDependencies[$dependency]))
+            {
+                return $this->packageDependencies[$dependency];
+            }
+
+            if($dependency instanceof PackageSource)
+            {
+                $dependency = $dependency->getName();
+            }
+
+            foreach($this->packageDependencies as $packageSource)
+            {
+                if((string)$packageSource->getName() === $dependency)
+                {
+                    return $packageSource;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Checks if a dependency with the given name exists
+         *
+         * @param string $package
+         * @return bool True if the dependency exists, false otherwise
+         */
+        protected function dependencyExists(string $package): bool
+        {
+            if(isset($this->packageDependencies[$package]))
+            {
+                return true;
+            }
+
+            return $this->getDependency($package) !== null;
+        }
+
+        /**
+         * Adds a new dependency to the project
+         *
+         * @param PackageSource|string $dependency The PackageSource object representing the dependency to add
+         * @throws InvalidArgumentException If a dependency with the same name already exists
+         */
+        protected function addDependency(string $package, PackageSource|string $dependency): void
+        {
+            if(is_string($dependency) && isset($this->packageDependencies[$package]))
+            {
+                return;
+            }
+
+            if(is_string($dependency))
+            {
+                $dependency = new PackageSource($dependency);
+            }
+
+            if($this->packageDependencies === null)
+            {
+                $this->packageDependencies = [];
+            }
+
+            if($this->dependencyExists($package))
+            {
+                throw new InvalidArgumentException('A dependency with the name \'' . (string)$package . '\' already exists');
+            }
+
+            $this->packageDependencies[$package] = $dependency;
+        }
+
+        /**
+         * Removes a dependency from the project by its name
+         *
+         * @param PackageSource|string $dependency The name of the dependency to remove
+         */
+        protected function removeDependency(PackageSource|string $dependency): void
+        {
+            if($dependency instanceof PackageSource)
+            {
+                $dependency = (string)$dependency;
+            }
+
+            if($this->packageDependencies === null)
+            {
+                return;
+            }
+
+            if(isset($this->packageDependencies[$dependency]))
+            {
+                unset($this->packageDependencies[$dependency]);
+                return;
+            }
+
+            foreach($this->packageDependencies as $packageName => $packageSource)
+            {
+                if((string)$packageSource->getName() === $dependency)
+                {
+                    unset($this->packageDependencies[$packageName]);
+                    return;
+                }
+            }
         }
 
         /**
@@ -292,8 +422,8 @@
         protected function refreshFiles(): void
         {
             // Find all the required components/resources in the source path based on the include/exclude patterns.
-            $this->components = FileCollector::collectFiles($this->sourcePath, $this->includeComponents, $this->excludeComponents);
-            $this->resources = FileCollector::collectFiles($this->sourcePath, $this->includeResources, $this->excludeResources);
+            $this->sourceComponents = FileCollector::collectFiles($this->sourcePath, $this->includeComponents, $this->excludeComponents);
+            $this->sourceResources = FileCollector::collectFiles($this->sourcePath, $this->includeResources, $this->excludeResources);
 
             // Verify if all the execution units are correctly configured and that all the required files
             // are available to compile with, temporary units are not included since they are only used during compilation.
@@ -302,7 +432,7 @@
                 $executionUnit = $this->projectConfiguration->getExecutionUnit($executionUnitName);
                 if($executionUnit === null)
                 {
-                    throw new InvalidArgumentException(sprintf('The required execution unit %s was not found in the project configuration', $executionUnitName));
+                    throw new OperationException(sprintf('The required execution unit %s was not found in the project configuration', $executionUnitName));
                 }
 
                 // Only handle PHP execution units for entry points, since system commands are not part of the project files.
@@ -311,10 +441,10 @@
                     $entryPointPath = $this->projectPath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
                     if(!file_exists($entryPointPath))
                     {
-                        throw new InvalidArgumentException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
+                        throw new OperationException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
                     }
 
-                    $this->resources[] = realpath($entryPointPath);
+                    $this->sourceResources[] = realpath($entryPointPath);
                 }
 
                 // Include all required files for the execution unit.
@@ -325,16 +455,48 @@
                         $requiredFilePath = $this->projectPath . DIRECTORY_SEPARATOR . $requiredFile;
                         if(!file_exists($requiredFilePath))
                         {
-                            throw new InvalidArgumentException(sprintf('The required file %s was not found in the project path %s for the execution unit %s', $requiredFile, $this->projectPath, $executionUnitName));
+                            throw new OperationException(sprintf('The required file %s was not found in the project path %s for the execution unit %s', $requiredFile, $this->projectPath, $executionUnitName));
                         }
 
-                        $this->resources[] = realpath($requiredFilePath);
+                        $this->sourceResources[] = realpath($requiredFilePath);
                     }
                 }
             }
 
             // Finally, we calculate the build number based on the collected files.
             $this->buildNumber = $this->calculateBuildNumber();
+        }
+
+        protected function getDependencyReaders(): array
+        {
+            $results = [];
+
+            foreach($this->packageDependencies as $packageName => $packageSource)
+            {
+                $results = array_merge($results, $this->resolveDependencyReaders($packageName, $packageSource));
+            }
+
+            return $results;
+        }
+
+        private function resolveDependencyReaders(string $package, PackageSource $source): array
+        {
+            $resolvedDependency = new ResolvedDependency($package, $source);
+            if($resolvedDependency->getPackageReader() === null)
+            {
+                throw new OperationException(sprintf('Cannot resolve %s becaues the package is not installed', $package));
+            }
+
+            $results = [$resolvedDependency];
+            if(count($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences()) > 0)
+            {
+                foreach($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences() as $dependencyReference)
+                {
+                    $results = array_merge($results, $this->resolveDependencyReaders($dependencyReference->getPackage(), $dependencyReference->getSource()));
+                }
+            }
+
+            return $results;
         }
 
         /**
@@ -345,7 +507,7 @@
         private function calculateBuildNumber(): string
         {
             $hashes = [];
-            foreach(array_merge($this->components, $this->resources) as $filePath)
+            foreach(array_merge($this->sourceComponents, $this->sourceResources) as $filePath)
             {
                 $hashes[] = hash_file('crc32b', $filePath);
             }
