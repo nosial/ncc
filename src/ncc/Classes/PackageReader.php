@@ -138,8 +138,38 @@
             return $this->filePath;
         }
 
-        public function getSource(): PackageSource
+        public function getPackageSource(): ?PackageSource
         {
+            $packageSource = null;
+
+            if($this->getHeader()->getUpdateSource() !== null)
+            {
+                return $this->getHeader()->getUpdateSource();
+            }
+            elseif($this->getHeader()->getMainRepository() !== null)
+            {
+                $packageSource = new PackageSource();
+                $packageSource->setRepository($this->getHeader()->getMainRepository()->getName());
+                $packageSource->setName($this->getAssembly()->getName());
+                $packageSource->setVersion($this->getAssembly()->getVersion());
+                if($this->getAssembly()->getOrganization() !== null)
+                {
+                    $packageSource->setOrganization($this->getAssembly()->getOrganization());
+                }
+            }
+
+            return $packageSource;
+        }
+
+        public function getPackageName(bool $includeVersion = false): string
+        {
+            $name = $this->getAssembly()->getName();
+            if($includeVersion)
+            {
+                $name .= '=' . $this->getAssembly()->getVersion();
+            }
+
+            return $name;
         }
 
         /**
