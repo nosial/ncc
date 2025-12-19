@@ -29,6 +29,7 @@
     use ncc\Classes\StreamWrapper;
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
+    use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
     use RuntimeException;
 
@@ -343,7 +344,7 @@
             return self::$systemAuthenticationManager;
         }
 
-        public static function packageInstalled(string $package, string $version): bool
+        public static function packageInstalled(string $package, string $version='latest'): bool
         {
             if(self::getSystemPackageManager()->entryExists($package, $version))
             {
@@ -351,6 +352,28 @@
             }
 
             return self::getUserPackageManager()?->entryExists($package, $version);
+        }
+
+        public static function getPackageEntry(string $package, string $version='latest'): ?PackageLockEntry
+        {
+            $systemPackageEntry = self::getSystemPackageManager()->getEntry($package, $version);
+            if($systemPackageEntry === null)
+            {
+                return self::getUserPackageManager()->getEntry($package, $version);
+            }
+
+            return $systemPackageEntry;
+        }
+
+        public static function getPackagePath(string $package, string $version='latest'): ?string
+        {
+            $systemPackagePath = self::getSystemPackageManager()->getPackagePath($package, $version);
+            if($systemPackagePath === null)
+            {
+                return self::getUserPackageManager()->getPackagePath($package, $version);
+            }
+
+            return $systemPackagePath;
         }
 
         public static function getRepository(string $name): ?RepositoryConfiguration
