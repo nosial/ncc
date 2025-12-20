@@ -23,7 +23,6 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
-    use ncc\CLI\Logger;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
@@ -47,6 +46,7 @@
         private string $filePath;
         private $fileHandle;
         private int $startOffset;
+        private int $endOffset;
         private string $packageVersion;
         private Header $header;
         private Assembly $assembly;
@@ -131,6 +131,17 @@
                         throw new RuntimeException("Unknown section marker: " . bin2hex($marker));
                 }
             }
+
+            // After reading all sections, check if we need to read the final TERMINATE
+            // The marker check above breaks on TERMINATE, so we need to consume it if present
+            if($marker === PackageStructure::TERMINATE->value[0])
+            {
+                // Read the second byte of TERMINATE (it's \xE0\xE0)
+                fread($this->fileHandle, 1);
+            }
+
+            // Save the end offset - this is where the package ends
+            $this->endOffset = ftell($this->fileHandle);
         }
 
         public function getFilePath(): string
@@ -874,6 +885,39 @@
         private function skipData(int $size): void
         {
             fseek($this->fileHandle, ftell($this->fileHandle) + $size);
+        }
+
+        /**
+         * Exports the package to a new file, extracting it from any embedded context.
+         * This method reads the exact package data from the start offset to the end offset
+         * and writes it to the specified file path. This is useful when the package is embedded
+         * in another file (e.g., a compiled program or PHP script using __halt_compiler()).
+         *
+         * @param string $filePath The destination file path where the package should be exported.
+         * @return void
+         * @throws IOException If there is an error writing the file.
+         */
+        public function exportPackage(string $filePath): void
+        {
+            // Calculate the exact package size
+            $packageSize = $this->endOffset - $this->startOffset;
+
+            // Seek to the start of the package
+            if (fseek($this->fileHandle, $this->startOffset) !== 0)
+            {
+                throw new RuntimeException("Could not seek to package start position: " . $this->startOffset);
+            }
+
+            // Read the exact package data from startOffset to endOffset
+            $packageData = fread($this->fileHandle, $packageSize);
+            
+            if ($packageData === false || strlen($packageData) !== $packageSize)
+            {
+                throw new IOException("Failed to read complete package data from: " . $this->filePath . " (expected " . $packageSize . " bytes)");
+            }
+
+            // Write the package data to the specified file
+            IO::writeFile($filePath, $packageData);
         }
 
         /**
