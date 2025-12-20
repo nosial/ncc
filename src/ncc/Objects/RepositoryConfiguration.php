@@ -22,6 +22,8 @@
 
     namespace ncc\Objects;
 
+    use ncc\Abstracts\AbstractAuthentication;
+    use ncc\Abstracts\AbstractRepository;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Interfaces\SerializableInterface;
@@ -98,6 +100,17 @@
         public function getBaseUrl(): string
         {
             return ($this->ssl ? 'https://' : 'http://') . $this->host;
+        }
+
+        /**
+         * Creates an instance of the repository client based on the configuration.
+         *
+         * @param AbstractAuthentication|null $authentication Optional authentication method for the repository.
+         * @return AbstractRepository An instance of the repository client.
+         */
+        public function createClient(?AbstractAuthentication $authentication=null): AbstractRepository
+        {
+            return AbstractRepository::fromConfiguration($this, $authentication);
         }
 
         /**
