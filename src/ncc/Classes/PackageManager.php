@@ -398,11 +398,7 @@
                 throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
             }
 
-            if(
-                !file_exists($this->getPackagePathFromEntry()) &&
-                !mkdir($this->getPackagePathFromEntry(), 0755, true) &&
-                !is_dir($this->getPackagePathFromEntry())
-            )
+            if(!file_exists($this->getPackagePathFromEntry()) && !mkdir($this->getPackagePathFromEntry(), 0755, true) && !is_dir($this->getPackagePathFromEntry()))
             {
                 throw new IOException(sprintf('Directory "%s" was not created', $this->getPackagePathFromEntry()));
             }
@@ -416,14 +412,10 @@
                 throw new IOException(sprintf('Cannot remove orphaned package from "%s"', $packageInstallationPath));
             }
 
-            // Copy over the package to the package installation path
-            if(!copy($packageReader->getFilePath(), $packageInstallationPath))
-            {
-                throw new IOException(sprintf('Cannot copy package from "%s" to "%s"', $packageReader->getFilePath(), $packageInstallationPath));
-            }
-
-            // Finally add the entry to the package manager
-            $this->addEntry($packageReader);
+            $packageReader->exportPackage($packageInstallationPath); // Export (ONLY) the package to a file
+            // The reason we don't copy the file directly is because the package could be embedded into another file,
+            // and we need to extract just the package data.
+            $this->addEntry($packageReader); // Finally add the entry to the package manager
         }
 
         /**
