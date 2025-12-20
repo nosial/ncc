@@ -27,7 +27,6 @@
     use ncc\Classes\PackageWriter;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
-    use ncc\Exceptions\PackageException;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\Header;
     use ncc\Runtime;
@@ -37,7 +36,7 @@
         /**
          * Stage 1: Creating package
          */
-        private const int TOTAL_STAGES = 1;
+        private const int TOTAL_STAGES = 1; // TODO: implement this
         private bool $compressionEnabled;
         private int $compressionLevel;
 
@@ -107,140 +106,139 @@
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            try
+            // Initialize package writer
+            $packageWriter = new PackageWriter($this->getOutputPath(), $overwrite);
+            $dependencyReaders = null;
+
+            if($this->isStaticallyLinked())
             {
-                // Initialize package writer
-                $packageWriter = new PackageWriter($this->getOutputPath(), $overwrite);
-
-                // Write until the package is closed
-                while(!$packageWriter->isClosed())
-                {
-                    // Switch to the correct writing mode and handle it.
-                   switch($packageWriter->getWritingMode())
-                   {
-                       case WritingMode::HEADER:
-                           // Write the header as a data entry only, section gets closed automatically
-                           $packageWriter->writeData(msgpack_pack($this->createPackageHeader()->toArray()));
-                           break;
-
-                       case WritingMode::ASSEMBLY:
-                           // Write the assembly as a data entry only, section gets closed automatically
-                           $packageWriter->writeData(msgpack_pack($this->getProjectConfiguration()->getAssembly()->toArray()));
-                           break;
-
-                       case WritingMode::EXECUTION_UNITS:
-                           // Execution units can be multiple, write them named.
-                           foreach($this->getRequiredExecutionUnits() as $executionUnitName)
-                           {
-                               $executionUnit = $this->getProjectConfiguration()->getExecutionUnit($executionUnitName);
-                               $packageWriter->writeData(msgpack_pack($executionUnit->toArray()), $executionUnit->getName());
-                           }
-
-                           // Close the section
-                           $packageWriter->endSection();
-                           break;
-
-                       case WritingMode::COMPONENTS:
-                           // Components ca be multiple, write them named
-                           foreach($this->getSourceComponents() as $componentFilePath)
-                           {
-                               // Check if component is within source path
-                               if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
-                               {
-                                   // File is inside source path, use relative path
-                                   $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
-                               }
-                               else
-                               {
-                                   // File is outside source path, use just the filename
-                                   $componentName = basename($componentFilePath);
-                               }
-
-                               if(empty($componentName) || $componentName === false)
-                               {
-                                   throw new CompileException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
-                               }
-
-                               $componentData = file_get_contents($componentFilePath);
-                               if($this->compressionEnabled)
-                               {
-                                      $componentData = gzdeflate($componentData, $this->compressionLevel);
-                               }
-
-                               $packageWriter->writeData($componentData, $componentName);
-                           }
-
-                           // If dependency linking is statically linked, we embed the package contents into our compiled package
-                           if($this->isStaticallyLinked())
-                           {
-                               // For each dependency, if we cannot resolve one of these dependencies the build fails
-                               /** @var PackageReader $packageReader */
-                               foreach($this->getDependencyReaders() as $packageReader)
-                               {
-                                   // For each component reference
-                                   /** @var ComponentReference $componentReference */
-                                   foreach($packageReader->getComponentReferences() as $componentName => $componentReference)
-                                   {
-                                       $packageWriter->writeData($componentName, $packageReader->readComponent($componentReference));
-                                   }
-                               }
-                           }
-
-                           // Close the section
-                           $packageWriter->endSection();
-                           break;
-
-                       case WritingMode::RESOURCES:
-                           // Resources can be multiple, write them named.
-                           foreach($this->getSourceResources() as $resourceFilePath)
-                           {
-                                // Check if resource is within source path
-                                if(str_starts_with($resourceFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
-                                {
-                                    // File is inside source path, use relative path
-                                    $resourceName = substr($resourceFilePath, strlen($this->getSourcePath()) + 1);
-                                }
-                                else
-                                {
-                                    // File is outside source path, use just the filename
-                                    $resourceName = basename($resourceFilePath);
-                                }
-
-                                if(empty($resourceName) || $resourceName === false)
-                                {
-                                    throw new CompileException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
-                                }
-
-                                $resourceData = file_get_contents($resourceFilePath);
-                                if($this->compressionEnabled)
-                                {
-                                    $resourceData = gzdeflate($resourceData, $this->compressionLevel);
-                                }
-
-                                $packageWriter->writeData($resourceData, $resourceName);
-                           }
-
-                           if($this->isStaticallyLinked())
-                           {
-                               /** @var PackageReader $packageReader */
-                               foreach($this->getDependencyReaders() as $packageReader)
-                               {
-                                   /** @var ComponentReference $componentReference */
-                                   foreach($packageReader->getResourceReferences() as $resourceName => $resourceReference)
-                                   {
-                                       $packageWriter->writeData($resourceName, $packageReader->readResource($resourceReference));
-                                   }
-                               }
-                           }
-
-                           $packageWriter->endSection();
-                           break;
-                   }
-                }
+                $dependencyReaders = $this->getDependencyReaders();
             }
-            catch (PackageException $e)
+
+            // Write until the package is closed
+            while(!$packageWriter->isClosed())
             {
-                throw new CompileException(sprintf('Failed to open package writer for %s', $this->getOutputPath()), $e->getCode(), $e);
+                // Switch to the correct writing mode and handle it.
+                switch($packageWriter->getWritingMode())
+                {
+                    case WritingMode::HEADER:
+                        // Write the header as a data entry only, section gets closed automatically
+                        $packageWriter->writeData(msgpack_pack($this->createPackageHeader($dependencyReaders)->toArray()));
+                        break;
+
+                    case WritingMode::ASSEMBLY:
+                        // Write the assembly as a data entry only, section gets closed automatically
+                        $packageWriter->writeData(msgpack_pack($this->getProjectConfiguration()->getAssembly()->toArray()));
+                        break;
+
+                    case WritingMode::EXECUTION_UNITS:
+                        // Execution units can be multiple, write them named.
+                        foreach($this->getRequiredExecutionUnits() as $executionUnitName)
+                        {
+                            $executionUnit = $this->getProjectConfiguration()->getExecutionUnit($executionUnitName);
+                            $packageWriter->writeData(msgpack_pack($executionUnit->toArray()), $executionUnit->getName());
+                        }
+
+                        // Close the section
+                        $packageWriter->endSection();
+                        break;
+
+                    case WritingMode::COMPONENTS:
+                        // Components ca be multiple, write them named
+                        foreach($this->getSourceComponents() as $componentFilePath)
+                        {
+                            // Check if component is within source path
+                            if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                            {
+                                // File is inside source path, use relative path
+                                $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
+                            }
+                            else
+                            {
+                                // File is outside source path, use just the filename
+                                $componentName = basename($componentFilePath);
+                            }
+
+                            if(empty($componentName) || $componentName === false)
+                            {
+                                throw new CompileException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
+                            }
+
+                            $componentData = file_get_contents($componentFilePath);
+                            if($this->compressionEnabled)
+                            {
+                                $componentData = gzdeflate($componentData, $this->compressionLevel);
+                            }
+
+                            $packageWriter->writeData($componentData, $componentName);
+                        }
+
+                        // If dependency linking is statically linked, we embed the package contents into our compiled package
+                        if($this->isStaticallyLinked())
+                        {
+                            // For each dependency, if we cannot resolve one of these dependencies the build fails
+                            /** @var PackageReader $packageReader */
+                            foreach($dependencyReaders as $packageReader)
+                            {
+                                // For each component reference
+                                /** @var ComponentReference $componentReference */
+                                foreach($packageReader->getComponentReferences() as $componentName => $componentReference)
+                                {
+                                    $packageWriter->writeData($componentName, $packageReader->readComponent($componentReference));
+                                }
+                            }
+                        }
+
+                        // Close the section
+                        $packageWriter->endSection();
+                        break;
+
+                    case WritingMode::RESOURCES:
+                        // Resources can be multiple, write them named.
+                        foreach($this->getSourceResources() as $resourceFilePath)
+                        {
+                            // Check if resource is within source path
+                            if(str_starts_with($resourceFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                            {
+                                // File is inside source path, use relative path
+                                $resourceName = substr($resourceFilePath, strlen($this->getSourcePath()) + 1);
+                            }
+                            else
+                            {
+                                // File is outside source path, use just the filename
+                                $resourceName = basename($resourceFilePath);
+                            }
+
+                            if(empty($resourceName) || $resourceName === false)
+                            {
+                                throw new CompileException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
+                            }
+
+                            $resourceData = file_get_contents($resourceFilePath);
+                            if($this->compressionEnabled)
+                            {
+                                $resourceData = gzdeflate($resourceData, $this->compressionLevel);
+                            }
+
+                            $packageWriter->writeData($resourceData, $resourceName);
+                        }
+
+                        if($this->isStaticallyLinked())
+                        {
+                            /** @var PackageReader $packageReader */
+                            foreach($dependencyReaders as $packageReader)
+                            {
+                                /** @var ComponentReference $componentReference */
+                                foreach($packageReader->getResourceReferences() as $resourceName => $resourceReference)
+                                {
+                                    $packageWriter->writeData($resourceName, $packageReader->readResource($resourceReference));
+                                }
+                            }
+                        }
+
+                        $packageWriter->endSection();
+                        break;
+                }
             }
 
             return $this->getOutputPath();
@@ -252,10 +250,11 @@
          * @return Header THe package's header object
          * @throws CompileException thrown if a dependency cannot be resolved when statically linking
          */
-        private function createPackageHeader(): Header
+        private function createPackageHeader(?array $dependencyReaders=null): Header
         {
             $header = new Header();
 
+            // General header information
             $header->setBuildNumber($this->getBuildNumber());
             $header->setCompressed($this->compressionEnabled);
             $header->setStaticallyLinked($this->getBuildConfiguration()?->getOptions()['static'] ?? false);
@@ -265,24 +264,44 @@
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
             $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
             $header->setRepositories($this->getProjectConfiguration()->getRepository());
-
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
             }
 
-            // Process dependencies from both project and build configuration
-            foreach($this->getPackageDependencies() as $packageName => $packageSource)
+            // If dependency readers are provided, we need to match them against the required dependencies because this
+            // result contains all resolved dependencies that a package may have (transitive dependencies).
+            if($dependencyReaders !== null)
             {
-                $packageVersion = Runtime::getPackageEntry($packageName, $packageSource->getVersion() ?? 'latest')?->getVersion() ?? 'latest';
-
-                // Ensure that there are no 'latest' versions when statically linking
-                if($this->isStaticallyLinked() && $packageVersion === 'latest')
+                foreach($this->getDependencyReaders() as $packageReader)
                 {
-                    throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
-                }
+                    $packageName = $packageReader->getPackageConfiguration()->getName();
+                    $packageVersion = $packageReader->getPackageConfiguration()->getVersion();
 
-                $header->addDependencyReference($packageName, $packageVersion, $packageSource);
+                    // Ensure that there are no 'latest' versions when statically linking
+                    if($this->isStaticallyLinked() && $packageVersion === 'latest')
+                    {
+                        throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
+                    }
+
+                    $header->addDependencyReference($packageName, $packageVersion, $packageReader->getPackageSource());
+                }
+            }
+            // Otherwise, just add the dependencies as-is, during installation time they will be resolved regardless.
+            else
+            {
+                foreach($this->getPackageDependencies() as $packageName => $packageSource)
+                {
+                    $packageVersion = Runtime::getPackageEntry($packageName, $packageSource->getVersion() ?? 'latest')?->getVersion() ?? 'latest';
+
+                    // Ensure that there are no 'latest' versions when statically linking
+                    if($this->isStaticallyLinked() && $packageVersion === 'latest')
+                    {
+                        throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
+                    }
+
+                    $header->addDependencyReference($packageName, $packageVersion, $packageSource);
+                }
             }
 
             return $header;
