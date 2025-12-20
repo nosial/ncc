@@ -94,34 +94,6 @@
         {
             $results = [];
 
-            // Find possible git source
-            try
-            {
-                $gitSource = $this->getGit($group, $project);
-                if($gitSource !== null)
-                {
-                    $results[] = $gitSource;
-                }
-            }
-            catch(Exception $e)
-            {
-                Logger::getLogger()->warning(sprintf('Could not get the git repo for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
-            }
-
-            // Find possible release packages
-            try
-            {
-                $releasePackage = $this->getReleasePackage($group, $project, $version ?? $this->getLatestRelease($group, $project));
-                if($releasePackage !== null)
-                {
-                    $results[] = $releasePackage;
-                }
-            }
-            catch(Exception $e)
-            {
-                Logger::getLogger()->warning(sprintf('Could not get release package for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
-            }
-
             // Find possible release archives
             try
             {
@@ -148,6 +120,34 @@
             catch(Exception $e)
             {
                 Logger::getLogger()->warning(sprintf('Could not get tag archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+            }
+
+            // Find possible git source
+            try
+            {
+                $gitSource = $this->getGit($group, $project);
+                if($gitSource !== null)
+                {
+                    $results[] = $gitSource;
+                }
+            }
+            catch(Exception $e)
+            {
+                Logger::getLogger()->warning(sprintf('Could not get the git repo for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+            }
+
+            // Find possible release packages
+            try
+            {
+                $releasePackage = $this->getReleasePackage($group, $project, $version ?? $this->getLatestRelease($group, $project));
+                if($releasePackage !== null)
+                {
+                    $results[] = $releasePackage;
+                }
+            }
+            catch(Exception $e)
+            {
+                Logger::getLogger()->warning(sprintf('Could not get release package for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
             }
 
             return $results;
@@ -258,17 +258,17 @@
             {
                 case RemotePackageType::SOURCE_ZIP:
                     $downloadedPackage = $this->downloadFile($remotePackage->getDownloadUrl(), PathResolver::getTmpLocation(), $progress);
-                    ShutdownHandler::flagTemporary($downloadedPackage);
                     $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . IO::santizeName($remotePackage->getProject());
                     ZipArchive::extract($downloadedPackage, $outputPath);
+                    ShutdownHandler::flagTemporary($downloadedPackage);
                     ShutdownHandler::flagTemporary($outputPath);
                     return $outputPath;
 
                 case RemotePackageType::SOURCE_TAR:
                     $downloadedPackage = $this->downloadFile($remotePackage->getDownloadUrl(), PathResolver::getTmpLocation(), $progress);
-                    ShutdownHandler::flagTemporary($downloadedPackage);
                     $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . IO::santizeName($remotePackage->getProject());
                     TarArchive::extract($downloadedPackage, $outputPath);
+                    ShutdownHandler::flagTemporary($downloadedPackage);
                     ShutdownHandler::flagTemporary($outputPath);
                     return $outputPath;
 
@@ -401,14 +401,14 @@
          * @param RepositoryConfiguration $configuration The repository configuration
          * @return AbstractRepository The constructed repository client
          */
-        public static function fromConfiguration(RepositoryConfiguration $configuration): AbstractRepository
+        public static function fromConfiguration(RepositoryConfiguration $configuration, ?AbstractAuthentication $authentication=null): AbstractRepository
         {
             return match($configuration->getType())
             {
-                RepositoryType::GITHUB => new GithubRepository($configuration),
-                RepositoryType::GITEA => new GiteaRepository($configuration),
-                RepositoryType::GITLAB => new GitlabRepository($configuration),
-                RepositoryType::PACKAGIST => new PackagistRepository($configuration)
+                RepositoryType::GITHUB => new GithubRepository($configuration, $authentication),
+                RepositoryType::GITEA => new GiteaRepository($configuration, $authentication),
+                RepositoryType::GITLAB => new GitlabRepository($configuration, $authentication),
+                RepositoryType::PACKAGIST => new PackagistRepository($configuration, $authentication)
             };
         }
     }
