@@ -25,8 +25,10 @@
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExtractCommand;
     use ncc\CLI\Commands\InspectCommand;
+    use ncc\CLI\Commands\InstallCommand;
     use ncc\CLI\Commands\ListPackagesCommand;
     use ncc\CLI\Commands\ProjectCommand;
+    use ncc\CLI\Commands\RepositoryCommand;
     use ncc\Libraries\OptsLib\Parse;
 
     class Main
@@ -67,9 +69,17 @@
             {
                 return InspectCommand::handle($argv);
             }
+            elseif(isset($argv['install']))
+            {
+                return InstallCommand::handle($argv);
+            }
             elseif(isset($argv['extract']) || isset($argv['ext']))
             {
                 return ExtractCommand::handle($argv);
+            }
+            elseif(isset($argv['repository']) || isset($argv['repo']))
+            {
+                return RepositoryCommand::handle($argv);
             }
             elseif(isset($argv['list']) || isset($argv['ls']))
             {
@@ -123,12 +133,16 @@
                 print('ncc - Nosial Code Compiler' . PHP_EOL);
                 print('Usage: ncc [command] [options]' . PHP_EOL . PHP_EOL);
                 print('Commands:' . PHP_EOL);
-                print('  project           Create and Edit ncc Projects' . PHP_EOL);
-                print('  build             Build the current project' . PHP_EOL);
-                print('  exec              Executes an ncc package if it contains an entrypoint' . PHP_EOL);
-                print('  inspect           Inspect the contents of a ncc package' . PHP_EOL);
-                print('  extract           Extracts the content of a ncc package to a directory as a working PHP component' . PHP_EOL);
-                print('  list              Lists all the installed packages that ncc can locate' . PHP_EOL);
+                print('  project           Manage ncc projects (create, validate, convert, apply templates)' . PHP_EOL);
+                print('  build             Build a project into an ncc package' . PHP_EOL);
+                print('  install           Install an ncc package from file or repository' . PHP_EOL);
+                print('  inspect           Display information about an ncc package' . PHP_EOL);
+                print('  extract           Extract package contents to a directory' . PHP_EOL);
+                print('  repository        Manage package repositories' . PHP_EOL);
+                print('  list              List all installed ncc packages' . PHP_EOL);
+                print(PHP_EOL . 'Options:' . PHP_EOL);
+                print('  --version, -v     Display version information' . PHP_EOL);
+                print('  --help, -h        Display this help message' . PHP_EOL);
                 print(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.' . PHP_EOL);
                 return;
             }
@@ -137,6 +151,34 @@
             {
                 case 'project':
                     ProjectCommand::help();
+                    break;
+
+                case 'build':
+                    BuildCommand::help();
+                    break;
+
+                case 'inspect':
+                case 'ins':
+                    InspectCommand::help();
+                    break;
+
+                case 'install':
+                    InstallCommand::help();
+                    break;
+
+                case 'extract':
+                case 'ext':
+                    ExtractCommand::help();
+                    break;
+
+                case 'repository':
+                case 'repo':
+                    RepositoryCommand::help();
+                    break;
+
+                case 'list':
+                case 'ls':
+                    ListPackagesCommand::help();
                     break;
 
                 default:
