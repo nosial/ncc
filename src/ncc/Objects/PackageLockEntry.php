@@ -44,7 +44,9 @@
         {
             $this->package = $data['package'] ?? throw new InvalidArgumentException('Package name is required');
             $this->version = $data['version'] ?? throw new InvalidArgumentException('Package version is required');
-            $this->dependencies = $data['dependencies'] ?? [];
+            $this->dependencies = array_map(function($item) {if(!($item instanceof DependencyReference)) {
+                return DependencyReference::fromArray($item);} else {return $item;}}, $data['dependencies'] ?? []
+            );
         }
 
         /**

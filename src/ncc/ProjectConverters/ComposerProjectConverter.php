@@ -22,11 +22,14 @@
 
     namespace ncc\ProjectConverters;
 
+    use Exception;
     use ncc\Abstracts\AbstractProjectConverter;
     use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\IOException;
+    use ncc\Libraries\semver\Constraint\Constraint;
     use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
@@ -81,10 +84,13 @@
                 ssl: true
             ));
 
+            // Get the base directory of the composer.json file
+            $baseDir = dirname($filePath);
+            
             // Even if target-dir is deprecated, we will still support it for setting the source path if it exists
             if(isset($composerData['target-dir']))
             {
-                $project->setSourcePath($composerData['target-dir']);
+                $project->setSourcePath($this->validateSourcePath($baseDir, $composerData['target-dir']));
             }
             // PSR-4 autoloading
             elseif(isset($composerData['autoload']['psr-4']))
@@ -93,7 +99,8 @@
                 $psr4Paths = array_values($composerData['autoload']['psr-4']);
                 $firstPath = $psr4Paths[0] ?? 'src';
                 // Empty string in PSR-4 means the root directory, use '.' instead
-                $project->setSourcePath($firstPath === '' ? '.' : $firstPath);
+                $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
+                $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
 
                 // If there are more than one, add them as included components
                 if(count($psr4Paths) > 1)
@@ -101,19 +108,24 @@
                     foreach(array_slice($psr4Paths, 1) as $item)
                     {
                         // Empty string means root directory
-                        $includePath = $item === '' ? '.' : $item;
-                        $releaseConfiguration->addIncludedComponent($includePath);
-                        $debugConfiguration->addIncludedComponent($includePath);
+                        $includePath = $item === '' ? '.' : rtrim($item, '/\\');
+                        $validatedPath = $this->validateSourcePath($baseDir, $includePath);
+                        if($validatedPath !== null)
+                        {
+                            $releaseConfiguration->addIncludedComponent($validatedPath);
+                            $debugConfiguration->addIncludedComponent($validatedPath);
+                        }
                     }
                 }
             }
-            // PSR-0 autoloading
+            // PSR-0 autoloading or classmap
             elseif(isset($composerData['autoload']['classmap']))
             {
                 // Get first item, we consider this the main source path
                 $firstPath = $composerData['autoload']['classmap'][0] ?? 'src';
                 // Empty string in classmap means the root directory, use '.' instead
-                $project->setSourcePath($firstPath === '' ? '.' : $firstPath);
+                $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
+                $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
 
                 // If there are more than one, add them as included components
                 if(count($composerData['autoload']['classmap']) > 1)
@@ -121,15 +133,20 @@
                     foreach(array_slice($composerData['autoload']['classmap'], 1) as $item)
                     {
                         // Empty string means root directory
-                        $includePath = $item === '' ? '.' : $item;
-                        $releaseConfiguration->addIncludedComponent($includePath);
-                        $debugConfiguration->addIncludedComponent($includePath);
+                        $includePath = $item === '' ? '.' : rtrim($item, '/\\');
+                        $validatedPath = $this->validateSourcePath($baseDir, $includePath);
+                        if($validatedPath !== null)
+                        {
+                            $releaseConfiguration->addIncludedComponent($validatedPath);
+                            $debugConfiguration->addIncludedComponent($validatedPath);
+                        }
                     }
                 }
             }
             else
             {
-                $project->setSourcePath('src');
+                // No autoload information, try to find the source path automatically
+                $project->setSourcePath($this->detectSourcePath($baseDir));
             }
 
             // Add any files autoloaded via files to included components
@@ -309,7 +326,7 @@
                     $normalizedVersion = (new VersionParser())->normalize($composerData['version']);
                     $assembly->setVersion($normalizedVersion);
                 }
-                catch(\Exception $e)
+                catch(Exception $e)
                 {
                     // If version normalization fails, keep default 0.0.0
                 }
@@ -339,7 +356,7 @@
                         }
                     }
                 }
-                catch(\Exception $e)
+                catch(Exception $e)
                 {
                     // If branch-alias parsing fails, keep default 0.0.0
                 }
@@ -365,7 +382,7 @@
                 {
                     return $versionParser->normalize($versionConstraint);
                 }
-                catch(\Exception $e)
+                catch(Exception $e)
                 {
                     // Fall through to constraint resolution
                 }
@@ -394,12 +411,17 @@
                 });
                 
                 // Sort versions in descending order using Semver
-                usort($stableVersions, function($a, $b) use ($versionParser) {
-                    try {
+                usort($stableVersions, function($a, $b) use ($versionParser)
+                {
+                    try
+                    {
                         $normalizedA = $versionParser->normalize($a);
                         $normalizedB = $versionParser->normalize($b);
                         return version_compare($normalizedB, $normalizedA);
-                    } catch(\Exception $e) {
+                    }
+                    catch(Exception $e)
+                    {
+                        Logger::getLogger()->warning(sprintf('Failed to compare versions %s and %s: %s', $a, $b, $e->getMessage()), $e);
                         return 0;
                     }
                 });
@@ -410,20 +432,20 @@
                     try
                     {
                         $normalizedVersion = $versionParser->normalize($version);
-                        if($constraint->matches(new \ncc\Libraries\semver\Constraint\Constraint('==', $normalizedVersion)))
+                        if($constraint->matches(new Constraint('==', $normalizedVersion)))
                         {
                             return $normalizedVersion;
                         }
                     }
-                    catch(\Exception $e)
+                    catch(Exception $e)
                     {
                         continue;
                     }
                 }
             }
-            catch(\Exception $e)
+            catch(Exception $e)
             {
-                // If resolution fails, fall back to latest
+                Logger::getLogger()->warning(sprintf('Failed to resolve version for package %s: %s, defaulting to latest.', $package, $e->getMessage()));
             }
 
             return 'latest';
@@ -439,8 +461,68 @@
         {
             return sprintf("%s.%s.%s",
                 'com',
-                str_replace('-', '', explode('/', $composerPackageName)[0]),
-                str_replace('-', '', explode('/', $composerPackageName)[1])
+                str_replace('-', '_', explode('/', $composerPackageName)[0]),
+                str_replace('-', '_', explode('/', $composerPackageName)[1])
             );
+        }
+
+        /**
+         * Validates and normalizes a source path, checking if it exists in the base directory.
+         * 
+         * @param string $baseDir The base directory (where composer.json is located).
+         * @param string $sourcePath The source path to validate (relative to baseDir).
+         * @return string|null The validated source path, or null if the path doesn't exist.
+         */
+        private function validateSourcePath(string $baseDir, string $sourcePath): ?string
+        {
+            // Normalize the path
+            $normalizedPath = rtrim($sourcePath, '/\\');
+            
+            // '.' means root directory, which always exists
+            if($normalizedPath === '.')
+            {
+                return '.';
+            }
+            
+            // Check if the path exists
+            $fullPath = $baseDir . DIRECTORY_SEPARATOR . $normalizedPath;
+            if(is_dir($fullPath) || is_file($fullPath))
+            {
+                return $normalizedPath;
+            }
+            
+            // Path doesn't exist, return null
+            return null;
+        }
+
+        /**
+         * Automatically detects the source path by looking for common directory structures.
+         * 
+         * @param string $baseDir The base directory to search in.
+         * @return string The detected source path (defaults to '.' if nothing specific is found).
+         */
+        private function detectSourcePath(string $baseDir): string
+        {
+            // Common source directory names to check, in order of preference
+            $commonSourceDirs = ['src', 'lib', 'Source', 'includes', 'app'];
+            
+            foreach($commonSourceDirs as $dir)
+            {
+                if(is_dir($baseDir . DIRECTORY_SEPARATOR . $dir))
+                {
+                    return $dir;
+                }
+            }
+            
+            // If no common source directory found, check if there are any .php files in the root
+            // If yes, use the root directory as source
+            $files = glob($baseDir . DIRECTORY_SEPARATOR . '*.php');
+            if(!empty($files))
+            {
+                return '.';
+            }
+            
+            // Default to root directory if nothing else is found
+            return '.';
         }
     }

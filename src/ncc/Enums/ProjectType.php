@@ -26,6 +26,7 @@
     use ncc\Abstracts\AbstractProjectConverter;
     use ncc\ProjectConverters\ComposerProjectConverter;
     use ncc\ProjectConverters\LegacyProjectConverter;
+    use RecursiveCallbackFilterIterator;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
 
@@ -43,6 +44,9 @@
          */
         public function getFilePath(string $path): ?string
         {
+            // Directories to skip during recursive search (commonly contain test/example project files)
+            $skipDirectories = ['.github', 'tests', 'test', 'vendor', 'examples', 'docs', 'doc', 'samples', '.git'];
+            
             // First, check if the file exists in the current directory
             $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
             if (file_exists($directFilePath) && is_file($directFilePath))
@@ -51,7 +55,18 @@
             }
 
             // If not found in current directory, recursively search subdirectories
-            foreach ((new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST)) as $file)
+            // but skip common directories that contain test/example fixtures
+            $iterator = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
+            $filteredIterator = new RecursiveCallbackFilterIterator($iterator, function ($current, $key, $iterator) use ($skipDirectories) {
+                // Skip directories in the skip list
+                if ($iterator->hasChildren() && in_array($current->getFilename(), $skipDirectories, true))
+                {
+                    return false;
+                }
+                return true;
+            });
+            
+            foreach (new RecursiveIteratorIterator($filteredIterator, RecursiveIteratorIterator::SELF_FIRST) as $file)
             {
                 if ($file->isFile() && $file->getFilename() === $this->value)
                 {

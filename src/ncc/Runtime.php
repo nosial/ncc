@@ -366,24 +366,32 @@
             $systemPackageEntry = self::getSystemPackageManager()->getEntry($package, $version);
             if($systemPackageEntry === null)
             {
-                return self::getUserPackageManager()->getEntry($package, $version);
+                return self::getUserPackageManager()?->getEntry($package, $version);
             }
 
             return $systemPackageEntry;
         }
 
-        public static function getPackageEntries(string $package): array
+        public static function getPackageEntries(?string $package=null): array
         {
+
             $entries = [];
 
-            $systemEntries = self::getSystemPackageManager()->getEntriesByName($package);
-            $entries = array_merge($entries, $systemEntries);
-
-            $userManager = self::getUserPackageManager();
-            if($userManager !== null)
+            if($package === null)
             {
-                $userEntries = $userManager->getEntriesByName($package);
-                $entries = array_merge($entries, $userEntries);
+                $entries = array_merge($entries, self::getSystemPackageManager()->getEntries());
+                if(self::getUserPackageManager() !== null)
+                {
+                    $entries = array_merge($entries, self::getUserPackageManager()->getEntries());
+                }
+            }
+            else
+            {
+                $entries = array_merge($entries, self::getSystemPackageManager()->getAllVersions($package));
+                if(self::getUserPackageManager() !== null)
+                {
+                    $entries = array_merge($entries, self::getUserPackageManager()->getAllVersions($package));
+                }
             }
 
             return $entries;

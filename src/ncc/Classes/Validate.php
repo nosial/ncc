@@ -25,17 +25,17 @@
     class Validate
     {
         /**
-         * Validates a given package name such as "com.example.package" with a similar naming convention to Java's
-         * package names where a Group ID and Artifact ID is used.
-         *
-         * @param string $packageName The package name to validate.
-         * @return bool True if the package name is valid, false otherwise.
-         */
-        public static function packageName(string $packageName): bool
-        {
-            // Regex to match package names like "com.example.package"
-            return preg_match('/^[a-zA-Z]+(\.[a-zA-Z][a-zA-Z0-9]*)+$/', $packageName) === 1;
-        }
+          * Validates a given package name such as "com.example_package" with a similar naming convention to Java's
+          * package names where a Group ID and Artifact ID is used. Underscores are allowed within segments.
+          *
+          * @param string $packageName The package name to validate.
+          * @return bool True if the package name is valid, false otherwise.
+          */
+         public static function packageName(string $packageName): bool
+         {
+             // Regex to match package names like "com.example.package" and allow underscores in segments
+             return preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$/', $packageName) === 1;
+         }
 
         /**
          * Validates if the given string is a valid semantic version.

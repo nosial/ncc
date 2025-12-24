@@ -31,6 +31,7 @@
     use ncc\CLI\Logger;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\Process\ExecutableFinder;
@@ -256,6 +257,18 @@
          */
         public function download(RemotePackage $remotePackage, ?callable $progress=null): string
         {
+            if(!is_dir(PathResolver::getTmpLocation()))
+            {
+                if(@!mkdir(PathResolver::getTmpLocation(), 0777, true))
+                {
+                    throw new IOException(sprintf('Failed to create path %s', PathResolver::getTmpLocation()));
+                }
+            }
+            elseif(!is_writeable(PathResolver::getTmpLocation()))
+            {
+                throw new IOException(sprintf('No write permissions for the temporary path %s', PathResolver::getTmpLocation()));
+            }
+
             switch($remotePackage->getType())
             {
                 case RemotePackageType::SOURCE_ZIP:

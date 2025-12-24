@@ -26,19 +26,74 @@
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\Classes\Validate;
+    use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PackageException;
+    use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
 
     class UninstallCommand extends AbstractCommandHandler
     {
         public static function handle(array $argv): int
         {
+            $allPackages = $argv['all'] ?? null;
             $package = $argv['package'] ?? $argv['p'] ?? null;
             $version = $argv['version'] ?? $argv['v'] ?? null;
             $autoPrompt = isset($argv['yes']) || isset($argv['y']);
 
+            if($allPackages !== null)
+            {
+                $selectedEntries = [];
+                if(Runtime::isSystemUser())
+                {
+                    $selectedEntries = Runtime::getPackageEntries();
+                }
+                else
+                {
+                    $selectedEntries = Runtime::getUserPackageManager()?->getEntries() ?? [];
+                }
+
+                if(count($selectedEntries) === 0)
+                {
+                    Console::out('No packages found to uninstall.');
+                    return 0;
+                }
+
+                if(!$autoPrompt)
+                {
+                    if(!Runtime::isSystemUser())
+                    {
+                        Console::warning('Only selecting user packages to uninstall, elevated permissions are required to uninstall system packages');
+                    }
+
+                    $confirmation = Console::prompt(sprintf('You are about to uninstall %d package(s) that you currently have write-access to, do you want to proceed? (y/N): ', count($selectedEntries)));
+                    if(strtolower($confirmation) !== 'y')
+                    {
+                        Console::out('Uninstallation cancelled.');
+                        return 0;
+                    }
+                }
+
+                /** @var PackageLockEntry $entry */
+                foreach($selectedEntries as $entry)
+                {
+                    Console::out(sprintf(' Uninstalling %s', $entry->getPackage()));
+                    try
+                    {
+                        Runtime::uninstallPackage($entry->getPackage());
+                    }
+                    catch(Exception $e)
+                    {
+                        Console::error(sprintf('Failed to unstainll %s: %s', $entry->getPackage(), $e->getMessage()), $e);
+                    }
+                }
+
+                Console::out('All packages uninstalled successfully');
+                return 0;
+            }
+
             if(empty($package))
             {
-                Console::error('Package name is required. Use --package or -p to specify the package name.');
+                Console::error('Package name is required. Use --package or -p to specify the package name or use --all to uninstall all packages');
                 return 1;
             }
             elseif(!Validate::packageName($package))
@@ -92,7 +147,7 @@
             try
             {
                 Console::out(sprintf('Uninstalling package "%s" version "%s"...', $package, $version ?? 'all versions'));
-                $uninstalledEntries = Runtime::uninstallPackage($package, $version);
+                $selectedEntries = Runtime::uninstallPackage($package, $version);
             }
             catch (Exception $e)
             {
@@ -100,7 +155,7 @@
                 return 1;
             }
 
-            foreach($uninstalledEntries as $entry)
+            foreach($selectedEntries as $entry)
             {
                 Console::out(sprintf(' Uninstalled %s=%s', $entry->getPackage(), $entry->getVersion()));
             }
