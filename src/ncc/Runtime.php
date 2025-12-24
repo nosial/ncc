@@ -29,6 +29,7 @@
     use ncc\Classes\StreamWrapper;
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
     use RuntimeException;
@@ -86,7 +87,9 @@
          * @param string $package The package name
          * @param string $version The version of the package (use 'latest' for the most recent version)
          * @return PackageReader Returns the PackageReader
+         * @throws IOException
          * @throws ImportException If the package cannot be found or imported
+         * @throws PackageException
          */
         public static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
@@ -174,7 +177,8 @@
          * Returns null when running as root/system user.
          *
          * @return PackageManager|null The user-level PackageManager instance, or null if running as system user.
-         * @throws RuntimeException If the package manager directory cannot be created.
+         * @throws PackageException Thrown if there is an error initializing the package manager.
+         * @throws IOException Thrown if there is an error creating the package manager directory.
          */
         public static function getUserPackageManager(): ?PackageManager
         {
@@ -205,6 +209,8 @@
          * This always returns a valid PackageManager instance.
          *
          * @return PackageManager The system-level PackageManager instance.
+         * @throws IOException
+         * @throws PackageException
          */
         public static function getSystemPackageManager(): PackageManager
         {
@@ -232,7 +238,8 @@
          * and system-level package manager for system users (root).
          *
          * @return PackageManager The primary PackageManager instance.
-         * @throws RuntimeException If the package manager directory cannot be created.
+         * @throws IOException
+         * @throws PackageException
          */
         public static function getPackageManager(): PackageManager
         {
@@ -365,6 +372,28 @@
             return $systemPackageEntry;
         }
 
+        public static function getPackageEntries(string $package): array
+        {
+            $entries = [];
+
+            $systemEntries = self::getSystemPackageManager()->getEntriesByName($package);
+            $entries = array_merge($entries, $systemEntries);
+
+            $userManager = self::getUserPackageManager();
+            if($userManager !== null)
+            {
+                $userEntries = $userManager->getEntriesByName($package);
+                $entries = array_merge($entries, $userEntries);
+            }
+
+            return $entries;
+        }
+
+        public static function isSystemPackage(string $package, string $version='latest'): bool
+        {
+            return self::getSystemPackageManager()->entryExists($package, $version);
+        }
+
         public static function getPackagePath(string $package, string $version='latest'): ?string
         {
             $systemPackagePath = self::getSystemPackageManager()->getPackagePath($package, $version);
@@ -376,9 +405,24 @@
             return $systemPackagePath;
         }
 
+        /**
+         * @param string $package
+         * @param string|null $version
+         * @return PackageLockEntry[]
+         * @throws IOException
+         * @throws PackageException
+         */
+        public static function uninstallPackage(string $package, ?string $version='latest'): array
+        {
+            return array_merge(
+                self::getSystemPackageManager()->uninstall($package, $version),
+                self::getUserPackageManager()?->uninstall($package, $version) ?? []
+            );
+        }
+
         public static function getRepository(string $name): ?RepositoryConfiguration
         {
-            return self::getSystemRepositoryManager()->getRepository($name) ?? self::getUserRepositoryManager()->getRepository($name);
+            return self::getSystemRepositoryManager()->getRepository($name) ?? self::getUserRepositoryManager()?->getRepository($name);
         }
 
         public static function repositoryExists(string $name): bool
@@ -388,7 +432,7 @@
                 return true;
             }
 
-            return self::getUserRepositoryManager()->repositoryExists($name);
+            return self::getUserRepositoryManager()?->repositoryExists($name) ?? false;
         }
 
         public static function getRepositories(): array
@@ -402,6 +446,27 @@
         public static function deleteRepository(string $name): bool
         {
             return self::getSystemRepositoryManager()->removeRepository($name) || self::getUserRepositoryManager()?->removeRepository($name) ?? false;
+        }
+
+        public static function isSystemUser(): bool
+        {
+            // Check if running as root on Unix-like systems
+            if (function_exists('posix_geteuid') && posix_geteuid() === 0)
+            {
+                return true;
+            }
+
+            // Check if running with elevated privileges on Windows
+            if (PHP_OS_FAMILY === 'Windows')
+            {
+                $identity = shell_exec('whoami /groups 2>nul | findstr /i "S-1-16-12288" 2>nul');
+                if ($identity !== null && trim($identity) !== '')
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /**
