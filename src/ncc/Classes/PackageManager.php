@@ -68,17 +68,18 @@
             // Check if the lock file exists and is not writable
             if(file_exists($this->packageLockPath))
             {
-                return !is_writable($this->packageLockPath);
+                $this->readOnly = !is_writable($this->packageLockPath);
             }
-
             // Check if the directory is writable (for creating new lock file)
-            if(file_exists($this->dataDirectoryPath))
+            elseif(file_exists($this->dataDirectoryPath))
             {
-                return !is_writable($this->dataDirectoryPath);
+                $this->readOnly = !is_writable($this->dataDirectoryPath);
             }
-
-            // Directory doesn't exist, check parent directory
-            $this->readOnly = !is_writable(dirname($this->dataDirectoryPath));
+            else
+            {
+                // Directory doesn't exist, check parent directory
+                $this->readOnly = !is_writable(dirname($this->dataDirectoryPath));
+            }
 
             if(file_exists($this->packageLockPath))
             {
@@ -340,12 +341,20 @@
          * Remove a package entry
          *
          * @param string $packageName The name of the package
-         * @param string $version The version of the package
+         * @param string|null $version The version of the package to remove, or null to remove all versions
          * @return bool True if the entry was removed, false if it didn't exist
          * @throws IOException If auto-save is enabled and save fails
          */
-        private function removeEntry(string $packageName, string $version): bool
+        private function removeEntry(string $packageName, ?string $version=null): bool
         {
+            if($version === null)
+            {
+                foreach($this->getAllVersions($packageName) as $entry)
+                {
+                    $this->removeEntry($packageName, $entry->getVersion());
+                }
+            }
+
             $key = $packageName . '=' . $version;
 
             if(isset($this->entries[$key]))
@@ -416,6 +425,52 @@
             // The reason we don't copy the file directly is because the package could be embedded into another file,
             // and we need to extract just the package data.
             $this->addEntry($packageReader); // Finally add the entry to the package manager
+        }
+
+        /**
+         * @param string $package
+         * @param string|null $version
+         * @return PackageLockEntry[]
+         * @throws IOException
+         */
+        public function uninstall(string $package, ?string $version='latest'): array
+        {
+            $removedEntries = [];
+
+            if($version === null)
+            {
+                // We remove all versions
+                foreach($this->getAllVersions($package) as $entry)
+                {
+                    $removedEntries = array_merge($removedEntries, $this->uninstall($package, $entry->getVersion()));
+                }
+            }
+            else
+            {
+                $entry = $this->getEntry($package, $version);
+                if($entry === null)
+                {
+                    return []; // Nothing to uninstall
+                }
+
+                $packagePath = $this->getPackagePathFromEntry($entry);
+                if(file_exists($packagePath))
+                {
+                    // Remove the package file
+                    if(!@unlink($packagePath))
+                    {
+                        throw new IOException(sprintf('Failed to remove package file: %s', $packagePath));
+                    }
+                }
+
+                // Remove the entry from the lock file
+                if($this->removeEntry($package, $entry->getVersion()))
+                {
+                    $removedEntries[] = $entry;
+                }
+            }
+
+            return $removedEntries;
         }
 
         /**
