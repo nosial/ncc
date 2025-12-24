@@ -38,6 +38,7 @@
             $type = $argv['type'] ?? $argv['t'] ?? null;
             $host = $argv['host'] ?? $argv['h'] ?? null;
             $ssl = isset($argv['ssl']) ? (bool)$argv['ssl'] : true;
+            $overwrite = isset($argv['overwrite']) ? (bool)$argv['overwrite'] : false;
 
             if(empty($name))
             {
@@ -73,8 +74,13 @@
 
             if(Runtime::repositoryExists($name))
             {
-                Console::error(sprintf('A repository with the name "%s" already exists.', $name));
-                return 1;
+                if(!$overwrite)
+                {
+                    Console::error(sprintf('Repository "%s" already exists. Use --overwrite to replace it.', $name));
+                    return 1;
+                }
+
+                Runtime::deleteRepository($name);
             }
 
             Runtime::getRepositoryManager()->addRepository($name, $type, $host, $ssl);
