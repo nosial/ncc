@@ -92,7 +92,7 @@
          */
         public function addRepository(string $name, RepositoryType $type, string $host, bool $ssl): void
         {
-            if(!isset($this->entries[$name]))
+            if(isset($this->entries[$name]))
             {
                 throw new InvalidArgumentException(sprintf("The repository %s already exists", $name));
             }
@@ -183,7 +183,33 @@
                 $data[] = $entry->toArray();
             }
 
-            file_put_contents($this->repositoriesPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            // Ensure the directory exists
+            if(!is_dir($this->dataDirectoryPath))
+            {
+                // Check if we can create the directory
+                if(!@mkdir($this->dataDirectoryPath, 0755, true) && !is_dir($this->dataDirectoryPath))
+                {
+                    // Cannot create directory, skip saving (likely a read-only system directory)
+                    return;
+                }
+            }
+
+            // Check if we have write permission to the directory
+            if(!is_writable($this->dataDirectoryPath))
+            {
+                // No write permission, skip saving (likely a read-only system directory)
+                return;
+            }
+
+            // Write the file
+            if(@file_put_contents($this->repositoriesPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false)
+            {
+                // Failed to write file, skip silently
+                return;
+            }
+            
+            // Set permissions: owner can read/write, others can only read (0644)
+            @chmod($this->repositoriesPath, 0644);
         }
 
         /**
