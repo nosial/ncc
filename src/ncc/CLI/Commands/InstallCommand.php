@@ -150,7 +150,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromFile($packageReader);
+                $installedPackages = self::installFromFile($packageReader, [], []);
             }
             else
             {
@@ -187,7 +187,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromRemote($packageSource);
+                $installedPackages = self::installFromRemote($packageSource, [], []);
             }
 
             if(count($installedPackages) === 0)
@@ -195,6 +195,9 @@
                 Console::out("No installation actions were necessary.");
                 return 0;
             }
+
+            // Remove duplicates from the installed packages list
+            $installedPackages = array_unique($installedPackages);
 
             Console::out(sprintf("Completed installation of %d package(s).", count($installedPackages)));
             foreach($installedPackages as $installedPackage)
@@ -205,16 +208,23 @@
             return 0;
         }
 
-        private static function installFromFile(PackageReader $reader, array $options=[]): array
+        private static function installFromFile(PackageReader $reader, array $options=[], array $installed=[]): array
         {
-            $installed = [];
             $options = self::parseOptions($options);
             $packageReader = $reader;
+            $packageIdentifier = sprintf("%s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion());
 
-            // Check if package is already installed
+            // Check if package is already in the installed list (to avoid duplicates in current session)
+            if(in_array($packageIdentifier, $installed, true))
+            {
+                Console::out(sprintf("Package %s is already being installed in this session, skipping.", $packageIdentifier));
+                return $installed;
+            }
+
+            // Check if package is already installed on the system
             if(Runtime::packageInstalled($packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()) && !$options['reinstall'])
             {
-                Console::out(sprintf("Package %s=%s is already installed, skipping installation.", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()));
+                Console::out(sprintf("Package %s is already installed, skipping installation.", $packageIdentifier));
                 return $installed;
             }
 
@@ -240,6 +250,15 @@
                 /** @var DependencyReference $dependency */
                 foreach($packageReader->getHeader()->getDependencyReferences() as $dependency)
                 {
+                    $depIdentifier = sprintf("%s=%s", $dependency->getPackage(), $dependency->getVersion());
+                    
+                    // Check if already in the installed list (current session)
+                    if(in_array($depIdentifier, $installed, true))
+                    {
+                        continue;
+                    }
+                    
+                    // Check if already installed on the system
                     if(Runtime::packageInstalled($dependency->getPackage(), $dependency->getVersion()))
                     {
                         continue;
@@ -247,12 +266,12 @@
 
                     Console::out(sprintf("Installing dependency %s for package %s", $dependency, $packageReader->getPackageName()));
                     $dependencySource = new PackageSource($dependency);
-                    $installed = array_merge($installed, self::installFromRemote($dependencySource, $options, $installed));
+                    $installed = self::installFromRemote($dependencySource, $options, $installed);
                 }
             }
 
             Runtime::getPackageManager()->install($packageReader, $options);
-            $installed[] = sprintf("%s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion());
+            $installed[] = $packageIdentifier;
 
             return $installed;
         }
@@ -305,7 +324,7 @@
             // If it's a file, we assume it's an NCC package
             if(is_file($downloadedPackage))
             {
-                return array_merge($installed, self::installFromFile(new PackageReader($downloadedPackage), $options));
+                return self::installFromFile(new PackageReader($downloadedPackage), $options, $installed);
             }
 
             // Otherwise, we assume its source code that needs to be built, so we try to figure out it's project type
@@ -419,7 +438,7 @@
             try
             {
                 Console::out(sprintf("Building and installing package %s", $source));
-                return array_merge($installed, self::installFromFile(new PackageReader($compiler->build()), $options));
+                return self::installFromFile(new PackageReader($compiler->build()), $options, $installed);
             }
             catch(Exception $e)
             {

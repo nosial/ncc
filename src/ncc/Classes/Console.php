@@ -67,7 +67,7 @@
 
         public static function prompt(string $prompt): string
         {
-            self::out($prompt);
+            print($prompt);
             return trim(fgets(STDIN));
         }
 
