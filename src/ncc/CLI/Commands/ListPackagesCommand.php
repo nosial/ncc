@@ -29,10 +29,30 @@
     class ListPackagesCommand extends AbstractCommandHandler
     {
         /**
+         * Prints out the help menu for the list command
+         *
+         * @return void
+         */
+        public static function help(): void
+        {
+            Console::out('Usage: ncc list' . PHP_EOL);
+            Console::out('Lists all installed ncc packages that can be located.' . PHP_EOL);
+            Console::out('Displays both user-level and system-level package locations.');
+            Console::out(PHP_EOL . 'Example:');
+            Console::out('  ncc list');
+        }
+
+        /**
          * @inheritDoc
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                self::help();
+                return 0;
+            }
+
             $userPackageManager = Runtime::getUserPackageManager();
             $systemPackageManager = Runtime::getSystemPackageManager();
 
