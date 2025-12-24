@@ -84,6 +84,7 @@
                     Console::out('  --type, -t        (Required) Repository type (e.g., git, http)');
                     Console::out('  --host, -h        (Required) Repository host URL or domain');
                     Console::out('  --ssl             Enable SSL (default: true)');
+                    Console::out('  --overwrite       Overwrite existing repository with the same name');
                     Console::out(PHP_EOL . 'Example:');
                     Console::out('  ncc repository add --name=myrepo --type=git --host=repo.example.com');
                     break;
