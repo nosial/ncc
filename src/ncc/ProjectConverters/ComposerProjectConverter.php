@@ -88,15 +88,20 @@
             elseif(isset($composerData['autoload']['psr-4']))
             {
                 // Get first item, we consider this the main source path
-                $project->setSourcePath(array_keys($composerData['autoload']['psr-4'])[0]);
+                $psr4Paths = array_values($composerData['autoload']['psr-4']);
+                $firstPath = $psr4Paths[0] ?? 'src';
+                // Empty string in PSR-4 means the root directory, use '.' instead
+                $project->setSourcePath($firstPath === '' ? '.' : $firstPath);
 
                 // If there are more than one, add them as included components
-                if(count($composerData['autoload']['psr-4']) > 1)
+                if(count($psr4Paths) > 1)
                 {
-                    foreach(array_slice(array_keys($composerData['autoload']['psr-4']), 1) as $item)
+                    foreach(array_slice($psr4Paths, 1) as $item)
                     {
-                        $releaseConfiguration->addIncludedComponent($item);
-                        $debugConfiguration->addIncludedComponent($item);
+                        // Empty string means root directory
+                        $includePath = $item === '' ? '.' : $item;
+                        $releaseConfiguration->addIncludedComponent($includePath);
+                        $debugConfiguration->addIncludedComponent($includePath);
                     }
                 }
             }
@@ -104,15 +109,19 @@
             elseif(isset($composerData['autoload']['classmap']))
             {
                 // Get first item, we consider this the main source path
-                $project->setSourcePath($composerData['autoload']['classmap'][0]);
+                $firstPath = $composerData['autoload']['classmap'][0] ?? 'src';
+                // Empty string in classmap means the root directory, use '.' instead
+                $project->setSourcePath($firstPath === '' ? '.' : $firstPath);
 
                 // If there are more than one, add them as included components
                 if(count($composerData['autoload']['classmap']) > 1)
                 {
                     foreach(array_slice($composerData['autoload']['classmap'], 1) as $item)
                     {
-                        $releaseConfiguration->addIncludedComponent($item);
-                        $debugConfiguration->addIncludedComponent($item);
+                        // Empty string means root directory
+                        $includePath = $item === '' ? '.' : $item;
+                        $releaseConfiguration->addIncludedComponent($includePath);
+                        $debugConfiguration->addIncludedComponent($includePath);
                     }
                 }
             }
@@ -134,8 +143,15 @@
             // If there are any excluded files from classmap, add them to excluded components
             if(isset($composerData['autoload']['exclude-from-classmap']))
             {
-                $releaseConfiguration->addExcludedComponent($composerData['autoload']['exclude-from-classmap']);
-                $debugConfiguration->addExcludedComponent($composerData['autoload']['exclude-from-classmap']);
+                $excludedComponents = is_array($composerData['autoload']['exclude-from-classmap']) 
+                    ? $composerData['autoload']['exclude-from-classmap'] 
+                    : [$composerData['autoload']['exclude-from-classmap']];
+                    
+                foreach($excludedComponents as $component)
+                {
+                    $releaseConfiguration->addExcludedComponent($component);
+                    $debugConfiguration->addExcludedComponent($component);
+                }
             }
 
             $project->addBuildConfiguration($releaseConfiguration);
