@@ -22,6 +22,7 @@
 
     namespace ncc\CLI;
 
+    use ncc\Classes\Console;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExtractCommand;
     use ncc\CLI\Commands\InspectCommand;
@@ -29,6 +30,7 @@
     use ncc\CLI\Commands\ListPackagesCommand;
     use ncc\CLI\Commands\ProjectCommand;
     use ncc\CLI\Commands\RepositoryCommand;
+    use ncc\CLI\Commands\UninstallCommand;
     use ncc\Libraries\OptsLib\Parse;
 
     class Main
@@ -41,6 +43,9 @@
          */
         public static function main(array $argv): int
         {
+            // Note, while this is the main execution pointer for the command-line interface, we should never use
+            // any exit calls here. Instead, we return exit codes to the caller so they can handle it appropriately.
+
             // If the CLI definition isn't created, we assume we're not in CLI mode.
             if(!defined('__NCC_CLI__'))
             {
@@ -50,7 +55,7 @@
             // Check for a CLI environment
             if(php_sapi_name() !== 'cli')
             {
-                print('This program can only be run from the command line.' . PHP_EOL);
+                Console::out('This program can only be run from the command line.' . PHP_EOL);
                 return 1;
             }
 
@@ -72,6 +77,10 @@
             elseif(isset($argv['install']))
             {
                 return InstallCommand::handle($argv);
+            }
+            elseif(isset($argv['uninstall']))
+            {
+                return UninstallCommand::handle($argv);
             }
             elseif(isset($argv['extract']) || isset($argv['ext']))
             {
@@ -107,17 +116,17 @@
 
             if(!file_exists($versionFile))
             {
-                print('ncc version file not found!' . PHP_EOL);
+                Console::out('ncc version file not found!' . PHP_EOL);
                 return;
             }
 
             if(!file_exists($buildFile))
             {
-                print('ncc build file not found!' . PHP_EOL);
+                Console::out('ncc build file not found!' . PHP_EOL);
                 return;
             }
 
-            print(sprintf("ncc v%s build %s", file_get_contents($versionFile), file_get_contents($buildFile)));
+            Console::out(sprintf("ncc v%s build %s", file_get_contents($versionFile), file_get_contents($buildFile)));
         }
 
         /**
@@ -130,20 +139,21 @@
         {
             if($command === null || $command === true)
             {
-                print('ncc - Nosial Code Compiler' . PHP_EOL);
-                print('Usage: ncc [command] [options]' . PHP_EOL . PHP_EOL);
-                print('Commands:' . PHP_EOL);
-                print('  project           Manage ncc projects (create, validate, convert, apply templates)' . PHP_EOL);
-                print('  build             Build a project into an ncc package' . PHP_EOL);
-                print('  install           Install an ncc package from file or repository' . PHP_EOL);
-                print('  inspect           Display information about an ncc package' . PHP_EOL);
-                print('  extract           Extract package contents to a directory' . PHP_EOL);
-                print('  repository        Manage package repositories' . PHP_EOL);
-                print('  list              List all installed ncc packages' . PHP_EOL);
-                print(PHP_EOL . 'Options:' . PHP_EOL);
-                print('  --version, -v     Display version information' . PHP_EOL);
-                print('  --help, -h        Display this help message' . PHP_EOL);
-                print(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.' . PHP_EOL);
+                Console::out('ncc - Nosial Code Compiler' . PHP_EOL);
+                Console::out('Usage: ncc [command] [options]' . PHP_EOL . PHP_EOL);
+                Console::out('Commands:' . PHP_EOL);
+                Console::out('  project           Manage ncc projects (create, validate, convert, apply templates)' . PHP_EOL);
+                Console::out('  build             Build a project into an ncc package' . PHP_EOL);
+                Console::out('  install           Install an ncc package from file or repository' . PHP_EOL);
+                Console::out('  uninstall         Uninstall an installed ncc package' . PHP_EOL);
+                Console::out('  inspect           Display information about an ncc package' . PHP_EOL);
+                Console::out('  extract           Extract package contents to a directory' . PHP_EOL);
+                Console::out('  repository        Manage package repositories' . PHP_EOL);
+                Console::out('  list              List all installed ncc packages' . PHP_EOL);
+                Console::out(PHP_EOL . 'Options:' . PHP_EOL);
+                Console::out('  --version, -v     Display version information' . PHP_EOL);
+                Console::out('  --help, -h        Display this help message' . PHP_EOL);
+                Console::out(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.' . PHP_EOL);
                 return;
             }
 
@@ -182,7 +192,7 @@
                     break;
 
                 default:
-                    print('No help available for command ' . $command . PHP_EOL);
+                    Console::out('No help available for command ' . $command . PHP_EOL);
                     break;
             }
         }
