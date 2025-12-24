@@ -25,7 +25,6 @@
     use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\FileCollector;
-    use ncc\Classes\PackageReader;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
@@ -34,7 +33,6 @@
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
-    use ncc\Objects\Package\DependencyReference;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;
