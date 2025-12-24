@@ -56,12 +56,54 @@
             $userPackageManager = Runtime::getUserPackageManager();
             $systemPackageManager = Runtime::getSystemPackageManager();
 
+            $userPackages = [];
+            $systemPackages = [];
+
+            // Collect user-level packages
             if($userPackageManager !== null)
             {
-                Console::out("User Level Packages: " . $userPackageManager->getDataDirectoryPath());
+                foreach($userPackageManager->getEntries() as $entry)
+                {
+                    $userPackages[] = sprintf('%s=%s', $entry->getPackage(), $entry->getVersion());
+                }
             }
 
+            // Collect system-level packages
+            foreach($systemPackageManager->getEntries() as $entry)
+            {
+                $systemPackages[] = sprintf('%s=%s', $entry->getPackage(), $entry->getVersion());
+            }
+
+            // Display user packages if any exist
+            if(!empty($userPackages))
+            {
+                Console::out("User Level Packages: " . $userPackageManager->getDataDirectoryPath());
+                foreach($userPackages as $package)
+                {
+                    Console::out('   ' . $package);
+                }
+                Console::out('');
+            }
+
+            // Display system packages
             Console::out('System Packages: ' . $systemPackageManager->getDataDirectoryPath());
+            if(!empty($systemPackages))
+            {
+                foreach($systemPackages as $package)
+                {
+                    Console::out('   ' . $package);
+                }
+            }
+            else
+            {
+                Console::out('   (no packages installed)');
+            }
+
+            // Display total count
+            $totalCount = count($userPackages) + count($systemPackages);
+            Console::out('');
+            Console::out(sprintf('Total: %d package(s)', $totalCount));
+
             return 0;
         }
     }
