@@ -91,37 +91,56 @@
             switch($command)
             {
                 case 'create':
-                    Console::out('Usage: ncc project create --name=ProjectName --package=com.example.project_name' . PHP_EOL);
-                    Console::out('The create command allows you to create a new php project with a ncc project file included,');
-                    Console::out('once a project file is included, you can easily apply templates to automatically generate a');
+                    Console::out('Usage: ncc project create --name=<name> --package=<package>' . PHP_EOL);
+                    Console::out('Creates a new PHP project with an ncc project configuration file.');
+                    Console::out('Once created, you can apply templates to automatically generate a');
                     Console::out('build system for your project.' . PHP_EOL);
                     Console::out('Options:');
-                    Console::out('  - name     (Required)   The name of the project/product');
-                    Console::out('  - package  (Required)   The package name eg; com.example.project');
-                    Console::out(PHP_EOL . 'Example Usage:');
+                    Console::out('  --name            (Required) The name of the project/product');
+                    Console::out('  --package         (Required) The package name (e.g., com.example.project)');
+                    Console::out(PHP_EOL . 'Example:');
+                    Console::out('  ncc project create --name=MyProject --package=com.example.myproject');
                     break;
 
                 case 'validate':
-                    Console::out('Usage: ncc project validate [--path=path/to/project]');
-                    Console::out('The validate command checks your project for any ');
+                    Console::out('Usage: ncc project validate [--path=<path>]' . PHP_EOL);
+                    Console::out('Validates an ncc project configuration and displays inspection results.');
+                    Console::out('Checks for errors, missing dependencies, and configuration issues.' . PHP_EOL);
                     Console::out('Options:');
-                    Console::out('  - path     (Optional)   The path to the project, if not specified, the current working directory is used');
+                    Console::out('  --path            (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out(PHP_EOL . 'Example:');
+                    Console::out('  ncc project validate');
+                    Console::out('  ncc project validate --path=/path/to/project');
                     break;
 
                 case 'template':
-                    Console::out('Usage: ncc project template --name=TemplateName [--path=path/to/project]');
+                    Console::out('Usage: ncc project template --name=<template> [--path=<path>]' . PHP_EOL);
+                    Console::out('Applies an automatic template to your existing project.');
+                    Console::out('Templates can generate build configurations, directory structures,');
+                    Console::out('and other project scaffolding automatically.' . PHP_EOL);
                     Console::out('Options:');
-                    Console::out('  - name     (Required)   The name of the template to apply');
-                    Console::out('  - path     (Optional)   The path to the project, if not specified, the current working directory is used');
+                    Console::out('  --name            (Required) The name of the template to apply');
+                    Console::out('  --path            (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out(PHP_EOL . 'Example:');
+                    Console::out('  ncc project template --name=standard');
+                    Console::out('  ncc project template --name=library --path=/path/to/project');
                     break;
 
                 case 'convert':
-                    Console::out('Usage: ncc project convert [--path=path/to/project]');
-                    Console::out('The convert command allows you to convert an existing project from another format (eg; Composer)');
-                    Console::out('to the ncc v3+ project format. Currently supported formats are Composer.' . PHP_EOL);
+                    Console::out('Usage: ncc project convert [--path=<path>] [--format=<format>]' . PHP_EOL);
+                    Console::out('Converts an existing project from another format to ncc v3+ format.');
+                    Console::out('Currently supported formats: composer, legacy' . PHP_EOL);
                     Console::out('Options:');
-                    Console::out('  - path     (Optional)   The path to the project, if not specified, the current working directory is used');
-                    Console::out('  - format   (Optional)   The format to convert from, ncc automatically detects the format if not specified; currently only "composer" and "legacy" is supported');
+                    Console::out('  --path            (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out('  --format          (Optional) Source format to convert from');
+                    Console::out('                    Auto-detected if not specified');
+                    Console::out('                    Supported: composer, legacy');
+                    Console::out(PHP_EOL . 'Examples:');
+                    Console::out('  ncc project convert');
+                    Console::out('  ncc project convert --path=/path/to/project --format=composer');
                     break;
 
                 default:
