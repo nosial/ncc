@@ -32,12 +32,34 @@
 
     class InspectCommand extends AbstractCommandHandler
     {
+        /**
+         * Prints out the help menu for the inspect command
+         *
+         * @return void
+         */
+        public static function help(): void
+        {
+            Console::out('Usage: ncc inspect --path=<package-file>' . PHP_EOL);
+            Console::out('Displays detailed information about an ncc package.' . PHP_EOL);
+            Console::out('This includes package metadata, version, components, resources,');
+            Console::out('execution units, dependencies, and entry points.' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --path=<file>     (Required) Path to the .ncc package file to inspect');
+            Console::out(PHP_EOL . 'Example:');
+            Console::out('  ncc inspect --path=mypackage.ncc');
+        }
 
         /**
          * @inheritDoc
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                self::help();
+                return 0;
+            }
+
             $packagePath = null;
             if(isset($argv['path']))
             {
