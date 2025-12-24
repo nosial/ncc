@@ -28,7 +28,7 @@
 
     class ListRepositories extends AbstractCommandHandler
     {
-        private const string SYSTEM_FLAG = "\033[*\033[0m";
+        private const string SYSTEM_FLAG = "\033[31m*\033[0m";
 
         /**
          * @inheritDoc
@@ -37,7 +37,7 @@
         {
             foreach(Runtime::getSystemRepositoryManager()->getEntries() as $repository)
             {
-                Console::out(sprintf(' %s (%s:%s)%s', $repository->getName(), $repository->getType()->value, $repository->getHost(), self::SYSTEM_FLAG));
+                Console::out(sprintf(' %s%s (%s:%s)', $repository->getName(), self::SYSTEM_FLAG, $repository->getType()->value, $repository->getHost()));
             }
 
             foreach(Runtime::getUserRepositoryManager()->getEntries() ?? [] as $repository)
