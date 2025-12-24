@@ -328,6 +328,16 @@ exec php \"$TARGET_PHAR\" --ncc-cli \"\$@\"
     fi
     
     print_success "Created executable wrapper at $BIN_SCRIPT"
+
+    # Add repositories
+    print_info "Configuring default repositories as"
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name packagist --type packagist --host packagist.org
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name github --type github --host api.github.com
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name gitlab --type gitlab --host gitlab.com
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name gitgud --type gitlab --host gitgud.io
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name codeberg --type github --host codeberg.org
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name n64 --type github --host git.n64.cc
+
     print_success "Installation complete!"
     print_info "You can now run 'ncc' from anywhere in your terminal"
     print_info "PHP can also require ncc globally: require 'ncc';"
