@@ -30,10 +30,36 @@
     class ExtractCommand extends AbstractCommandHandler
     {
         /**
+         * Prints out the help menu for the extract command
+         *
+         * @return void
+         */
+        public static function help(): void
+        {
+            Console::out('Usage: ncc extract --path=<package-file> [--output=<directory>]' . PHP_EOL);
+            Console::out('Extracts the contents of an ncc package to a directory.' . PHP_EOL);
+            Console::out('The extracted files can be used as a working PHP component.');
+            Console::out('If no output directory is specified, the package is extracted');
+            Console::out('to the current directory using the package name.' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --path=<file>     (Required) Path to the .ncc package file to extract');
+            Console::out('  --output=<dir>    Output directory for extracted files');
+            Console::out(PHP_EOL . 'Examples:');
+            Console::out('  ncc extract --path=package.ncc');
+            Console::out('  ncc extract --path=package.ncc --output=/path/to/output');
+        }
+
+        /**
          * @inheritDoc
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                self::help();
+                return 0;
+            }
+
             if(isset($argv['path']))
             {
                 $packagePath = realpath($argv['path']);
