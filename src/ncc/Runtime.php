@@ -351,14 +351,14 @@
             return self::$systemAuthenticationManager;
         }
 
-        public static function packageInstalled(string $package, string $version='latest'): bool
+        public static function packageInstalled(string $package, ?string $version='latest'): bool
         {
             if(self::getSystemPackageManager()->entryExists($package, $version))
             {
                 return true;
             }
 
-            return self::getUserPackageManager()?->entryExists($package, $version);
+            return self::getUserPackageManager()?->entryExists($package, $version) ?? false;
         }
 
         public static function getPackageEntry(string $package, string $version='latest'): ?PackageLockEntry
@@ -389,7 +389,7 @@
             return $entries;
         }
 
-        public static function isSystemPackage(string $package, string $version='latest'): bool
+        public static function isSystemPackage(string $package, ?string $version='latest'): bool
         {
             return self::getSystemPackageManager()->entryExists($package, $version);
         }

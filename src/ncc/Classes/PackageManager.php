@@ -220,6 +220,11 @@
                 return $this->getLatestVersion($packageName) !== null;
             }
 
+            if($version === 'latest')
+            {
+                return $this->getLatestVersion($packageName) !== null;
+            }
+
             return isset($this->entries[$packageName . '=' . $version]);
         }
 

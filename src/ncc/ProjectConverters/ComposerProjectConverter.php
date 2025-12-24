@@ -27,9 +27,11 @@
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\IOException;
+    use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
     use ncc\Objects\RepositoryConfiguration;
+    use ncc\Runtime;
 
     class ComposerProjectConverter extends AbstractProjectConverter
     {
@@ -199,8 +201,8 @@
                 }
 
                 $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
-                //$dependencies[$this->generatePackageName($dependency)]->setVersion((new VersionParser)->normalize($version));
-                $dependencies[$this->generatePackageName($dependency)]->setVersion('latest');
+                $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
+                $dependencies[$this->generatePackageName($dependency)]->setVersion($resolvedVersion);
                 $dependencies[$this->generatePackageName($dependency)]->setRepository('packagist');
             }
 
@@ -224,8 +226,8 @@
                 }
 
                 $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
-                //$dependencies[$this->generatePackageName($dependency)]->setVersion((new VersionParser)->normalize($version));
-                $dependencies[$this->generatePackageName($dependency)]->setVersion('latest');
+                $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
+                $dependencies[$this->generatePackageName($dependency)]->setVersion($resolvedVersion);
                 $dependencies[$this->generatePackageName($dependency)]->setRepository('packagist');
             }
 
@@ -292,9 +294,139 @@
                 $assembly->setLicense($composerData['license']);
             }
 
+            // Set the package identifier (e.g., com.symfony.process)
             $assembly->setPackage($this->generatePackageName($composerData['name']));
+            
+            // Set the friendly name from the composer package name
+            $assembly->setName($composerData['name']);
+
+            // Extract and normalize version from composer.json
+            // First check for explicit version field
+            if(isset($composerData['version']))
+            {
+                try
+                {
+                    $normalizedVersion = (new VersionParser())->normalize($composerData['version']);
+                    $assembly->setVersion($normalizedVersion);
+                }
+                catch(\Exception $e)
+                {
+                    // If version normalization fails, keep default 0.0.0
+                }
+            }
+            // If no version field, check for branch-alias in extra section
+            elseif(isset($composerData['extra']['branch-alias']))
+            {
+                try
+                {
+                    $versionParser = new VersionParser();
+                    // Get the first branch alias (typically dev-main or dev-master)
+                    $branchAliases = $composerData['extra']['branch-alias'];
+                    if(is_array($branchAliases) && count($branchAliases) > 0)
+                    {
+                        // Get the first alias value (e.g., "2.9-dev" or "7.1.x-dev")
+                        $aliasVersion = reset($branchAliases);
+                        
+                        // Try to extract the numeric version from the alias
+                        // "2.9-dev" -> "2.9.0", "7.1.x-dev" -> "7.1.9999999"
+                        if(preg_match('/^(\d+)\.(\d+)(?:\.(\d+))?(?:\.x)?-dev$/', $aliasVersion, $matches))
+                        {
+                            $major = $matches[1];
+                            $minor = $matches[2];
+                            $patch = isset($matches[3]) ? $matches[3] : '0';
+                            $normalizedVersion = sprintf('%d.%d.%d', $major, $minor, $patch);
+                            $assembly->setVersion($normalizedVersion);
+                        }
+                    }
+                }
+                catch(\Exception $e)
+                {
+                    // If branch-alias parsing fails, keep default 0.0.0
+                }
+            }
 
             return $assembly;
+        }
+
+        /**
+         * Resolve a package version constraint to an actual version
+         *
+         * @param string $package The package name (e.g., "symfony/process")
+         * @param string $versionConstraint The version constraint (e.g., "^5.0", "~3.4", "*")
+         * @return string The resolved version or 'latest' if resolution fails
+         */
+        private function resolvePackageVersion(string $package, string $versionConstraint): string
+        {
+            // If it's already a specific version, normalize and return it
+            $versionParser = new VersionParser();
+            if($versionParser->isValid($versionConstraint))
+            {
+                try
+                {
+                    return $versionParser->normalize($versionConstraint);
+                }
+                catch(\Exception $e)
+                {
+                    // Fall through to constraint resolution
+                }
+            }
+
+            // For wildcard or constraint, we need to query packagist
+            try
+            {
+                if(!Runtime::repositoryExists('packagist'))
+                {
+                    return 'latest';
+                }
+
+                $repository = Runtime::getRepository('packagist')->createClient();
+                list($vendor, $name) = explode('/', $package, 2);
+                
+                // Get all available versions
+                $versions = $repository->getReleases($vendor, $name);
+                
+                // Parse the constraint
+                $constraint = $versionParser->parseConstraints($versionConstraint);
+                
+                // Filter out dev versions and sort in descending order
+                $stableVersions = array_filter($versions, function($version) {
+                    return stripos($version, '-dev') === false;
+                });
+                
+                // Sort versions in descending order using Semver
+                usort($stableVersions, function($a, $b) use ($versionParser) {
+                    try {
+                        $normalizedA = $versionParser->normalize($a);
+                        $normalizedB = $versionParser->normalize($b);
+                        return version_compare($normalizedB, $normalizedA);
+                    } catch(\Exception $e) {
+                        return 0;
+                    }
+                });
+                
+                // Find the latest version that satisfies the constraint
+                foreach($stableVersions as $version)
+                {
+                    try
+                    {
+                        $normalizedVersion = $versionParser->normalize($version);
+                        if($constraint->matches(new \ncc\Libraries\semver\Constraint\Constraint('==', $normalizedVersion)))
+                        {
+                            return $normalizedVersion;
+                        }
+                    }
+                    catch(\Exception $e)
+                    {
+                        continue;
+                    }
+                }
+            }
+            catch(\Exception $e)
+            {
+                // If resolution fails, fall back to latest
+            }
+
+            return 'latest';
         }
 
         /**
