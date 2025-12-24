@@ -87,8 +87,6 @@
          * @param string $project
          * @param string|null $version
          * @return RemotePackage[]
-         * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public function getAll(string $group, string $project, ?string $version=null): array
         {
@@ -119,7 +117,11 @@
             }
             catch(Exception $e)
             {
-                Logger::getLogger()->warning(sprintf('Could not get tag archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                // Don't log warnings for Packagist repositories about tags not being supported (it's expected behavior)
+                if(!($this instanceof PackagistRepository && $e instanceof OperationException && str_contains($e->getMessage(), 'does not support tags')))
+                {
+                    Logger::getLogger()->warning(sprintf('Could not get tag archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                }
             }
 
             // Find possible git source
@@ -294,10 +296,10 @@
          * @param string $url The URL of the git repository to clone
          * @param string $path The path where the repository should be cloned
          * @param callable|null $progressCallback Optional callback function to report progress
-         * @return string The path to the cloned repository
+         * @return void The path to the cloned repository
          * @throws OperationException Thrown if the git clone operation fails
          */
-        private function gitClone(string $url, string $path, ?callable $progressCallback=null): string
+        private function gitClone(string $url, string $path, ?callable $progressCallback=null): void
         {
             $gitExecutable = (new ExecutableFinder())->find('git');
 
@@ -321,7 +323,6 @@
                 throw new OperationException(sprintf('Failed to clone git repository from %s: %s', $url, $process->getErrorOutput()));
             }
 
-            return $path;
         }
 
         /**
@@ -346,6 +347,15 @@
             if(str_ends_with($path, '/'))
             {
                 $path = substr($path, 0, -1);
+            }
+
+            // Ensure the directory exists before attempting to write the file
+            if(!is_dir($path))
+            {
+                if(!mkdir($path, 0777, true) && !is_dir($path))
+                {
+                    throw new OperationException(sprintf('Failed to create directory: %s', $path));
+                }
             }
 
             $filePath = $path . DIRECTORY_SEPARATOR . $filePath;
