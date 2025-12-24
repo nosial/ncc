@@ -297,7 +297,7 @@
                 return $userManager;
             }
 
-            return self::getUserRepositoryManager();
+            return self::getSystemRepositoryManager();
         }
 
         public static function getUserAuthenticationManager(): ?AuthenticationManager
@@ -389,6 +389,19 @@
             }
 
             return self::getUserRepositoryManager()->repositoryExists($name);
+        }
+
+        public static function getRepositories(): array
+        {
+            return array_merge(
+                self::getSystemRepositoryManager()->getEntries(),
+                self::getUserRepositoryManager()?->getEntries() ?? []
+            );
+        }
+
+        public static function deleteRepository(string $name): bool
+        {
+            return self::getSystemRepositoryManager()->removeRepository($name) || self::getUserRepositoryManager()?->removeRepository($name) ?? false;
         }
 
         /**
