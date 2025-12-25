@@ -47,6 +47,7 @@
                 Logger::getLogger()->error(sprintf('Invalid repository type for PackagistRepository, expected %s, got %s', RepositoryType::PACKAGIST->value, $configuration->getType()->value));
                 throw new InvalidArgumentException(sprintf('Invalid repository type for PackagistRepository, expected %s, got %s', RepositoryType::PACKAGIST->value, $configuration->getType()->value));
             }
+
             Logger::getLogger()->debug(sprintf('Initialized PackagistRepository for host %s', $configuration->getHost()));
         }
 
@@ -55,7 +56,6 @@
          */
         public function getTags(string $group, string $project): array
         {
-            Logger::getLogger()->warning('Packagist does not support tags');
             throw new OperationException('Packagist does not support tags.');
         }
 
@@ -64,7 +64,6 @@
          */
         public function getLatestTag(string $group, string $project): string
         {
-            Logger::getLogger()->warning('Packagist does not support tags');
             throw new OperationException('Packagist does not support tags.');
         }
 
@@ -73,7 +72,6 @@
          */
         public function getTagArchive(string $group, string $project, string $tag): ?RemotePackage
         {
-            Logger::getLogger()->warning('Packagist does not support tags');
             throw new OperationException('Packagist does not support tags.');
         }
 
@@ -189,7 +187,6 @@
          */
         public function getReleasePackage(string $group, string $project, string $release): ?RemotePackage
         {
-            Logger::getLogger()->warning('Packagist does not provide .ncc packages');
             return null;
         }
 
@@ -198,7 +195,6 @@
          */
         public function getGit(string $group, string $project): ?RemotePackage
         {
-            Logger::getLogger()->warning('Packagist does not provide direct git access');
             return null;
         }
 
