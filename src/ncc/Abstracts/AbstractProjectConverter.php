@@ -31,8 +31,9 @@
          * Converts the given project configuration file into a ncc v3+ configuration file
          *
          * @param string $filePath The filepath of the configuration file to convert
+         * @param string|null $version Optional version to use instead of auto-detecting from the project file
          * @return Project The resulting generated Project configuration based off the configuration file
          * @throws Exception thrown if there was an error converting the project configuration
          */
-        public abstract function convert(string $filePath): Project;
+        public abstract function convert(string $filePath, ?string $version = null): Project;
     }

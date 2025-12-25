@@ -41,9 +41,13 @@
         /**
          * @inheritDoc
          */
-        public function convert(string $filePath): Project
+        public function convert(string $filePath, ?string $version = null): Project
         {
             Logger::getLogger()->verbose(sprintf('Converting Composer project from %s', $filePath));
+            if($version !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Using provided version: %s', $version));
+            }
             $content = IO::readFile($filePath);
             $composerData = json_decode($content, true);
 
@@ -58,7 +62,7 @@
 
             // Apply assembly
             Logger::getLogger()->debug('Generating assembly configuration from composer.json');
-            $project->setAssembly($this->generateAssembly($composerData));
+            $project->setAssembly($this->generateAssembly($composerData, $version));
 
             // Apply release configuration
             $releaseConfiguration = Project\BuildConfiguration::defaultRelease();
@@ -254,6 +258,13 @@
                     continue;
                 }
 
+                // Skip Composer virtual packages (composer-runtime-api, composer-plugin-api, etc.)
+                if(!str_contains($dependency, '/'))
+                {
+                    Logger::getLogger()->debug(sprintf('Skipping Composer virtual package: %s', $dependency));
+                    continue;
+                }
+
                 Logger::getLogger()->verbose(sprintf('Processing dependency: %s@%s', $dependency, $version));
                 $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
                 $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
@@ -282,6 +293,13 @@
                     continue;
                 }
 
+                // Skip Composer virtual packages (composer-runtime-api, composer-plugin-api, etc.)
+                if(!str_contains($dependency, '/'))
+                {
+                    Logger::getLogger()->debug(sprintf('Skipping Composer virtual package: %s', $dependency));
+                    continue;
+                }
+
                 Logger::getLogger()->verbose(sprintf('Processing development dependency: %s@%s', $dependency, $version));
                 $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
                 $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
@@ -297,9 +315,10 @@
          * Generate a Project\Assembly object from Composer data.
          *
          * @param array $composerData The parsed Composer JSON data.
+         * @param string|null $providedVersion Optional version provided externally (from repository)
          * @return Project\Assembly The generated assembly object.
          */
-        private function generateAssembly(array $composerData): Project\Assembly
+        private function generateAssembly(array $composerData, ?string $providedVersion = null): Project\Assembly
         {
             Logger::getLogger()->debug('Generating assembly configuration');
             $assembly = new Project\Assembly();
@@ -366,14 +385,30 @@
             // Set the friendly name from the composer package name
             $assembly->setName($composerData['name']);
 
-            // Extract and normalize version from composer.json
-            // First check for explicit version field
-            if(isset($composerData['version']))
+            // Extract and normalize version
+            // First prioritize the version provided externally (from repository)
+            if($providedVersion !== null)
             {
-                Logger::getLogger()->verbose(sprintf('Found explicit version: %s', $composerData['version']));
+                Logger::getLogger()->verbose(sprintf('Using externally provided version: %s', $providedVersion));
                 try
                 {
-                    $normalizedVersion = (new VersionParser())->normalize($composerData['version']);
+                    $normalizedVersion = self::normalizeVersion($providedVersion);
+                    $assembly->setVersion($normalizedVersion);
+                    Logger::getLogger()->verbose(sprintf('Set assembly version to %s', $normalizedVersion));
+                }
+                catch(Exception $e)
+                {
+                    Logger::getLogger()->warning(sprintf('Failed to normalize provided version %s: %s, falling back to composer.json', $providedVersion, $e->getMessage()));
+                    // Fall through to check composer.json version
+                }
+            }
+            // If no provided version or normalization failed, check for explicit version field in composer.json
+            elseif(isset($composerData['version']))
+            {
+                Logger::getLogger()->verbose(sprintf('Found explicit version in composer.json: %s', $composerData['version']));
+                try
+                {
+                    $normalizedVersion = self::normalizeVersion($composerData['version']);
                     $assembly->setVersion($normalizedVersion);
                     Logger::getLogger()->verbose(sprintf('Set assembly version to %s', $normalizedVersion));
                 }
