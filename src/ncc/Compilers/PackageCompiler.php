@@ -36,9 +36,14 @@
     class PackageCompiler extends AbstractCompiler
     {
         /**
-         * Stage 1: Creating package
+         * Compilation stages
          */
-        private const int TOTAL_STAGES = 1; // TODO: implement this
+        private const int STAGE_HEADER = 1;
+        private const int STAGE_ASSEMBLY = 2;
+        private const int STAGE_EXECUTION_UNITS = 3;
+        private const int STAGE_COMPONENTS = 4;
+        private const int TOTAL_STAGES = 4;
+        
         private bool $compressionEnabled;
         private int $compressionLevel;
 
@@ -131,6 +136,13 @@
                 Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
             }
 
+            // Calculate total stages dynamically based on content
+            $componentCount = count($this->getSourceComponents());
+            $executionUnitCount = count($this->getRequiredExecutionUnits());
+            $dependencyCount = $this->isStaticallyLinked() ? count($dependencyReaders ?? []) : 0;
+            $totalStages = self::TOTAL_STAGES + $componentCount + $executionUnitCount + $dependencyCount;
+            $currentStage = 0;
+
             // Write until the package is closed
             while(!$packageWriter->isClosed())
             {
@@ -138,6 +150,11 @@
                 switch($packageWriter->getWritingMode())
                 {
                     case WritingMode::HEADER:
+                        $currentStage++;
+                        if($progressCallback !== null)
+                        {
+                            $progressCallback($currentStage, $totalStages, 'Writing package header');
+                        }
                         Logger::getLogger()->verbose('Writing package header');
                         // Write the header as a data entry only, section gets closed automatically
                         $packageWriter->writeData(msgpack_pack($this->createPackageHeader($dependencyReaders)->toArray()));
@@ -145,6 +162,11 @@
                         break;
 
                     case WritingMode::ASSEMBLY:
+                        $currentStage++;
+                        if($progressCallback !== null)
+                        {
+                            $progressCallback($currentStage, $totalStages, 'Writing assembly information');
+                        }
                         Logger::getLogger()->verbose('Writing package assembly');
                         // Write the assembly as a data entry only, section gets closed automatically
                         $packageWriter->writeData(msgpack_pack($this->getProjectConfiguration()->getAssembly()->toArray()));
@@ -152,11 +174,21 @@
                         break;
 
                     case WritingMode::EXECUTION_UNITS:
+                        $currentStage++;
+                        if($progressCallback !== null)
+                        {
+                            $progressCallback($currentStage, $totalStages, sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
+                        }
                         Logger::getLogger()->verbose(sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
                         
                         // Execution units can be multiple, write them named.
                         foreach($this->getRequiredExecutionUnits() as $executionUnitName)
                         {
+                            $currentStage++;
+                            if($progressCallback !== null)
+                            {
+                                $progressCallback($currentStage, $totalStages, sprintf('Writing execution unit: %s', $executionUnitName));
+                            }
                             $executionUnit = $this->getProjectConfiguration()->getExecutionUnit($executionUnitName);
                             $packageWriter->writeData(msgpack_pack($executionUnit->toArray()), $executionUnit->getName());
                             Logger::getLogger()->debug(sprintf('Written execution unit: %s', $executionUnitName));
@@ -168,12 +200,18 @@
                         break;
 
                     case WritingMode::COMPONENTS:
-                        $componentCount = count($this->getSourceComponents());
+                        $currentStage++;
+                        if($progressCallback !== null)
+                        {
+                            $progressCallback($currentStage, $totalStages, sprintf('Writing %d package components', $componentCount));
+                        }
                         Logger::getLogger()->verbose(sprintf('Writing %d source components', $componentCount));
                         
                         // Components ca be multiple, write them named
                         foreach($this->getSourceComponents() as $componentFilePath)
                         {
+                            $currentStage++;
+                            
                             // Check if component is within source path
                             if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
                             {
@@ -190,6 +228,11 @@
                             {
                                 Logger::getLogger()->error(sprintf('Invalid component path: %s', $componentFilePath));
                                 throw new CompileException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
+                            }
+
+                            if($progressCallback !== null)
+                            {
+                                $progressCallback($currentStage, $totalStages, sprintf('Writing component: %s', $componentName));
                             }
 
                             $componentData = IO::readFile($componentFilePath);
@@ -214,6 +257,12 @@
                             /** @var PackageReader $packageReader */
                             foreach($dependencyReaders as $packageReader)
                             {
+                                $currentStage++;
+                                if($progressCallback !== null)
+                                {
+                                    $progressCallback($currentStage, $totalStages, sprintf('Embedding dependency: %s', $packageReader->getPackageName()));
+                                }
+                                
                                 // For each component reference
                                 /** @var ComponentReference $componentReference */
                                 foreach($packageReader->getComponentReferences() as $componentName => $componentReference)

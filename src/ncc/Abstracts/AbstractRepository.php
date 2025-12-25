@@ -270,6 +270,10 @@
             {
                 case RemotePackageType::SOURCE_ZIP:
                     $downloadedPackage = $this->downloadFile($remotePackage->getDownloadUrl(), PathResolver::getTmpLocation(), $progress);
+                    if($progress !== null)
+                    {
+                        $progress(1, 1, 'Extracting ZIP archive');
+                    }
                     $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . uniqid();
                     ZipArchive::extract($downloadedPackage, $outputPath);
                     ShutdownHandler::flagTemporary($downloadedPackage);
@@ -278,6 +282,10 @@
 
                 case RemotePackageType::SOURCE_TAR:
                     $downloadedPackage = $this->downloadFile($remotePackage->getDownloadUrl(), PathResolver::getTmpLocation(), $progress);
+                    if($progress !== null)
+                    {
+                        $progress(1, 1, 'Extracting TAR archive');
+                    }
                     $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . uniqid();
                     TarArchive::extract($downloadedPackage, $outputPath);
                     ShutdownHandler::flagTemporary($downloadedPackage);
@@ -318,15 +326,15 @@
                 throw new OperationException('Git executable not found in PATH');
             }
 
+            if($progressCallback !== null)
+            {
+                // Initial progress for git clone (indeterminate)
+                $progressCallback(0, 100, 'Cloning Git repository...');
+            }
+            
             $process = new Process([$gitExecutable, 'clone', $url, $path]);
             $process->setTimeout(300);
-            $process->run(function ($type, $buffer) use ($progressCallback)
-            {
-                if($progressCallback !== null)
-                {
-                    $progressCallback($buffer);
-                }
-            });
+            $process->run();
 
             if(!$process->isSuccessful())
             {
@@ -378,9 +386,13 @@
             ]);
             curl_setopt($curl, CURLOPT_PROGRESSFUNCTION, static function ($resource, $totalBytes, $downloadedBytes)  use ($url, &$end, $progressCallback)
             {
-                if($progressCallback !== null)
+                if($progressCallback !== null && $totalBytes > 0)
                 {
-                    $progressCallback(sprintf('Downloading %s: %d/%d bytes', $url, $downloadedBytes, $totalBytes));
+                    // Format bytes for display
+                    $downloadedMB = round($downloadedBytes / 1048576, 2);
+                    $totalMB = round($totalBytes / 1048576, 2);
+                    $message = sprintf('Downloading %s (%s MB / %s MB)', basename($url), $downloadedMB, $totalMB);
+                    $progressCallback($downloadedBytes, $totalBytes, $message);
                 }
 
                 if($totalBytes == 0)

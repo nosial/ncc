@@ -75,11 +75,17 @@
 
             try
             {
-                Console::out(Project::compilerFromFile($projectPath)->build());
+                $compiler = Project::compilerFromFile($projectPath);
+                $outputPath = $compiler->compile(function(int $current, int $total, string $message) {
+                    Console::inlineProgress($current, $total, $message);
+                });
+                Console::completeProgress("Build completed: " . $outputPath);
             }
             catch (CompileException | ExecutionUnitException | IOException $e)
             {
+                Console::clearInlineProgress();
                 Console::error($e->getMessage());
+                return 1;
             }
 
             return 0;

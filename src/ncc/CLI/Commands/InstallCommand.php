@@ -291,6 +291,10 @@
                 throw new OperationException(sprintf('Cannot install "%s", unknown remote repository "%s"', $source, $source->getRepository()));
             }
 
+            // Define stages for progress tracking
+            $totalStages = 100; // Use percentage-based tracking
+            $currentStage = 0;
+
             // TODO: Implement authentication handling here
             $repository = Runtime::getRepository($source->getRepository())->createClient();
             $resolvedPackages = $repository->getAll($source->getOrganization(), $source->getName(), $source->getVersion());
@@ -319,20 +323,26 @@
                 throw new OperationException(sprintf('No suitable package found for %s in repository %s', $source, $source->getRepository()));
             }
 
-            Console::out(sprintf("Downloading %s from repository %s", $source, $source->getRepository()));
-            $downloadedPackage = $repository->download($selectedPackage);
+            // Stage 1: Download (0-70%)
+            $downloadedPackage = $repository->download($selectedPackage, function(int $downloaded, int $total, string $message) use ($totalStages) {
+                // Map download progress to 0-70% of total progress
+                $downloadProgress = $total > 0 ? (int)(($downloaded / $total) * 70) : 0;
+                Console::inlineProgress($downloadProgress, 100, $message);
+            });
 
             // If it's a file, we assume it's an NCC package
             if(IO::isFile($downloadedPackage))
             {
+                Console::completeProgress();
                 return self::installFromFile(new PackageReader($downloadedPackage), $options, $installed);
             }
+
+            // Stage 2: Detect project type (70%)
+            Console::inlineProgress(70, 100, sprintf("Detecting project type %s", $source));
 
             // Otherwise, we assume its source code that needs to be built, so we try to figure out it's project type
             try
             {
-                Console::out(sprintf("Detecting project type %s", $source));
-
                 // Get the version from the RemotePackage (already resolved by the repository)
                 $resolvedVersion = $selectedPackage->getVersion();
                 if($resolvedVersion !== null)
@@ -343,6 +353,7 @@
                 $projectPath = ProjectType::detectProjectPath($downloadedPackage);
                 if($projectPath === null)
                 {
+                    Console::clearInlineProgress();
                     Logger::getLogger()->error(sprintf('Unable to detect project path for %s', $source));
                     throw new OperationException(sprintf('Unable to detect project configuration file path for %s', $source));
                 }
@@ -350,6 +361,7 @@
                 $projectType = ProjectType::detectProjectType($downloadedPackage);
                 if($projectType === null)
                 {
+                    Console::clearInlineProgress();
                     Logger::getLogger()->error(sprintf('Unable to detect project type for %s', $source));
                     throw new OperationException(sprintf('Unable to detect project type for %s', $source));
                 }
@@ -360,6 +372,7 @@
                 $converter = $projectType->getConverter();
                 if($converter === null)
                 {
+                    Console::clearInlineProgress();
                     Logger::getLogger()->error(sprintf('No converter available for project type %s', $projectType->value));
                     throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
                 }
@@ -373,18 +386,25 @@
             }
             catch(Exception $e)
             {
+                Console::clearInlineProgress();
                 throw new OperationException(sprintf('Failed to convert project source for %s: %s', $source, $e->getMessage()));
             }
 
+            // Stage 3: Compile (70-100%)
             // Build & install the project
             try
             {
-                Console::out(sprintf("Compiling package %s", $source));
-                $packageReader = new PackageReader($compiler->build());
+                $packageReader = new PackageReader($compiler->compile(function(int $current, int $total, string $message) {
+                    // Map compile progress to 70-100% of total progress
+                    $compileProgress = $total > 0 ? 70 + (int)(($current / $total) * 30) : 70;
+                    Console::inlineProgress($compileProgress, 100, $message);
+                }));
+                Console::completeProgress();
                 return self::installFromFile($packageReader, $options, $installed);
             }
             catch(Exception $e)
             {
+                Console::clearInlineProgress();
                 throw new OperationException(sprintf('Failed to build project source for %s: %s', $source, $e->getMessage()));
             }
         }

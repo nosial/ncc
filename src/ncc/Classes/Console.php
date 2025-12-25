@@ -29,6 +29,8 @@
     class Console
     {
         private static bool $ansiColorsEnabled = true;
+        private static ?string $currentProgressMessage = null;
+        private static int $lastProgressLength = 0;
 
         public static function enableAnsiColors(): void
         {
@@ -232,5 +234,155 @@
             }
 
             return null;
+        }
+
+        /**
+         * Displays an inline progress indicator with a message.
+         * This will overwrite the current line each time it's called.
+         *
+         * @param int $current The current progress value (e.g., current stage)
+         * @param int $total The total number of steps
+         * @param string $message The message to display
+         * @return void
+         */
+        public static function inlineProgress(int $current, int $total, string $message): void
+        {
+            $percentage = $total > 0 ? round(($current / $total) * 100) : 0;
+            $progressBar = self::createProgressBar($current, $total, 30);
+            
+            // Add color if ANSI is enabled
+            if (self::$ansiColorsEnabled)
+            {
+                $coloredBar = self::colorizeProgressBar($progressBar, $percentage);
+                $percentageStr = sprintf("\e[1;36m%3d%%\e[0m", $percentage); // Cyan bold
+                $output = sprintf('⟦%s⟧ %s %s', $coloredBar, $percentageStr, $message);
+            }
+            else
+            {
+                $output = sprintf('[%s] %3d%% - %s', $progressBar, $percentage, $message);
+            }
+            
+            // Clear the entire line first, then print the new progress
+            print("\r\033[K" . $output);
+            
+            // Store the length for next clear operation (strip ANSI codes for accurate length)
+            self::$lastProgressLength = mb_strlen(preg_replace('/\e\[[0-9;]*m/', '', $output));
+            self::$currentProgressMessage = $message;
+            
+            flush();
+        }
+
+        /**
+         * Clears the current inline progress indicator and moves to a new line.
+         *
+         * @return void
+         */
+        public static function clearInlineProgress(): void
+        {
+            if (self::$lastProgressLength > 0)
+            {
+                // Use ANSI escape code to clear the entire line
+                print("\r\033[K");
+                self::$lastProgressLength = 0;
+                self::$currentProgressMessage = null;
+            }
+        }
+
+        /**
+         * Completes the progress display and moves to a new line.
+         *
+         * @param string|null $finalMessage Optional message to display when complete
+         * @return void
+         */
+        public static function completeProgress(?string $finalMessage = null): void
+        {
+            if (self::$lastProgressLength > 0)
+            {
+                // Use ANSI escape code to clear the entire line
+                print("\r\033[K");
+                self::$lastProgressLength = 0;
+                self::$currentProgressMessage = null;
+            }
+            
+            if ($finalMessage !== null)
+            {
+                print($finalMessage . PHP_EOL);
+            }
+        }
+
+        /**
+         * Creates a text-based progress bar.
+         *
+         * @param int $current Current progress value
+         * @param int $total Total progress value
+         * @param int $width Width of the progress bar in characters
+         * @return string The progress bar string
+         */
+        private static function createProgressBar(int $current, int $total, int $width = 30): string
+        {
+            if ($total <= 0)
+            {
+                return str_repeat('█', $width);
+            }
+
+            $progress = min(1.0, $current / $total);
+            $filled = (int)round($width * $progress);
+            $empty = $width - $filled;
+
+            // Use Unicode block characters for a smooth gradient effect
+            $bar = str_repeat('█', $filled);
+            
+            // Add a transitional character for smoother animation
+            if ($filled < $width && $progress > 0)
+            {
+                $fractional = ($width * $progress) - $filled;
+                if ($fractional > 0.75)
+                {
+                    $bar .= '▓';
+                }
+                elseif ($fractional > 0.5)
+                {
+                    $bar .= '▒';
+                }
+                elseif ($fractional > 0.25)
+                {
+                    $bar .= '░';
+                }
+                else
+                {
+                    $bar .= '░';
+                }
+                $empty--;
+            }
+            
+            $bar .= str_repeat('░', max(0, $empty));
+
+            return $bar;
+        }
+
+        /**
+         * Colorizes the progress bar based on percentage.
+         *
+         * @param string $bar The progress bar string
+         * @param float $percentage The completion percentage
+         * @return string The colorized progress bar
+         */
+        private static function colorizeProgressBar(string $bar, float $percentage): string
+        {
+            // Color scheme based on progress
+            if ($percentage < 33)
+            {
+                $color = "\e[91m"; // Light red for 0-33%
+            }
+            elseif ($percentage < 66)
+            {
+                $color = "\e[93m"; // Yellow for 33-66%
+            }
+            else
+            {
+                $color = "\e[92m"; // Green for 66-100%
+            }
+
+            return $color . $bar . "\e[0m";
         }
     }
