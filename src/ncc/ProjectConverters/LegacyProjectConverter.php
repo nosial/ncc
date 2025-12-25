@@ -49,7 +49,7 @@
          */
         public function convert(string $filePath): Project
         {
-            Logger::getLogger()->info(sprintf('Converting legacy project from %s', $filePath));
+            Logger::getLogger()->verbose(sprintf('Converting legacy project from %s', $filePath));
             $content = IO::readFile($filePath);
             $data = json_decode($content, true);
 
@@ -70,7 +70,7 @@
 
             if(isset($data['build']['source_path']))
             {
-                Logger::getLogger()->info(sprintf('Setting source path: %s', $data['build']['source_path']));
+                Logger::getLogger()->verbose(sprintf('Setting source path: %s', $data['build']['source_path']));
                 $project->setSourcePath($data['build']['source_path']);
             }
             else
@@ -96,7 +96,7 @@
 
                     if(isset($data['build']['main']) && $data['build']['main'] === $name)
                     {
-                        Logger::getLogger()->info(sprintf('Setting entry point to: %s', $name));
+                        Logger::getLogger()->verbose(sprintf('Setting entry point to: %s', $name));
                         $project->setEntryPoint($name);
                     }
                 }
@@ -114,7 +114,7 @@
                 $project = $this->applyDependencies($project, $data['build']['dependencies']);
             }
 
-            Logger::getLogger()->info('Successfully converted legacy project');
+            Logger::getLogger()->verbose('Successfully converted legacy project');
             return $project;
         }
 
@@ -273,7 +273,7 @@
                     // This ensures we actually have a default configuration defined in the configuration
                     if(isset($build['default_configuration']) && $build['default_configuration'] === $buildName)
                     {
-                        Logger::getLogger()->info(sprintf('Setting default build configuration: %s', $buildName));
+                        Logger::getLogger()->verbose(sprintf('Setting default build configuration: %s', $buildName));
                         $project->setDefaultBuild($buildName);
                     }
 

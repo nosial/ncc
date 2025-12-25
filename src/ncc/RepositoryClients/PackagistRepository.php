@@ -108,7 +108,7 @@
             }
 
             $versions = array_keys($response['package']['versions']);
-            Logger::getLogger()->info(sprintf('Found %d versions for %s/%s', count($versions), $group, $project));
+            Logger::getLogger()->verbose(sprintf('Found %d versions for %s/%s', count($versions), $group, $project));
             return $versions;
         }
 
@@ -137,7 +137,7 @@
                 throw new OperationException(sprintf('Failed to resolve latest version for %s/%s', $group, $project));
             }
 
-            Logger::getLogger()->info(sprintf('Latest release for %s/%s is %s', $group, $project, $versions[0]));
+            Logger::getLogger()->verbose(sprintf('Latest release for %s/%s is %s', $group, $project, $versions[0]));
             return $versions[0]; // The first version in the sorted array is the latest
         }
 
@@ -148,7 +148,7 @@
         {
             Logger::getLogger()->debug(sprintf('Getting release archive for %s/%s version %s', $group, $project, $release));
             $version = $this->resolveVersion($group, $project, $release);
-            Logger::getLogger()->info(sprintf('Resolved version %s to %s for %s/%s', $release, $version, $group, $project));
+            Logger::getLogger()->verbose(sprintf('Resolved version %s to %s for %s/%s', $release, $version, $group, $project));
             $endpoint = sprintf('%s://%s/packages/%s/%s.json', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), rawurlencode($group), rawurlencode($project));
 
             Logger::getLogger()->verbose(sprintf('Fetching archive for %s/%s version %s from %s', $group, $project, $version, $endpoint));
@@ -180,7 +180,7 @@
                 throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
             }
 
-            Logger::getLogger()->info(sprintf('Found archive URL for %s/%s version %s', $group, $project, $version));
+            Logger::getLogger()->verbose(sprintf('Found archive URL for %s/%s version %s', $group, $project, $version));
             return new RemotePackage($response['package']['versions'][$version]['dist']['url'], RemotePackageType::SOURCE_ZIP, $group, $project, $version);
         }
 
@@ -223,7 +223,7 @@
 
                 if(Semver::satisfies($working_version, $version))
                 {
-                    Logger::getLogger()->info(sprintf('Resolved version %s to %s for %s/%s', $version, $working_version, $group, $project));
+                    Logger::getLogger()->verbose(sprintf('Resolved version %s to %s for %s/%s', $version, $working_version, $group, $project));
                     return $working_version;
                 }
             }

@@ -107,7 +107,7 @@
             \ncc\CLI\Logger::getLogger()->verbose(sprintf('Project path resolved to: %s', $this->projectPath), 'AbstractCompiler');
             
             $this->projectConfiguration = Project::fromFile($projectFilePath, true);
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Loaded project configuration from: %s', $projectFilePath), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Loaded project configuration from: %s', $projectFilePath), 'AbstractCompiler');
 
             try
             {
@@ -127,7 +127,7 @@
             }
 
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Using build configuration: %s', $buildConfiguration), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Using build configuration: %s', $buildConfiguration), 'AbstractCompiler');
             $this->sourcePath = $this->projectPath . DIRECTORY_SEPARATOR . $this->projectConfiguration->getSourcePath();
             $this->outputPath = $this->projectPath . DIRECTORY_SEPARATOR . $this->buildConfiguration->getOutput();
             \ncc\CLI\Logger::getLogger()->verbose(sprintf('Source path: %s', $this->sourcePath), 'AbstractCompiler');
@@ -177,7 +177,7 @@
             if(isset($this->buildConfiguration->getOptions()['static']) && is_bool($this->buildConfiguration->getOptions()['static']))
             {
                 $this->staticallyLinked = $this->buildConfiguration->getOptions()['static'];
-                \ncc\CLI\Logger::getLogger()->info(sprintf('Static linking: %s', $this->staticallyLinked ? 'enabled' : 'disabled'), 'AbstractCompiler');
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->staticallyLinked ? 'enabled' : 'disabled'), 'AbstractCompiler');
             }
             else
             {
@@ -186,7 +186,7 @@
             }
 
             $this->packageDependencies = array_merge($this->packageDependencies, $this->buildConfiguration->getDependencies() ?? [], $this->projectConfiguration->getDependencies() ?? []);
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Total package dependencies: %d', count($this->packageDependencies)), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Total package dependencies: %d', count($this->packageDependencies)), 'AbstractCompiler');
             
             $this->refreshFiles();
         }
@@ -503,7 +503,7 @@
 
             // Finally, we calculate the build number based on the collected files.
             $this->buildNumber = $this->calculateBuildNumber();
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Build number calculated: %s', $this->buildNumber), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Build number calculated: %s', $this->buildNumber), 'AbstractCompiler');
         }
 
         protected function getDependencyReaders(): array
@@ -517,7 +517,7 @@
                 $results = array_merge($results, $this->resolveDependencyReaders($packageName, $packageSource));
             }
 
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Resolved %d dependency readers total', count($results)), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers total', count($results)), 'AbstractCompiler');
             return $results;
         }
 
@@ -581,7 +581,7 @@
                 return;
             }
 
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Running %d pre-compile execution units', count($this->getProjectConfiguration()->getPreCompile())), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Running %d pre-compile execution units', count($this->getProjectConfiguration()->getPreCompile())), 'AbstractCompiler');
             
             foreach($this->getProjectConfiguration()->getPreCompile() as $unitName)
             {
@@ -589,7 +589,7 @@
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
             }
             
-            \ncc\CLI\Logger::getLogger()->info('Pre-compile execution units completed', 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose('Pre-compile execution units completed', 'AbstractCompiler');
         }
 
         /**
@@ -605,7 +605,7 @@
                 return;
             }
 
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostInstall())), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostInstall())), 'AbstractCompiler');
             
             foreach($this->getProjectConfiguration()->getPostInstall() as $unitName)
             {
@@ -613,7 +613,7 @@
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
             }
             
-            \ncc\CLI\Logger::getLogger()->info('Post-compile execution units completed', 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose('Post-compile execution units completed', 'AbstractCompiler');
         }
 
         /**
@@ -647,18 +647,18 @@
          */
         public function build(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            \ncc\CLI\Logger::getLogger()->info('Starting build process', 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose('Starting build process', 'AbstractCompiler');
             \ncc\CLI\Logger::getLogger()->verbose(sprintf('Build options - Overwrite: %s', $overwrite ? 'true' : 'false'), 'AbstractCompiler');
             
             $this->preCompile();
             
-            \ncc\CLI\Logger::getLogger()->info('Starting compilation phase', 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose('Starting compilation phase', 'AbstractCompiler');
             $buildPath = $this->compile(null, $overwrite);
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Compilation completed: %s', $buildPath), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Compilation completed: %s', $buildPath), 'AbstractCompiler');
             
             $this->postCompile();
             
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Build process completed successfully: %s', $buildPath), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Build process completed successfully: %s', $buildPath), 'AbstractCompiler');
             return $buildPath;
         }
     }

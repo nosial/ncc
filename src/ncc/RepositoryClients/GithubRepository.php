@@ -89,7 +89,7 @@
                 }
             }
 
-            Logger::getLogger()->info(sprintf('Found %d tags for %s/%s', count($results), $group, $project));
+            Logger::getLogger()->verbose(sprintf('Found %d tags for %s/%s', count($results), $group, $project));
             return $results;
         }
 
@@ -106,7 +106,7 @@
                 throw new OperationException(sprintf('No tags found for %s/%s', $group, $project));
             }
 
-            Logger::getLogger()->info(sprintf('Latest tag for %s/%s is %s', $group, $project, $tags[0]));
+            Logger::getLogger()->verbose(sprintf('Latest tag for %s/%s is %s', $group, $project, $tags[0]));
             return $tags[0];
         }
 
@@ -146,7 +146,7 @@
             Logger::getLogger()->verbose(sprintf('Received HTTP %d response for tag archive %s/%s/%s', $http_code, $group, $project, $tag));
             if($http_code === 200)
             {
-                Logger::getLogger()->info(sprintf('Found tag archive for %s/%s/%s', $group, $project, $tag));
+                Logger::getLogger()->verbose(sprintf('Found tag archive for %s/%s/%s', $group, $project, $tag));
                 $result = new RemotePackage(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RemotePackageType::SOURCE_ZIP, $group, $project);
                 curl_close($curl);
                 return $result;
@@ -191,7 +191,7 @@
                 }
             }
 
-            Logger::getLogger()->info(sprintf('Found %d releases for %s/%s', count($results), $group, $project));
+            Logger::getLogger()->verbose(sprintf('Found %d releases for %s/%s', count($results), $group, $project));
             return $results;
         }
 
@@ -205,7 +205,7 @@
                 throw new OperationException(sprintf('No releases found for %s/%s', $group, $project));
             }
 
-            Logger::getLogger()->info(sprintf('Latest release for %s/%s is %s', $group, $project, $releases[0]));
+            Logger::getLogger()->verbose(sprintf('Latest release for %s/%s is %s', $group, $project, $releases[0]));
             return $releases[0];
         }
 
@@ -237,12 +237,12 @@
             $response = self::processRequest($curl, $group, $project);
             if(isset($response['zipball_url']))
             {
-                Logger::getLogger()->info(sprintf('Found zipball archive for release %s in %s/%s', $release, $group, $project));
+                Logger::getLogger()->verbose(sprintf('Found zipball archive for release %s in %s/%s', $release, $group, $project));
                 return new RemotePackage($response['zipball_url'], RemotePackageType::SOURCE_ZIP, $group, $project, $release);
             }
             elseif(isset($response['tarball_url']))
             {
-                Logger::getLogger()->info(sprintf('Found tarball archive for release %s in %s/%s', $release, $group, $project));
+                Logger::getLogger()->verbose(sprintf('Found tarball archive for release %s in %s/%s', $release, $group, $project));
                 return new RemotePackage($response['tarball_url'], RemotePackageType::SOURCE_TAR, $group, $project, $release);
             }
 
@@ -289,7 +289,7 @@
 
             if($targetAsset !== null)
             {
-                Logger::getLogger()->info(sprintf('Found release package for %s/%s/%s', $group, $project, $release));
+                Logger::getLogger()->verbose(sprintf('Found release package for %s/%s/%s', $group, $project, $release));
                 return new RemotePackage($targetAsset['browser_download_url'], RemotePackageType::NCC, $group, $project);
             }
 
@@ -325,7 +325,7 @@
             $response = self::processRequest($curl, $group, $project);
             if(isset($response['git_url']))
             {
-                Logger::getLogger()->info(sprintf('Found git url for %s/%s', $group, $project));
+                Logger::getLogger()->verbose(sprintf('Found git url for %s/%s', $group, $project));
                 return new RemotePackage($response['git_url'], RemotePackageType::SOURCE_GIT, $group, $project);
             }
 

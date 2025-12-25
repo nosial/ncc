@@ -55,7 +55,7 @@
             {
                 // Enable/Disable compression
                 $this->compressionEnabled = (bool)$this->getBuildConfiguration()->getOptions()['compression'];
-                \ncc\CLI\Logger::getLogger()->info(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'), 'PackageCompiler');
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'), 'PackageCompiler');
             }
             else
             {
@@ -81,7 +81,7 @@
                     $this->compressionLevel = 1;
                 }
                 
-                \ncc\CLI\Logger::getLogger()->info(sprintf('Compression level: %d', $this->compressionLevel), 'PackageCompiler');
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Compression level: %d', $this->compressionLevel), 'PackageCompiler');
             }
             else
             {
@@ -116,7 +116,7 @@
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Starting package compilation to: %s', $this->getOutputPath()), 'PackageCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Starting package compilation to: %s', $this->getOutputPath()), 'PackageCompiler');
             \ncc\CLI\Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'), 'PackageCompiler');
             
             // Initialize package writer
@@ -125,7 +125,7 @@
 
             if($this->isStaticallyLinked())
             {
-                \ncc\CLI\Logger::getLogger()->info('Resolving dependency readers for static linking', 'PackageCompiler');
+                \ncc\CLI\Logger::getLogger()->verbose('Resolving dependency readers for static linking', 'PackageCompiler');
                 $dependencyReaders = $this->getDependencyReaders();
                 \ncc\CLI\Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)), 'PackageCompiler');
             }
@@ -225,7 +225,7 @@
 
                         // Close the section
                         $packageWriter->endSection();
-                        \ncc\CLI\Logger::getLogger()->info(sprintf('Components section completed (%d components)', $componentCount), 'PackageCompiler');
+                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Components section completed (%d components)', $componentCount), 'PackageCompiler');
                         break;
 
                     case WritingMode::RESOURCES:
@@ -283,12 +283,12 @@
                         }
 
                         $packageWriter->endSection();
-                        \ncc\CLI\Logger::getLogger()->info(sprintf('Resources section completed (%d resources)', $resourceCount), 'PackageCompiler');
+                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Resources section completed (%d resources)', $resourceCount), 'PackageCompiler');
                         break;
                 }
             }
 
-            \ncc\CLI\Logger::getLogger()->info(sprintf('Package compilation completed: %s', $this->getOutputPath()), 'PackageCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Package compilation completed: %s', $this->getOutputPath()), 'PackageCompiler');
             return $this->getOutputPath();
         }
 

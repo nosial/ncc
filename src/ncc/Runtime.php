@@ -93,6 +93,14 @@
                     self::$importedPackages[$reference->getPackage()] = $referenceId;
                 }
             }
+            // For non-statically linked packages, import dependencies separately
+            elseif(count($packageReader->getHeader()->getDependencyReferences()) > 0)
+            {
+                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
+                {
+                    self::import($reference->getPackage(), $reference->getVersion());
+                }
+            }
         }
 
         /**

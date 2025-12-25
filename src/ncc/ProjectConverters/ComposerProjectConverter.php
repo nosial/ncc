@@ -43,7 +43,7 @@
          */
         public function convert(string $filePath): Project
         {
-            Logger::getLogger()->info(sprintf('Converting Composer project from %s', $filePath));
+            Logger::getLogger()->verbose(sprintf('Converting Composer project from %s', $filePath));
             $content = IO::readFile($filePath);
             $composerData = json_decode($content, true);
 
@@ -69,7 +69,7 @@
                 {
                     $project->addDependency($dependencyName, $dependencySource);
                 }
-                Logger::getLogger()->info(sprintf('Added %d production dependencies', count($this->generateDependencies($composerData))));
+                Logger::getLogger()->verbose(sprintf('Added %d production dependencies', count($this->generateDependencies($composerData))));
             }
 
             // Apply debug configuration
@@ -81,7 +81,7 @@
                 {
                     $debugConfiguration->addDependency($dependencyName, $dependencySource);
                 }
-                Logger::getLogger()->info(sprintf('Added %d development dependencies', count($this->generateDebugDependencies($composerData))));
+                Logger::getLogger()->verbose(sprintf('Added %d development dependencies', count($this->generateDebugDependencies($composerData))));
             }
 
             // Apply packagist repository configurations
@@ -112,7 +112,7 @@
                 // Empty string in PSR-4 means the root directory, use '.' instead
                 $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
                 $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
-                Logger::getLogger()->info(sprintf('Set source path from PSR-4 autoload: %s', $normalizedPath));
+                Logger::getLogger()->verbose(sprintf('Set source path from PSR-4 autoload: %s', $normalizedPath));
 
                 // If there are more than one, add them as included components
                 if(count($psr4Paths) > 1)
@@ -145,7 +145,7 @@
                 // Empty string in classmap means the root directory, use '.' instead
                 $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
                 $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
-                Logger::getLogger()->info(sprintf('Set source path from classmap autoload: %s', $normalizedPath));
+                Logger::getLogger()->verbose(sprintf('Set source path from classmap autoload: %s', $normalizedPath));
 
                 // If there are more than one, add them as included components
                 if(count($composerData['autoload']['classmap']) > 1)
@@ -174,7 +174,7 @@
                 // No autoload information, try to find the source path automatically
                 Logger::getLogger()->warning('No autoload configuration found, attempting to detect source path automatically');
                 $project->setSourcePath($this->detectSourcePath($baseDir));
-                Logger::getLogger()->info(sprintf('Auto-detected source path: %s', $project->getSourcePath()));
+                Logger::getLogger()->verbose(sprintf('Auto-detected source path: %s', $project->getSourcePath()));
             }
 
             // Add any files autoloaded via files to included components
@@ -211,11 +211,11 @@
 
             if(isset($composerData['bin']) && is_array($composerData['bin']) && count($composerData['bin']) > 0)
             {
-                Logger::getLogger()->info(sprintf('Generating execution unit from %d bin entries', count($composerData['bin'])));
+                Logger::getLogger()->verbose(sprintf('Generating execution unit from %d bin entries', count($composerData['bin'])));
                 $project->addExecutionUnit($this->generateExecutionUnit($composerData));
             }
 
-            Logger::getLogger()->info('Successfully converted Composer project');
+            Logger::getLogger()->verbose('Successfully converted Composer project');
             return $project;
         }
 
@@ -375,7 +375,7 @@
                 {
                     $normalizedVersion = (new VersionParser())->normalize($composerData['version']);
                     $assembly->setVersion($normalizedVersion);
-                    Logger::getLogger()->info(sprintf('Set assembly version to %s', $normalizedVersion));
+                    Logger::getLogger()->verbose(sprintf('Set assembly version to %s', $normalizedVersion));
                 }
                 catch(Exception $e)
                 {
@@ -406,7 +406,7 @@
                             $patch = isset($matches[3]) ? $matches[3] : '0';
                             $normalizedVersion = sprintf('%d.%d.%d', $major, $minor, $patch);
                             $assembly->setVersion($normalizedVersion);
-                            Logger::getLogger()->info(sprintf('Set assembly version to %s from branch-alias', $normalizedVersion));
+                            Logger::getLogger()->verbose(sprintf('Set assembly version to %s from branch-alias', $normalizedVersion));
                         }
                     }
                 }
@@ -501,7 +501,7 @@
                         $normalizedVersion = $versionParser->normalize($version);
                         if($constraint->matches(new Constraint('==', $normalizedVersion)))
                         {
-                            Logger::getLogger()->info(sprintf('Found matching version %s for constraint %s on package %s', $normalizedVersion, $versionConstraint, $package));
+                            Logger::getLogger()->verbose(sprintf('Found matching version %s for constraint %s on package %s', $normalizedVersion, $versionConstraint, $package));
                             return $normalizedVersion;
                         }
                     }
@@ -584,7 +584,7 @@
             {
                 if(IO::isDir($baseDir . DIRECTORY_SEPARATOR . $dir))
                 {
-                    Logger::getLogger()->info(sprintf('Detected source directory: %s', $dir));
+                    Logger::getLogger()->verbose(sprintf('Detected source directory: %s', $dir));
                     return $dir;
                 }
             }
@@ -594,12 +594,96 @@
             $files = glob($baseDir . DIRECTORY_SEPARATOR . '*.php');
             if(!empty($files))
             {
-                Logger::getLogger()->info('Found PHP files in root directory, using root as source path');
+                Logger::getLogger()->verbose('Found PHP files in root directory, using root as source path');
                 return '.';
             }
             
             // Default to root directory if nothing else is found
             Logger::getLogger()->warning('No source directory detected, defaulting to root directory');
             return '.';
+        }
+
+        /**
+         * Normalize and resolve a version string to a valid semantic version format.
+         * This method handles various version formats including those with 'v' prefixes,
+         * and ensures the version conforms to ncc's 3-component format (X.Y.Z).
+         *
+         * @param string $version The version string to normalize.
+         * @return string The normalized version.
+         * @throws OperationException If the version cannot be normalized to a valid format.
+         */
+        public static function normalizeVersion(string $version): string
+        {
+            Logger::getLogger()->debug(sprintf('Normalizing version: "%s"', $version));
+            $versionParser = new VersionParser();
+            
+            try
+            {
+                Logger::getLogger()->debug(sprintf('Testing if version is valid: "%s"', $version));
+                if($versionParser->isValid($version))
+                {
+                    Logger::getLogger()->debug('Version is valid, normalizing...');
+                    $normalizedVersion = $versionParser->normalize($version);
+                    Logger::getLogger()->debug(sprintf('Normalized version: "%s"', $normalizedVersion));
+                    
+                    // The VersionParser may add a 4th component (e.g., "8.0.0.0")
+                    // but ncc expects 3-component semantic versions (X.Y.Z)
+                    // Strip the 4th component if present
+                    if(preg_match('/^(\d+\.\d+\.\d+)\.0$/', $normalizedVersion, $matches))
+                    {
+                        $normalizedVersion = $matches[1];
+                        Logger::getLogger()->debug(sprintf('Stripped 4th component, using: "%s"', $normalizedVersion));
+                    }
+                    
+                    return $normalizedVersion;
+                }
+                else
+                {
+                    Logger::getLogger()->debug('Version is not valid, trying to clean it...');
+                    // If normalization fails, strip common prefixes and try again
+                    $cleanVersion = ltrim($version, 'vV');
+                    Logger::getLogger()->debug(sprintf('Cleaned version: "%s"', $cleanVersion));
+                    
+                    if($versionParser->isValid($cleanVersion))
+                    {
+                        Logger::getLogger()->debug('Cleaned version is valid, normalizing...');
+                        $normalizedVersion = $versionParser->normalize($cleanVersion);
+                        Logger::getLogger()->debug(sprintf('Normalized version: "%s"', $normalizedVersion));
+                        
+                        // Strip the 4th component if present
+                        if(preg_match('/^(\d+\.\d+\.\d+)\.0$/', $normalizedVersion, $matches))
+                        {
+                            $normalizedVersion = $matches[1];
+                            Logger::getLogger()->debug(sprintf('Stripped 4th component, using: "%s"', $normalizedVersion));
+                        }
+                        
+                        return $normalizedVersion;
+                    }
+                    else
+                    {
+                        Logger::getLogger()->debug('Cleaned version is still invalid, checking regex pattern...');
+                        // Last resort: use the version as-is if it looks like a semantic version
+                        if(preg_match('/^\d+\.\d+\.\d+/', $cleanVersion))
+                        {
+                            Logger::getLogger()->debug(sprintf('Using version as-is: "%s"', $cleanVersion));
+                            return $cleanVersion;
+                        }
+                        else
+                        {
+                            throw new OperationException(sprintf('Invalid version format received: "%s"', $version));
+                        }
+                    }
+                }
+            }
+            catch(OperationException $e)
+            {
+                // Re-throw OperationException as-is
+                throw $e;
+            }
+            catch(Exception $e)
+            {
+                Logger::getLogger()->error(sprintf('Exception during version normalization: %s', $e->getMessage()));
+                throw new OperationException(sprintf('Failed to normalize version "%s": %s', $version, $e->getMessage()));
+            }
         }
     }

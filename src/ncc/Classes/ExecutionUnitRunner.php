@@ -92,7 +92,7 @@
 
             try
             {
-                Logger::getLogger()->info(sprintf('Executing unit %s...', $unit->getName()));
+                Logger::getLogger()->verbose(sprintf('Executing unit %s...', $unit->getName()));
                 $process->run();
             }
             catch(RuntimeException $e)
@@ -101,7 +101,7 @@
             }
             finally
             {
-                Logger::getLogger()->info(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
+                Logger::getLogger()->verbose(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
                 return $process->getExitCode();
             }
         }

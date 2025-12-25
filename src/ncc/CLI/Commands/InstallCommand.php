@@ -279,8 +279,8 @@
 
         private static function installFromRemote(PackageSource $source, array $options=[], array $installed=[]): array
         {
+            Console::out(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
             $options = self::parseOptions($options);
-
             if($source->getRepository() === null)
             {
                 throw new OperationException(sprintf('Cannot install "%s", a remote repository is required', $source));
@@ -331,6 +331,8 @@
             // Otherwise, we assume its source code that needs to be built, so we try to figure out it's project type
             try
             {
+                Console::out(sprintf("Building project source for %s", $source));
+
                 // Convert the project source to a ncc project configuration
                 $projectConfiguration = ProjectType::detectProjectType($downloadedPackage)->getConverter()->convert(
                     ProjectType::detectProjectPath($downloadedPackage)
@@ -365,64 +367,10 @@
                         throw new OperationException('Could not determine package version');
                     }
                     
-                    // Normalize the version using semver to ensure consistency
-                    // The normalize method handles 'v' prefixes and other version formats
-                    $versionParser = new \ncc\Libraries\semver\VersionParser();
-                    
+                    // Normalize the version using the ComposerProjectConverter helper
                     try
                     {
-                        Logger::getLogger()->debug(sprintf('Testing if version is valid: "%s"', $actualVersion));
-                        if($versionParser->isValid($actualVersion))
-                        {
-                            Logger::getLogger()->debug('Version is valid, normalizing...');
-                            $normalizedVersion = $versionParser->normalize($actualVersion);
-                            Logger::getLogger()->debug(sprintf('Normalized version: "%s"', $normalizedVersion));
-                            
-                            // The VersionParser may add a 4th component (e.g., "8.0.0.0")
-                            // but ncc expects 3-component semantic versions (X.Y.Z)
-                            // Strip the 4th component if present
-                            if(preg_match('/^(\d+\.\d+\.\d+)\.0$/', $normalizedVersion, $matches))
-                            {
-                                $normalizedVersion = $matches[1];
-                                Logger::getLogger()->debug(sprintf('Stripped 4th component, using: "%s"', $normalizedVersion));
-                            }
-                        }
-                        else
-                        {
-                            Logger::getLogger()->debug('Version is not valid, trying to clean it...');
-                            // If normalization fails, strip common prefixes and try again
-                            $cleanVersion = ltrim($actualVersion, 'vV');
-                            Logger::getLogger()->debug(sprintf('Cleaned version: "%s"', $cleanVersion));
-                            
-                            if($versionParser->isValid($cleanVersion))
-                            {
-                                Logger::getLogger()->debug('Cleaned version is valid, normalizing...');
-                                $normalizedVersion = $versionParser->normalize($cleanVersion);
-                                Logger::getLogger()->debug(sprintf('Normalized version: "%s"', $normalizedVersion));
-                                
-                                // Strip the 4th component if present
-                                if(preg_match('/^(\d+\.\d+\.\d+)\.0$/', $normalizedVersion, $matches))
-                                {
-                                    $normalizedVersion = $matches[1];
-                                    Logger::getLogger()->debug(sprintf('Stripped 4th component, using: "%s"', $normalizedVersion));
-                                }
-                            }
-                            else
-                            {
-                                Logger::getLogger()->debug('Cleaned version is still invalid, checking regex pattern...');
-                                // Last resort: use the version as-is if it looks like a semantic version
-                                if(preg_match('/^\d+\.\d+\.\d+/', $cleanVersion))
-                                {
-                                    Logger::getLogger()->debug(sprintf('Using version as-is: "%s"', $cleanVersion));
-                                    $normalizedVersion = $cleanVersion;
-                                }
-                                else
-                                {
-                                    throw new OperationException(sprintf('Invalid version format received from repository: "%s"', $actualVersion));
-                                }
-                            }
-                        }
-                        
+                        $normalizedVersion = \ncc\ProjectConverters\ComposerProjectConverter::normalizeVersion($actualVersion);
                         $projectConfiguration->getAssembly()->setVersion($normalizedVersion);
                         Console::out(sprintf("Resolved package version: %s", $normalizedVersion));
                     }
