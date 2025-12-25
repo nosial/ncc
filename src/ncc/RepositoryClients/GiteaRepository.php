@@ -49,8 +49,10 @@
             throw new InvalidArgumentException(sprintf('Invalid repository type for GithubRepository, expected %s, got %s', RepositoryType::GITHUB->value, $configuration->getType()->value));
         }
         Logger::getLogger()->debug(sprintf('Initialized GiteaRepository for host %s with %s', $configuration->getHost(), $authentication !== null ? 'authentication' : 'no authentication'));
-        public function getTags(string $group, string $project): array
-        {
+    }
+
+    public function getTags(string $group, string $project): array
+    {
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/tags', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), rawurlencode($group), rawurlencode($project));
             $curl = curl_init($endpoint);
             $headers = [
