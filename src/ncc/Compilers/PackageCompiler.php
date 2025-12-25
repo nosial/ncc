@@ -310,7 +310,8 @@
                             {
                                 $resourceData = gzdeflate($resourceData, $this->compressionLevel);
                                 $compressedSize = strlen($resourceData);
-                                Logger::getLogger()->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
+                                $compressionRatio = $originalSize > 0 ? ($compressedSize / $originalSize) * 100 : 0;
+                                Logger::getLogger()->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
                             }
 
                             $packageWriter->writeData($resourceData, $resourceName);
