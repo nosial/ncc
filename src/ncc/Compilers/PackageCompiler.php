@@ -26,6 +26,7 @@
     use ncc\Classes\IO;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PackageWriter;
+    use ncc\CLI\Logger;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
     use ncc\Objects\Package\ComponentReference;
@@ -46,7 +47,7 @@
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
-            \ncc\CLI\Logger::getLogger()->debug('Initializing PackageCompiler', 'PackageCompiler');
+            Logger::getLogger()->debug('Initializing PackageCompiler');
             
             parent::__construct($projectFilePath, $buildConfiguration);
 
@@ -55,13 +56,13 @@
             {
                 // Enable/Disable compression
                 $this->compressionEnabled = (bool)$this->getBuildConfiguration()->getOptions()['compression'];
-                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'), 'PackageCompiler');
+                Logger::getLogger()->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'));
             }
             else
             {
                 // By default, compression is always enabled.
                 $this->compressionEnabled = true;
-                \ncc\CLI\Logger::getLogger()->verbose('Compression: enabled (default)', 'PackageCompiler');
+                Logger::getLogger()->verbose('Compression: enabled (default)');
             }
 
             // Package-specific compression level attributes
@@ -71,23 +72,23 @@
                 if($this->compressionLevel > 9)
                 {
                     // Fallback to 9 if the value is greater than 9
-                    \ncc\CLI\Logger::getLogger()->warning(sprintf('Compression level %d exceeds maximum, using 9', $this->compressionLevel), 'PackageCompiler');
+                    Logger::getLogger()->warning(sprintf('Compression level %d exceeds maximum, using 9', $this->compressionLevel));
                     $this->compressionLevel = 9;
                 }
                 elseif($this->compressionLevel < 1)
                 {
                     // Fallback to 1 if the value is less than 1
-                    \ncc\CLI\Logger::getLogger()->warning(sprintf('Compression level %d below minimum, using 1', $this->compressionLevel), 'PackageCompiler');
+                    Logger::getLogger()->warning(sprintf('Compression level %d below minimum, using 1', $this->compressionLevel));
                     $this->compressionLevel = 1;
                 }
                 
-                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Compression level: %d', $this->compressionLevel), 'PackageCompiler');
+                Logger::getLogger()->verbose(sprintf('Compression level: %d', $this->compressionLevel));
             }
             else
             {
                 // All other cases; default value is 9.
                 $this->compressionLevel = 9;
-                \ncc\CLI\Logger::getLogger()->verbose('Compression level: 9 (default)', 'PackageCompiler');
+                Logger::getLogger()->verbose('Compression level: 9 (default)');
             }
         }
 
@@ -116,8 +117,8 @@
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Starting package compilation to: %s', $this->getOutputPath()), 'PackageCompiler');
-            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'), 'PackageCompiler');
+            Logger::getLogger()->verbose(sprintf('Starting package compilation to: %s', $this->getOutputPath()));
+            Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'));
             
             // Initialize package writer
             $packageWriter = new PackageWriter($this->getOutputPath(), $overwrite);
@@ -125,9 +126,9 @@
 
             if($this->isStaticallyLinked())
             {
-                \ncc\CLI\Logger::getLogger()->verbose('Resolving dependency readers for static linking', 'PackageCompiler');
+                Logger::getLogger()->verbose('Resolving dependency readers for static linking');
                 $dependencyReaders = $this->getDependencyReaders();
-                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)), 'PackageCompiler');
+                Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
             }
 
             // Write until the package is closed
@@ -137,38 +138,38 @@
                 switch($packageWriter->getWritingMode())
                 {
                     case WritingMode::HEADER:
-                        \ncc\CLI\Logger::getLogger()->verbose('Writing package header', 'PackageCompiler');
+                        Logger::getLogger()->verbose('Writing package header');
                         // Write the header as a data entry only, section gets closed automatically
                         $packageWriter->writeData(msgpack_pack($this->createPackageHeader($dependencyReaders)->toArray()));
-                        \ncc\CLI\Logger::getLogger()->debug('Package header written successfully', 'PackageCompiler');
+                        Logger::getLogger()->debug('Package header written successfully');
                         break;
 
                     case WritingMode::ASSEMBLY:
-                        \ncc\CLI\Logger::getLogger()->verbose('Writing package assembly', 'PackageCompiler');
+                        Logger::getLogger()->verbose('Writing package assembly');
                         // Write the assembly as a data entry only, section gets closed automatically
                         $packageWriter->writeData(msgpack_pack($this->getProjectConfiguration()->getAssembly()->toArray()));
-                        \ncc\CLI\Logger::getLogger()->debug('Package assembly written successfully', 'PackageCompiler');
+                        Logger::getLogger()->debug('Package assembly written successfully');
                         break;
 
                     case WritingMode::EXECUTION_UNITS:
-                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())), 'PackageCompiler');
+                        Logger::getLogger()->verbose(sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
                         
                         // Execution units can be multiple, write them named.
                         foreach($this->getRequiredExecutionUnits() as $executionUnitName)
                         {
                             $executionUnit = $this->getProjectConfiguration()->getExecutionUnit($executionUnitName);
                             $packageWriter->writeData(msgpack_pack($executionUnit->toArray()), $executionUnit->getName());
-                            \ncc\CLI\Logger::getLogger()->debug(sprintf('Written execution unit: %s', $executionUnitName), 'PackageCompiler');
+                            Logger::getLogger()->debug(sprintf('Written execution unit: %s', $executionUnitName));
                         }
 
                         // Close the section
                         $packageWriter->endSection();
-                        \ncc\CLI\Logger::getLogger()->debug('Execution units section closed', 'PackageCompiler');
+                        Logger::getLogger()->debug('Execution units section closed');
                         break;
 
                     case WritingMode::COMPONENTS:
                         $componentCount = count($this->getSourceComponents());
-                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Writing %d source components', $componentCount), 'PackageCompiler');
+                        Logger::getLogger()->verbose(sprintf('Writing %d source components', $componentCount));
                         
                         // Components ca be multiple, write them named
                         foreach($this->getSourceComponents() as $componentFilePath)
@@ -187,7 +188,7 @@
 
                             if(empty($componentName) || $componentName === false)
                             {
-                                \ncc\CLI\Logger::getLogger()->error(sprintf('Invalid component path: %s', $componentFilePath), 'PackageCompiler');
+                                Logger::getLogger()->error(sprintf('Invalid component path: %s', $componentFilePath));
                                 throw new CompileException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
                             }
 
@@ -198,7 +199,7 @@
                             {
                                 $componentData = gzdeflate($componentData, $this->compressionLevel);
                                 $compressedSize = strlen($componentData);
-                                \ncc\CLI\Logger::getLogger()->debug(sprintf('Compressed component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100), 'PackageCompiler');
+                                Logger::getLogger()->debug(sprintf('Compressed component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
                             }
 
                             $packageWriter->writeData($componentData, $componentName);
@@ -207,7 +208,7 @@
                         // If dependency linking is statically linked, we embed the package contents into our compiled package
                         if($this->isStaticallyLinked())
                         {
-                            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Embedding %d dependency components for static linking', count($dependencyReaders)), 'PackageCompiler');
+                            Logger::getLogger()->verbose(sprintf('Embedding %d dependency components for static linking', count($dependencyReaders)));
                             
                             // For each dependency, if we cannot resolve one of these dependencies the build fails
                             /** @var PackageReader $packageReader */
@@ -218,19 +219,19 @@
                                 foreach($packageReader->getComponentReferences() as $componentName => $componentReference)
                                 {
                                     $packageWriter->writeData($componentName, $packageReader->readComponent($componentReference));
-                                    \ncc\CLI\Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $componentName), 'PackageCompiler');
+                                    Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $componentName));
                                 }
                             }
                         }
 
                         // Close the section
                         $packageWriter->endSection();
-                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Components section completed (%d components)', $componentCount), 'PackageCompiler');
+                        Logger::getLogger()->verbose(sprintf('Components section completed (%d components)', $componentCount));
                         break;
 
                     case WritingMode::RESOURCES:
                         $resourceCount = count($this->getSourceResources());
-                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Writing %d source resources', $resourceCount), 'PackageCompiler');
+                        Logger::getLogger()->verbose(sprintf('Writing %d source resources', $resourceCount));
                         
                         // Resources can be multiple, write them named.
                         foreach($this->getSourceResources() as $resourceFilePath)
@@ -249,7 +250,7 @@
 
                             if(empty($resourceName) || $resourceName === false)
                             {
-                                \ncc\CLI\Logger::getLogger()->error(sprintf('Invalid resource path: %s', $resourceFilePath), 'PackageCompiler');
+                                Logger::getLogger()->error(sprintf('Invalid resource path: %s', $resourceFilePath));
                                 throw new CompileException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
                             }
 
@@ -260,7 +261,7 @@
                             {
                                 $resourceData = gzdeflate($resourceData, $this->compressionLevel);
                                 $compressedSize = strlen($resourceData);
-                                \ncc\CLI\Logger::getLogger()->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100), 'PackageCompiler');
+                                Logger::getLogger()->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
                             }
 
                             $packageWriter->writeData($resourceData, $resourceName);
@@ -268,7 +269,7 @@
 
                         if($this->isStaticallyLinked())
                         {
-                            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Embedding %d dependency resources for static linking', count($dependencyReaders)), 'PackageCompiler');
+                            Logger::getLogger()->verbose(sprintf('Embedding %d dependency resources for static linking', count($dependencyReaders)));
                             
                             /** @var PackageReader $packageReader */
                             foreach($dependencyReaders as $packageReader)
@@ -277,18 +278,18 @@
                                 foreach($packageReader->getResourceReferences() as $resourceName => $resourceReference)
                                 {
                                     $packageWriter->writeData($resourceName, $packageReader->readResource($resourceReference));
-                                    \ncc\CLI\Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $resourceName), 'PackageCompiler');
+                                    Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $resourceName));
                                 }
                             }
                         }
 
                         $packageWriter->endSection();
-                        \ncc\CLI\Logger::getLogger()->verbose(sprintf('Resources section completed (%d resources)', $resourceCount), 'PackageCompiler');
+                        Logger::getLogger()->verbose(sprintf('Resources section completed (%d resources)', $resourceCount));
                         break;
                 }
             }
 
-            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Package compilation completed: %s', $this->getOutputPath()), 'PackageCompiler');
+            Logger::getLogger()->verbose(sprintf('Package compilation completed: %s', $this->getOutputPath()));
             return $this->getOutputPath();
         }
 
@@ -300,7 +301,7 @@
          */
         private function createPackageHeader(?array $dependencyReaders=null): Header
         {
-            \ncc\CLI\Logger::getLogger()->debug('Creating package header', 'PackageCompiler');
+            Logger::getLogger()->debug('Creating package header');
             
             $header = new Header();
 
@@ -315,19 +316,19 @@
             $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
             $header->setRepositories($this->getProjectConfiguration()->getRepository());
             
-            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Header: build=%s, compressed=%s, static=%s', $this->getBuildNumber(), $this->compressionEnabled ? 'yes' : 'no', $header->isStaticallyLinked() ? 'yes' : 'no'), 'PackageCompiler');
+            Logger::getLogger()->verbose(sprintf('Header: build=%s, compressed=%s, static=%s', $this->getBuildNumber(), $this->compressionEnabled ? 'yes' : 'no', $header->isStaticallyLinked() ? 'yes' : 'no'));
             
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
-                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Added %d defined constants to header', count($this->getBuildConfiguration()->getDefinitions())), 'PackageCompiler');
+                Logger::getLogger()->verbose(sprintf('Added %d defined constants to header', count($this->getBuildConfiguration()->getDefinitions())));
             }
 
             // If dependency readers are provided, we need to match them against the required dependencies because this
             // result contains all resolved dependencies that a package may have (transitive dependencies).
             if($dependencyReaders !== null)
             {
-                \ncc\CLI\Logger::getLogger()->debug(sprintf('Processing %d resolved dependency readers for header', count($dependencyReaders)), 'PackageCompiler');
+                Logger::getLogger()->debug(sprintf('Processing %d resolved dependency readers for header', count($dependencyReaders)));
                 
                 foreach($this->getDependencyReaders() as $packageReader)
                 {
@@ -337,18 +338,18 @@
                     // Ensure that there are no 'latest' versions when statically linking
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
                     {
-                        \ncc\CLI\Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName), 'PackageCompiler');
+                        Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
                         throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
                     $header->addDependencyReference($packageName, $packageVersion, $packageReader->getPackageSource());
-                    \ncc\CLI\Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion), 'PackageCompiler');
+                    Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
                 }
             }
             // Otherwise, just add the dependencies as-is, during installation time they will be resolved regardless.
             else
             {
-                \ncc\CLI\Logger::getLogger()->debug(sprintf('Processing %d package dependencies for header', count($this->getPackageDependencies())), 'PackageCompiler');
+                Logger::getLogger()->debug(sprintf('Processing %d package dependencies for header', count($this->getPackageDependencies())));
                 
                 foreach($this->getPackageDependencies() as $packageName => $packageSource)
                 {
@@ -357,16 +358,16 @@
                     // Ensure that there are no 'latest' versions when statically linking
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
                     {
-                        \ncc\CLI\Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName), 'PackageCompiler');
+                        Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
                         throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
                     $header->addDependencyReference($packageName, $packageVersion, $packageSource);
-                    \ncc\CLI\Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion), 'PackageCompiler');
+                    Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
                 }
             }
 
-            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Package header created with %d dependency references', count($header->getDependencyReferences())), 'PackageCompiler');
+            Logger::getLogger()->verbose(sprintf('Package header created with %d dependency references', count($header->getDependencyReferences())));
             return $header;
         }
     }
