@@ -29,6 +29,7 @@
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
     use ncc\Libraries\semver\Constraint\Constraint;
     use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageSource;
