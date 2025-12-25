@@ -46,7 +46,22 @@
         public function getFilePath(string $path): ?string
         {
             // Directories to skip during recursive search (commonly contain test/example project files)
-            $skipDirectories = ['.github', 'tests', 'test', 'vendor', 'examples', 'docs', 'doc', 'samples', '.git'];
+            // 'build' is skipped to prevent detecting project files in build artifacts (e.g., build/composer.json)
+            $skipDirectories = [
+                '.github', 
+                'tests', 
+                'test', 
+                'vendor',
+                'examples', 
+                'docs', 
+                'doc', 
+                'samples', 
+                '.git', 
+                'build',
+                'dist', 
+                'target', 
+                'out'
+            ];
             
             // First, check if the file exists in the current directory
             $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
