@@ -189,7 +189,7 @@
             else
             {
                 // No autoload information, try to find the source path automatically
-                Logger::getLogger()->warning('No autoload configuration found, attempting to detect source path automatically');
+                Logger::getLogger()->debug('No autoload configuration found, attempting to detect source path automatically');
                 $project->setSourcePath($this->detectSourcePath($baseDir));
                 Logger::getLogger()->verbose(sprintf('Auto-detected source path: %s', $project->getSourcePath()));
             }
@@ -398,8 +398,11 @@
             // License
             if(isset($composerData['license']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting license: %s', $composerData['license']));
-                $assembly->setLicense($composerData['license']);
+                $license = is_array($composerData['license']) 
+                    ? implode(' OR ', $composerData['license']) 
+                    : $composerData['license'];
+                Logger::getLogger()->verbose(sprintf('Setting license: %s', $license));
+                $assembly->setLicense($license);
             }
 
             // Set the package identifier (e.g., com.symfony.process)
