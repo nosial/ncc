@@ -331,57 +331,43 @@
             // Otherwise, we assume its source code that needs to be built, so we try to figure out it's project type
             try
             {
-                Console::out(sprintf("Building project source for %s", $source));
+                Console::out(sprintf("Detecting project type %s", $source));
+
+                // Get the version from the RemotePackage (already resolved by the repository)
+                $resolvedVersion = $selectedPackage->getVersion();
+                if($resolvedVersion !== null)
+                {
+                    Logger::getLogger()->debug(sprintf('Using version from repository: " %s. The downloaded source may not contain a recognized project configuration file (composer.json, package.json, etc.)', $source));
+                }
+
+                $projectPath = ProjectType::detectProjectPath($downloadedPackage);
+                if($projectPath === null)
+                {
+                    Logger::getLogger()->error(sprintf('Unable to detect project path for %s', $source));
+                    throw new OperationException(sprintf('Unable to detect project configuration file path for %s', $source));
+                }
+
+                $projectType = ProjectType::detectProjectType($downloadedPackage);
+                if($projectType === null)
+                {
+                    Logger::getLogger()->error(sprintf('Unable to detect project type for %s', $source));
+                    throw new OperationException(sprintf('Unable to detect project type for %s', $source));
+                }
+
+                Logger::getLogger()->debug(sprintf('Detected project type: %s at path: %s', $projectType->value, $projectPath));
+
+                // Get the converter for the project type
+                $converter = $projectType->getConverter();
+                if($converter === null)
+                {
+                    Logger::getLogger()->error(sprintf('No converter available for project type %s', $projectType->value));
+                    throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
+                }
 
                 // Convert the project source to a ncc project configuration
-                $projectConfiguration = ProjectType::detectProjectType($downloadedPackage)->getConverter()->convert(
-                    ProjectType::detectProjectPath($downloadedPackage)
-                );
-                
-                // If the project configuration has default version (0.0.0), inject the actual resolved version
-                if($projectConfiguration->getAssembly()->getVersion() === '0.0.0')
-                {
-                    // Resolve the actual version from the repository
-                    // First check if the RemotePackage has version information
-                    if($selectedPackage->getVersion() !== null)
-                    {
-                        // Use the version from the RemotePackage (already resolved during getReleaseArchive)
-                        $actualVersion = $selectedPackage->getVersion();
-                        Logger::getLogger()->debug(sprintf('Using version from RemotePackage: "%s"', $actualVersion));
-                    }
-                    // Determine which version to use based on repository type and requested version
-                    elseif($source->getRepository() === 'packagist')
-                    {
-                        // For packagist, get the latest stable release
-                        // This is already filtered for stable versions and sorted by the repository
-                        $actualVersion = $repository->getLatestRelease($source->getOrganization(), $source->getName());
-                        Logger::getLogger()->debug(sprintf('Received version from packagist: "%s" (type: %s, length: %d)', $actualVersion, gettype($actualVersion), strlen($actualVersion)));
-                    }
-                    elseif($source->getVersion() !== null && $source->getVersion() !== 'latest')
-                    {
-                        // For other repositories, use the specified version
-                        $actualVersion = $source->getVersion();
-                    }
-                    else
-                    {
-                        throw new OperationException('Could not determine package version');
-                    }
-                    
-                    // Normalize the version using the ComposerProjectConverter helper
-                    try
-                    {
-                        $normalizedVersion = \ncc\ProjectConverters\ComposerProjectConverter::normalizeVersion($actualVersion);
-                        $projectConfiguration->getAssembly()->setVersion($normalizedVersion);
-                        Console::out(sprintf("Resolved package version: %s", $normalizedVersion));
-                    }
-                    catch(Exception $e)
-                    {
-                        Logger::getLogger()->error(sprintf('Exception during version resolution: %s', $e->getMessage()));
-                        throw new OperationException(sprintf('Failed to resolve version for %s: %s', $source, $e->getMessage()));
-                    }
-                }
-                
-                $outputPath = dirname(ProjectType::detectProjectPath($downloadedPackage)) . DIRECTORY_SEPARATOR . 'project.yml';
+                // Pass the resolved version to the converter
+                $projectConfiguration = $converter->convert($projectPath, $resolvedVersion);
+                $outputPath = dirname($projectPath) . DIRECTORY_SEPARATOR . 'project.yml';
                 $projectConfiguration->save($outputPath);
                 $compiler = Project::compilerFromFile($outputPath);
             }
@@ -393,8 +379,9 @@
             // Build & install the project
             try
             {
-                Console::out(sprintf("Building and installing package %s", $source));
-                return self::installFromFile(new PackageReader($compiler->build()), $options, $installed);
+                Console::out(sprintf("Compiling package %s", $source));
+                $packageReader = new PackageReader($compiler->build());
+                return self::installFromFile($packageReader, $options, $installed);
             }
             catch(Exception $e)
             {
