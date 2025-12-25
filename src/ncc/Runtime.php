@@ -33,11 +33,11 @@
     use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
-    use RuntimeException;
 
     class Runtime
     {
         private static array $importedPackages = [];
+        private static array $packageReaderReferences = [];
         private static bool $streamWrapperInitialized = false;
         private static ?PackageManager $userPackageManager = null;
         private static ?PackageManager $systemPackageManager = null;
@@ -69,7 +69,6 @@
                 if(IO::isFile($package))
                 {
                     $packageReader = self::importFromFile($package);
-                    self::$importedPackages[$packageReader->getAssembly()->getPackage()] = $packageReader;
                 }
                 else
                 {
@@ -79,6 +78,20 @@
             catch(IOException $e)
             {
                 throw new ImportException('Fatal error while read the package: ' . $package, $e->getCode(), $e);
+            }
+
+            // Import the package as a reference
+            $referenceId = uniqid();
+            self::$packageReaderReferences[$referenceId] = $packageReader;
+            self::$importedPackages[$packageReader->getAssembly()->getPackage()] = $referenceId;
+
+            // If the package is statically linked, import its dependencies as well but point to the same reference
+            if($packageReader->getHeader()->isStaticallyLinked())
+            {
+                foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
+                {
+                    self::$importedPackages[$reference->getPackage()] = $referenceId;
+                }
             }
         }
 
@@ -92,7 +105,7 @@
          * @throws ImportException If the package cannot be found or imported
          * @throws PackageException
          */
-        public static function importFromPackageManager(string $package, string $version='latest'): PackageReader
+        private static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
             // First check if package is already imported
             if(isset(self::$importedPackages[$package]))
@@ -159,7 +172,13 @@
          */
         public static function getImportedPackages(): array
         {
-            return self::$importedPackages;
+            $results = [];
+            foreach(self::$importedPackages as $packageName => $referenceId)
+            {
+                $results[$packageName] = self::$packageReaderReferences[$referenceId];
+            }
+
+            return $results;
         }
 
         /**
