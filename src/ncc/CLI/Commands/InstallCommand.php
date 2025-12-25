@@ -368,6 +368,9 @@
 
                 Logger::getLogger()->debug(sprintf('Detected project type: %s at path: %s', $projectType->value, $projectPath));
 
+                // Stage 2.5: Converting project (72%)
+                Console::inlineProgress(72, 100, sprintf("Converting %s project %s", $projectType->value, $source));
+
                 // Get the converter for the project type
                 $converter = $projectType->getConverter();
                 if($converter === null)
@@ -377,9 +380,18 @@
                     throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
                 }
 
+                // Stage 2.6: Resolving dependencies (75%)
+                Console::inlineProgress(75, 100, sprintf("Resolving dependencies for %s", $source));
+
                 // Convert the project source to a ncc project configuration
                 // Pass the resolved version to the converter
-                $projectConfiguration = $converter->convert($projectPath, $resolvedVersion);
+                $projectConfiguration = $converter->convert($projectPath, $resolvedVersion, function(string $message) use ($source) {
+                    Console::inlineProgress(75, 100, $message);
+                });
+                
+                // Stage 2.7: Generating project configuration (78%)
+                Console::inlineProgress(78, 100, sprintf("Generating project configuration for %s", $source));
+                
                 $outputPath = dirname($projectPath) . DIRECTORY_SEPARATOR . 'project.yml';
                 $projectConfiguration->save($outputPath);
                 $compiler = Project::compilerFromFile($outputPath);
@@ -390,13 +402,13 @@
                 throw new OperationException(sprintf('Failed to convert project source for %s: %s', $source, $e->getMessage()));
             }
 
-            // Stage 3: Compile (70-100%)
+            // Stage 3: Compile (80-100%)
             // Build & install the project
             try
             {
                 $packageReader = new PackageReader($compiler->compile(function(int $current, int $total, string $message) {
-                    // Map compile progress to 70-100% of total progress
-                    $compileProgress = $total > 0 ? 70 + (int)(($current / $total) * 30) : 70;
+                    // Map compile progress to 80-100% of total progress
+                    $compileProgress = $total > 0 ? 80 + (int)(($current / $total) * 20) : 80;
                     Console::inlineProgress($compileProgress, 100, $message);
                 }));
                 Console::completeProgress();

@@ -41,7 +41,7 @@
         /**
          * @inheritDoc
          */
-        public function convert(string $filePath, ?string $version = null): Project
+        public function convert(string $filePath, ?string $version = null, ?callable $progressCallback = null): Project
         {
             Logger::getLogger()->verbose(sprintf('Converting Composer project from %s', $filePath));
             if($version !== null)
@@ -69,7 +69,7 @@
             if(isset($composerData['require']))
             {
                 Logger::getLogger()->debug(sprintf('Processing %d production dependencies', count($composerData['require'])));
-                foreach($this->generateDependencies($composerData) as $dependencyName => $dependencySource)
+                foreach($this->generateDependencies($composerData, $progressCallback) as $dependencyName => $dependencySource)
                 {
                     $project->addDependency($dependencyName, $dependencySource);
                 }
@@ -81,7 +81,7 @@
             if(isset($composerData['require-dev']))
             {
                 Logger::getLogger()->debug(sprintf('Processing %d development dependencies', count($composerData['require-dev'])));
-                foreach($this->generateDebugDependencies($composerData) as $dependencyName => $dependencySource)
+                foreach($this->generateDebugDependencies($composerData, $progressCallback) as $dependencyName => $dependencySource)
                 {
                     $debugConfiguration->addDependency($dependencyName, $dependencySource);
                 }
@@ -113,6 +113,13 @@
                 // Get first item, we consider this the main source path
                 $psr4Paths = array_values($composerData['autoload']['psr-4']);
                 $firstPath = $psr4Paths[0] ?? 'src';
+                
+                // PSR-4 paths can be either strings or arrays of strings
+                if(is_array($firstPath))
+                {
+                    $firstPath = $firstPath[0] ?? 'src';
+                }
+                
                 // Empty string in PSR-4 means the root directory, use '.' instead
                 $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
                 $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
@@ -124,18 +131,24 @@
                     Logger::getLogger()->verbose(sprintf('Adding %d additional PSR-4 paths as included components', count($psr4Paths) - 1));
                     foreach(array_slice($psr4Paths, 1) as $item)
                     {
-                        // Empty string means root directory
-                        $includePath = $item === '' ? '.' : rtrim($item, '/\\');
-                        $validatedPath = $this->validateSourcePath($baseDir, $includePath);
-                        if($validatedPath !== null)
+                        // PSR-4 paths can be either strings or arrays of strings
+                        $paths = is_array($item) ? $item : [$item];
+                        
+                        foreach($paths as $path)
                         {
-                            Logger::getLogger()->debug(sprintf('Adding included component: %s', $includePath));
-                            $releaseConfiguration->addIncludedComponent($validatedPath);
-                            $debugConfiguration->addIncludedComponent($validatedPath);
-                        }
-                        else
-                        {
-                            Logger::getLogger()->warning(sprintf('PSR-4 path does not exist, skipping: %s', $includePath));
+                            // Empty string means root directory
+                            $includePath = $path === '' ? '.' : rtrim($path, '/\\');
+                            $validatedPath = $this->validateSourcePath($baseDir, $includePath);
+                            if($validatedPath !== null)
+                            {
+                                Logger::getLogger()->debug(sprintf('Adding included component: %s', $includePath));
+                                $releaseConfiguration->addIncludedComponent($validatedPath);
+                                $debugConfiguration->addIncludedComponent($validatedPath);
+                            }
+                            else
+                            {
+                                Logger::getLogger()->warning(sprintf('PSR-4 path does not exist, skipping: %s', $includePath));
+                            }
                         }
                     }
                 }
@@ -245,9 +258,10 @@
          * Generate dependencies from Composer data.
          *
          * @param array $composerData The parsed Composer JSON data.
+         * @param callable|null $progressCallback Optional callback for progress updates.
          * @return array An associative array of dependency names to PackageSource objects.
          */
-        private function generateDependencies(array $composerData): array
+        private function generateDependencies(array $composerData, ?callable $progressCallback = null): array
         {
             $dependencies = [];
             foreach ($composerData['require'] as $dependency => $version)
@@ -265,6 +279,11 @@
                     continue;
                 }
 
+                if($progressCallback !== null)
+                {
+                    $progressCallback(sprintf('Resolving dependency %s', $dependency));
+                }
+
                 Logger::getLogger()->verbose(sprintf('Processing dependency: %s@%s', $dependency, $version));
                 $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
                 $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
@@ -280,9 +299,10 @@
          * Generate debug dependencies from Composer data.
          *
          * @param array $composerData The parsed Composer JSON data.
+         * @param callable|null $progressCallback Optional callback for progress updates.
          * @return array An associative array of dependency names to PackageSource objects for debug dependencies.
          */
-        private function generateDebugDependencies(array $composerData): array
+        private function generateDebugDependencies(array $composerData, ?callable $progressCallback = null): array
         {
             $dependencies = [];
             foreach ($composerData['require-dev'] as $dependency => $version)
@@ -298,6 +318,11 @@
                 {
                     Logger::getLogger()->debug(sprintf('Skipping Composer virtual package: %s', $dependency));
                     continue;
+                }
+
+                if($progressCallback !== null)
+                {
+                    $progressCallback(sprintf('Resolving dev dependency %s', $dependency));
                 }
 
                 Logger::getLogger()->verbose(sprintf('Processing development dependency: %s@%s', $dependency, $version));

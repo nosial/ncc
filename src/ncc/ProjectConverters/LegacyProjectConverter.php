@@ -44,10 +44,12 @@
          * Converts a legacy project.json file to the new Project format
          *
          * @param string $filePath The path to the legacy project.json file
+         * @param string|null $version Optional version parameter (not used in legacy converter)
+         * @param callable|null $progressCallback Optional callback for progress updates
          * @return Project The converted Project object
          * @throws IOException If the file cannot be read
          */
-        public function convert(string $filePath): Project
+        public function convert(string $filePath, ?string $version = null, ?callable $progressCallback = null): Project
         {
             Logger::getLogger()->verbose(sprintf('Converting legacy project from %s', $filePath));
             $content = IO::readFile($filePath);
