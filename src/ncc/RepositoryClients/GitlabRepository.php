@@ -27,6 +27,7 @@
     use JsonException;
     use ncc\Abstracts\AbstractAuthentication;
     use ncc\Abstracts\AbstractRepository;
+    use ncc\Classes\Cache;
     use ncc\CLI\Logger;
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\RemotePackageType;
@@ -402,6 +403,17 @@
 
         private function processHttpResponse(CurlHandle $curl, string $group, string $project): array
         {
+            // Generate cache key from the URL
+            $url = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
+            $cache_key = 'http_response:' . md5($url);
+
+            // Check if response is cached
+            if(Cache::has($cache_key))
+            {
+                Logger::getLogger()->debug(sprintf('Using cached response for %s/%s', $group, $project));
+                return Cache::get($cache_key);
+            }
+
             $retry_count = 0;
             $response = false;
 
@@ -450,7 +462,13 @@
             try
             {
                 Logger::getLogger()->debug(sprintf('Parsing JSON response for %s/%s', $group, $project));
-                return json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+                $decoded = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+                
+                // Cache the successful response
+                Cache::set($cache_key, $decoded);
+                Logger::getLogger()->verbose(sprintf('Cached response for %s/%s', $group, $project));
+                
+                return $decoded;
             }
             catch(JsonException $e)
             {
