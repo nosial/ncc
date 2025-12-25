@@ -231,6 +231,9 @@
 
             Console::out(sprintf("Installing package %s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()));
 
+            // Mark package as being installed to prevent circular dependency loops
+            $installed[] = $packageIdentifier;
+
             // Add the repositories if required
             if(!$options['skip-repositories'] && count($packageReader->getHeader()->getRepositories() ?? []) > 0)
             {
@@ -272,7 +275,6 @@
             }
 
             Runtime::getPackageManager()->install($packageReader, $options);
-            $installed[] = $packageIdentifier;
 
             return $installed;
         }
