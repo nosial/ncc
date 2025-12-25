@@ -22,14 +22,9 @@
 
     namespace ncc\Enums;
 
-    use FilesystemIterator;
     use ncc\Abstracts\AbstractProjectConverter;
-    use ncc\Classes\IO;
     use ncc\ProjectConverters\ComposerProjectConverter;
     use ncc\ProjectConverters\LegacyProjectConverter;
-    use RecursiveCallbackFilterIterator;
-    use RecursiveDirectoryIterator;
-    use RecursiveIteratorIterator;
 
     enum ProjectType : string
     {
@@ -45,48 +40,33 @@
          */
         public function getFilePath(string $path): ?string
         {
-            // Directories to skip during recursive search (commonly contain test/example project files)
-            // 'build' is skipped to prevent detecting project files in build artifacts (e.g., build/composer.json)
-            $skipDirectories = [
-                '.github', 
-                'tests', 
-                'test', 
-                'vendor',
-                'examples', 
-                'docs', 
-                'doc', 
-                'samples', 
-                '.git', 
-                'build',
-                'dist', 
-                'target', 
-                'out'
-            ];
-            
             // First, check if the file exists in the current directory
             $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
-            if (IO::exists($directFilePath) && IO::isFile($directFilePath))
+            if (file_exists($directFilePath) && is_file($directFilePath))
             {
                 return $directFilePath;
             }
 
-            // If not found in current directory, recursively search subdirectories
-            // but skip common directories that contain test/example fixtures
-            $iterator = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
-            $filteredIterator = new RecursiveCallbackFilterIterator($iterator, function ($current, $key, $iterator) use ($skipDirectories) {
-                // Skip directories in the skip list
-                if ($iterator->hasChildren() && in_array($current->getFilename(), $skipDirectories, true))
-                {
-                    return false;
-                }
-                return true;
-            });
-            
-            foreach (new RecursiveIteratorIterator($filteredIterator, RecursiveIteratorIterator::SELF_FIRST) as $file)
+            // For packagist packages, check one level deep (common structure)
+            $items = @scandir($path);
+            if ($items !== false)
             {
-                if ($file->isFile() && $file->getFilename() === $this->value)
+                foreach ($items as $item)
                 {
-                    return $file->getPathname();
+                    if ($item === '.' || $item === '..')
+                    {
+                        continue;
+                    }
+                    
+                    $subPath = $path . DIRECTORY_SEPARATOR . $item;
+                    if (is_dir($subPath))
+                    {
+                        $subFilePath = $subPath . DIRECTORY_SEPARATOR . $this->value;
+                        if (file_exists($subFilePath) && is_file($subFilePath))
+                        {
+                            return $subFilePath;
+                        }
+                    }
                 }
             }
 
@@ -109,24 +89,55 @@
         }
 
         /**
-         * Detects the project path by scanning the directory recursively for project files.
+         * Detects the project path by scanning the directory for project files.
+         * Optimized to scan only once instead of per project type.
          *
          * @param string $path The path to search for project files.
          * @return string|null The path to the project file if found, null otherwise.
          */
         public static function detectProjectPath(string $path): ?string
         {
+            // Build list of all project filenames to search for
+            $projectFiles = [];
             foreach (self::cases() as $case)
             {
-                if ($case === null)
-                {
-                    continue;
-                }
+                $projectFiles[] = $case->value;
+            }
 
-                $filePath = $case->getFilePath($path);
-                if ($filePath !== null)
+            // First, check if any file exists in the root directory
+            foreach ($projectFiles as $filename)
+            {
+                $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+                if (file_exists($directFilePath) && is_file($directFilePath))
                 {
-                    return $filePath;
+                    return $directFilePath;
+                }
+            }
+
+            // For packagist packages, check one level deep (common structure)
+            // This handles the case where packagist extracts to a subfolder
+            $items = @scandir($path);
+            if ($items !== false)
+            {
+                foreach ($items as $item)
+                {
+                    if ($item === '.' || $item === '..')
+                    {
+                        continue;
+                    }
+                    
+                    $subPath = $path . DIRECTORY_SEPARATOR . $item;
+                    if (is_dir($subPath))
+                    {
+                        foreach ($projectFiles as $filename)
+                        {
+                            $subFilePath = $subPath . DIRECTORY_SEPARATOR . $filename;
+                            if (file_exists($subFilePath) && is_file($subFilePath))
+                            {
+                                return $subFilePath;
+                            }
+                        }
+                    }
                 }
             }
 
