@@ -270,7 +270,7 @@
             {
                 case RemotePackageType::SOURCE_ZIP:
                     $downloadedPackage = $this->downloadFile($remotePackage->getDownloadUrl(), PathResolver::getTmpLocation(), $progress);
-                    $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . IO::santizeName($remotePackage->getProject());
+                    $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . uniqid();
                     ZipArchive::extract($downloadedPackage, $outputPath);
                     ShutdownHandler::flagTemporary($downloadedPackage);
                     ShutdownHandler::flagTemporary($outputPath);
@@ -278,7 +278,7 @@
 
                 case RemotePackageType::SOURCE_TAR:
                     $downloadedPackage = $this->downloadFile($remotePackage->getDownloadUrl(), PathResolver::getTmpLocation(), $progress);
-                    $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . IO::santizeName($remotePackage->getProject());
+                    $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . uniqid();
                     TarArchive::extract($downloadedPackage, $outputPath);
                     ShutdownHandler::flagTemporary($downloadedPackage);
                     ShutdownHandler::flagTemporary($outputPath);
@@ -286,7 +286,7 @@
 
                 case RemotePackageType::SOURCE_GIT:
                     // USe symfony process to clone the repo properly
-                    $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . IO::santizeName($remotePackage->getProject());
+                    $outputPath = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . uniqid();
                     $this->gitClone($remotePackage->getDownloadUrl(), $outputPath, $progress);
                     ShutdownHandler::flagTemporary($outputPath);
                     return $outputPath;
