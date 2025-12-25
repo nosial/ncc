@@ -25,12 +25,14 @@
     use Exception;
     use ncc\Libraries\Process\Process;
     use ncc\Libraries\Process\ExecutableFinder;
+    use ncc\CLI\Logger;
 
     class Console
     {
         private static bool $ansiColorsEnabled = true;
         private static ?string $currentProgressMessage = null;
         private static int $lastProgressLength = 0;
+        private static ?bool $isVerboseOrDebugMode = null;
 
         public static function enableAnsiColors(): void
         {
@@ -40,6 +42,26 @@
         public static function disableAnsiColors(): void
         {
             self::$ansiColorsEnabled = false;
+        }
+
+        /**
+         * Checks if the Logger is in Verbose or Debug mode.
+         * Caches the result to avoid repeated checks.
+         *
+         * @return bool True if in verbose or debug mode, false otherwise
+         */
+        private static function isVerboseOrDebugMode(): bool
+        {
+            if (self::$isVerboseOrDebugMode === null)
+            {
+                $currentLevel = \ncc\Libraries\LogLib2\Classes\Utilities::getEnvironmentLogLevel();
+                self::$isVerboseOrDebugMode = in_array($currentLevel, [
+                    \ncc\Libraries\LogLib2\Enums\LogLevel::VERBOSE,
+                    \ncc\Libraries\LogLib2\Enums\LogLevel::DEBUG
+                ], true);
+            }
+            
+            return self::$isVerboseOrDebugMode;
         }
 
         public static function out(string $message): void
@@ -239,6 +261,7 @@
         /**
          * Displays an inline progress indicator with a message.
          * This will overwrite the current line each time it's called.
+         * If Logger is in Verbose or Debug mode, uses Logger info statements instead.
          *
          * @param int $current The current progress value (e.g., current stage)
          * @param int $total The total number of steps
@@ -247,6 +270,15 @@
          */
         public static function inlineProgress(int $current, int $total, string $message): void
         {
+            // If in verbose or debug mode, use logger info statements instead of animated progress
+            if (self::isVerboseOrDebugMode())
+            {
+                $percentage = $total > 0 ? round(($current / $total) * 100) : 0;
+                $logMessage = sprintf('[%d/%d] (%d%%) %s', $current, $total, $percentage, $message);
+                Logger::getLogger()->info($logMessage);
+                return;
+            }
+            
             $percentage = $total > 0 ? round(($current / $total) * 100) : 0;
             $progressBar = self::createProgressBar($current, $total, 30);
             
@@ -274,11 +306,18 @@
 
         /**
          * Clears the current inline progress indicator and moves to a new line.
+         * Does nothing if in verbose or debug mode (since we use logger instead).
          *
          * @return void
          */
         public static function clearInlineProgress(): void
         {
+            // No need to clear if we're using logger mode
+            if (self::isVerboseOrDebugMode())
+            {
+                return;
+            }
+            
             if (self::$lastProgressLength > 0)
             {
                 // Use ANSI escape code to clear the entire line
@@ -290,12 +329,23 @@
 
         /**
          * Completes the progress display and moves to a new line.
+         * If in verbose or debug mode, uses Logger info for final message.
          *
          * @param string|null $finalMessage Optional message to display when complete
          * @return void
          */
         public static function completeProgress(?string $finalMessage = null): void
         {
+            // If in verbose or debug mode, use logger for final message
+            if (self::isVerboseOrDebugMode())
+            {
+                if ($finalMessage !== null)
+                {
+                    Logger::getLogger()->info($finalMessage);
+                }
+                return;
+            }
+            
             if (self::$lastProgressLength > 0)
             {
                 // Use ANSI escape code to clear the entire line
