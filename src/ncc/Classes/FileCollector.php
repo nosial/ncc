@@ -25,6 +25,7 @@
     use Exception;
     use FilesystemIterator;
     use InvalidArgumentException;
+    use ncc\Classes\IO;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
     use RuntimeException;
@@ -49,7 +50,7 @@
         public static function collectFiles(string $directory, array $include=[], array $exclude=[]): array
         {
             // Validate the directory
-            if (!is_dir($directory))
+            if (!IO::isDir($directory))
             {
                 throw new InvalidArgumentException(sprintf('The provided path \'%s\' is not a valid directory.', $directory));
             }

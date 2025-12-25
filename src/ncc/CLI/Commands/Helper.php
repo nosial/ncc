@@ -22,6 +22,7 @@
 
     namespace ncc\CLI\Commands;
 
+    use ncc\Classes\IO;
     use ncc\Classes\Utilities;
     use ncc\CLI\Logger;
 
@@ -54,7 +55,7 @@
             }
 
             Logger::getLogger()->debug("Resolving project configuration path: $projectPath");
-            if(!file_exists($projectPath))
+            if(!IO::exists($projectPath))
             {
                 Logger::getLogger()->debug('Resolution failed, path does not exist');
                 return null;

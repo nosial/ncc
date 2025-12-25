@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
+    use ncc\Classes\IO;
     use ncc\Enums\RepositoryType;
     use ncc\Objects\RepositoryConfiguration;
 
@@ -46,9 +47,9 @@
             $this->repositoriesPath = $this->dataDirectoryPath . DIRECTORY_SEPARATOR . 'repositories.json';
             $this->entries = [];
 
-            if(is_file($this->repositoriesPath))
+            if(IO::isFile($this->repositoriesPath))
             {
-                $json = file_get_contents($this->repositoriesPath);
+                $json = IO::readFile($this->repositoriesPath);
                 $data = json_decode($json, true);
                 if(is_array($data))
                 {
@@ -184,10 +185,14 @@
             }
 
             // Ensure the directory exists
-            if(!is_dir($this->dataDirectoryPath))
+            if(!IO::isDir($this->dataDirectoryPath))
             {
                 // Check if we can create the directory
-                if(!@mkdir($this->dataDirectoryPath, 0755, true) && !is_dir($this->dataDirectoryPath))
+                try
+                {
+                    IO::mkdir($this->dataDirectoryPath);
+                }
+                catch(\ncc\Exceptions\IOException $e)
                 {
                     // Cannot create directory, skip saving (likely a read-only system directory)
                     return;
@@ -195,21 +200,24 @@
             }
 
             // Check if we have write permission to the directory
-            if(!is_writable($this->dataDirectoryPath))
+            if(!IO::isWritable($this->dataDirectoryPath))
             {
                 // No write permission, skip saving (likely a read-only system directory)
                 return;
             }
 
             // Write the file
-            if(@file_put_contents($this->repositoriesPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false)
+            try
+            {
+                IO::writeFile($this->repositoriesPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                // Set permissions: owner can read/write, others can only read (0644)
+                IO::chmod($this->repositoriesPath, 0644);
+            }
+            catch(\ncc\Exceptions\IOException $e)
             {
                 // Failed to write file, skip silently
                 return;
             }
-            
-            // Set permissions: owner can read/write, others can only read (0644)
-            @chmod($this->repositoriesPath, 0644);
         }
 
         /**

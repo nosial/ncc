@@ -259,12 +259,12 @@
                 if($asset['format'] === 'zip')
                 {
                     Logger::getLogger()->info(sprintf('Found zip archive for release %s in %s/%s', $release, $group, $project));
-                    $results = new RemotePackage($asset['url'], RemotePackageType::SOURCE_ZIP, $group, $project);
+                    $results = new RemotePackage($asset['url'], RemotePackageType::SOURCE_ZIP, $group, $project, $release);
                 }
                 elseif($asset['format'] === 'tar')
                 {
                     Logger::getLogger()->info(sprintf('Found tar archive for release %s in %s/%s', $release, $group, $project));
-                    $results = new RemotePackage($asset['url'], RemotePackageType::SOURCE_TAR, $group, $project);
+                    $results = new RemotePackage($asset['url'], RemotePackageType::SOURCE_TAR, $group, $project, $release);
                 }
                 else
                 {

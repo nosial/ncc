@@ -22,6 +22,7 @@
 
     namespace ncc\Classes;
 
+    use ncc\Classes\IO;
     use ncc\CLI\Logger;
     use ncc\Enums\ExecutionMode;
     use ncc\Enums\ExecutionUnitType;
@@ -47,7 +48,7 @@
             // Check if all the required files are available
             foreach($unit->getRequiredFiles() as $requiredFile)
             {
-                if(!file_exists($projectPath . DIRECTORY_SEPARATOR . $requiredFile))
+                if(!IO::exists($projectPath . DIRECTORY_SEPARATOR . $requiredFile))
                 {
                     throw new ExecutionUnitException(sprintf('The execution unit %s is missing the required file %s', $unit->getName(), $projectPath . DIRECTORY_SEPARATOR . $requiredFile));
                 }
@@ -57,7 +58,7 @@
             if($unit->getType() === ExecutionUnitType::PHP)
             {
                 $entryPointPath = $projectPath . DIRECTORY_SEPARATOR . $unit->getEntryPoint();
-                if(!file_exists($entryPointPath))
+                if(!IO::exists($entryPointPath))
                 {
                     throw new ExecutionUnitException(sprintf('The execution unit %s entrypoint %s does not exist', $unit->getName(), $entryPointPath));
                 }

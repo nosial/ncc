@@ -257,14 +257,11 @@
          */
         public function download(RemotePackage $remotePackage, ?callable $progress=null): string
         {
-            if(!is_dir(PathResolver::getTmpLocation()))
+            if(!IO::isDir(PathResolver::getTmpLocation()))
             {
-                if(@!mkdir(PathResolver::getTmpLocation(), 0777, true))
-                {
-                    throw new IOException(sprintf('Failed to create path %s', PathResolver::getTmpLocation()));
-                }
+                IO::mkdir(PathResolver::getTmpLocation());
             }
-            elseif(!is_writeable(PathResolver::getTmpLocation()))
+            elseif(!IO::isWritable(PathResolver::getTmpLocation()))
             {
                 throw new IOException(sprintf('No write permissions for the temporary path %s', PathResolver::getTmpLocation()));
             }
@@ -363,12 +360,9 @@
             }
 
             // Ensure the directory exists before attempting to write the file
-            if(!is_dir($path))
+            if(!IO::isDir($path))
             {
-                if(!mkdir($path, 0777, true) && !is_dir($path))
-                {
-                    throw new OperationException(sprintf('Failed to create directory: %s', $path));
-                }
+                IO::mkdir($path);
             }
 
             $filePath = $path . DIRECTORY_SEPARATOR . $filePath;

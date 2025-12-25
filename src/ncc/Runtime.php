@@ -22,6 +22,7 @@
     namespace ncc;
 
     use ncc\Classes\AuthenticationManager;
+    use ncc\Classes\IO;
     use ncc\Classes\PackageManager;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PathResolver;
@@ -65,7 +66,7 @@
 
             try
             {
-                if(is_file($package))
+                if(IO::isFile($package))
                 {
                     $packageReader = self::importFromFile($package);
                     self::$importedPackages[$packageReader->getAssembly()->getPackage()] = $packageReader;
@@ -133,17 +134,17 @@
         {
             // Initialize the StreamWrapper on first import
             $packagePath = realpath($packagePath);
-            if(!file_exists($packagePath))
+            if(!IO::exists($packagePath))
             {
                 throw new IOException('Package not found: ' . $packagePath);
             }
 
-            if(!is_file($packagePath))
+            if(!IO::isFile($packagePath))
             {
                 throw new IOException('Package path is not a file: ' . $packagePath);
             }
 
-            if(!is_readable($packagePath))
+            if(!IO::isReadable($packagePath))
             {
                 throw new IOException('Package file is not readable: ' . $packagePath);
             }
@@ -190,12 +191,9 @@
                     return null;
                 }
 
-                if(!file_exists($userLocation))
+                if(!IO::exists($userLocation))
                 {
-                    if(!mkdir($userLocation, 0755, true) && !is_dir($userLocation))
-                    {
-                        throw new RuntimeException(sprintf('Directory "%s" was not created', $userLocation));
-                    }
+                    IO::mkdir($userLocation);
                 }
 
                 self::$userPackageManager = new PackageManager($userLocation);
@@ -217,13 +215,10 @@
             if(self::$systemPackageManager === null)
             {
                 $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
-                if($hasWriteAccess && !file_exists($systemLocation))
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
+                if($hasWriteAccess && !IO::exists($systemLocation))
                 {
-                    if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
-                    {
-                        throw new RuntimeException(sprintf('Directory "%s" was not created', $systemLocation));
-                    }
+                    IO::mkdir($systemLocation);
                 }
 
                 self::$systemPackageManager = new PackageManager($systemLocation);
@@ -262,12 +257,9 @@
                     return null;
                 }
 
-                if(!file_exists($userLocation))
+                if(!IO::exists($userLocation))
                 {
-                    if(!mkdir($userLocation, 0755, true) && !is_dir($userLocation))
-                    {
-                        throw new RuntimeException(sprintf('Directory "%s" was not created', $userLocation));
-                    }
+                    IO::mkdir($userLocation);
                 }
 
                 self::$userRepositoryManager = new RepositoryManager($userLocation);
@@ -281,13 +273,10 @@
             if(self::$systemRepositoryManager === null)
             {
                 $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = is_writable(dirname($systemLocation)) || (file_exists($systemLocation) && is_writable($systemLocation));
-                if($hasWriteAccess && !file_exists($systemLocation))
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
+                if($hasWriteAccess && !IO::exists($systemLocation))
                 {
-                    if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
-                    {
-                        throw new RuntimeException(sprintf('Directory "%s" was not created', $systemLocation));
-                    }
+                    IO::mkdir($systemLocation);
                 }
 
                 self::$systemRepositoryManager = new RepositoryManager($systemLocation);
@@ -317,12 +306,9 @@
                     return null;
                 }
 
-                if(!file_exists($userLocation))
+                if(!IO::exists($userLocation))
                 {
-                    if(!mkdir($userLocation, 0755, true) && !is_dir($userLocation))
-                    {
-                        throw new RuntimeException(sprintf('Directory "%s" was not created', $userLocation));
-                    }
+                    IO::mkdir($userLocation);
                 }
 
                 self::$userAuthenticationManager = new AuthenticationManager($userLocation);
@@ -336,13 +322,10 @@
             if(self::$systemAuthenticationManager === null)
             {
                 $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = is_writeable(dirname($systemLocation) || (file_exists($systemLocation) && is_writeable($systemLocation)));
-                if($hasWriteAccess && !file_exists($systemLocation))
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation) || (IO::exists($systemLocation) && IO::isWritable($systemLocation)));
+                if($hasWriteAccess && !IO::exists($systemLocation))
                 {
-                    if(!mkdir($systemLocation, 0755, true) && !is_dir($systemLocation))
-                    {
-                        throw new RuntimeException(sprintf('Directory "%s" was not created', $systemLocation));
-                    }
+                    IO::mkdir($systemLocation);
                 }
 
                 self::$systemAuthenticationManager = new AuthenticationManager($systemLocation);

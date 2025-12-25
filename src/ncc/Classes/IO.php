@@ -152,6 +152,164 @@
             return $content;
         }
 
+        /**
+         * Copies a file from source to destination.
+         *
+         * @param string $source The source file path.
+         * @param string $destination The destination file path.
+         * @throws IOException If the file cannot be copied.
+         */
+        public static function copy(string $source, string $destination): void
+        {
+            Logger::getLogger()->verbose(sprintf('Copying file from %s to %s', $source, $destination));
+            if(!@copy($source, $destination))
+            {
+                throw new IOException(sprintf('Failed to copy file from %s to %s', $source, $destination));
+            }
+        }
+
+        /**
+         * Renames or moves a file or directory.
+         *
+         * @param string $oldName The current file or directory path.
+         * @param string $newName The new file or directory path.
+         * @throws IOException If the file or directory cannot be renamed.
+         */
+        public static function rename(string $oldName, string $newName): void
+        {
+            Logger::getLogger()->verbose(sprintf('Renaming %s to %s', $oldName, $newName));
+            if(!@rename($oldName, $newName))
+            {
+                throw new IOException(sprintf('Failed to rename %s to %s', $oldName, $newName));
+            }
+        }
+
+        /**
+         * Changes file mode (permissions).
+         *
+         * @param string $path The path to the file or directory.
+         * @param int $mode The new permissions mode.
+         * @throws IOException If the permissions cannot be changed.
+         */
+        public static function chmod(string $path, int $mode): void
+        {
+            Logger::getLogger()->verbose(sprintf('Changing permissions of %s to %o', $path, $mode));
+            if(!@chmod($path, $mode))
+            {
+                throw new IOException(sprintf('Failed to change permissions of %s', $path));
+            }
+        }
+
+        /**
+         * Checks if a file or directory exists.
+         *
+         * @param string $path The path to check.
+         * @return bool True if the file or directory exists, false otherwise.
+         */
+        public static function exists(string $path): bool
+        {
+            Logger::getLogger()->verbose(sprintf('Checking if %s exists', $path));
+            return file_exists($path);
+        }
+
+        /**
+         * Checks if a path is a directory.
+         *
+         * @param string $path The path to check.
+         * @return bool True if the path is a directory, false otherwise.
+         */
+        public static function isDir(string $path): bool
+        {
+            Logger::getLogger()->verbose(sprintf('Checking if %s is a directory', $path));
+            return is_dir($path);
+        }
+
+        /**
+         * Checks if a path is a file.
+         *
+         * @param string $path The path to check.
+         * @return bool True if the path is a file, false otherwise.
+         */
+        public static function isFile(string $path): bool
+        {
+            Logger::getLogger()->verbose(sprintf('Checking if %s is a file', $path));
+            return is_file($path);
+        }
+
+        /**
+         * Checks if a file or directory is readable.
+         *
+         * @param string $path The path to check.
+         * @return bool True if the file or directory is readable, false otherwise.
+         */
+        public static function isReadable(string $path): bool
+        {
+            Logger::getLogger()->verbose(sprintf('Checking if %s is readable', $path));
+            return is_readable($path);
+        }
+
+        /**
+         * Checks if a file or directory is writable.
+         *
+         * @param string $path The path to check.
+         * @return bool True if the file or directory is writable, false otherwise.
+         */
+        public static function isWritable(string $path): bool
+        {
+            Logger::getLogger()->verbose(sprintf('Checking if %s is writable', $path));
+            return is_writable($path);
+        }
+
+        /**
+         * Gets the size of a file.
+         *
+         * @param string $path The path to the file.
+         * @return int The size of the file in bytes.
+         * @throws IOException If the file size cannot be determined.
+         */
+        public static function filesize(string $path): int
+        {
+            Logger::getLogger()->verbose(sprintf('Getting size of file %s', $path));
+            $size = @filesize($path);
+            if($size === false)
+            {
+                throw new IOException(sprintf('Failed to get size of file %s', $path));
+            }
+            return $size;
+        }
+
+        /**
+         * Creates a symbolic link.
+         *
+         * @param string $target The target of the link.
+         * @param string $link The link path.
+         * @throws IOException If the symbolic link cannot be created.
+         */
+        public static function symlink(string $target, string $link): void
+        {
+            Logger::getLogger()->verbose(sprintf('Creating symbolic link from %s to %s', $link, $target));
+            if(!@symlink($target, $link))
+            {
+                throw new IOException(sprintf('Failed to create symbolic link from %s to %s', $link, $target));
+            }
+        }
+
+        /**
+         * Creates a hard link.
+         *
+         * @param string $target The target of the link.
+         * @param string $link The link path.
+         * @throws IOException If the hard link cannot be created.
+         */
+        public static function link(string $target, string $link): void
+        {
+            Logger::getLogger()->verbose(sprintf('Creating hard link from %s to %s', $link, $target));
+            if(!@link($target, $link))
+            {
+                throw new IOException(sprintf('Failed to create hard link from %s to %s', $link, $target));
+            }
+        }
+
         public static function santizeName(string $name): string
         {
             // Remove any invalid characters from the name

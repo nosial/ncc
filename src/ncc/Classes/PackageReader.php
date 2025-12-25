@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
+    use ncc\Classes\IO;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
@@ -65,12 +66,12 @@
         public function __construct(string $filePath)
         {
             $this->filePath = $filePath;
-            if(!file_exists($this->filePath))
+            if(!IO::exists($this->filePath))
             {
                 throw new InvalidArgumentException("File does not exist: " . $this->filePath);
             }
 
-            if(!is_readable($this->filePath))
+            if(!IO::isReadable($this->filePath))
             {
                 throw new InvalidArgumentException("File is not readable: " . $this->filePath);
             }
@@ -412,9 +413,9 @@
         public function extract(string $outputDirectory): void
         {
             // Create the directory if it doesn't exist
-            if(!is_dir($outputDirectory))
+            if(!IO::isDir($outputDirectory))
             {
-                mkdir($outputDirectory, 0777, true);
+                IO::mkdir($outputDirectory);
             }
 
             // Extract all the references from the package
@@ -522,8 +523,8 @@
             $searchSequence = PackageStructure::START_PACKAGE->value . PackageStructure::MAGIC_BYTES->value . PackageStructure::TERMINATE->value;
             $searchLength = strlen($searchSequence);
 
-            $fileSize = filesize($this->filePath);
-            if ($fileSize === false || $fileSize < $searchLength)
+            $fileSize = IO::filesize($this->filePath);
+            if ($fileSize < $searchLength)
             {
                 throw new InvalidArgumentException("File is too small to contain a valid package: " . $this->filePath);
             }

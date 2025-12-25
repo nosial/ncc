@@ -56,7 +56,7 @@
                 $projectPath = getcwd() . DIRECTORY_SEPARATOR . $argv['name'];
             }
 
-            if(file_exists($projectPath))
+            if(IO::exists($projectPath))
             {
                 Console::error(sprintf('The path %s already exists', $projectPath));
                 return 1;
@@ -78,7 +78,7 @@
 
             try
             {
-                if(!file_exists($sourcePath))
+                if(!IO::exists($sourcePath))
                 {
                     IO::mkdir($sourcePath);
                 }

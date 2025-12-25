@@ -25,6 +25,7 @@
     use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\FileCollector;
+    use ncc\Classes\IO;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
@@ -93,36 +94,51 @@
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
+            \ncc\CLI\Logger::getLogger()->debug(sprintf('Initializing compiler with project file: %s, build configuration: %s', $projectFilePath, $buildConfiguration), 'AbstractCompiler');
+            
             $projectFilePath = Helper::resolveProjectConfigurationPath($projectFilePath);
             if($projectFilePath === null)
             {
+                \ncc\CLI\Logger::getLogger()->error('No project configuration file found', 'AbstractCompiler');
                 throw new OperationException("No project configuration file found");
             }
 
             $this->projectPath = dirname($projectFilePath);
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Project path resolved to: %s', $this->projectPath), 'AbstractCompiler');
+            
             $this->projectConfiguration = Project::fromFile($projectFilePath, true);
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Loaded project configuration from: %s', $projectFilePath), 'AbstractCompiler');
 
             try
             {
                 $this->projectConfiguration->validate();
+                \ncc\CLI\Logger::getLogger()->debug('Project configuration validated successfully', 'AbstractCompiler');
             }
             catch(InvalidPropertyException $e)
             {
+                \ncc\CLI\Logger::getLogger()->error(sprintf('Project configuration validation failed: %s', $e->getMessage()), 'AbstractCompiler');
                 throw new OperationException("Project configuration is invalid: " . $e->getMessage(), $e->getCode(), $e);
             }
 
             if(!$this->projectConfiguration->buildConfigurationExists($buildConfiguration))
             {
+                \ncc\CLI\Logger::getLogger()->error(sprintf('Build configuration "%s" not found in project', $buildConfiguration), 'AbstractCompiler');
                 throw new OperationException("Build configuration '$buildConfiguration' does not exist in project configuration");
             }
 
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Using build configuration: %s', $buildConfiguration), 'AbstractCompiler');
             $this->sourcePath = $this->projectPath . DIRECTORY_SEPARATOR . $this->projectConfiguration->getSourcePath();
             $this->outputPath = $this->projectPath . DIRECTORY_SEPARATOR . $this->buildConfiguration->getOutput();
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Source path: %s', $this->sourcePath), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Output path: %s', $this->outputPath), 'AbstractCompiler');
+            
             $this->includeComponents = array_merge(['*.php'], $this->buildConfiguration->getIncludedComponents());
             $this->excludeComponents = $this->buildConfiguration->getExcludedComponents();
             $this->includeResources = $this->buildConfiguration->getIncludedResources();
             $this->excludeResources = array_merge(['*.php'], $this->buildConfiguration->getExcludedResources());
+            \ncc\CLI\Logger::getLogger()->debug(sprintf('Component patterns - Include: %d, Exclude: %d', count($this->includeComponents), count($this->excludeComponents)), 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->debug(sprintf('Resource patterns - Include: %d, Exclude: %d', count($this->includeResources), count($this->excludeResources)), 'AbstractCompiler');
             $this->requiredExecutionUnits = [];
             $this->sourceComponents = [];
             $this->sourceResources = [];
@@ -131,38 +147,47 @@
             if($this->projectConfiguration->getEntryPoint() !== null)
             {
                 $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getEntryPoint();
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Entry point unit: %s', $this->getProjectConfiguration()->getEntryPoint()), 'AbstractCompiler');
             }
 
             if($this->projectConfiguration->getPreInstall() !== null)
             {
                 $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getPreInstall();
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Pre-install unit: %s', $this->getProjectConfiguration()->getPreInstall()), 'AbstractCompiler');
             }
 
             if($this->projectConfiguration->getPostInstall() !== null)
             {
                 $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getPostInstall();
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Post-install unit: %s', $this->getProjectConfiguration()->getPostInstall()), 'AbstractCompiler');
             }
 
             if($this->projectConfiguration->getPreCompile() !== null)
             {
                 $this->temporaryExecutionUnits[] = $this->getProjectConfiguration()->getPreCompile();
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Pre-compile unit: %s', $this->getProjectConfiguration()->getPreCompile()), 'AbstractCompiler');
             }
 
             if($this->projectConfiguration->getPostCompile() !== null)
             {
                 $this->temporaryExecutionUnits[] = $this->getProjectConfiguration()->getPostCompile();
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Post-compile unit: %s', $this->getProjectConfiguration()->getPostCompile()), 'AbstractCompiler');
             }
 
             if(isset($this->buildConfiguration->getOptions()['static']) && is_bool($this->buildConfiguration->getOptions()['static']))
             {
                 $this->staticallyLinked = $this->buildConfiguration->getOptions()['static'];
+                \ncc\CLI\Logger::getLogger()->info(sprintf('Static linking: %s', $this->staticallyLinked ? 'enabled' : 'disabled'), 'AbstractCompiler');
             }
             else
             {
                 $this->staticallyLinked = false;
+                \ncc\CLI\Logger::getLogger()->verbose('Static linking: disabled (default)', 'AbstractCompiler');
             }
 
             $this->packageDependencies = array_merge($this->packageDependencies, $this->buildConfiguration->getDependencies() ?? [], $this->projectConfiguration->getDependencies() ?? []);
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Total package dependencies: %d', count($this->packageDependencies)), 'AbstractCompiler');
+            
             $this->refreshFiles();
         }
 
@@ -419,40 +444,55 @@
          */
         protected function refreshFiles(): void
         {
+            \ncc\CLI\Logger::getLogger()->debug('Refreshing source files collection', 'AbstractCompiler');
+            
             // Find all the required components/resources in the source path based on the include/exclude patterns.
             $this->sourceComponents = FileCollector::collectFiles($this->sourcePath, $this->includeComponents, $this->excludeComponents);
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Collected %d source components', count($this->sourceComponents)), 'AbstractCompiler');
+            
             $this->sourceResources = FileCollector::collectFiles($this->sourcePath, $this->includeResources, $this->excludeResources);
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Collected %d source resources', count($this->sourceResources)), 'AbstractCompiler');
 
             // Verify if all the execution units are correctly configured and that all the required files
             // are available to compile with, temporary units are not included since they are only used during compilation.
+            \ncc\CLI\Logger::getLogger()->debug(sprintf('Verifying %d required execution units', count($this->requiredExecutionUnits)), 'AbstractCompiler');
+            
             foreach($this->requiredExecutionUnits as $executionUnitName)
             {
                 $executionUnit = $this->projectConfiguration->getExecutionUnit($executionUnitName);
                 if($executionUnit === null)
                 {
+                    \ncc\CLI\Logger::getLogger()->error(sprintf('Required execution unit not found: %s', $executionUnitName), 'AbstractCompiler');
                     throw new OperationException(sprintf('The required execution unit %s was not found in the project configuration', $executionUnitName));
                 }
+                
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Verifying execution unit: %s (type: %s)', $executionUnitName, $executionUnit->getType()->value), 'AbstractCompiler');
 
                 // Only handle PHP execution units for entry points, since system commands are not part of the project files.
                 if($executionUnit->getType() === ExecutionUnitType::PHP)
                 {
                     $entryPointPath = $this->projectPath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
-                    if(!file_exists($entryPointPath))
+                    if(!IO::exists($entryPointPath))
                     {
+                        \ncc\CLI\Logger::getLogger()->error(sprintf('Entry point not found: %s for unit %s', $entryPointPath, $executionUnitName), 'AbstractCompiler');
                         throw new OperationException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
                     }
 
                     $this->sourceResources[] = realpath($entryPointPath);
+                    \ncc\CLI\Logger::getLogger()->debug(sprintf('Added entry point to resources: %s', $executionUnit->getEntryPoint()), 'AbstractCompiler');
                 }
 
                 // Include all required files for the execution unit.
                 if($executionUnit->getRequiredFiles() !== null)
                 {
+                    \ncc\CLI\Logger::getLogger()->debug(sprintf('Processing %d required files for unit: %s', count($executionUnit->getRequiredFiles()), $executionUnitName), 'AbstractCompiler');
+                    
                     foreach($executionUnit->getRequiredFiles() as $requiredFile)
                     {
                         $requiredFilePath = $this->projectPath . DIRECTORY_SEPARATOR . $requiredFile;
-                        if(!file_exists($requiredFilePath))
+                        if(!IO::exists($requiredFilePath))
                         {
+                            \ncc\CLI\Logger::getLogger()->error(sprintf('Required file not found: %s for unit %s', $requiredFilePath, $executionUnitName), 'AbstractCompiler');
                             throw new OperationException(sprintf('The required file %s was not found in the project path %s for the execution unit %s', $requiredFile, $this->projectPath, $executionUnitName));
                         }
 
@@ -463,10 +503,13 @@
 
             // Finally, we calculate the build number based on the collected files.
             $this->buildNumber = $this->calculateBuildNumber();
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Build number calculated: %s', $this->buildNumber), 'AbstractCompiler');
         }
 
         protected function getDependencyReaders(): array
         {
+            \ncc\CLI\Logger::getLogger()->debug(sprintf('Resolving dependency readers for %d packages', count($this->packageDependencies)), 'AbstractCompiler');
+            
             $results = [];
 
             foreach($this->packageDependencies as $packageName => $packageSource)
@@ -474,20 +517,28 @@
                 $results = array_merge($results, $this->resolveDependencyReaders($packageName, $packageSource));
             }
 
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Resolved %d dependency readers total', count($results)), 'AbstractCompiler');
             return $results;
         }
 
         private function resolveDependencyReaders(string $package, PackageSource $source): array
         {
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Resolving dependency: %s', $package), 'AbstractCompiler');
+            
             $resolvedDependency = new ResolvedDependency($package, $source);
             if($resolvedDependency->getPackageReader() === null)
             {
+                \ncc\CLI\Logger::getLogger()->error(sprintf('Package not installed: %s', $package), 'AbstractCompiler');
                 throw new OperationException(sprintf('Cannot resolve %s becaues the package is not installed', $package));
             }
 
             $results = [$resolvedDependency];
-            if(count($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences()) > 0)
+            $transitiveDeps = count($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences());
+            
+            if($transitiveDeps > 0)
             {
+                \ncc\CLI\Logger::getLogger()->debug(sprintf('Package %s has %d transitive dependencies', $package, $transitiveDeps), 'AbstractCompiler');
+                
                 foreach($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences() as $dependencyReference)
                 {
                     $results = array_merge($results, $this->resolveDependencyReaders($dependencyReference->getPackage(), $dependencyReference->getSource()));
@@ -504,6 +555,9 @@
          */
         private function calculateBuildNumber(): string
         {
+            $totalFiles = count(array_merge($this->sourceComponents, $this->sourceResources));
+            \ncc\CLI\Logger::getLogger()->debug(sprintf('Calculating build number from %d files', $totalFiles), 'AbstractCompiler');
+            
             $hashes = [];
             foreach(array_merge($this->sourceComponents, $this->sourceResources) as $filePath)
             {
@@ -523,13 +577,19 @@
         {
             if($this->getProjectConfiguration()->getPreCompile() === null)
             {
+                \ncc\CLI\Logger::getLogger()->debug('No pre-compile execution units defined', 'AbstractCompiler');
                 return;
             }
 
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Running %d pre-compile execution units', count($this->getProjectConfiguration()->getPreCompile())), 'AbstractCompiler');
+            
             foreach($this->getProjectConfiguration()->getPreCompile() as $unitName)
             {
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Executing pre-compile unit: %s', $unitName), 'AbstractCompiler');
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
             }
+            
+            \ncc\CLI\Logger::getLogger()->info('Pre-compile execution units completed', 'AbstractCompiler');
         }
 
         /**
@@ -541,13 +601,19 @@
         {
             if($this->getProjectConfiguration()->getPostInstall() === null)
             {
+                \ncc\CLI\Logger::getLogger()->debug('No post-compile execution units defined', 'AbstractCompiler');
                 return;
             }
 
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostInstall())), 'AbstractCompiler');
+            
             foreach($this->getProjectConfiguration()->getPostInstall() as $unitName)
             {
+                \ncc\CLI\Logger::getLogger()->verbose(sprintf('Executing post-compile unit: %s', $unitName), 'AbstractCompiler');
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
             }
+            
+            \ncc\CLI\Logger::getLogger()->info('Post-compile execution units completed', 'AbstractCompiler');
         }
 
         /**
@@ -581,9 +647,18 @@
          */
         public function build(?callable $progressCallback=null, bool $overwrite=true): string
         {
+            \ncc\CLI\Logger::getLogger()->info('Starting build process', 'AbstractCompiler');
+            \ncc\CLI\Logger::getLogger()->verbose(sprintf('Build options - Overwrite: %s', $overwrite ? 'true' : 'false'), 'AbstractCompiler');
+            
             $this->preCompile();
+            
+            \ncc\CLI\Logger::getLogger()->info('Starting compilation phase', 'AbstractCompiler');
             $buildPath = $this->compile(null, $overwrite);
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Compilation completed: %s', $buildPath), 'AbstractCompiler');
+            
             $this->postCompile();
+            
+            \ncc\CLI\Logger::getLogger()->info(sprintf('Build process completed successfully: %s', $buildPath), 'AbstractCompiler');
             return $buildPath;
         }
     }

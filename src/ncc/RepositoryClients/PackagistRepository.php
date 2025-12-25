@@ -181,7 +181,7 @@
             }
 
             Logger::getLogger()->info(sprintf('Found archive URL for %s/%s version %s', $group, $project, $version));
-            return new RemotePackage($response['package']['versions'][$version]['dist']['url'], RemotePackageType::SOURCE_ZIP, $group, $project);
+            return new RemotePackage($response['package']['versions'][$version]['dist']['url'], RemotePackageType::SOURCE_ZIP, $group, $project, $version);
         }
 
         /**

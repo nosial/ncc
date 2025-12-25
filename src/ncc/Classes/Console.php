@@ -106,7 +106,7 @@
 
             // Fall back to raw input with warning
             self::error('Warning: Unable to hide password input. Password will be visible.');
-            self::out($prompt);
+            print($prompt);
             return trim(fgets(STDIN));
         }
 

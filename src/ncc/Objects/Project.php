@@ -796,13 +796,13 @@
          */
         public static function fromFile(string $filePath, bool $macros=false): Project
         {
-            if(!file_exists($filePath) || !is_readable($filePath))
+            if(!IO::exists($filePath) || !IO::isReadable($filePath))
             {
                 throw new InvalidArgumentException('The file \'' . $filePath . '\' does not exist or is not readable');
             }
 
 
-            $results = Yaml::parse(file_get_contents($filePath));
+            $results = Yaml::parse(IO::readFile($filePath));
 
             // If macros are enabled, process them
             if($macros)

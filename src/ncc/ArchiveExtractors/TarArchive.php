@@ -22,6 +22,7 @@
 
     namespace ncc\ArchiveExtractors;
 
+    use ncc\Classes\IO;
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\ArchiveInterface;
 
@@ -35,23 +36,20 @@
          */
         public static function extract(string $archivePath, string $destinationPath): void
         {
-            if (!file_exists($archivePath))
+            if (!IO::exists($archivePath))
             {
                 throw new OperationException(sprintf('Archive file not found: %s', $archivePath));
             }
 
-            if (!is_readable($archivePath))
+            if (!IO::isReadable($archivePath))
             {
                 throw new OperationException(sprintf('Archive file is not readable: %s', $archivePath));
             }
 
             // Create destination directory if it doesn't exist
-            if (!is_dir($destinationPath))
+            if (!IO::isDir($destinationPath))
             {
-                if (!mkdir($destinationPath, 0755, true))
-                {
-                    throw new OperationException(sprintf('Failed to create destination directory: %s', $destinationPath));
-                }
+                IO::mkdir($destinationPath);
             }
 
             // Detect compression type and open the file accordingly
@@ -152,24 +150,18 @@
                 if ($fileInfo['type'] === '5' || $fileInfo['type'] === 'dir')
                 {
                     // Directory
-                    if (!is_dir($fullPath))
+                    if (!IO::isDir($fullPath))
                     {
-                        if (!mkdir($fullPath, 0755, true))
-                        {
-                            throw new OperationException(sprintf('Failed to create directory: %s', $fullPath));
-                        }
+                        IO::mkdir($fullPath);
                     }
                 }
                 elseif ($fileInfo['type'] === '0' || $fileInfo['type'] === '' || $fileInfo['type'] === 'file')
                 {
                     // Regular file
                     $dirPath = dirname($fullPath);
-                    if (!is_dir($dirPath))
+                    if (!IO::isDir($dirPath))
                     {
-                        if (!mkdir($dirPath, 0755, true))
-                        {
-                            throw new OperationException(sprintf('Failed to create directory: %s', $dirPath));
-                        }
+                        IO::mkdir($dirPath);
                     }
 
                     // Extract file content
@@ -198,7 +190,14 @@
                     // Set file permissions if specified
                     if ($fileInfo['mode'])
                     {
-                        @chmod($fullPath, $fileInfo['mode']);
+                        try
+                        {
+                            IO::chmod($fullPath, $fileInfo['mode']);
+                        }
+                        catch(\ncc\Exceptions\IOException $e)
+                        {
+                            // Ignore permission errors, continue extraction
+                        }
                     }
 
                     // Skip padding to next block boundary

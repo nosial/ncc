@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
+    use ncc\Classes\IO;
     use ncc\Enums\PackageStructure;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\IOException;
@@ -56,18 +57,18 @@
         public function __construct(string $filePath, bool $overwrite=true)
         {
             // Delete the file if it already exists, prevent overwriting if not allowed
-            if(file_exists($filePath))
+            if(IO::exists($filePath))
             {
                 if(!$overwrite)
                 {
                     throw new PackageException("File already exists: " . $filePath);
                 }
-                unlink($filePath);
+                IO::rm($filePath, false);
             }
 
             // Create the file
             IO::mkdir(dirname($filePath));
-            touch($filePath);
+            IO::touch($filePath);
             $this->fileHandler = fopen($filePath, 'a+b');
             if($this->fileHandler === false)
             {

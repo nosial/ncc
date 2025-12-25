@@ -22,6 +22,7 @@
 
     namespace ncc\Classes;
 
+    use ncc\Classes\IO;
     use ncc\CLI\Logger;
     use ncc\Exceptions\IOException;
 
@@ -33,7 +34,7 @@
         {
             foreach(self::$temporaryFiles as $file)
             {
-                if(file_exists($file))
+                if(IO::exists($file))
                 {
                     try
                     {

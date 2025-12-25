@@ -25,6 +25,7 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\Classes\IO;
     use ncc\Classes\PackageReader;
     use ncc\CLI\Logger;
     use ncc\Enums\ProjectType;
@@ -91,7 +92,7 @@
                 Console::warning('The "skip-dependencies" option was used, the package may not meet the requirements');
             }
 
-            if(is_file($package))
+            if(IO::isFile($package))
             {
                 try
                 {
@@ -322,7 +323,7 @@
             $downloadedPackage = $repository->download($selectedPackage);
 
             // If it's a file, we assume it's an NCC package
-            if(is_file($downloadedPackage))
+            if(IO::isFile($downloadedPackage))
             {
                 return self::installFromFile(new PackageReader($downloadedPackage), $options, $installed);
             }
@@ -339,8 +340,15 @@
                 if($projectConfiguration->getAssembly()->getVersion() === '0.0.0')
                 {
                     // Resolve the actual version from the repository
+                    // First check if the RemotePackage has version information
+                    if($selectedPackage->getVersion() !== null)
+                    {
+                        // Use the version from the RemotePackage (already resolved during getReleaseArchive)
+                        $actualVersion = $selectedPackage->getVersion();
+                        Logger::getLogger()->debug(sprintf('Using version from RemotePackage: "%s"', $actualVersion));
+                    }
                     // Determine which version to use based on repository type and requested version
-                    if($source->getRepository() === 'packagist')
+                    elseif($source->getRepository() === 'packagist')
                     {
                         // For packagist, get the latest stable release
                         // This is already filtered for stable versions and sorted by the repository

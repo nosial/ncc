@@ -108,25 +108,25 @@
          */
        public static function getProjectConfiguration(string $path): ?string
        {
-           if (!file_exists($path))
+           if (!IO::exists($path))
            {
                Logger::getLogger()->debug(sprintf('File %s does not exist', $path));
                return null;
            }
 
            // If $path is a directory, look for project.yml or project.yaml inside it
-           if (is_dir($path))
+           if (IO::isDir($path))
            {
                $ymlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yml';
                Logger::getLogger()->debug(sprintf('Checking path %s', $ymlPath));
-               if (is_file($ymlPath))
+               if (IO::isFile($ymlPath))
                {
                    return realpath($ymlPath);
                }
 
                $yamlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yaml';
                Logger::getLogger()->debug(sprintf('Checking path %s', $yamlPath));
-               if (is_file($yamlPath))
+               if (IO::isFile($yamlPath))
                {
                    return realpath($yamlPath);
                }
@@ -137,7 +137,7 @@
            // If $path is a file and is named 'project.yml' or 'project.yaml'
            $filename = basename($path);
            Logger::getLogger()->debug(sprintf('Checking path %s', $filename));
-           if (is_file($path) && ($filename === 'project.yml' || $filename === 'project.yaml'))
+           if (IO::isFile($path) && ($filename === 'project.yml' || $filename === 'project.yaml'))
            {
                return realpath($path);
            }

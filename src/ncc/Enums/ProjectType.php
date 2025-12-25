@@ -24,6 +24,7 @@
 
     use FilesystemIterator;
     use ncc\Abstracts\AbstractProjectConverter;
+    use ncc\Classes\IO;
     use ncc\ProjectConverters\ComposerProjectConverter;
     use ncc\ProjectConverters\LegacyProjectConverter;
     use RecursiveCallbackFilterIterator;
@@ -49,7 +50,7 @@
             
             // First, check if the file exists in the current directory
             $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
-            if (file_exists($directFilePath) && is_file($directFilePath))
+            if (IO::exists($directFilePath) && IO::isFile($directFilePath))
             {
                 return $directFilePath;
             }

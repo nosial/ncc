@@ -238,12 +238,12 @@
             if(isset($response['zipball_url']))
             {
                 Logger::getLogger()->info(sprintf('Found zipball archive for release %s in %s/%s', $release, $group, $project));
-                return new RemotePackage($response['zipball_url'], RemotePackageType::SOURCE_ZIP, $group, $project);
+                return new RemotePackage($response['zipball_url'], RemotePackageType::SOURCE_ZIP, $group, $project, $release);
             }
             elseif(isset($response['tarball_url']))
             {
                 Logger::getLogger()->info(sprintf('Found tarball archive for release %s in %s/%s', $release, $group, $project));
-                return new RemotePackage($response['tarball_url'], RemotePackageType::SOURCE_TAR, $group, $project);
+                return new RemotePackage($response['tarball_url'], RemotePackageType::SOURCE_TAR, $group, $project, $release);
             }
 
             Logger::getLogger()->warning(sprintf('No archive found for release %s in %s/%s', $release, $group, $project));

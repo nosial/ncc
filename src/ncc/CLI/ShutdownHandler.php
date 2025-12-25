@@ -22,6 +22,7 @@
 
     namespace ncc\CLI;
 
+    use ncc\Classes\IO;
 
     class ShutdownHandler
     {
@@ -59,7 +60,7 @@
                 {
                     $temporaryFile = realpath($temporaryFile);
 
-                    if(!file_exists($temporaryFile))
+                    if(!IO::exists($temporaryFile))
                     {
                         Logger::getLogger()->debug(sprintf("Temporary file '%s' does not exist, skipping", $temporaryFile));
                         continue;
@@ -67,7 +68,11 @@
 
                     Logger::getLogger()->debug(sprintf("Deleting temporary file '%s'", $temporaryFile));
 
-                    if(!@unlink($temporaryFile))
+                    try
+                    {
+                        IO::rm($temporaryFile, false);
+                    }
+                    catch(\ncc\Exceptions\IOException $e)
                     {
                         Logger::getLogger()->warning(sprintf("Cannot delete temporary file '%s' due to insufficient permissions", $temporaryFile));
                     }

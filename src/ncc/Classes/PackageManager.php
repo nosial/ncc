@@ -24,6 +24,7 @@
 
     use InvalidArgumentException;
     use JsonException;
+    use ncc\Classes\IO;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
@@ -66,22 +67,22 @@
             $this->autoSave = $autoSave;
 
             // Check if the lock file exists and is not writable
-            if(file_exists($this->packageLockPath))
+            if(IO::exists($this->packageLockPath))
             {
-                $this->readOnly = !is_writable($this->packageLockPath);
+                $this->readOnly = !IO::isWritable($this->packageLockPath);
             }
             // Check if the directory is writable (for creating new lock file)
-            elseif(file_exists($this->dataDirectoryPath))
+            elseif(IO::exists($this->dataDirectoryPath))
             {
-                $this->readOnly = !is_writable($this->dataDirectoryPath);
+                $this->readOnly = !IO::isWritable($this->dataDirectoryPath);
             }
             else
             {
                 // Directory doesn't exist, check parent directory
-                $this->readOnly = !is_writable(dirname($this->dataDirectoryPath));
+                $this->readOnly = !IO::isWritable(dirname($this->dataDirectoryPath));
             }
 
-            if(file_exists($this->packageLockPath))
+            if(IO::exists($this->packageLockPath))
             {
                 $this->loadLockFile();
             }
@@ -95,11 +96,7 @@
          */
         private function loadLockFile(): void
         {
-            $content = @file_get_contents($this->packageLockPath);
-            if($content === false)
-            {
-                throw new IOException(sprintf('Failed to read lock file: %s', $this->packageLockPath));
-            }
+            $content = IO::readFile($this->packageLockPath);
 
             if(empty($content))
             {
@@ -294,7 +291,7 @@
             $packagePath = $this->getDataDirectoryPath() . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR .
                 $packageName . '=' . $entry->getVersion();
 
-            if(!file_exists($packagePath))
+            if(!IO::exists($packagePath))
             {
                 return null;
             }
@@ -412,18 +409,18 @@
                 throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
             }
 
-            if(!file_exists($this->getPackagePathFromEntry()) && !mkdir($this->getPackagePathFromEntry(), 0755, true) && !is_dir($this->getPackagePathFromEntry()))
+            if(!IO::exists($this->getPackagePathFromEntry()))
             {
-                throw new IOException(sprintf('Directory "%s" was not created', $this->getPackagePathFromEntry()));
+                IO::mkdir($this->getPackagePathFromEntry());
             }
 
             $packageInstallationPath = $this->getPackagePathFromEntry() . DIRECTORY_SEPARATOR .
                 sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
 
             // Remove the orphaned package if it already exists
-            if(file_exists($packageInstallationPath) && !unlink($packageInstallationPath))
+            if(IO::exists($packageInstallationPath))
             {
-                throw new IOException(sprintf('Cannot remove orphaned package from "%s"', $packageInstallationPath));
+                IO::rm($packageInstallationPath, false);
             }
 
             $packageReader->exportPackage($packageInstallationPath); // Export (ONLY) the package to a file
@@ -459,13 +456,10 @@
                 }
 
                 $packagePath = $this->getPackagePathFromEntry($entry);
-                if(file_exists($packagePath))
+                if(IO::exists($packagePath))
                 {
                     // Remove the package file
-                    if(!@unlink($packagePath))
-                    {
-                        throw new IOException(sprintf('Failed to remove package file: %s', $packagePath));
-                    }
+                    IO::rm($packagePath, false);
                 }
 
                 // Remove the entry from the lock file
@@ -496,12 +490,9 @@
             }
 
             $directory = dirname($this->packageLockPath);
-            if(!is_dir($directory))
+            if(!IO::isDir($directory))
             {
-                if(!@mkdir($directory, 0755, true))
-                {
-                    throw new IOException(sprintf('Failed to create directory: %s', $directory));
-                }
+                IO::mkdir($directory);
             }
 
             $data = array_map(fn(PackageLockEntry $entry) => $entry->toArray(), array_values($this->entries));
@@ -517,15 +508,19 @@
 
             // Atomic write using temporary file
             $tempFile = $this->packageLockPath . '.tmp';
-            if(@file_put_contents($tempFile, $json, LOCK_EX) === false)
-            {
-                throw new IOException(sprintf('Failed to write temporary lock file: %s', $tempFile));
-            }
+            IO::writeFile($tempFile, $json);
 
-            if(!@rename($tempFile, $this->packageLockPath))
+            try
             {
-                @unlink($tempFile);
-                throw new IOException(sprintf('Failed to save lock file: %s', $this->packageLockPath));
+                IO::rename($tempFile, $this->packageLockPath);
+            }
+            catch(IOException $e)
+            {
+                if(IO::exists($tempFile))
+                {
+                    IO::rm($tempFile, false);
+                }
+                throw new IOException(sprintf('Failed to save lock file: %s', $this->packageLockPath), 0, $e);
             }
 
             $this->modified = false;

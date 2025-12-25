@@ -23,6 +23,7 @@
     namespace ncc\CLI;
 
     use ncc\Classes\Console;
+    use ncc\Classes\IO;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExtractCommand;
     use ncc\CLI\Commands\InspectCommand;
@@ -114,19 +115,19 @@
             $versionFile = __NCC_DIR__ . DIRECTORY_SEPARATOR . 'VERSION';
             $buildFile = __NCC_DIR__ . DIRECTORY_SEPARATOR . 'BUILD';
 
-            if(!file_exists($versionFile))
+            if(!IO::exists($versionFile))
             {
                 Console::out('ncc version file not found!' . PHP_EOL);
                 return;
             }
 
-            if(!file_exists($buildFile))
+            if(!IO::exists($buildFile))
             {
                 Console::out('ncc build file not found!' . PHP_EOL);
                 return;
             }
 
-            Console::out(sprintf("ncc v%s build %s", file_get_contents($versionFile), file_get_contents($buildFile)));
+            Console::out(sprintf("ncc v%s build %s", IO::readFile($versionFile), IO::readFile($buildFile)));
         }
 
         /**

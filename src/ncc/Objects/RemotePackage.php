@@ -30,13 +30,15 @@
         private RemotePackageType $type;
         private string $group;
         private string $project;
+        private ?string $version;
 
-        public function __construct(string $downloadUrl, RemotePackageType $type, string $group, string $project)
+        public function __construct(string $downloadUrl, RemotePackageType $type, string $group, string $project, ?string $version = null)
         {
             $this->downloadUrl = $downloadUrl;
             $this->type = $type;
             $this->group = $group;
             $this->project = $project;
+            $this->version = $version;
         }
 
         public function getDownloadUrl(): string
@@ -57,5 +59,10 @@
         public function getProject(): string
         {
             return $this->project;
+        }
+
+        public function getVersion(): ?string
+        {
+            return $this->version;
         }
     }

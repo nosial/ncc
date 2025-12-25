@@ -25,6 +25,7 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\Classes\IO;
     use ncc\Classes\PackageReader;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\ExecutionUnitReference;
@@ -71,7 +72,7 @@
                 return 1;
             }
 
-            if(!file_exists($packagePath) || !is_file($packagePath))
+            if(!IO::exists($packagePath) || !IO::isFile($packagePath))
             {
                 Console::error('The given path must be a ncc package file');
                 return 1;

@@ -24,6 +24,7 @@
 
     use Exception;
     use ncc\Abstracts\AbstractAuthentication;
+    use ncc\Classes\IO;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\PhpEncryption\Crypto;
     use ncc\Libraries\PhpEncryption\Exception\EnvironmentIsBrokenException;
@@ -148,7 +149,7 @@
          */
         public function vaultExists(): bool
         {
-            return file_exists($this->vaultPath);
+            return IO::exists($this->vaultPath);
         }
 
         /**
@@ -170,12 +171,12 @@
                 return;
             }
 
-            if(!is_writeable($this->vaultPath) || !is_readable($this->vaultPath))
+            if(!IO::isWritable($this->vaultPath) || !IO::isReadable($this->vaultPath))
             {
                 throw new OperationException(sprintf('Vault file \'%s\' is not accessible', $this->vaultPath));
             }
 
-            $encryptedData = file_get_contents($this->vaultPath);
+            $encryptedData = IO::readFile($this->vaultPath);
 
             try
             {
@@ -215,14 +216,14 @@
                 throw new OperationException(sprintf('Vault already exists at \'%s\'', $this->vaultPath));
             }
 
-            if(!is_writeable($this->dataDirectoryPath))
+            if(!IO::isWritable($this->dataDirectoryPath))
             {
                 throw new OperationException(sprintf('Data directory \'%s\' is not writeable', $this->dataDirectoryPath));
             }
 
             try
             {
-                file_put_contents($this->vaultPath, Crypto::encryptWithPassword(json_encode([]), $this->masterPassword));
+                IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode([]), $this->masterPassword));
             }
             catch(EnvironmentIsBrokenException $e)
             {
@@ -252,6 +253,6 @@
                 $dataToSave[$name] = $entry->toArray();
             }
 
-            file_put_contents($this->vaultPath, Crypto::encryptWithPassword(json_encode($dataToSave), $this->masterPassword));
+            IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode($dataToSave), $this->masterPassword));
         }
     }
