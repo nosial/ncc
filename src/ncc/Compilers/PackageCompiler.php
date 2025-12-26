@@ -29,21 +29,14 @@
     use ncc\CLI\Logger;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
+    use ncc\Libraries\pal\Autoloader;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\Header;
     use ncc\Runtime;
 
     class PackageCompiler extends AbstractCompiler
     {
-        /**
-         * Compilation stages
-         */
-        private const int STAGE_HEADER = 1;
-        private const int STAGE_ASSEMBLY = 2;
-        private const int STAGE_EXECUTION_UNITS = 3;
-        private const int STAGE_COMPONENTS = 4;
         private const int TOTAL_STAGES = 4;
-        
         private bool $compressionEnabled;
         private int $compressionLevel;
 
@@ -136,6 +129,11 @@
                 Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
             }
 
+            // Generate autoloader mapping before writing package
+            Logger::getLogger()->verbose('Generating autoloader mapping');
+            $autoloaderMapping = $this->generateAutoloaderMapping($dependencyReaders);
+            Logger::getLogger()->verbose(sprintf('Generated autoloader with %d class mappings', count($autoloaderMapping)));
+
             // Calculate total stages dynamically based on content
             $componentCount = count($this->getSourceComponents());
             $executionUnitCount = count($this->getRequiredExecutionUnits());
@@ -156,8 +154,14 @@
                             $progressCallback($currentStage, $totalStages, 'Writing package header');
                         }
                         Logger::getLogger()->verbose('Writing package header');
+                        
+                        // Create header and set autoloader
+                        $header = $this->createPackageHeader($dependencyReaders);
+                        $header->setAutoloader($autoloaderMapping);
+                        Logger::getLogger()->debug(sprintf('Set autoloader with %d mappings in header', count($autoloaderMapping)));
+                        
                         // Write the header as a data entry only, section gets closed automatically
-                        $packageWriter->writeData(msgpack_pack($this->createPackageHeader($dependencyReaders)->toArray()));
+                        $packageWriter->writeData(msgpack_pack($header->toArray()));
                         Logger::getLogger()->debug('Package header written successfully');
                         break;
 
@@ -419,5 +423,423 @@
 
             Logger::getLogger()->verbose(sprintf('Package header created with %d dependency references', count($header->getDependencyReferences())));
             return $header;
+        }
+
+        /**
+         * Generates the autoloader mapping array for the package.
+         * 
+         * Creates a class-to-file mapping using pal for source components and manually
+         * parses embedded dependency components when statically linking. The mapping
+         * uses ncc:// protocol paths for runtime autoloading.
+         *
+         * @param array|null $dependencyReaders Array of PackageReader instances for statically linked dependencies
+         * @return array<string, string> The autoloader mapping array (class name => ncc:// path)
+         * @throws CompileException If there's an error generating the autoloader
+         */
+        private function generateAutoloaderMapping(?array $dependencyReaders=null): array
+        {
+            Logger::getLogger()->debug('Generating autoloader mapping');
+            
+            $packageName = $this->getProjectConfiguration()->getAssembly()->getPackage();
+            $baseDirectory = 'ncc://' . $packageName . '/';
+            
+            // Generate mapping for source components using pal
+            $mapping = [];
+            
+            if(count($this->getSourceComponents()) > 0)
+            {
+                Logger::getLogger()->verbose(sprintf('Generating autoloader mapping for %d source components', count($this->getSourceComponents())));
+                
+                // Use pal to generate autoloader array from source directory
+                $sourceMapping = Autoloader::generateAutoloaderArray($this->getSourcePath(), [
+                    'extensions' => ['php'],
+                    'case_sensitive' => false,
+                    'follow_symlinks' => false,
+                    'include_static' => false
+                ]);
+                
+                if($sourceMapping !== false && is_array($sourceMapping))
+                {
+                    // Convert file paths to ncc:// protocol paths
+                    foreach($sourceMapping as $className => $filePath)
+                    {
+                        // Make path relative to source directory
+                        if(str_starts_with($filePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                        {
+                            $relativePath = substr($filePath, strlen($this->getSourcePath()) + 1);
+                            $mapping[$className] = $baseDirectory . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
+                            Logger::getLogger()->debug(sprintf('Mapped class: %s => %s', $className, $mapping[$className]));
+                        }
+                    }
+                }
+                
+                Logger::getLogger()->verbose(sprintf('Generated %d source class mappings via PAL', count($mapping)));
+                
+                // Fallback: If PAL didn't find any classes, parse component files directly
+                // This handles cases where files are not organized in PAL-compatible structure
+                if(empty($mapping))
+                {
+                    Logger::getLogger()->verbose('PAL autoloader generation returned empty, parsing component files directly');
+                    
+                    foreach($this->getSourceComponents() as $componentFilePath)
+                    {
+                        try
+                        {
+                            // Read the component file
+                            $componentData = IO::readFile($componentFilePath);
+                            
+                            // Determine the component name (relative path for mapping)
+                            if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                            {
+                                $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
+                            }
+                            else
+                            {
+                                $componentName = basename($componentFilePath);
+                            }
+                            
+                            $componentPath = $baseDirectory . str_replace(DIRECTORY_SEPARATOR, '/', $componentName);
+                            
+                            // Parse the PHP code to extract class names
+                            $classes = $this->parsePhpClasses($componentData);
+                            
+                            foreach($classes as $className)
+                            {
+                                $mapping[$className] = $componentPath;
+                                Logger::getLogger()->debug(sprintf('Mapped class (fallback): %s => %s', $className, $componentPath));
+                            }
+                        }
+                        catch(\Exception $e)
+                        {
+                            Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentFilePath, $e->getMessage()));
+                        }
+                    }
+                    
+                    Logger::getLogger()->verbose(sprintf('Generated %d source class mappings via fallback parser', count($mapping)));
+                }
+            }
+            
+            // If statically linking, add mappings for embedded dependencies
+            if($this->isStaticallyLinked() && $dependencyReaders !== null && count($dependencyReaders) > 0)
+            {
+                Logger::getLogger()->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
+                
+                /** @var PackageReader $packageReader */
+                foreach($dependencyReaders as $packageReader)
+                {
+                    $depPackageName = $packageReader->getAssembly()->getPackage();
+                    $depBaseDirectory = 'ncc://' . $depPackageName . '/';
+                    
+                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s', $depPackageName));
+                    
+                    $depMapping = $this->parsePackageComponents($packageReader, $depBaseDirectory);
+                    $mapping = array_merge($mapping, $depMapping);
+                    
+                    Logger::getLogger()->verbose(sprintf('Added %d class mappings from %s', count($depMapping), $depPackageName));
+                }
+            }
+            
+            Logger::getLogger()->verbose(sprintf('Total autoloader mappings: %d classes', count($mapping)));
+            return $mapping;
+        }
+
+        /**
+         * Parses components from a PackageReader to extract class definitions.
+         * 
+         * Reads each component from the package, tokenizes the PHP code, and extracts
+         * class, interface, trait, and enum definitions with their namespaces.
+         *
+         * @param PackageReader $packageReader The package reader to parse components from
+         * @param string $baseDirectory The base ncc:// directory for this package
+         * @return array<string, string> Mapping of class names to ncc:// paths
+         */
+        private function parsePackageComponents(PackageReader $packageReader, string $baseDirectory): array
+        {
+            $mapping = [];
+            
+            foreach($packageReader->getComponentReferences() as $componentRef)
+            {
+                try
+                {
+                    // Read the component data
+                    $componentData = $packageReader->readComponent($componentRef);
+                    $componentPath = $baseDirectory . $componentRef->getName();
+                    
+                    // Parse the PHP code to extract class names
+                    $classes = $this->parsePhpClasses($componentData);
+                    
+                    foreach($classes as $className)
+                    {
+                        $mapping[$className] = $componentPath;
+                        Logger::getLogger()->debug(sprintf('Mapped dependency class: %s => %s', $className, $componentPath));
+                    }
+                }
+                catch(\Exception $e)
+                {
+                    Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
+                }
+            }
+            
+            return $mapping;
+        }
+
+        /**
+         * Parses PHP source code to extract class, interface, trait, and enum names.
+         * 
+         * Uses PHP tokenizer to analyze the code and extract fully qualified class names.
+         * This is similar to pal's parseSourceFile but works with string content instead of files.
+         *
+         * @param string $phpCode The PHP source code to parse
+         * @return array<string> Array of fully qualified class names found in the code
+         */
+        private function parsePhpClasses(string $phpCode): array
+        {
+            $tokens = @token_get_all($phpCode);
+            if(!is_array($tokens))
+            {
+                return [];
+            }
+            
+            $classes = [];
+            $namespace = '';
+            $tokenCount = count($tokens);
+            $bracketLevel = 0;
+            $namespaceBracketLevel = 0;
+            
+            for($i = 0; $i < $tokenCount; $i++)
+            {
+                $token = $tokens[$i];
+                
+                if(!is_array($token))
+                {
+                    if($token === '{')
+                    {
+                        $bracketLevel++;
+                    }
+                    elseif($token === '}')
+                    {
+                        $bracketLevel--;
+                        if($namespaceBracketLevel > 0 && $bracketLevel < $namespaceBracketLevel)
+                        {
+                            $namespace = '';
+                            $namespaceBracketLevel = 0;
+                        }
+                    }
+                    continue;
+                }
+                
+                $tokenType = $token[0];
+                
+                // Handle namespace declarations
+                if($tokenType === T_NAMESPACE)
+                {
+                    $namespace = $this->extractNamespaceFromTokens($tokens, $i);
+                    
+                    // Check if this is a bracketed namespace
+                    $j = $i + 1;
+                    while($j < $tokenCount)
+                    {
+                        if(!is_array($tokens[$j]) && $tokens[$j] === '{')
+                        {
+                            $namespaceBracketLevel = $bracketLevel + 1;
+                            break;
+                        }
+                        $j++;
+                    }
+                    continue;
+                }
+                
+                // Handle class/interface/trait/enum definitions
+                $allowedTypes = [T_CLASS, T_INTERFACE];
+                
+                if(defined('T_TRAIT'))
+                {
+                    $allowedTypes[] = T_TRAIT;
+                }
+                
+                if(defined('T_ENUM'))
+                {
+                    $allowedTypes[] = T_ENUM;
+                }
+                
+                if(in_array($tokenType, $allowedTypes))
+                {
+                    // Skip anonymous classes
+                    if($this->isAnonymousClass($tokens, $i))
+                    {
+                        continue;
+                    }
+                    
+                    // Skip ::class constants
+                    if($this->isClassConstant($tokens, $i))
+                    {
+                        continue;
+                    }
+                    
+                    $className = $this->extractClassNameFromTokens($tokens, $i);
+                    if($className)
+                    {
+                        $fullClassName = $namespace ? $namespace . '\\' . $className : $className;
+                        $classes[] = $fullClassName;
+                    }
+                }
+            }
+            
+            return array_unique($classes);
+        }
+
+        /**
+         * Extracts namespace from tokens starting at a T_NAMESPACE token.
+         *
+         * @param array $tokens Token array
+         * @param int $startPos Position of T_NAMESPACE token
+         * @return string The namespace string
+         */
+        private function extractNamespaceFromTokens(array $tokens, int $startPos): string
+        {
+            $namespace = '';
+            $i = $startPos + 1;
+            
+            while($i < count($tokens))
+            {
+                $token = $tokens[$i];
+                
+                if(!is_array($token))
+                {
+                    if($token === ';' || $token === '{')
+                    {
+                        break;
+                    }
+                    $i++;
+                    continue;
+                }
+                
+                if($token[0] === T_STRING || $token[0] === T_NS_SEPARATOR)
+                {
+                    $namespace .= $token[1];
+                }
+                elseif(defined('T_NAME_QUALIFIED') && $token[0] === T_NAME_QUALIFIED)
+                {
+                    $namespace .= $token[1];
+                }
+                elseif(defined('T_NAME_FULLY_QUALIFIED') && $token[0] === T_NAME_FULLY_QUALIFIED)
+                {
+                    $namespace .= $token[1];
+                }
+                
+                $i++;
+            }
+            
+            return trim($namespace, '\\');
+        }
+
+        /**
+         * Extracts class name from tokens starting at a class/interface/trait/enum token.
+         *
+         * @param array $tokens Token array
+         * @param int $startPos Position of class-like token
+         * @return string|null The class name or null if not found
+         */
+        private function extractClassNameFromTokens(array $tokens, int $startPos): ?string
+        {
+            $i = $startPos + 1;
+            
+            while($i < count($tokens))
+            {
+                $token = $tokens[$i];
+                
+                if(is_array($token) && $token[0] === T_STRING)
+                {
+                    return $token[1];
+                }
+                
+                $i++;
+            }
+            
+            return null;
+        }
+
+        /**
+         * Checks if a class token represents an anonymous class.
+         *
+         * @param array $tokens Token array
+         * @param int $pos Position of T_CLASS token
+         * @return bool True if anonymous class
+         */
+        private function isAnonymousClass(array $tokens, int $pos): bool
+        {
+            // Look ahead for class name or opening parenthesis/brace
+            $i = $pos + 1;
+            while($i < count($tokens))
+            {
+                $token = $tokens[$i];
+                
+                if(!is_array($token))
+                {
+                    // If we hit ( or { before a T_STRING, it's anonymous
+                    if($token === '(' || $token === '{')
+                    {
+                        return true;
+                    }
+                    $i++;
+                    continue;
+                }
+                
+                if($token[0] === T_WHITESPACE)
+                {
+                    $i++;
+                    continue;
+                }
+                
+                if($token[0] === T_STRING)
+                {
+                    return false;
+                }
+                
+                break;
+            }
+            
+            return false;
+        }
+
+        /**
+         * Checks if a class token is part of a ::class constant.
+         *
+         * @param array $tokens Token array
+         * @param int $pos Position of T_CLASS token
+         * @return bool True if ::class constant
+         */
+        private function isClassConstant(array $tokens, int $pos): bool
+        {
+            // Look backward for double colon
+            $i = $pos - 1;
+            while($i >= 0)
+            {
+                $token = $tokens[$i];
+                
+                if(is_array($token) && $token[0] === T_WHITESPACE)
+                {
+                    $i--;
+                    continue;
+                }
+                
+                if(defined('T_DOUBLE_COLON') && is_array($token) && $token[0] === T_DOUBLE_COLON)
+                {
+                    return true;
+                }
+                
+                if(!is_array($token) && $token === ':')
+                {
+                    // Check for ::
+                    if($i > 0 && !is_array($tokens[$i - 1]) && $tokens[$i - 1] === ':')
+                    {
+                        return true;
+                    }
+                }
+                
+                break;
+            }
+            
+            return false;
         }
     }

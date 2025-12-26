@@ -48,6 +48,10 @@
         private ?array $dependencyReferences;
         private ?PackageSource $updateSource;
         private array $repositories;
+        /**
+         * @var array<string, string>|null Class-to-file mapping for autoloading
+         */
+        private ?array $autoloader;
 
         /**
          * Public constructor for the package header
@@ -88,6 +92,7 @@
             }
             $this->updateSource = isset($data['package_source']) ? new PackageSource($data['package_source']) : null;
             $this->repositories = isset($data['repositories']) ? array_map(function($item){ return  RepositoryConfiguration::fromArray($item); }, $data['repositories']) : [];
+            $this->autoloader = $data['autoloader'] ?? null;
         }
 
         /**
@@ -285,7 +290,7 @@
          */
         public function getDefinedConstants(): array
         {
-            return $this->definedConstants;
+            return $this->definedConstants ?? [];
         }
 
         /**
@@ -429,6 +434,27 @@
         }
 
         /**
+         * Gets the autoloader class-to-file mapping array.
+         *
+         * @return array<string, string>|null The autoloader mapping array, or null if not set.
+         */
+        public function getAutoloader(): ?array
+        {
+            return $this->autoloader;
+        }
+
+        /**
+         * Sets the autoloader class-to-file mapping array.
+         *
+         * @param array<string, string>|null $autoloader The autoloader mapping array to set.
+         * @return void
+         */
+        public function setAutoloader(?array $autoloader): void
+        {
+            $this->autoloader = $autoloader;
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(): array
@@ -443,7 +469,8 @@
                 'dependencies' => $this->dependencyReferences ? array_map(function($item){ return $item->toArray(); }, $this->dependencyReferences) : null,
                 'defined_constants' => $this->definedConstants,
                 'package_source' => $this->updateSource ? (string)$this->updateSource : null,
-                'repositories' => array_map(function($item){ return $item->toArray(); }, $this->repositories)
+                'repositories' => array_map(function($item){ return $item->toArray(); }, $this->repositories),
+                'autoloader' => $this->autoloader
             ];
         }
 

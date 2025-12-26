@@ -21,6 +21,7 @@
      */
     namespace ncc;
 
+    use Exception;
     use ncc\Classes\AuthenticationManager;
     use ncc\Classes\IO;
     use ncc\Classes\PackageManager;
@@ -38,6 +39,7 @@
     {
         private static array $importedPackages = [];
         private static array $packageReaderReferences = [];
+        private static array $registeredAutoloaders = [];
         private static bool $streamWrapperInitialized = false;
         private static ?PackageManager $userPackageManager = null;
         private static ?PackageManager $systemPackageManager = null;
@@ -69,10 +71,18 @@
                 if(IO::isFile($package))
                 {
                     $packageReader = self::importFromFile($package);
+                    $packageName = $packageReader->getAssembly()->getPackage();
                 }
                 else
                 {
+                    // Check if package is already imported before attempting to import
+                    if(isset(self::$importedPackages[$package]))
+                    {
+                        return; // Package already imported, skip
+                    }
+                    
                     $packageReader = self::importFromPackageManager($package, $version);
+                    $packageName = $packageReader->getAssembly()->getPackage();
                 }
             }
             catch(IOException $e)
@@ -80,10 +90,19 @@
                 throw new ImportException('Fatal error while read the package: ' . $package, $e->getCode(), $e);
             }
 
+            // Check again with the actual package name (in case a file path was used)
+            if(isset(self::$importedPackages[$packageName]))
+            {
+                return; // Package already imported, skip
+            }
+
             // Import the package as a reference
             $referenceId = uniqid();
             self::$packageReaderReferences[$referenceId] = $packageReader;
-            self::$importedPackages[$packageReader->getAssembly()->getPackage()] = $referenceId;
+            self::$importedPackages[$packageName] = $referenceId;
+
+            // Register the autoloader for this package
+            self::registerAutoloader($packageReader);
 
             // If the package is statically linked, import its dependencies as well but point to the same reference
             if($packageReader->getHeader()->isStaticallyLinked())
@@ -115,20 +134,12 @@
          */
         private static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
-            // First check if package is already imported
-            if(isset(self::$importedPackages[$package]))
-            {
-                return self::$importedPackages[$package];
-            }
-
             // Try user package manager first
             $userManager = self::getUserPackageManager();
             if($userManager !== null && $userManager->entryExists($package, $version))
             {
                 $packagePath = $userManager->getPackagePath($package, $version);
-                $packageReader = self::importFromFile($packagePath);
-                self::$importedPackages[$package] = $packageReader;
-                return $packageReader;
+                return self::importFromFile($packagePath);
             }
 
             // Try system package manager
@@ -136,9 +147,7 @@
             if($systemManager->entryExists($package, $version))
             {
                 $packagePath = $systemManager->getPackagePath($package, $version);
-                $packageReader = self::importFromFile($packagePath);
-                self::$importedPackages[$package] = $packageReader;
-                return $packageReader;
+                return self::importFromFile($packagePath);
             }
 
             throw new ImportException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
@@ -502,5 +511,86 @@
 
             StreamWrapper::register();
             self::$streamWrapperInitialized = true;
+        }
+
+        /**
+         * Registers an autoloader for the given package.
+         * 
+         * Extracts the autoloader mapping from the package header and registers
+         * a custom autoloader function that maps class names to ncc:// protocol paths.
+         *
+         * @param PackageReader $packageReader The package reader to register an autoloader for
+         * @return void
+         */
+        private static function registerAutoloader(PackageReader $packageReader): void
+        {
+            $packageName = $packageReader->getAssembly()->getPackage();
+            
+            // Check if autoloader already registered for this package
+            if(isset(self::$registeredAutoloaders[$packageName]))
+            {
+                return;
+            }
+            
+            $autoloaderMapping = $packageReader->getHeader()->getAutoloader();
+            
+            // If no autoloader mapping, nothing to register
+            if($autoloaderMapping === null || empty($autoloaderMapping))
+            {
+                return;
+            }
+            
+            // Create the autoloader closure
+            $autoloader = function(string $className) use ($autoloaderMapping, $packageName): bool
+            {
+                // Try case-sensitive match first
+                if(isset($autoloaderMapping[$className]))
+                {
+                    $filePath = $autoloaderMapping[$className];
+                    
+                    try
+                    {
+                        require_once $filePath;
+                        return true;
+                    }
+                    catch(Exception $e)
+                    {
+                        trigger_error(sprintf('NCC Autoloader: Failed to load "%s" from "%s": %s', $className, $filePath, $e->getMessage()), E_USER_WARNING);
+                        return false;
+                    }
+                }
+                
+                // Try case-insensitive match as fallback
+                foreach($autoloaderMapping as $mappedClass => $filePath)
+                {
+                    if(strcasecmp($mappedClass, $className) === 0)
+                    {
+                        try
+                        {
+                            require_once $filePath;
+                            return true;
+                        }
+                        catch(Exception $e)
+                        {
+                            trigger_error(sprintf('NCC Autoloader: Failed to load "%s" from "%s": %s', $className, $filePath, $e->getMessage()), E_USER_WARNING);
+                            return false;
+                        }
+                    }
+                }
+                
+                return false;
+            };
+            
+            // Register the autoloader
+            $registered = spl_autoload_register($autoloader, true, false);
+            
+            if($registered)
+            {
+                self::$registeredAutoloaders[$packageName] = $autoloader;
+            }
+            else
+            {
+                trigger_error(sprintf('NCC Autoloader: Failed to register autoloader for package "%s"', $packageName), E_USER_WARNING);
+            }
         }
     }

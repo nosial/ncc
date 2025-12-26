@@ -327,7 +327,26 @@
             $size = 0;
             if ($this->reference !== null)
             {
-                $size = $this->reference->getSize();
+                // If the package is compressed, we need the decompressed size for PHP's require/include
+                // Otherwise, the stored size is accurate and we can avoid decompression overhead
+                if ($this->packageReader->getHeader()->isCompressed())
+                {
+                    if ($this->data === null)
+                    {
+                        // Load data to get accurate decompressed size
+                        $this->data = $this->packageReader->read($this->reference);
+                        if (!is_string($this->data))
+                        {
+                            $this->data = '';
+                        }
+                    }
+                    $size = strlen($this->data);
+                }
+                else
+                {
+                    // Not compressed, stored size is accurate
+                    $size = $this->reference->getSize();
+                }
             }
             elseif ($this->data !== null)
             {
@@ -393,7 +412,17 @@
                 {
                     return false;
                 }
-                $size = $reference->getSize();
+                // If compressed, report decompressed size for PHP's require/include to work correctly
+                // Otherwise use stored size to avoid unnecessary decompression overhead
+                if ($packageReader->getHeader()->isCompressed())
+                {
+                    $data = $packageReader->read($reference);
+                    $size = is_string($data) ? strlen($data) : 0;
+                }
+                else
+                {
+                    $size = $reference->getSize();
+                }
             }
 
             // Return minimal stat array
