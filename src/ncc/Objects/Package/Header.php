@@ -419,11 +419,17 @@
         /**
          * Sets the repository configuration of the package
          *
-         * @param RepositoryConfiguration|array $repositories The repository configuration to set
+         * @param RepositoryConfiguration|array|null $repositories The repository configuration to set
          * @return void
          */
-        public function setRepositories(RepositoryConfiguration|array $repositories): void
+        public function setRepositories(RepositoryConfiguration|array|null $repositories): void
         {
+            if($repositories === null)
+            {
+                $this->repositories = [];
+                return;
+            }
+
             if($repositories instanceof RepositoryConfiguration)
             {
                 $this->repositories[] = $repositories;

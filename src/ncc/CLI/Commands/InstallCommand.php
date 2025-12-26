@@ -116,11 +116,11 @@
 
                 if($packageReader->getHeader()->getRepositories() !== null)
                 {
-                    if($packageReader->getHeader()->getMainRepository()->getName() !== $packageReader->getHeader()->getUpdateSource()?->getRepository())
+                    if($packageReader->getHeader()->getMainRepository() !== null && $packageReader->getHeader()->getMainRepository()->getName() !== $packageReader->getHeader()->getUpdateSource()?->getRepository())
                     {
                         Console::warning("The repository name specified in the package header does not match the repository in the update source, updates will not be found correctly.");
                     }
-                    else
+                    elseif($packageReader->getHeader()->getMainRepository() !== null)
                     {
                         Console::out("Repository: " . $packageReader->getHeader()->getMainRepository()->getHost());
                     }
