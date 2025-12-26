@@ -47,6 +47,9 @@
     // Register the shutdown handler
     \ncc\Classes\ShutdownHandler::register();
 
+    // Register the ncc:// stream wrapper
+    \ncc\Classes\StreamWrapper::register();
+
     // Define the core methods
     if(!function_exists('import'))
     {
