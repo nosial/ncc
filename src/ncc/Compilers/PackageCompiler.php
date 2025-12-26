@@ -407,7 +407,19 @@
                 
                 foreach($this->getPackageDependencies() as $packageName => $packageSource)
                 {
-                    $packageVersion = Runtime::getPackageEntry($packageName, $packageSource->getVersion() ?? 'latest')?->getVersion() ?? 'latest';
+                    // Try to get the exact version from the source first
+                    $sourceVersion = $packageSource->getVersion();
+                    
+                    // If source has a specific version (not 'latest' or null), use it
+                    if($sourceVersion !== null && $sourceVersion !== 'latest')
+                    {
+                        $packageVersion = $sourceVersion;
+                    }
+                    // Otherwise try to resolve from installed packages
+                    else
+                    {
+                        $packageVersion = Runtime::getPackageEntry($packageName, $sourceVersion ?? 'latest')?->getVersion() ?? 'latest';
+                    }
 
                     // Ensure that there are no 'latest' versions when statically linking
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
