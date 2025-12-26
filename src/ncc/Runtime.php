@@ -139,7 +139,7 @@
             if($userManager !== null && $userManager->entryExists($package, $version))
             {
                 $packagePath = $userManager->getPackagePath($package, $version);
-                return self::importFromFile($packagePath);
+                return self::importFromFileWithCache($packagePath);
             }
 
             // Try system package manager
@@ -147,7 +147,7 @@
             if($systemManager->entryExists($package, $version))
             {
                 $packagePath = $systemManager->getPackagePath($package, $version);
-                return self::importFromFile($packagePath);
+                return self::importFromFileWithCache($packagePath);
             }
 
             throw new ImportException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
@@ -180,6 +180,36 @@
             }
 
             return new PackageReader($packagePath);
+        }
+
+        /**
+         * Constructs a PackageReader instance with cache support for faster loading
+         *
+         * @param string $packagePath The file path to the package
+         * @return PackageReader Returns the PackageReader
+         * @throws IOException Thrown if the file cannot be read/found
+         */
+        private static function importFromFileWithCache(string $packagePath): PackageReader
+        {
+            // Initialize the StreamWrapper on first import
+            $packagePath = realpath($packagePath);
+            if(!IO::exists($packagePath))
+            {
+                throw new IOException('Package not found: ' . $packagePath);
+            }
+
+            if(!IO::isFile($packagePath))
+            {
+                throw new IOException('Package path is not a file: ' . $packagePath);
+            }
+
+            if(!IO::isReadable($packagePath))
+            {
+                throw new IOException('Package file is not readable: ' . $packagePath);
+            }
+
+            // Try to use cache for faster loading
+            return new PackageReader($packagePath, true);
         }
 
         /**

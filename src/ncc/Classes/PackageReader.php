@@ -62,8 +62,9 @@
          * Public constructor for the PackageReader class.
          *
          * @param string $filePath The path to the package file. Must be a valid file path.
+         * @param bool $tryCache If true, attempt to load from cache file if available
          */
-        public function __construct(string $filePath)
+        public function __construct(string $filePath, bool $tryCache = false)
         {
             $this->filePath = $filePath;
             if(!IO::exists($this->filePath))
@@ -74,6 +75,25 @@
             if(!IO::isReadable($this->filePath))
             {
                 throw new InvalidArgumentException("File is not readable: " . $this->filePath);
+            }
+
+            // Try to load from cache if requested
+            if($tryCache)
+            {
+                $cacheFile = $this->filePath . '.cache';
+                if(IO::exists($cacheFile))
+                {
+                    try
+                    {
+                        $this->importFromCacheFile($cacheFile);
+                        return;
+                    }
+                    catch(\Exception $e)
+                    {
+                        // If cache loading fails, fall back to normal parsing
+                        // Silently continue to normal parsing
+                    }
+                }
             }
 
             $this->fileHandle = fopen($this->filePath, 'rb');
@@ -919,6 +939,112 @@
 
             // Write the package data to the specified file
             IO::writeFile($filePath, $packageData);
+        }
+
+        /**
+         * Exports package metadata to a cache file for faster subsequent loading.
+         * The cache file contains all parsed references and metadata, allowing the
+         * PackageReader to be reconstructed without re-parsing the package file.
+         *
+         * @param string $cacheFilePath The path where the cache file should be saved
+         * @throws IOException If the cache file cannot be written
+         */
+        public function exportCache(string $cacheFilePath): void
+        {
+            $cacheData = [
+                'version' => 1, // Cache format version for future compatibility
+                'file_path' => $this->filePath,
+                'file_size' => filesize($this->filePath),
+                'file_mtime' => filemtime($this->filePath),
+                'start_offset' => $this->startOffset,
+                'end_offset' => $this->endOffset,
+                'package_version' => $this->packageVersion,
+                'header' => $this->header->toArray(),
+                'assembly' => $this->assembly->toArray(),
+                'execution_unit_references' => $this->executionUnitReferences,
+                'component_references' => $this->componentReferences,
+                'resource_references' => $this->resourceReferences,
+            ];
+
+            $serialized = serialize($cacheData);
+            IO::writeFile($cacheFilePath, $serialized);
+        }
+
+        /**
+         * Creates a PackageReader instance from a cache file.
+         * This method provides a static factory for creating PackageReader instances
+         * from previously exported cache files.
+         *
+         * @param string $cacheFilePath The path to the cache file
+         * @param string $packageFilePath The path to the original package file
+         * @return static A new PackageReader instance
+         * @throws InvalidArgumentException If the cache file is invalid or corrupted
+         * @throws IOException If the cache file cannot be read
+         */
+        public static function importFromCache(string $cacheFilePath, string $packageFilePath): self
+        {
+            if(!IO::exists($cacheFilePath))
+            {
+                throw new InvalidArgumentException("Cache file does not exist: " . $cacheFilePath);
+            }
+
+            if(!IO::exists($packageFilePath))
+            {
+                throw new InvalidArgumentException("Package file does not exist: " . $packageFilePath);
+            }
+
+            // Use reflection to create instance without calling constructor
+            $reflection = new \ReflectionClass(self::class);
+            $instance = $reflection->newInstanceWithoutConstructor();
+            
+            $instance->filePath = $packageFilePath;
+            $instance->importFromCacheFile($cacheFilePath);
+            
+            return $instance;
+        }
+
+        /**
+         * Internal method to import cache data into the current instance.
+         *
+         * @param string $cacheFilePath The path to the cache file
+         * @throws InvalidArgumentException If the cache is invalid or corrupted
+         * @throws IOException If the cache file cannot be read
+         */
+        private function importFromCacheFile(string $cacheFilePath): void
+        {
+            $cacheContent = IO::readFile($cacheFilePath);
+            $cacheData = unserialize($cacheContent);
+
+            if(!is_array($cacheData) || !isset($cacheData['version']))
+            {
+                throw new InvalidArgumentException("Invalid cache file format");
+            }
+
+            // Validate cache against current package file
+            $currentSize = filesize($this->filePath);
+            $currentMtime = filemtime($this->filePath);
+
+            if($cacheData['file_size'] !== $currentSize || $cacheData['file_mtime'] !== $currentMtime)
+            {
+                throw new InvalidArgumentException("Cache file is outdated (package file has been modified)");
+            }
+
+            // Reconstruct all properties from cache
+            $this->startOffset = $cacheData['start_offset'];
+            $this->endOffset = $cacheData['end_offset'];
+            $this->packageVersion = $cacheData['package_version'];
+            $this->header = Header::fromArray($cacheData['header']);
+            $this->assembly = Assembly::fromArray($cacheData['assembly']);
+            $this->executionUnitReferences = $cacheData['execution_unit_references'];
+            $this->componentReferences = $cacheData['component_references'];
+            $this->resourceReferences = $cacheData['resource_references'];
+
+            // Open file handle for reading actual data when needed
+            $this->fileHandle = fopen($this->filePath, 'rb');
+            if(!$this->fileHandle)
+            {
+                throw new InvalidArgumentException("Could not open package file: " . $this->filePath);
+            }
         }
 
         /**

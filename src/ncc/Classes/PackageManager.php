@@ -426,6 +426,18 @@
             $packageReader->exportPackage($packageInstallationPath); // Export (ONLY) the package to a file
             // The reason we don't copy the file directly is because the package could be embedded into another file,
             // and we need to extract just the package data.
+            
+            // Export cache file for faster subsequent imports
+            try
+            {
+                $packageReader->exportCache($packageInstallationPath . '.cache');
+            }
+            catch(\Exception $e)
+            {
+                // Cache creation is not critical, so we just log and continue
+                // The package will still work, just without cache optimization
+            }
+            
             $this->addEntry($packageReader); // Finally add the entry to the package manager
         }
 
