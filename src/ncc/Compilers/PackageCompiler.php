@@ -211,6 +211,9 @@
                         }
                         Logger::getLogger()->verbose(sprintf('Writing %d source components', $componentCount));
                         
+                        // Get the main package assembly name to namespace its components
+                        $mainPackageName = $this->getProjectConfiguration()->getAssembly()->getName();
+                        
                         // Components ca be multiple, write them named
                         foreach($this->getSourceComponents() as $componentFilePath)
                         {
@@ -249,7 +252,9 @@
                                 Logger::getLogger()->debug(sprintf('Compressed component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
                             }
 
-                            $packageWriter->writeData($componentData, $componentName);
+                            // Namespace the component under the main package's assembly name
+                            $namespacedComponentName = $mainPackageName . '/' . $componentName;
+                            $packageWriter->writeData($componentData, $namespacedComponentName);
                         }
 
                         // If dependency linking is statically linked, we embed the package contents into our compiled package
@@ -258,21 +263,43 @@
                             Logger::getLogger()->verbose(sprintf('Embedding %d dependency components for static linking', count($dependencyReaders)));
                             
                             // For each dependency, if we cannot resolve one of these dependencies the build fails
-                            /** @var PackageReader $packageReader */
-                            foreach($dependencyReaders as $packageReader)
+                            foreach($dependencyReaders as $resolvedDependency)
                             {
+                                $packageReader = $resolvedDependency->getPackageReader();
+                                if($packageReader === null)
+                                {
+                                    continue;
+                                }
+                                
                                 $currentStage++;
                                 if($progressCallback !== null)
                                 {
                                     $progressCallback($currentStage, $totalStages, sprintf('Embedding dependency: %s', $packageReader->getPackageName()));
                                 }
                                 
+                                // Get the dependency assembly name to namespace its components
+                                $depPackageName = $packageReader->getAssembly()->getName();
+                                
                                 // For each component reference
                                 /** @var ComponentReference $componentReference */
                                 foreach($packageReader->getComponentReferences() as $componentName => $componentReference)
                                 {
-                                    $packageWriter->writeData($componentName, $packageReader->readComponent($componentReference));
-                                    Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $componentName));
+                                    // Read the component data (already decompressed)
+                                    $componentData = $packageReader->readComponent($componentReference);
+                                    $originalSize = strlen($componentData);
+                                    
+                                    // Re-compress if target package uses compression
+                                    if($this->compressionEnabled)
+                                    {
+                                        $componentData = gzdeflate($componentData, $this->compressionLevel);
+                                        $compressedSize = strlen($componentData);
+                                        Logger::getLogger()->debug(sprintf('Compressed embedded component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
+                                    }
+                                    
+                                    // Namespace the component under the dependency's package directory
+                                    $namespacedComponentName = $depPackageName . '/' . $componentName;
+                                    $packageWriter->writeData($componentData, $namespacedComponentName);
+                                    Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $namespacedComponentName));
                                 }
                             }
                         }
@@ -285,6 +312,9 @@
                     case WritingMode::RESOURCES:
                         $resourceCount = count($this->getSourceResources());
                         Logger::getLogger()->verbose(sprintf('Writing %d source resources', $resourceCount));
+                        
+                        // Get the main package assembly name to namespace its resources
+                        $mainPackageName = $this->getProjectConfiguration()->getAssembly()->getName();
                         
                         // Resources can be multiple, write them named.
                         foreach($this->getSourceResources() as $resourceFilePath)
@@ -318,21 +348,46 @@
                                 Logger::getLogger()->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
                             }
 
-                            $packageWriter->writeData($resourceData, $resourceName);
+                            // Namespace the resource under the main package's assembly name
+                            $namespacedResourceName = $mainPackageName . '/' . $resourceName;
+                            $packageWriter->writeData($resourceData, $namespacedResourceName);
                         }
 
                         if($this->isStaticallyLinked())
                         {
                             Logger::getLogger()->verbose(sprintf('Embedding %d dependency resources for static linking', count($dependencyReaders)));
                             
-                            /** @var PackageReader $packageReader */
-                            foreach($dependencyReaders as $packageReader)
+                            foreach($dependencyReaders as $resolvedDependency)
                             {
+                                $packageReader = $resolvedDependency->getPackageReader();
+                                if($packageReader === null)
+                                {
+                                    continue;
+                                }
+                                
+                                // Get the dependency assembly name to namespace its resources
+                                $depPackageName = $packageReader->getAssembly()->getName();
+                                
                                 /** @var ComponentReference $componentReference */
                                 foreach($packageReader->getResourceReferences() as $resourceName => $resourceReference)
                                 {
-                                    $packageWriter->writeData($resourceName, $packageReader->readResource($resourceReference));
-                                    Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $resourceName));
+                                    // Read the resource data (already decompressed)
+                                    $resourceData = $packageReader->readResource($resourceReference);
+                                    $originalSize = strlen($resourceData);
+                                    
+                                    // Re-compress if target package uses compression
+                                    if($this->compressionEnabled)
+                                    {
+                                        $resourceData = gzdeflate($resourceData, $this->compressionLevel);
+                                        $compressedSize = strlen($resourceData);
+                                        $compressionRatio = $originalSize > 0 ? ($compressedSize / $originalSize) * 100 : 0;
+                                        Logger::getLogger()->debug(sprintf('Compressed embedded resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
+                                    }
+                                    
+                                    // Namespace the resource under the dependency's package directory
+                                    $namespacedResourceName = $depPackageName . '/' . $resourceName;
+                                    $packageWriter->writeData($resourceData, $namespacedResourceName);
+                                    Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $namespacedResourceName));
                                 }
                             }
                         }
@@ -362,7 +417,7 @@
             // General header information
             $header->setBuildNumber($this->getBuildNumber());
             $header->setCompressed($this->compressionEnabled);
-            $header->setStaticallyLinked($this->getBuildConfiguration()?->getOptions()['static'] ?? false);
+            $header->setStaticallyLinked($this->isStaticallyLinked());
             $header->setEntryPoint($this->getProjectConfiguration()->getEntryPoint());
             $header->setWebEntryPoint($this->getProjectConfiguration()->getWebEntryPoint());
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
@@ -384,10 +439,26 @@
             {
                 Logger::getLogger()->debug(sprintf('Processing %d resolved dependency readers for header', count($dependencyReaders)));
                 
-                foreach($this->getDependencyReaders() as $packageReader)
+                $addedDependencies = [];
+                
+                foreach($this->getDependencyReaders() as $resolvedDependency)
                 {
-                    $packageName = $packageReader->getPackageConfiguration()->getName();
-                    $packageVersion = $packageReader->getPackageConfiguration()->getVersion();
+                    $packageReader = $resolvedDependency->getPackageReader();
+                    if($packageReader === null)
+                    {
+                        continue;
+                    }
+                    
+                    // Use the package identifier (e.g., com.example.package) instead of friendly name
+                    $packageName = $packageReader->getAssembly()->getPackage();
+                    $packageVersion = $packageReader->getAssembly()->getVersion();
+
+                    // Skip if already added (prevent duplicates)
+                    if(isset($addedDependencies[$packageName]))
+                    {
+                        Logger::getLogger()->debug(sprintf('Skipping duplicate dependency: %s', $packageName));
+                        continue;
+                    }
 
                     // Ensure that there are no 'latest' versions when statically linking
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
@@ -396,7 +467,8 @@
                         throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
-                    $header->addDependencyReference($packageName, $packageVersion, $packageReader->getPackageSource());
+                    $header->addDependencyReference($packageName, $packageVersion, $resolvedDependency->getPackageSource());
+                    $addedDependencies[$packageName] = true;
                     Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
                 }
             }
@@ -536,13 +608,22 @@
             {
                 Logger::getLogger()->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
                 
-                /** @var PackageReader $packageReader */
-                foreach($dependencyReaders as $packageReader)
+                /** @var \ncc\Objects\ResolvedDependency $resolvedDependency */
+                foreach($dependencyReaders as $resolvedDependency)
                 {
-                    $depPackageName = $packageReader->getAssembly()->getPackage();
-                    $depBaseDirectory = 'ncc://' . $depPackageName . '/';
+                    $packageReader = $resolvedDependency->getPackageReader();
+                    if($packageReader === null)
+                    {
+                        continue;
+                    }
                     
-                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s', $depPackageName));
+                    $depPackageName = $packageReader->getAssembly()->getPackage();
+                    // For statically linked dependencies, components are namespaced with assembly name
+                    // and stored in the main package, so use main package + assembly name prefix
+                    $depAssemblyName = $packageReader->getAssembly()->getName();
+                    $depBaseDirectory = $baseDirectory . $depAssemblyName . '/';
+                    
+                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s (mapped to %s)', $depPackageName, $depBaseDirectory));
                     
                     $depMapping = $this->parsePackageComponents($packageReader, $depBaseDirectory);
                     $mapping = array_merge($mapping, $depMapping);
