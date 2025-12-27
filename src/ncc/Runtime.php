@@ -64,10 +64,38 @@
          * @param string $version The version of the package to import if importing from a package manager
          * @throws ImportException If the package cannot be imported.
          */
-        public static function import(string $package, string $version='latest'): void
+        public static function import(string|PackageReader $package, string $version='latest'): void
         {
             Logger::getLogger()->debug(sprintf('Import requested: %s@%s', $package, $version));
             self::initializeStreamWrapper();
+
+            if($package instanceof PackageReader)
+            {
+                $packageName = $package->getAssembly()->getPackage();
+
+                // Check if package is already imported before attempting to import
+                if(isset(self::$importedPackages[$packageName]))
+                {
+                    Logger::getLogger()->debug(sprintf('Package already imported: %s', $packageName));
+                    return; // Package already imported, skip
+                }
+
+                Logger::getLogger()->verbose(sprintf('Importing from PackageReader instance: %s', $packageName));
+                $packageReader = $package;
+
+                // Import the package as a reference
+                $referenceId = uniqid();
+                Logger::getLogger()->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
+                self::$packageReaderReferences[$referenceId] = $packageReader;
+                self::$importedPackages[$packageName] = $referenceId;
+                // Register the autoloader for this package
+
+                Logger::getLogger()->debug(sprintf('Registering autoloader for: %s', $packageName));
+                self::registerAutoloader($packageReader);
+                Logger::getLogger()->verbose(sprintf('Package import completed: %s', $packageName));
+
+                return;
+            }
 
             try
             {
@@ -722,8 +750,7 @@
             try
             {
                 // Try to find a satisfying version using semver
-                // The requested version might be an exact version like "1.33.0.0"
-                // We need to match it against available versions like "1.33.0"
+                // First, try as-is (in case it's already a constraint like ^1.0 or ~2.3)
                 $satisfying = Semver::satisfiedBy($availableVersions, $requestedVersion);
                 
                 if(!empty($satisfying))
@@ -732,12 +759,23 @@
                     return Semver::rsort($satisfying)[0];
                 }
                 
-                // If no match found, try normalizing the requested version and treat it as a constraint
-                // Remove trailing .0 segments (1.33.0.0 -> 1.33.0)
+                // If no match found with exact version, try normalizing trailing .0 segments
+                // (e.g., 1.33.0.0 -> 1.33.0)
                 $normalized = preg_replace('/\.0+$/', '', $requestedVersion);
                 if($normalized !== $requestedVersion)
                 {
                     $satisfying = Semver::satisfiedBy($availableVersions, $normalized);
+                    if(!empty($satisfying))
+                    {
+                        return Semver::rsort($satisfying)[0];
+                    }
+                }
+                
+                // If still no match and the version looks like a specific version (e.g., "7.4.0"),
+                // try with caret constraint (^) for compatible versions
+                if(preg_match('/^\d+\.\d+(\.\d+)?$/', $requestedVersion))
+                {
+                    $satisfying = Semver::satisfiedBy($availableVersions, '^' . $requestedVersion);
                     if(!empty($satisfying))
                     {
                         return Semver::rsort($satisfying)[0];
