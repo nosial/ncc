@@ -25,6 +25,7 @@
     use InvalidArgumentException;
     use JsonException;
     use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
@@ -55,6 +56,8 @@
          */
         public function __construct(string $dataDirectoryPath, bool $autoSave=true)
         {
+            Logger::getLogger()->debug(sprintf('Initializing PackageManager for directory: %s', $dataDirectoryPath));
+            
             if(empty($dataDirectoryPath))
             {
                 throw new InvalidArgumentException('Directory path cannot be empty');
@@ -84,7 +87,12 @@
 
             if(IO::exists($this->packageLockPath))
             {
+                Logger::getLogger()->verbose(sprintf('Loading existing lock file: %s', $this->packageLockPath));
                 $this->loadLockFile();
+            }
+            else
+            {
+                Logger::getLogger()->verbose('No existing lock file found, starting fresh');
             }
         }
 
@@ -96,10 +104,12 @@
          */
         private function loadLockFile(): void
         {
+            Logger::getLogger()->debug('Parsing package lock file');
             $content = IO::readFile($this->packageLockPath);
 
             if(empty($content))
             {
+                Logger::getLogger()->verbose('Lock file is empty');
                 return; // Empty file is valid (no packages)
             }
 
@@ -128,12 +138,15 @@
                 {
                     $entry = PackageLockEntry::fromArray($entryData);
                     $this->entries[(string)$entry] = $entry;
+                    Logger::getLogger()->debug(sprintf('Loaded package entry: %s', (string)$entry));
                 }
                 catch(InvalidArgumentException $e)
                 {
                     throw new PackageException(sprintf('Invalid entry at index %d: %s', $index, $e->getMessage()), 0, $e);
                 }
             }
+            
+            Logger::getLogger()->verbose(sprintf('Loaded %d package entries from lock file', count($this->entries)));
         }
 
         /**
@@ -177,6 +190,8 @@
          */
         public function getLatestVersion(string $packageName): ?PackageLockEntry
         {
+            Logger::getLogger()->debug(sprintf('Looking for latest version of package: %s', $packageName));
+            
             if(empty($packageName))
             {
                 return null;
@@ -195,6 +210,15 @@
                 }
             }
 
+            if($latestEntry !== null)
+            {
+                Logger::getLogger()->verbose(sprintf('Latest version of %s is %s', $packageName, $latestEntry->getVersion()));
+            }
+            else
+            {
+                Logger::getLogger()->verbose(sprintf('No version found for package: %s', $packageName));
+            }
+            
             return $latestEntry;
         }
 
@@ -366,6 +390,8 @@
          */
         private function addEntry(PackageReader $reader): void
         {
+            Logger::getLogger()->debug(sprintf('Adding package entry: %s=%s', $reader->getAssembly()->getPackage(), $reader->getAssembly()->getVersion()));
+            
             $entry = new PackageLockEntry([
                 'package' => $reader->getAssembly()->getPackage(),
                 'version' => $reader->getAssembly()->getVersion(),
@@ -374,6 +400,8 @@
 
             $this->entries[(string)$entry] = $entry;
             $this->modified = true;
+            
+            Logger::getLogger()->verbose(sprintf('Package entry added: %s', (string)$entry));
 
             if($this->autoSave && $this->modified && !$this->readOnly)
             {
@@ -445,26 +473,34 @@
          */
         public function install(PackageReader $packageReader, array $options=[]): void
         {
+            Logger::getLogger()->verbose(sprintf('Installing package: %s=%s', $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()));
+            
             // If the 'reinstall' option isn't set, we check if the pcakage is already installed
             if(!isset($options['reinstall']) && Runtime::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
             {
+                Logger::getLogger()->debug('Package already installed and reinstall not requested');
                 throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
             }
 
             if(!IO::exists($this->getPackagePathFromEntry()))
             {
+                Logger::getLogger()->debug('Creating packages directory');
                 IO::mkdir($this->getPackagePathFromEntry());
             }
 
             $packageInstallationPath = $this->getPackagePathFromEntry() . DIRECTORY_SEPARATOR .
                 sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+            
+            Logger::getLogger()->verbose(sprintf('Installation path: %s', $packageInstallationPath));
 
             // Remove the orphaned package if it already exists
             if(IO::exists($packageInstallationPath))
             {
+                Logger::getLogger()->debug('Removing existing package installation');
                 IO::rm($packageInstallationPath, false);
             }
 
+            Logger::getLogger()->verbose('Exporting package to installation path');
             $packageReader->exportPackage($packageInstallationPath); // Export (ONLY) the package to a file
             // The reason we don't copy the file directly is because the package could be embedded into another file,
             // and we need to extract just the package data.
@@ -472,15 +508,18 @@
             // Export cache file for faster subsequent imports
             try
             {
+                Logger::getLogger()->debug('Creating cache file for faster imports');
                 $packageReader->exportCache($packageInstallationPath . '.cache');
             }
             catch(\Exception $e)
             {
+                Logger::getLogger()->debug(sprintf('Failed to create cache file: %s', $e->getMessage()));
                 // Cache creation is not critical, so we just log and continue
                 // The package will still work, just without cache optimization
             }
             
             $this->addEntry($packageReader); // Finally add the entry to the package manager
+            Logger::getLogger()->verbose('Package installation completed successfully');
         }
 
         /**
