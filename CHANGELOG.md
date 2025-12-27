@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - Ongoing
+
+This update introduces a complete new rewrite of the Nosial Code Compiler with a different focus and better
+maintainability of the project
+
+### Added
+ - Added the ability to build ncc in a self-contained php archive (phar)
+ - Added legacy project conversion tool to convert ncc 1.* & 2.* projects to ncc 3.* format
+ - 
+### Changed
+ - Changed the ncc package structure, ncc v3+ Will no longer be compatible with ncc 1.* & 2.* package structure versions
+   the project must be rebuilt
+ - Refactored the CLI entirely
+ - Changed the project structure format
+ - Changed the project structure file format from JSON to YAML
+ - Refactored Makefile to handle a more clean approach into handling dependencies and avoiding conflicts, the Makefile can
+   now build the dependencies that ncc would require from the git submodules of the repository. 
+ - Streamlined the command-line interface to be more simple, with commands to manage/operate different parts of ncc instead
+   commands having many sub-commands instead. For instance instead of `ncc project build` it's instead `ncc build`, instead
+   of `ncc package list` it's simply just `ncc list`, see the command-line help menu for more information, older commands
+   and arguments will no longer work with ncc 3.0+
+
+### Removed
+ - Removed build requirements such as `phpab` and `phive`, the project can now be independently built using `pal`
+   (PHP Autoloader)
+ - Removed "runners" and other build tools for every other language except for PHP, for running code/commands that isn't
+   PHP related, execution units has been refactored allow executing both PHP and SYSTEM commands/actions
+ - Removed the internal logging in favor for `LogLib2` which can now independently be built with the project
+
+
+
 ## [2.1.8] - 2025-03-17
 
 This update introduces a temporary fix

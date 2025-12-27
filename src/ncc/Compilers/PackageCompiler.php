@@ -91,26 +91,6 @@
         }
 
         /**
-         * Gets whether compression is enabled.
-         *
-         * @return bool True if compression is enabled, false otherwise.
-         */
-        public function getCompressionEnabled(): bool
-        {
-            return $this->compressionEnabled;
-        }
-
-        /**
-         * Gets the compression level.
-         *
-         * @return int The compression level.
-         */
-        public function getCompressionLevel(): int
-        {
-            return $this->compressionLevel;
-        }
-
-        /**
          * @inheritDoc
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string

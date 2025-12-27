@@ -40,32 +40,6 @@
     class InstallCommand extends AbstractCommandHandler
     {
         /**
-         * Prints out the help menu for the install command
-         *
-         * @return void
-         */
-        public static function help(): void
-        {
-            Console::out('Usage: ncc install <package> [options]' . PHP_EOL);
-            Console::out('Installs an ncc package from a file or remote repository.' . PHP_EOL);
-            Console::out('The install command can handle local .ncc files or fetch packages');
-            Console::out('from configured repositories. Dependencies are resolved and installed');
-            Console::out('automatically unless explicitly skipped.' . PHP_EOL);
-            Console::out('Arguments:');
-            Console::out('  <package>         Package name or path to .ncc file' . PHP_EOL);
-            Console::out('Options:');
-            Console::out('  --yes, -y         Automatically confirm all prompts');
-            Console::out('  --skip-dependencies, --skip-deps, --sd');
-            Console::out('                    Skip installing package dependencies');
-            Console::out('  --skip-repositories, --skip-repos, --sr');
-            Console::out('                    Skip adding package repositories');
-            Console::out(PHP_EOL . 'Examples:');
-            Console::out('  ncc install mypackage.ncc');
-            Console::out('  ncc install com.example.package --yes');
-            Console::out('  ncc install package.ncc --skip-deps');
-        }
-
-        /**
          * @inheritDoc
          */
         public static function handle(array $argv): int
@@ -455,7 +429,6 @@
         private static function parseOptions(array $options): array
         {
             $results = [
-                'static' => false,
                 'skip-repositories' => false,
                 'skip-dependencies' => false,
                 'build-source' => false,
@@ -466,11 +439,6 @@
             {
                 switch($option)
                 {
-                    case 'static':
-                    case 's':
-                        $results['static'] = true;
-                        break;
-
                     case 'skip-repositories':
                     case 'skip-repos':
                     case 'sr':
@@ -496,5 +464,31 @@
             }
 
             return $results;
+        }
+
+        /**
+         * Prints out the help menu for the install command
+         *
+         * @return void
+         */
+        public static function help(): void
+        {
+            Console::out('Usage: ncc install <package> [options]' . PHP_EOL);
+            Console::out('Installs an ncc package from a file or remote repository.' . PHP_EOL);
+            Console::out('The install command can handle local .ncc files or fetch packages');
+            Console::out('from configured repositories. Dependencies are resolved and installed');
+            Console::out('automatically unless explicitly skipped.' . PHP_EOL);
+            Console::out('Arguments:');
+            Console::out('  <package>         Package name or path to .ncc file' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --yes, -y         Automatically confirm all prompts');
+            Console::out('  --skip-dependencies, --skip-deps, --sd');
+            Console::out('                    Skip installing package dependencies');
+            Console::out('  --skip-repositories, --skip-repos, --sr');
+            Console::out('                    Skip adding package repositories');
+            Console::out(PHP_EOL . 'Examples:');
+            Console::out('  ncc install mypackage.ncc');
+            Console::out('  ncc install com.example.package --yes');
+            Console::out('  ncc install package.ncc --skip-deps');
         }
     }
