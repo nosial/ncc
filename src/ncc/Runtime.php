@@ -29,6 +29,7 @@
     use ncc\Classes\PathResolver;
     use ncc\Classes\RepositoryManager;
     use ncc\Classes\StreamWrapper;
+    use ncc\CLI\Logger;
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageException;
@@ -65,12 +66,14 @@
          */
         public static function import(string $package, string $version='latest'): void
         {
+            Logger::getLogger()->debug(sprintf('Import requested: %s@%s', $package, $version));
             self::initializeStreamWrapper();
 
             try
             {
                 if(IO::isFile($package))
                 {
+                    Logger::getLogger()->verbose(sprintf('Importing from file: %s', $package));
                     $packageReader = self::importFromFile($package);
                     $packageName = $packageReader->getAssembly()->getPackage();
                 }
@@ -79,9 +82,11 @@
                     // Check if package is already imported before attempting to import
                     if(isset(self::$importedPackages[$package]))
                     {
+                        Logger::getLogger()->debug(sprintf('Package already imported: %s', $package));
                         return; // Package already imported, skip
                     }
                     
+                    Logger::getLogger()->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
                     $packageReader = self::importFromPackageManager($package, $version);
                     $packageName = $packageReader->getAssembly()->getPackage();
                 }
@@ -94,8 +99,11 @@
             // Check again with the actual package name (in case a file path was used)
             if(isset(self::$importedPackages[$packageName]))
             {
+                Logger::getLogger()->debug(sprintf('Package already imported (by actual name): %s', $packageName));
                 return; // Package already imported, skip
             }
+            
+            Logger::getLogger()->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
 
             // Import the package as a reference
             $referenceId = uniqid();
@@ -106,23 +114,30 @@
             // This prevents the autoloader from trying to import dependencies that are already embedded
             if($packageReader->getHeader()->isStaticallyLinked())
             {
+                Logger::getLogger()->debug(sprintf('Package is statically linked, marking %d dependencies as imported', count($packageReader->getHeader()->getDependencyReferences())));
                 foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
                 {
                     self::$importedPackages[$reference->getPackage()] = $referenceId;
+                    Logger::getLogger()->verbose(sprintf('Marked dependency as imported: %s', $reference->getPackage()));
                 }
             }
 
             // Register the autoloader for this package
+            Logger::getLogger()->debug(sprintf('Registering autoloader for: %s', $packageName));
             self::registerAutoloader($packageReader);
 
             // For non-statically linked packages, import dependencies separately
             if(!$packageReader->getHeader()->isStaticallyLinked() && count($packageReader->getHeader()->getDependencyReferences()) > 0)
             {
+                Logger::getLogger()->verbose(sprintf('Importing %d dependencies for: %s', count($packageReader->getHeader()->getDependencyReferences()), $packageName));
                 foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
                 {
+                    Logger::getLogger()->debug(sprintf('Importing dependency: %s@%s', $reference->getPackage(), $reference->getVersion()));
                     self::import($reference->getPackage(), $reference->getVersion());
                 }
             }
+            
+            Logger::getLogger()->verbose(sprintf('Package import completed: %s', $packageName));
         }
 
         /**
@@ -137,10 +152,13 @@
          */
         private static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
+            Logger::getLogger()->debug(sprintf('Looking up package in package managers: %s@%s', $package, $version));
+            
             // Try user package manager first
             $userManager = self::getUserPackageManager();
             if($userManager !== null && $userManager->entryExists($package, $version))
             {
+                Logger::getLogger()->verbose(sprintf('Package found in user manager: %s@%s', $package, $version));
                 $packagePath = $userManager->getPackagePath($package, $version);
                 return self::importFromFileWithCache($packagePath);
             }
@@ -149,6 +167,7 @@
             $systemManager = self::getSystemPackageManager();
             if($systemManager->entryExists($package, $version))
             {
+                Logger::getLogger()->verbose(sprintf('Package found in system manager: %s@%s', $package, $version));
                 $packagePath = $systemManager->getPackagePath($package, $version);
                 return self::importFromFileWithCache($packagePath);
             }
@@ -156,9 +175,11 @@
             // If exact version not found and not 'latest', try semver matching
             if($version !== 'latest')
             {
+                Logger::getLogger()->debug(sprintf('Exact version not found, trying semver matching for: %s@%s', $package, $version));
                 $satisfyingVersion = self::findSatisfyingVersion($package, $version, $userManager, $systemManager);
                 if($satisfyingVersion !== null)
                 {
+                    Logger::getLogger()->verbose(sprintf('Found satisfying version: %s@%s', $package, $satisfyingVersion));
                     // Check user manager first
                     if($userManager !== null && $userManager->entryExists($package, $satisfyingVersion))
                     {
@@ -172,6 +193,10 @@
                         $packagePath = $systemManager->getPackagePath($package, $satisfyingVersion);
                         return self::importFromFileWithCache($packagePath);
                     }
+                }
+                else
+                {
+                    Logger::getLogger()->debug(sprintf('No satisfying version found for: %s@%s', $package, $version));
                 }
             }
 
