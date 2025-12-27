@@ -32,6 +32,7 @@
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageException;
+    use ncc\Libraries\semver\Semver;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
 
@@ -101,10 +102,8 @@
             self::$packageReaderReferences[$referenceId] = $packageReader;
             self::$importedPackages[$packageName] = $referenceId;
 
-            // Register the autoloader for this package
-            self::registerAutoloader($packageReader);
-
-            // If the package is statically linked, import its dependencies as well but point to the same reference
+            // If the package is statically linked, mark dependencies as imported BEFORE registering autoloader
+            // This prevents the autoloader from trying to import dependencies that are already embedded
             if($packageReader->getHeader()->isStaticallyLinked())
             {
                 foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
@@ -112,8 +111,12 @@
                     self::$importedPackages[$reference->getPackage()] = $referenceId;
                 }
             }
+
+            // Register the autoloader for this package
+            self::registerAutoloader($packageReader);
+
             // For non-statically linked packages, import dependencies separately
-            elseif(count($packageReader->getHeader()->getDependencyReferences()) > 0)
+            if(!$packageReader->getHeader()->isStaticallyLinked() && count($packageReader->getHeader()->getDependencyReferences()) > 0)
             {
                 foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
                 {
@@ -148,6 +151,28 @@
             {
                 $packagePath = $systemManager->getPackagePath($package, $version);
                 return self::importFromFileWithCache($packagePath);
+            }
+
+            // If exact version not found and not 'latest', try semver matching
+            if($version !== 'latest')
+            {
+                $satisfyingVersion = self::findSatisfyingVersion($package, $version, $userManager, $systemManager);
+                if($satisfyingVersion !== null)
+                {
+                    // Check user manager first
+                    if($userManager !== null && $userManager->entryExists($package, $satisfyingVersion))
+                    {
+                        $packagePath = $userManager->getPackagePath($package, $satisfyingVersion);
+                        return self::importFromFileWithCache($packagePath);
+                    }
+                    
+                    // Check system manager
+                    if($systemManager->entryExists($package, $satisfyingVersion))
+                    {
+                        $packagePath = $systemManager->getPackagePath($package, $satisfyingVersion);
+                        return self::importFromFileWithCache($packagePath);
+                    }
+                }
             }
 
             throw new ImportException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
@@ -622,5 +647,84 @@
             {
                 trigger_error(sprintf('NCC Autoloader: Failed to register autoloader for package "%s"', $packageName), E_USER_WARNING);
             }
+        }
+
+        /**
+         * Finds a satisfying version for a package using semver matching.
+         *
+         * @param string $package The package name
+         * @param string $requestedVersion The requested version constraint
+         * @param PackageManager|null $userManager User package manager
+         * @param PackageManager $systemManager System package manager
+         * @return string|null The satisfying version or null if none found
+         */
+        private static function findSatisfyingVersion(string $package, string $requestedVersion, ?PackageManager $userManager, PackageManager $systemManager): ?string
+        {
+            // Collect all available versions for this package
+            $availableVersions = [];
+            
+            // Get versions from user manager
+            if($userManager !== null)
+            {
+                $userEntries = $userManager->getEntries();
+                foreach($userEntries as $entry)
+                {
+                    if($entry->getPackage() === $package)
+                    {
+                        $availableVersions[] = $entry->getVersion();
+                    }
+                }
+            }
+            
+            // Get versions from system manager
+            $systemEntries = $systemManager->getEntries();
+            foreach($systemEntries as $entry)
+            {
+                if($entry->getPackage() === $package)
+                {
+                    $availableVersions[] = $entry->getVersion();
+                }
+            }
+            
+            if(empty($availableVersions))
+            {
+                return null;
+            }
+            
+            // Remove duplicates
+            $availableVersions = array_unique($availableVersions);
+            
+            try
+            {
+                // Try to find a satisfying version using semver
+                // The requested version might be an exact version like "1.33.0.0"
+                // We need to match it against available versions like "1.33.0"
+                $satisfying = Semver::satisfiedBy($availableVersions, $requestedVersion);
+                
+                if(!empty($satisfying))
+                {
+                    // Return the highest satisfying version
+                    return Semver::rsort($satisfying)[0];
+                }
+                
+                // If no match found, try normalizing the requested version and treat it as a constraint
+                // Remove trailing .0 segments (1.33.0.0 -> 1.33.0)
+                $normalized = preg_replace('/\.0+$/', '', $requestedVersion);
+                if($normalized !== $requestedVersion)
+                {
+                    $satisfying = Semver::satisfiedBy($availableVersions, $normalized);
+                    if(!empty($satisfying))
+                    {
+                        return Semver::rsort($satisfying)[0];
+                    }
+                }
+            }
+            catch(\Exception $e)
+            {
+                // Semver matching failed, return null
+                return null;
+            }
+            
+            return null;
         }
     }
