@@ -39,6 +39,7 @@
         private ?array $arguments;
         private ?array $environment;
         private ?array $requiredFiles;
+        private ?int $timeout;
 
         /**
          * Public Constructor for the Execution Unit
@@ -65,6 +66,7 @@
             $this->arguments = $data['arguments'] ?? null;
             $this->environment = $data['environment'] ?? null;
             $this->requiredFiles = $data['required_files'] ?? null;
+            $this->timeout = $data['timeout'] ?? null;
         }
 
         /**
@@ -279,6 +281,16 @@
             $this->requiredFiles[] = $requiredFile;
         }
 
+        public function getTimeout(): ?int
+        {
+            return $this->timeout;
+        }
+
+        public function setTimeout(?int $timeout): void
+        {
+            $this->timeout = $timeout;
+        }
+
         /**
          * @inheritDoc
          */
@@ -292,7 +304,8 @@
                 'working_directory' => $this->workingDirectory,
                 'arguments' => $this->arguments,
                 'environment' => $this->environment,
-                'required_files' => $this->requiredFiles
+                'required_files' => $this->requiredFiles,
+                'timeout' => $this->timeout,
             ];
         }
 
@@ -342,6 +355,11 @@
             if(isset($data['environment']) && !is_array($data['environment']))
             {
                 throw new InvalidPropertyException('execution_units.' . $data['name'] . '.environment', 'Property \'environment\' must be an array if set');
+            }
+
+            if(isset($data['timeout']) && !is_int($data['timeout']))
+            {
+                throw new InvalidPropertyException('execution_units.' . $data['name'] . '.timeout', 'Property \'timeout\' must be an integer if set');
             }
         }
 
