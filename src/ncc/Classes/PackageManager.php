@@ -244,7 +244,49 @@
                 return $this->getLatestVersion($packageName);
             }
 
-            return $this->entries[$packageName . '=' . $version] ?? null;
+            // Try exact match first
+            $entry = $this->entries[$packageName . '=' . $version] ?? null;
+            if($entry !== null)
+            {
+                return $entry;
+            }
+
+            // Use semver to find matching version
+            // Normalize the requested version and compare with all installed versions
+            try
+            {
+                $versionParser = new \ncc\Libraries\semver\VersionParser();
+                $normalizedRequestedVersion = $versionParser->normalize($version);
+                
+                // Check all versions of this package
+                foreach($this->entries as $key => $packageEntry)
+                {
+                    if($packageEntry->getPackage() === $packageName)
+                    {
+                        try
+                        {
+                            $normalizedInstalledVersion = $versionParser->normalize($packageEntry->getVersion());
+                            
+                            // Compare normalized versions
+                            if($normalizedRequestedVersion === $normalizedInstalledVersion)
+                            {
+                                return $packageEntry;
+                            }
+                        }
+                        catch(\Exception $e)
+                        {
+                            // Skip invalid versions
+                            continue;
+                        }
+                    }
+                }
+            }
+            catch(\Exception $e)
+            {
+                // If normalization fails, try fallback methods
+            }
+
+            return null;
         }
 
         /**
