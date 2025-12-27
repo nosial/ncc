@@ -33,6 +33,9 @@ maintainability of the project
  - Removed "runners" and other build tools for every other language except for PHP, for running code/commands that isn't
    PHP related, execution units has been refactored allow executing both PHP and SYSTEM commands/actions
  - Removed the internal logging in favor for `LogLib2` which can now independently be built with the project
+ - Removed gitea repository `nocturn9x` git.nocturn9x.space because it's no longer maintained
+ - Removed gitea repository `martinvlba` git.martinvlba.eu because it's no longer maintained
+ - Removed gitea repository `kuny` git.it-kuny.ch because it's no longer maintained
 
 
 
