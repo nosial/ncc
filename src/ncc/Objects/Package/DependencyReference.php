@@ -75,9 +75,9 @@
         /**
          * Returns the source of the dependency
          *
-         * @return PackageSource The package source of the dependency
+         * @return PackageSource|null The package source of the dependency
          */
-        public function getSource(): PackageSource
+        public function getSource(): ?PackageSource
         {
             return $this->source;
         }
