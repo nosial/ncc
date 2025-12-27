@@ -26,6 +26,7 @@
     use FilesystemIterator;
     use InvalidArgumentException;
     use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
     use RuntimeException;
@@ -49,6 +50,9 @@
          */
         public static function collectFiles(string $directory, array $include=[], array $exclude=[]): array
         {
+            Logger::getLogger()->debug(sprintf('Collecting files from: %s', $directory));
+            Logger::getLogger()->verbose(sprintf('Include patterns: %d, Exclude patterns: %d', count($include), count($exclude)));
+            
             // Validate the directory
             if (!IO::isDir($directory))
             {
@@ -105,6 +109,8 @@
             {
                 throw new RuntimeException(sprintf('Error while scanning directory \'%s\': %s', $directory, $e->getMessage()), 0, $e);
             }
+            
+            Logger::getLogger()->verbose(sprintf('Collected %d files from %s', count($collectedFiles), $directory));
 
             return $collectedFiles;
         }
