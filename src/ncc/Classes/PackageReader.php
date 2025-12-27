@@ -31,6 +31,7 @@
     use ncc\Interfaces\ReferenceInterface;
     use ncc\Libraries\pal\Autoloader;
     use ncc\Libraries\Process\ExecutableFinder;
+    use ncc\Libraries\Process\Process;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\ExecutionUnitReference;
     use ncc\Objects\Package\Header;
@@ -38,6 +39,7 @@
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\ExecutionUnit;
+    use ncc\Runtime;
     use RuntimeException;
     use function msgpack_unpack;
 
@@ -1060,6 +1062,264 @@
             {
                 throw new InvalidArgumentException("Could not open package file: " . $this->filePath);
             }
+        }
+
+        /**
+         * Executes an execution unit from the package.
+         *
+         * @param string|null $executionUnit The name of the execution unit to execute. If null, uses the main entry point.
+         * @param array $arguments Arguments to pass to the execution unit (similar to $argv in PHP).
+         * @return mixed The return value from the executed script (for PHP/WEB) or exit code (for SYSTEM).
+         * @throws ExecutionUnitException If the execution unit is not found or execution fails.
+         * @throws IOException If there's an I/O error during execution.
+         */
+        public function execute(?string $executionUnit = null, array $arguments = []): mixed
+        {
+            Logger::getLogger()->debug(sprintf('Execute called with executionUnit: %s', $executionUnit ?? 'null'));
+            
+            // Determine which execution unit to use
+            if($executionUnit === null)
+            {
+                // Use main entry point from header
+                $entryPoint = $this->header->getEntryPoint();
+                if($entryPoint === null)
+                {
+                    throw new ExecutionUnitException('No execution unit specified and no main entry point defined in package');
+                }
+                
+                Logger::getLogger()->verbose(sprintf('Using main entry point: %s', $entryPoint));
+                $executionUnit = $entryPoint;
+            }
+            
+            // Find and read the execution unit
+            $executionUnitRef = $this->findExecutionUnit($executionUnit);
+            if($executionUnitRef === null)
+            {
+                throw new ExecutionUnitException(sprintf('Execution unit not found: %s', $executionUnit));
+            }
+            
+            $unit = $this->readExecutionUnit($executionUnitRef);
+            Logger::getLogger()->verbose(sprintf('Executing unit: %s (type: %s)', $executionUnit, $unit->getType()->value));
+            
+            // Handle execution based on type
+            switch($unit->getType())
+            {
+                case ExecutionUnitType::PHP:
+                case ExecutionUnitType::WEB:
+                    return $this->executePhpUnit($unit, $arguments);
+                    
+                case ExecutionUnitType::SYSTEM:
+                    return $this->executeSystemUnit($unit, $arguments);
+                    
+                default:
+                    throw new ExecutionUnitException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value));
+            }
+        }
+
+        /**
+         * Executes a PHP execution unit.
+         *
+         * @param ExecutionUnit $unit The execution unit to execute.
+         * @param array $arguments Arguments to pass to the script.
+         * @return mixed The return value from the executed script.
+         * @throws ExecutionUnitException If execution fails.
+         */
+        private function executePhpUnit(ExecutionUnit $unit, array $arguments): mixed
+        {
+            // Ensure the package is imported in the runtime
+            $packageName = $this->assembly->getPackage();
+            Logger::getLogger()->debug(sprintf('Importing package in runtime: %s', $packageName));
+            
+            // Import the package if not already imported
+            if(!Runtime::isImported($packageName))
+            {
+                Logger::getLogger()->verbose(sprintf('Package not yet imported, importing: %s', $packageName));
+                Runtime::import($this->filePath);
+            }
+            
+            // Build the ncc:// protocol path
+            $scriptPath = 'ncc://' . $packageName . '/' . ltrim($unit->getEntryPoint(), '/');
+            Logger::getLogger()->verbose(sprintf('Executing PHP script: %s', $scriptPath));
+            
+            // Verify the script exists, if not try with .php extension
+            if(!file_exists($scriptPath))
+            {
+                // If the entry point doesn't have .php extension, try adding it
+                if(!str_ends_with($scriptPath, '.php'))
+                {
+                    $scriptPathWithExtension = $scriptPath . '.php';
+                    if(file_exists($scriptPathWithExtension))
+                    {
+                        Logger::getLogger()->verbose(sprintf('Script found with .php extension: %s', $scriptPathWithExtension));
+                        $scriptPath = $scriptPathWithExtension;
+                    }
+                    else
+                    {
+                        throw new ExecutionUnitException(sprintf('Script not found in package: %s (also tried %s)', $scriptPath, $scriptPathWithExtension));
+                    }
+                }
+                else
+                {
+                    throw new ExecutionUnitException(sprintf('Script not found in package: %s', $scriptPath));
+                }
+            }
+            
+            // Set up $argv for the script
+            $oldArgv = $_SERVER['argv'] ?? [];
+            $_SERVER['argv'] = array_merge([$scriptPath], $arguments);
+            $argc = count($_SERVER['argv']);
+            $_SERVER['argc'] = $argc;
+            
+            // Set working directory if specified
+            $oldCwd = getcwd();
+            if($unit->getWorkingDirectory() !== null)
+            {
+                // Resolve macros in working directory (e.g., ${CWD} -> current working directory)
+                $workingDirectory = $this->resolveMacros($unit->getWorkingDirectory());
+                Logger::getLogger()->debug(sprintf('Changing working directory to: %s', $workingDirectory));
+                chdir($workingDirectory);
+            }
+            
+            // Set environment variables if specified
+            $oldEnv = [];
+            if($unit->getEnvironment() !== null)
+            {
+                foreach($unit->getEnvironment() as $key => $value)
+                {
+                    $oldEnv[$key] = getenv($key);
+                    putenv("$key=$value");
+                }
+            }
+            
+            try
+            {
+                // Execute the script
+                $result = require $scriptPath;
+                Logger::getLogger()->verbose('PHP script execution completed');
+                return $result;
+            }
+            catch(\Throwable $e)
+            {
+                throw new ExecutionUnitException(sprintf('Failed to execute PHP script: %s', $e->getMessage()), 0, $e);
+            }
+            finally
+            {
+                // Restore environment
+                $_SERVER['argv'] = $oldArgv;
+                $_SERVER['argc'] = count($oldArgv);
+                
+                if($unit->getWorkingDirectory() !== null)
+                {
+                    chdir($oldCwd);
+                }
+                
+                // Restore environment variables
+                foreach($oldEnv as $key => $value)
+                {
+                    if($value === false)
+                    {
+                        putenv($key);
+                    }
+                    else
+                    {
+                        putenv("$key=$value");
+                    }
+                }
+            }
+        }
+
+        /**
+         * Executes a system execution unit.
+         *
+         * @param ExecutionUnit $unit The execution unit to execute.
+         * @param array $arguments Arguments to pass to the command.
+         * @return int The exit code from the executed process.
+         * @throws ExecutionUnitException If execution fails.
+         */
+        private function executeSystemUnit(ExecutionUnit $unit, array $arguments): int
+        {
+            $entryPoint = $unit->getEntryPoint();
+            Logger::getLogger()->debug(sprintf('Executing system command: %s', $entryPoint));
+            
+            // Try to resolve the executable path if it's not an absolute path
+            $executablePath = $entryPoint;
+            if(!file_exists($executablePath))
+            {
+                Logger::getLogger()->verbose(sprintf('Entry point not found as file, attempting to resolve: %s', $entryPoint));
+                $resolvedPath = (new ExecutableFinder())->find($entryPoint);
+                
+                if($resolvedPath !== null)
+                {
+                    $executablePath = $resolvedPath;
+                    Logger::getLogger()->verbose(sprintf('Resolved executable path: %s', $executablePath));
+                }
+                else
+                {
+                    Logger::getLogger()->verbose(sprintf('Could not resolve executable, using as-is: %s', $entryPoint));
+                }
+            }
+            
+            // Build the command with arguments
+            $commandParts = array_merge([$executablePath], $arguments);
+            
+            // Create and configure the process
+            $process = new Process($commandParts);
+            
+            // Set working directory if specified
+            if($unit->getWorkingDirectory() !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Setting working directory: %s', $unit->getWorkingDirectory()));
+                $process->setWorkingDirectory($unit->getWorkingDirectory());
+            }
+            
+            // Set environment variables if specified
+            if($unit->getEnvironment() !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Setting %d environment variables', count($unit->getEnvironment())));
+                $process->setEnv($unit->getEnvironment());
+            }
+            
+            // Set timeout if specified
+            if($unit->getTimeout() !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Setting timeout: %d seconds', $unit->getTimeout()));
+                $process->setTimeout($unit->getTimeout());
+            }
+            
+            try
+            {
+                Logger::getLogger()->verbose(sprintf('Starting process: %s', $process->getCommandLine()));
+                $process->mustRun();
+                
+                $exitCode = $process->getExitCode();
+                Logger::getLogger()->verbose(sprintf('Process completed with exit code: %d', $exitCode));
+                
+                return $exitCode;
+            }
+            catch(\Throwable $e)
+            {
+                throw new ExecutionUnitException(sprintf('Failed to execute system command: %s', $e->getMessage()), 0, $e);
+            }
+        }
+
+        /**
+         * Resolves macro variables in a string.
+         *
+         * @param string $input The input string containing macros
+         * @return string The string with macros resolved
+         */
+        private function resolveMacros(string $input): string
+        {
+            // Handle ${CWD} - current working directory
+            if(str_contains($input, '${CWD}'))
+            {
+                $input = str_replace('${CWD}', getcwd(), $input);
+            }
+            
+            // Handle other common macros if needed in the future
+            // ${PACKAGE_PATH}, ${TEMP}, etc.
+            
+            return $input;
         }
 
         /**
