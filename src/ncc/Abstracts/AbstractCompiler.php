@@ -174,9 +174,9 @@
                 \ncc\CLI\Logger::getLogger()->verbose(sprintf('Post-compile unit: %s', $this->getProjectConfiguration()->getPostCompile()), 'AbstractCompiler');
             }
 
-            if(isset($this->buildConfiguration->getOptions()['static']) && is_bool($this->buildConfiguration->getOptions()['static']))
+            if(isset($this->buildConfiguration->getOptions()['static']))
             {
-                $this->staticallyLinked = $this->buildConfiguration->getOptions()['static'];
+                $this->staticallyLinked = (bool) $this->buildConfiguration->getOptions()['static'];
                 \ncc\CLI\Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->staticallyLinked ? 'enabled' : 'disabled'), 'AbstractCompiler');
             }
             else
@@ -528,7 +528,7 @@
             $resolvedDependency = new ResolvedDependency($package, $source);
             if($resolvedDependency->getPackageReader() === null)
             {
-                \ncc\CLI\Logger::getLogger()->error(sprintf('Package not installed: %s', $package), 'AbstractCompiler');
+                \ncc\CLI\Logger::getLogger()->error(sprintf('Package not installed: %s', $package));
                 throw new OperationException(sprintf('Cannot resolve %s becaues the package is not installed', $package));
             }
 
@@ -541,7 +541,29 @@
                 
                 foreach($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences() as $dependencyReference)
                 {
-                    $results = array_merge($results, $this->resolveDependencyReaders($dependencyReference->getPackage(), $dependencyReference->getSource()));
+                    $depSource = $dependencyReference->getSource();
+                    if($depSource === null)
+                    {
+                        // Create a minimal PackageSource when none is specified
+                        // The package name format is like: com.vendor.packagename or net.vendor.packagename
+                        // We need to convert it to vendor/packagename format for PackageSource
+                        $parts = explode('.', $dependencyReference->getPackage(), 3);
+                        if(count($parts) === 3)
+                        {
+                            // Format: prefix.organization.name -> organization/name
+                            $sourceString = $parts[1] . '/' . $parts[2];
+                        }
+                        else
+                        {
+                            // Fallback: use the package name as-is (might not parse but try)
+                            $sourceString = $dependencyReference->getPackage();
+                        }
+                        
+                        $depSource = new PackageSource($sourceString);
+                        $depSource->setVersion($dependencyReference->getVersion());
+                    }
+                    
+                    $results = array_merge($results, $this->resolveDependencyReaders($dependencyReference->getPackage(), $depSource));
                 }
             }
 
