@@ -24,6 +24,7 @@
 
     use InvalidArgumentException;
     use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use ncc\Enums\PackageStructure;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\IOException;
@@ -56,6 +57,8 @@
          */
         public function __construct(string $filePath, bool $overwrite=true)
         {
+            Logger::getLogger()->debug(sprintf('Initializing PackageWriter for: %s', $filePath));
+            
             // Delete the file if it already exists, prevent overwriting if not allowed
             if(IO::exists($filePath))
             {
@@ -63,10 +66,12 @@
                 {
                     throw new PackageException("File already exists: " . $filePath);
                 }
+                Logger::getLogger()->verbose('Overwriting existing file');
                 IO::rm($filePath, false);
             }
 
             // Create the file
+            Logger::getLogger()->verbose('Creating package file');
             IO::mkdir(dirname($filePath));
             IO::touch($filePath);
             $this->fileHandler = fopen($filePath, 'a+b');
