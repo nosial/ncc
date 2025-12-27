@@ -293,9 +293,30 @@
                 throw new OperationException(sprintf('Cannot install "%s", unknown remote repository "%s"', $source, $source->getRepository()));
             }
 
-            // Define stages for progress tracking
-            $totalStages = 100; // Use percentage-based tracking
-            $currentStage = 0;
+            // Define stages with weights for dynamic progress calculation
+            $stages = [
+                'download' => ['weight' => 60, 'start' => 0],
+                'detect' => ['weight' => 5, 'start' => 0],
+                'convert' => ['weight' => 5, 'start' => 0],
+                'resolve_deps' => ['weight' => 10, 'start' => 0],
+                'generate_config' => ['weight' => 5, 'start' => 0],
+                'compile' => ['weight' => 15, 'start' => 0],
+            ];
+            
+            // Calculate stage start positions
+            $currentPos = 0;
+            foreach($stages as $key => &$stage)
+            {
+                $stage['start'] = $currentPos;
+                $currentPos += $stage['weight'];
+            }
+            unset($stage);
+
+            // Helper function to calculate progress within a stage
+            $calculateProgress = function(string $stageName, float $stageProgress = 1.0) use ($stages): int {
+                $stage = $stages[$stageName];
+                return (int)($stage['start'] + ($stage['weight'] * $stageProgress));
+            };
 
             // TODO: Implement authentication handling here
             $repository = Runtime::getRepository($source->getRepository())->createClient();
@@ -325,11 +346,11 @@
                 throw new OperationException(sprintf('No suitable package found for %s in repository %s', $source, $source->getRepository()));
             }
 
-            // Stage 1: Download (0-70%)
-            $downloadedPackage = $repository->download($selectedPackage, function(int $downloaded, int $total, string $message) use ($totalStages) {
-                // Map download progress to 0-70% of total progress
-                $downloadProgress = $total > 0 ? (int)(($downloaded / $total) * 70) : 0;
-                Console::inlineProgress($downloadProgress, 100, $message);
+            // Stage: Download
+            $downloadedPackage = $repository->download($selectedPackage, function(int $downloaded, int $total, string $message) use ($calculateProgress) {
+                $downloadProgress = $total > 0 ? ($downloaded / $total) : 0;
+                $progress = $calculateProgress('download', $downloadProgress);
+                Console::inlineProgress($progress, 100, $message);
             });
 
             // If it's a file, we assume it's an NCC package
@@ -339,8 +360,8 @@
                 return self::installFromFile(new PackageReader($downloadedPackage), $options, $installed);
             }
 
-            // Stage 2: Detect project type (70%)
-            Console::inlineProgress(70, 100, sprintf("Detecting project type %s", $source));
+            // Stage: Detect project type
+            Console::inlineProgress($calculateProgress('detect'), 100, sprintf("Detecting project type %s", $source));
 
             // Otherwise, we assume its source code that needs to be built, so we try to figure out it's project type
             try
@@ -360,6 +381,8 @@
                     throw new OperationException(sprintf('Unable to detect project configuration file path for %s', $source));
                 }
 
+                Console::inlineProgress($calculateProgress('detect', 0.5), 100, sprintf("Analyzing project structure %s", $source));
+
                 $projectType = ProjectType::detectProjectType($downloadedPackage);
                 if($projectType === null)
                 {
@@ -370,8 +393,8 @@
 
                 Logger::getLogger()->debug(sprintf('Detected project type: %s at path: %s', $projectType->value, $projectPath));
 
-                // Stage 2.5: Converting project (72%)
-                Console::inlineProgress(72, 100, sprintf("Converting %s project %s", $projectType->value, $source));
+                // Stage: Converting project
+                Console::inlineProgress($calculateProgress('convert'), 100, sprintf("Converting %s project %s", $projectType->value, $source));
 
                 // Get the converter for the project type
                 $converter = $projectType->getConverter();
@@ -382,20 +405,27 @@
                     throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
                 }
 
-                // Stage 2.6: Resolving dependencies (75%)
-                Console::inlineProgress(75, 100, sprintf("Resolving dependencies for %s", $source));
+                // Stage: Resolving dependencies
+                Console::inlineProgress($calculateProgress('resolve_deps'), 100, sprintf("Resolving dependencies for %s", $source));
 
                 // Convert the project source to a ncc project configuration
                 // Pass the resolved version to the converter
-                $projectConfiguration = $converter->convert($projectPath, $resolvedVersion, function(string $message) use ($source) {
-                    Console::inlineProgress(75, 100, $message);
+                // Track progress dynamically during dependency resolution
+                $depResolutionProgress = 0.0;
+                $depResolutionStep = 0.15; // Increment by 15% of the stage per callback
+                
+                $projectConfiguration = $converter->convert($projectPath, $resolvedVersion, function(string $message) use ($calculateProgress, &$depResolutionProgress, $depResolutionStep) {
+                    $depResolutionProgress = min(0.95, $depResolutionProgress + $depResolutionStep);
+                    Console::inlineProgress($calculateProgress('resolve_deps', $depResolutionProgress), 100, $message);
                 });
                 
-                // Stage 2.7: Generating project configuration (78%)
-                Console::inlineProgress(78, 100, sprintf("Generating project configuration for %s", $source));
+                // Stage: Generating project configuration
+                Console::inlineProgress($calculateProgress('generate_config'), 100, sprintf("Generating project configuration for %s", $source));
                 
                 $outputPath = dirname($projectPath) . DIRECTORY_SEPARATOR . 'project.yml';
                 $projectConfiguration->save($outputPath);
+                
+                Console::inlineProgress($calculateProgress('generate_config', 0.7), 100, sprintf("Loading compiler for %s", $source));
                 $compiler = Project::compilerFromFile($outputPath);
             }
             catch(Exception $e)
@@ -404,14 +434,14 @@
                 throw new OperationException(sprintf('Failed to convert project source for %s: %s', $source, $e->getMessage()));
             }
 
-            // Stage 3: Compile (80-100%)
+            // Stage: Compile
             // Build & install the project
             try
             {
-                $packageReader = new PackageReader($compiler->compile(function(int $current, int $total, string $message) {
-                    // Map compile progress to 80-100% of total progress
-                    $compileProgress = $total > 0 ? 80 + (int)(($current / $total) * 20) : 80;
-                    Console::inlineProgress($compileProgress, 100, $message);
+                $packageReader = new PackageReader($compiler->compile(function(int $current, int $total, string $message) use ($calculateProgress) {
+                    $compileProgress = $total > 0 ? ($current / $total) : 0;
+                    $progress = $calculateProgress('compile', $compileProgress);
+                    Console::inlineProgress($progress, 100, $message);
                 }));
                 Console::completeProgress();
                 return self::installFromFile($packageReader, $options, $installed);
