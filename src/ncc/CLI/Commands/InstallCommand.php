@@ -279,7 +279,7 @@
             return $installed;
         }
 
-        private static function installFromRemote(PackageSource $source, array $options=[], array $installed=[]): array
+        public static function installFromRemote(PackageSource $source, array $options=[], array $installed=[]): array
         {
             Console::out(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
             $options = self::parseOptions($options);
