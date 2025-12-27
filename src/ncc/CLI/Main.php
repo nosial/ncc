@@ -25,6 +25,7 @@
     use ncc\Classes\Console;
     use ncc\Classes\IO;
     use ncc\CLI\Commands\BuildCommand;
+    use ncc\CLI\Commands\ExecuteCommand;
     use ncc\CLI\Commands\ExtractCommand;
     use ncc\CLI\Commands\InspectCommand;
     use ncc\CLI\Commands\InstallCommand;
@@ -87,6 +88,10 @@
             {
                 return ExtractCommand::handle($argv);
             }
+            elseif(isset($argv['execute']) || isset($argv['exec']) || isset($argv['exe']))
+            {
+                return ExecuteCommand::handle($argv);
+            }
             elseif(isset($argv['repository']) || isset($argv['repo']))
             {
                 return RepositoryCommand::handle($argv);
@@ -140,21 +145,21 @@
         {
             if($command === null || $command === true)
             {
-                Console::out('ncc - Nosial Code Compiler' . PHP_EOL);
-                Console::out('Usage: ncc [command] [options]' . PHP_EOL . PHP_EOL);
-                Console::out('Commands:' . PHP_EOL);
-                Console::out('  project           Manage ncc projects (create, validate, convert, apply templates)' . PHP_EOL);
-                Console::out('  build             Build a project into an ncc package' . PHP_EOL);
-                Console::out('  install           Install an ncc package from file or repository' . PHP_EOL);
-                Console::out('  uninstall         Uninstall an installed ncc package' . PHP_EOL);
-                Console::out('  inspect           Display information about an ncc package' . PHP_EOL);
-                Console::out('  extract           Extract package contents to a directory' . PHP_EOL);
-                Console::out('  repository        Manage package repositories' . PHP_EOL);
-                Console::out('  list              List all installed ncc packages' . PHP_EOL);
-                Console::out(PHP_EOL . 'Options:' . PHP_EOL);
-                Console::out('  --version, -v     Display version information' . PHP_EOL);
-                Console::out('  --help, -h        Display this help message' . PHP_EOL);
-                Console::out(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.' . PHP_EOL);
+                Console::out('ncc - Nosial Code Compiler');
+                Console::out('Usage: ncc [command] [options]' . PHP_EOL);
+                Console::out('Commands:');
+                Console::out('  project           Manage ncc projects (create, validate, convert, apply templates)');
+                Console::out('  build             Build a project into an ncc package');
+                Console::out('  install           Install an ncc package from file or repository');
+                Console::out('  uninstall         Uninstall an installed ncc package');
+                Console::out('  inspect           Display information about an ncc package');
+                Console::out('  extract           Extract package contents to a directory');
+                Console::out('  repository        Manage package repositories');
+                Console::out('  list              List all installed ncc packages');
+                Console::out(PHP_EOL . 'Options:');
+                Console::out('  --version, -v     Display version information');
+                Console::out('  --help, -h        Display this help message');
+                Console::out(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.');
                 return;
             }
 
@@ -193,7 +198,7 @@
                     break;
 
                 default:
-                    Console::out('No help available for command ' . $command . PHP_EOL);
+                    Console::out('No help available for command ' . $command);
                     break;
             }
         }
