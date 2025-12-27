@@ -24,6 +24,7 @@
 
     use InvalidArgumentException;
     use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
@@ -66,6 +67,7 @@
          */
         public function __construct(string $filePath, bool $tryCache = false)
         {
+            Logger::getLogger()->debug(sprintf('Initializing PackageReader for: %s', $filePath));
             $this->filePath = $filePath;
             if(!IO::exists($this->filePath))
             {
@@ -83,18 +85,23 @@
                 $cacheFile = $this->filePath . '.cache';
                 if(IO::exists($cacheFile))
                 {
+                    Logger::getLogger()->verbose('Attempting to load from cache file');
                     try
                     {
                         $this->importFromCacheFile($cacheFile);
+                        Logger::getLogger()->verbose('Successfully loaded from cache');
                         return;
                     }
                     catch(\Exception $e)
                     {
+                        Logger::getLogger()->debug(sprintf('Cache loading failed: %s, falling back to normal parsing', $e->getMessage()));
                         // If cache loading fails, fall back to normal parsing
                         // Silently continue to normal parsing
                     }
                 }
             }
+            
+            Logger::getLogger()->verbose('Parsing package file');
 
             $this->fileHandle = fopen($this->filePath, 'rb');
             if(!$this->fileHandle)
@@ -116,8 +123,10 @@
 
             // Read package version
             $this->packageVersion = $this->readPackageVersion();
+            Logger::getLogger()->debug(sprintf('Package version: %s', $this->packageVersion));
 
             // Read all sections
+            Logger::getLogger()->verbose('Reading package sections');
             while(!feof($this->fileHandle))
             {
                 $marker = fread($this->fileHandle, 1);
@@ -129,23 +138,31 @@
                 switch($marker)
                 {
                     case PackageStructure::HEADER->value:
+                        Logger::getLogger()->debug('Reading HEADER section');
                         $this->header = $this->readHeader();
                         break;
 
                     case PackageStructure::ASSEMBLY->value:
+                        Logger::getLogger()->debug('Reading ASSEMBLY section');
                         $this->assembly = $this->readAssembly();
                         break;
 
                     case PackageStructure::EXECUTION_UNITS->value:
+                        Logger::getLogger()->debug('Reading EXECUTION_UNITS section');
                         $this->executionUnitReferences = $this->readExecutionUnitReferences();
+                        Logger::getLogger()->verbose(sprintf('Loaded %d execution units', count($this->executionUnitReferences)));
                         break;
 
                     case PackageStructure::COMPONENTS->value:
+                        Logger::getLogger()->debug('Reading COMPONENTS section');
                         $this->componentReferences = $this->readComponentReferences();
+                        Logger::getLogger()->verbose(sprintf('Loaded %d components', count($this->componentReferences)));
                         break;
 
                     case PackageStructure::RESOURCES->value:
+                        Logger::getLogger()->debug('Reading RESOURCES section');
                         $this->resourceReferences = $this->readResourceReferences();
+                        Logger::getLogger()->verbose(sprintf('Loaded %d resources', count($this->resourceReferences)));
                         break;
 
                     default:
