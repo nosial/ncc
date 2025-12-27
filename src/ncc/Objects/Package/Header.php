@@ -468,6 +468,7 @@
             return [
                 'flags' => $this->flags,
                 'compressed' => $this->compressed,
+                'statically_linked' => $this->staticallyLinked,
                 'build_number' => $this->buildNumber,
                 'entry_point' => $this->entryPoint,
                 'pre_install' => $this->preInstall,
