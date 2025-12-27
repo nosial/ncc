@@ -25,8 +25,8 @@
     use InvalidArgumentException;
     use ncc\Abstracts\AbstractCompiler;
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
     use ncc\Classes\Utilities;
-    use ncc\CLI\Logger;
     use ncc\Compilers\PackageCompiler;
     use ncc\Enums\BuildType;
     use ncc\Enums\MacroVariable;

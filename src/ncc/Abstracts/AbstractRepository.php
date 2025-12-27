@@ -26,9 +26,9 @@
     use ncc\ArchiveExtractors\TarArchive;
     use ncc\ArchiveExtractors\ZipArchive;
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
     use ncc\Classes\PathResolver;
     use ncc\Classes\ShutdownHandler;
-    use ncc\CLI\Logger;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\IOException;

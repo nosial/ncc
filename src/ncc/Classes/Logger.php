@@ -20,7 +20,7 @@
  *
  */
 
-    namespace ncc\CLI;
+    namespace ncc\Classes;
 
     class Logger
     {

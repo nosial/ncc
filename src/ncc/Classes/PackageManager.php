@@ -24,13 +24,10 @@
 
     use InvalidArgumentException;
     use JsonException;
-    use ncc\Classes\IO;
-    use ncc\CLI\Logger;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
-    use ncc\Objects\PackageSource;
     use ncc\Runtime;
 
     class PackageManager

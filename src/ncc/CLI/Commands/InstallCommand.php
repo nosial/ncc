@@ -26,8 +26,8 @@
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
-    use ncc\CLI\Logger;
     use ncc\Enums\ProjectType;
     use ncc\Enums\RemotePackageType;
     use ncc\Exceptions\OperationException;

@@ -22,8 +22,6 @@
 
     namespace ncc\Classes;
 
-    use ncc\CLI\Logger;
-
     class Utilities
     {
         /**

@@ -22,8 +22,6 @@
 
     namespace ncc\Classes;
 
-    use ncc\Classes\IO;
-    use ncc\CLI\Logger;
     use ncc\Exceptions\IOException;
 
     class ShutdownHandler

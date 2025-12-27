@@ -23,7 +23,6 @@
     namespace ncc\Classes;
 
     use FilesystemIterator;
-    use ncc\CLI\Logger;
     use ncc\Exceptions\IOException;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
@@ -308,11 +307,5 @@
             {
                 throw new IOException(sprintf('Failed to create hard link from %s to %s', $link, $target));
             }
-        }
-
-        public static function santizeName(string $name): string
-        {
-            // Remove any invalid characters from the name
-            return preg_replace('/[<>:"\/|?*\x00-\x1F]/', '_', $name);
         }
     }

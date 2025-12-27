@@ -24,9 +24,9 @@
 
     use ncc\Abstracts\AbstractCompiler;
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PackageWriter;
-    use ncc\CLI\Logger;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
     use ncc\Libraries\pal\Autoloader;

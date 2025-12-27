@@ -22,8 +22,6 @@
 
     namespace ncc\Classes;
 
-    use ncc\Classes\IO;
-    use ncc\CLI\Logger;
     use ncc\Enums\ExecutionMode;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;

@@ -28,7 +28,7 @@
     use ncc\Abstracts\AbstractAuthentication;
     use ncc\Abstracts\AbstractRepository;
     use ncc\Classes\Cache;
-    use ncc\CLI\Logger;
+    use ncc\Classes\Logger;
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;

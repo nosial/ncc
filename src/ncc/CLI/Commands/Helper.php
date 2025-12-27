@@ -23,8 +23,8 @@
     namespace ncc\CLI\Commands;
 
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
     use ncc\Classes\Utilities;
-    use ncc\CLI\Logger;
 
     class Helper
     {

@@ -23,6 +23,7 @@
     namespace ncc\CLI;
 
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
 
     class ShutdownHandler
     {

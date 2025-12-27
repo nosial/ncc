@@ -23,9 +23,8 @@
     namespace ncc\Classes;
 
     use Exception;
-    use ncc\Libraries\Process\Process;
     use ncc\Libraries\Process\ExecutableFinder;
-    use ncc\CLI\Logger;
+    use ncc\Libraries\Process\Process;
 
     class Console
     {

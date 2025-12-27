@@ -23,8 +23,6 @@
     namespace ncc\Classes;
 
     use InvalidArgumentException;
-    use ncc\Classes\IO;
-    use ncc\CLI\Logger;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;

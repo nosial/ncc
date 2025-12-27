@@ -25,7 +25,7 @@
     use Exception;
     use ncc\Abstracts\AbstractProjectConverter;
     use ncc\Classes\IO;
-    use ncc\CLI\Logger;
+    use ncc\Classes\Logger;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\IOException;

@@ -24,12 +24,12 @@
     use Exception;
     use ncc\Classes\AuthenticationManager;
     use ncc\Classes\IO;
+    use ncc\Classes\Logger;
     use ncc\Classes\PackageManager;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PathResolver;
     use ncc\Classes\RepositoryManager;
     use ncc\Classes\StreamWrapper;
-    use ncc\CLI\Logger;
     use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\PackageException;

@@ -25,8 +25,6 @@
     use Exception;
     use FilesystemIterator;
     use InvalidArgumentException;
-    use ncc\Classes\IO;
-    use ncc\CLI\Logger;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
     use RuntimeException;

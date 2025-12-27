@@ -23,7 +23,6 @@
     namespace ncc\Objects;
 
     use ncc\Classes\PackageReader;
-    use ncc\Interfaces\SerializableInterface;
     use ncc\Runtime;
 
     class ResolvedDependency
@@ -37,16 +36,16 @@
             $this->package = $package;
             $this->updateSource = $updateSource;
             $version = $updateSource->getVersion() ?? 'latest';
-            \ncc\CLI\Logger::getLogger()->debug(sprintf('ResolvedDependency: Looking up package=%s, version=%s', $package, $version), 'ResolvedDependency');
+            \ncc\Classes\Logger::getLogger()->debug(sprintf('ResolvedDependency: Looking up package=%s, version=%s', $package, $version), 'ResolvedDependency');
             $entry = Runtime::getPackageEntry($package, $version);
             if($entry === null)
             {
-                \ncc\CLI\Logger::getLogger()->debug(sprintf('ResolvedDependency: Package entry not found for %s version %s', $package, $version), 'ResolvedDependency');
+                \ncc\Classes\Logger::getLogger()->debug(sprintf('ResolvedDependency: Package entry not found for %s version %s', $package, $version), 'ResolvedDependency');
                 $this->reader = null;
             }
             else
             {
-                \ncc\CLI\Logger::getLogger()->debug(sprintf('ResolvedDependency: Package entry found, path=%s', Runtime::getPackagePath($package, $version)), 'ResolvedDependency');
+                \ncc\Classes\Logger::getLogger()->debug(sprintf('ResolvedDependency: Package entry found, path=%s', Runtime::getPackagePath($package, $version)), 'ResolvedDependency');
                 $this->reader = new PackageReader(Runtime::getPackagePath($package, $version));
             }
         }
