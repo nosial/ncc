@@ -24,6 +24,7 @@
 
     use InvalidArgumentException;
     use ncc\Classes\IO;
+    use ncc\CLI\Logger;
     use ncc\Enums\RepositoryType;
     use ncc\Objects\RepositoryConfiguration;
 
@@ -43,12 +44,15 @@
          */
         public function __construct(string $dataDirectoryPath)
         {
+            Logger::getLogger()->debug(sprintf('Initializing RepositoryManager for: %s', $dataDirectoryPath));
+            
             $this->dataDirectoryPath = $dataDirectoryPath;
             $this->repositoriesPath = $this->dataDirectoryPath . DIRECTORY_SEPARATOR . 'repositories.json';
             $this->entries = [];
 
             if(IO::isFile($this->repositoriesPath))
             {
+                Logger::getLogger()->verbose('Loading repositories configuration');
                 $json = IO::readFile($this->repositoriesPath);
                 $data = json_decode($json, true);
                 if(is_array($data))
@@ -57,8 +61,14 @@
                     {
                         $repo = RepositoryConfiguration::fromArray($entry);
                         $this->entries[$repo->getName()] = $repo;
+                        Logger::getLogger()->debug(sprintf('Loaded repository: %s (%s)', $repo->getName(), $repo->getType()->value));
                     }
+                    Logger::getLogger()->verbose(sprintf('Loaded %d repositories', count($this->entries)));
                 }
+            }
+            else
+            {
+                Logger::getLogger()->verbose('No repositories configuration found');
             }
         }
 
@@ -93,12 +103,15 @@
          */
         public function addRepository(string $name, RepositoryType $type, string $host, bool $ssl): void
         {
+            Logger::getLogger()->verbose(sprintf('Adding repository: %s (type: %s, host: %s)', $name, $type->value, $host));
+            
             if(isset($this->entries[$name]))
             {
                 throw new InvalidArgumentException(sprintf("The repository %s already exists", $name));
             }
 
             $this->entries[$name] = new RepositoryConfiguration($name, $type, $host, $ssl);
+            Logger::getLogger()->debug(sprintf('Repository added: %s', $name));
         }
 
         /**
@@ -125,12 +138,16 @@
          */
         public function removeRepository(string $name): bool
         {
+            Logger::getLogger()->verbose(sprintf('Removing repository: %s', $name));
+            
             if(!isset($this->entries[$name]))
             {
+                Logger::getLogger()->debug(sprintf('Repository not found: %s', $name));
                 return false;
             }
 
             unset($this->entries[$name]);
+            Logger::getLogger()->debug(sprintf('Repository removed: %s', $name));
             return true;
         }
 
