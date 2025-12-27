@@ -218,7 +218,6 @@
             // Check if package is already in the installed list (to avoid duplicates in current session)
             if(in_array($packageIdentifier, $installed, true))
             {
-                Console::out(sprintf("Package %s is already being installed in this session, skipping.", $packageIdentifier));
                 return $installed;
             }
 
