@@ -22,16 +22,19 @@
 
     namespace ncc\Compilers;
 
+    use Exception;
     use ncc\Abstracts\AbstractCompiler;
     use ncc\Classes\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PackageWriter;
+    use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\CompileException;
     use ncc\Libraries\pal\Autoloader;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\Header;
+    use ncc\Objects\ResolvedDependency;
     use ncc\Runtime;
 
     class PackageCompiler extends AbstractCompiler
@@ -165,6 +168,9 @@
                         }
                         Logger::getLogger()->verbose(sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
                         
+                        // Get the main package assembly name to match resource namespacing
+                        $mainPackageName = $this->getProjectConfiguration()->getAssembly()->getName();
+                        
                         // Execution units can be multiple, write them named.
                         foreach($this->getRequiredExecutionUnits() as $executionUnitName)
                         {
@@ -174,7 +180,40 @@
                                 $progressCallback($currentStage, $totalStages, sprintf('Writing execution unit: %s', $executionUnitName));
                             }
                             $executionUnit = $this->getProjectConfiguration()->getExecutionUnit($executionUnitName);
-                            $packageWriter->writeData(msgpack_pack($executionUnit->toArray()), $executionUnit->getName());
+                            
+                            // Resolve the entry point path to match where it ends up in the package
+                            $executionUnitData = $executionUnit->toArray();
+                            if($executionUnit->getType() === ExecutionUnitType::PHP)
+                            {
+                                // Find the actual file path that was added to sourceResources
+                                $realPath = realpath($this->getProjectPath() . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint());
+                                
+                                // Try to find this file in the sourceResources array
+                                if($realPath !== false && in_array($realPath, $this->getSourceResources(), true))
+                                {
+                                    // File is in sourceResources, resolve to path relative to source directory
+                                    if(str_starts_with($realPath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                                    {
+                                        // File is inside source path - use relative path with assembly prefix
+                                        $resolvedEntryPoint = $mainPackageName . '/' . substr($realPath, strlen($this->getSourcePath()) + 1);
+                                        $executionUnitData['entry'] = $resolvedEntryPoint;
+                                        Logger::getLogger()->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
+                                    }
+                                    else
+                                    {
+                                        // File is outside source path - use basename with assembly prefix
+                                        $resolvedEntryPoint = $mainPackageName . '/' . basename($realPath);
+                                        $executionUnitData['entry'] = $resolvedEntryPoint;
+                                        Logger::getLogger()->debug(sprintf('Resolved entry point for %s (outside source): %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
+                                    }
+                                }
+                                else
+                                {
+                                    Logger::getLogger()->debug(sprintf('Entry point for %s kept as-is (not in resources or not found): %s', $executionUnitName, $executionUnit->getEntryPoint()));
+                                }
+                            }
+                            
+                            $packageWriter->writeData(msgpack_pack($executionUnitData), $executionUnit->getName());
                             Logger::getLogger()->debug(sprintf('Written execution unit: %s', $executionUnitName));
                         }
 
@@ -505,7 +544,8 @@
             Logger::getLogger()->debug('Generating autoloader mapping');
             
             $packageName = $this->getProjectConfiguration()->getAssembly()->getPackage();
-            $baseDirectory = 'ncc://' . $packageName . '/';
+            $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
+            $baseDirectory = 'ncc://' . $packageName . '/' . $assemblyName . '/';
             
             // Generate mapping for source components using pal
             $mapping = [];
@@ -573,7 +613,7 @@
                                 Logger::getLogger()->debug(sprintf('Mapped class (fallback): %s => %s', $className, $componentPath));
                             }
                         }
-                        catch(\Exception $e)
+                        catch(Exception $e)
                         {
                             Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentFilePath, $e->getMessage()));
                         }
@@ -588,7 +628,7 @@
             {
                 Logger::getLogger()->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
                 
-                /** @var \ncc\Objects\ResolvedDependency $resolvedDependency */
+                /** @var ResolvedDependency $resolvedDependency */
                 foreach($dependencyReaders as $resolvedDependency)
                 {
                     $packageReader = $resolvedDependency->getPackageReader();
@@ -647,7 +687,7 @@
                         Logger::getLogger()->debug(sprintf('Mapped dependency class: %s => %s', $className, $componentPath));
                     }
                 }
-                catch(\Exception $e)
+                catch(Exception $e)
                 {
                     Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
                 }
