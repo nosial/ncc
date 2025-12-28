@@ -106,7 +106,11 @@
         public function testParsePackageSourceWithMissingRepository(): void
         {
             $result = Utilities::parsePackageSource('myorg/mypackage=1.0');
-            $this->assertNull($result);
+            $this->assertIsArray($result);
+            $this->assertEquals('myorg', $result['organization']);
+            $this->assertEquals('mypackage', $result['package_name']);
+            $this->assertEquals('1.0', $result['version']);
+            $this->assertNull($result['repository']);
         }
 
         /**

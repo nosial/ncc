@@ -64,7 +64,6 @@
                 'invalid', // Missing organization/name separator
                 'org/', // Missing name
                 '/name', // Missing organization
-                'org/name', // Missing repository
                 'org/name@', // Empty repository
                 '@repo', // Missing org/name
                 'org name@repo', // Space in organization
@@ -270,4 +269,143 @@
                 $this->assertEquals("org/package={$version}@repo", (string)$packageSource);
             }
         }
+
+        /**
+         * Test serialization and deserialization
+         */
+        public function testSerialization(): void
+        {
+            $original = new PackageSource('test-org/test-package=2.0.0@test-repo');
+            $array = $original->toArray();
+            
+            $this->assertIsArray($array);
+            $this->assertArrayHasKey('organization', $array);
+            $this->assertArrayHasKey('name', $array);
+            $this->assertArrayHasKey('version', $array);
+            $this->assertArrayHasKey('repository', $array);
+            
+            $restored = PackageSource::fromArray($array);
+            $this->assertEquals($original->getOrganization(), $restored->getOrganization());
+            $this->assertEquals($original->getName(), $restored->getName());
+            $this->assertEquals($original->getVersion(), $restored->getVersion());
+            $this->assertEquals($original->getRepository(), $restored->getRepository());
+        }
+
+        /**
+         * Test null constructor creates default values
+         */
+        public function testNullConstructor(): void
+        {
+            $packageSource = new PackageSource();
+            $this->assertEquals('organization', $packageSource->getOrganization());
+            $this->assertEquals('name', $packageSource->getName());
+            $this->assertEquals('latest', $packageSource->getVersion());
+            $this->assertEquals('repository', $packageSource->getRepository());
+        }
+
+        /**
+         * Test setOrganization with valid value
+         */
+        public function testSetOrganizationValid(): void
+        {
+            $packageSource = new PackageSource();
+            $packageSource->setOrganization('new-org');
+            $this->assertEquals('new-org', $packageSource->getOrganization());
+        }
+
+        /**
+         * Test setName with valid value
+         */
+        public function testSetNameValid(): void
+        {
+            $packageSource = new PackageSource();
+            $packageSource->setName('new-name');
+            $this->assertEquals('new-name', $packageSource->getName());
+        }
+
+        /**
+         * Test setVersion with valid semver version
+         */
+        public function testSetVersionValidSemver(): void
+        {
+            $packageSource = new PackageSource();
+            $packageSource->setVersion('3.2.1');
+            $this->assertEquals('3.2.1', $packageSource->getVersion());
+        }
+
+        /**
+         * Test setVersion with 'latest' string
+         */
+        public function testSetVersionLatest(): void
+        {
+            $packageSource = new PackageSource();
+            $packageSource->setVersion('latest');
+            $this->assertEquals('latest', $packageSource->getVersion());
+            
+            $packageSource->setVersion('LATEST');
+            $this->assertEquals('latest', $packageSource->getVersion());
+        }
+
+        /**
+         * Test setVersion with null
+         */
+        public function testSetVersionNull(): void
+        {
+            $packageSource = new PackageSource('org/package=1.0.0@repo');
+            $packageSource->setVersion(null);
+            $this->assertNull($packageSource->getVersion());
+        }
+
+        /**
+         * Test setRepository with valid value
+         */
+        public function testSetRepositoryValid(): void
+        {
+            $packageSource = new PackageSource();
+            $packageSource->setRepository('custom-repo');
+            $this->assertEquals('custom-repo', $packageSource->getRepository());
+        }
+
+        /**
+         * Test setRepository with null
+         */
+        public function testSetRepositoryNull(): void
+        {
+            $packageSource = new PackageSource('org/package@repo');
+            $packageSource->setRepository(null);
+            $this->assertNull($packageSource->getRepository());
+        }
+
+        /**
+         * Test equality comparison of two PackageSource instances
+         */
+        public function testPackageSourceEquality(): void
+        {
+            $pkg1 = new PackageSource('org/package=1.0.0@repo');
+            $pkg2 = new PackageSource('org/package=1.0.0@repo');
+            $pkg3 = new PackageSource('org/package=2.0.0@repo');
+            
+            $this->assertEquals((string)$pkg1, (string)$pkg2);
+            $this->assertNotEquals((string)$pkg1, (string)$pkg3);
+        }
+
+        /**
+         * Test package source without repository in string representation
+         */
+        public function testStringRepresentationWithoutRepository(): void
+        {
+            $packageSource = new PackageSource('org/package=1.0.0');
+            $this->assertNull($packageSource->getRepository());
+            $this->assertEquals('org/package=1.0.0', (string)$packageSource);
+        }
+
+        /**
+         * Test package source with all components in string representation
+         */
+        public function testStringRepresentationComplete(): void
+        {
+            $packageSource = new PackageSource('my-org/my-pkg=2.5.0@my-repo');
+            $this->assertEquals('my-org/my-pkg=2.5.0@my-repo', (string)$packageSource);
+        }
     }
+

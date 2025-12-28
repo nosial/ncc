@@ -225,7 +225,7 @@
         {
             $project = new Project([]);
             
-            $project->addDependency('org/package@repo');
+            $project->addDependency('package', 'org/package@repo');
             $this->assertTrue($project->dependencyExists('package'));
             $this->assertIsArray($project->getDependencies());
             $this->assertCount(1, $project->getDependencies());
@@ -236,7 +236,7 @@
             $project = new Project([]);
             
             $dependency = new PackageSource('org/package@repo');
-            $project->addDependency($dependency);
+            $project->addDependency('package', $dependency);
             $this->assertTrue($project->dependencyExists('package'));
             $this->assertIsArray($project->getDependencies());
             $this->assertCount(1, $project->getDependencies());
@@ -251,7 +251,7 @@
             
             $this->expectException(InvalidArgumentException::class);
             $this->expectExceptionMessage('A dependency with the name \'package\' already exists');
-            $project->addDependency('org/package@repo');
+            $project->addDependency('package', 'org/package@repo');
         }
 
         public function testRemoveDependency(): void
@@ -281,8 +281,8 @@
         {
             $project = new Project([]);
             
-            $project->addDependency('org/package1@repo');
-            $project->addDependency('org/package2@repo');
+            $project->addDependency('package1', 'org/package1@repo');
+            $project->addDependency('package2', 'org/package2@repo');
             
             $this->assertCount(2, $project->getDependencies());
             $this->assertTrue($project->dependencyExists('package1'));
@@ -591,4 +591,135 @@
             $this->expectExceptionMessage('Each build configuration must be an array');
             Project::validateArray($data);
         }
+
+        /**
+         * Test dependency management with multiple operations
+         */
+        public function testDependencyManagement(): void
+        {
+            $project = new Project([]);
+            
+            // Add dependencies
+            $project->addDependency('dep1', 'org/dep1@repo');
+            $project->addDependency('dep2', 'org/dep2=1.0@repo');
+            $project->addDependency('dep3', new PackageSource('org/dep3=2.0@repo'));
+            
+            $this->assertCount(3, $project->getDependencies());
+            $this->assertTrue($project->dependencyExists('dep1'));
+            $this->assertTrue($project->dependencyExists('dep2'));
+            $this->assertTrue($project->dependencyExists('dep3'));
+            
+            // Remove dependency
+            $project->removeDependency('dep2');
+            $this->assertCount(2, $project->getDependencies());
+            $this->assertFalse($project->dependencyExists('dep2'));
+        }
+
+        /**
+         * Test build configuration management
+         */
+        public function testBuildConfigurationManagement(): void
+        {
+            $project = new Project([]);
+            
+            $this->assertEmpty($project->getBuildConfigurations());
+            
+            $buildConfig = new BuildConfiguration([
+                'name' => 'test-build',
+                'output' => 'build/test',
+                'type' => 'ncc'
+            ]);
+            
+            $project->addBuildConfiguration($buildConfig);
+            $this->assertCount(1, $project->getBuildConfigurations());
+            $this->assertTrue($project->buildConfigurationExists('test-build'));
+        }
+
+        /**
+         * Test getDefaultBuildConfiguration
+         */
+        public function testGetDefaultBuildConfiguration(): void
+        {
+            $project = new Project([
+                'default_build' => 'release',
+                'build_configurations' => [
+                    [
+                        'name' => 'release',
+                        'output' => 'build/release',
+                        'type' => 'ncc'
+                    ]
+                ]
+            ]);
+            
+            $this->assertNotNull($project->getDefaultBuild());
+            $this->assertEquals('release', $project->getDefaultBuild());
+        }
+
+        /**
+         * Test project with null dependencies
+         */
+        public function testProjectWithNullDependencies(): void
+        {
+            $project = new Project([]);
+            $this->assertNull($project->getDependencies());
+            
+            $project->addDependency('test', 'org/test@repo');
+            $this->assertIsArray($project->getDependencies());
+            $this->assertCount(1, $project->getDependencies());
+        }
+
+        /**
+         * Test validateArray with valid complete data
+         */
+        public function testValidateArrayWithValidCompleteData(): void
+        {
+            $data = [
+                'source' => 'src',
+                'default_build' => 'release',
+                'entry_point' => 'main',
+                'update_source' => 'org/package@repo',
+                'repository' => [
+                    'name' => 'test',
+                    'type' => 'github',
+                    'host' => 'github.com',
+                    'ssl' => true
+                ],
+                'assembly' => [
+                    'name' => 'Test',
+                    'package' => 'com.test.app',
+                    'version' => '1.0.0'
+                ],
+                'dependencies' => ['org/dep@repo'],
+                'execution_units' => [
+                    [
+                        'name' => 'main',
+                        'type' => 'php',
+                        'entry' => 'main.php',
+                        'mode' => 'auto'
+                    ]
+                ],
+                'build_configurations' => [
+                    [
+                        'name' => 'release',
+                        'output' => 'build',
+                        'type' => 'ncc'
+                    ]
+                ]
+            ];
+            
+            // Should not throw any exception
+            Project::validateArray($data);
+            $this->assertTrue(true);
+        }
+
+        /**
+         * Test project with empty build configurations array
+         */
+        public function testProjectWithEmptyBuildConfigurations(): void
+        {
+            $project = new Project(['build_configurations' => []]);
+            $this->assertEmpty($project->getBuildConfigurations());
+            $this->assertIsArray($project->getBuildConfigurations());
+        }
     }
+

@@ -546,4 +546,119 @@
             $this->assertEquals('sub.domain-with_special.chars.com', $config->getHost());
             $this->assertEquals('https://sub.domain-with_special.chars.com', $config->getBaseUrl());
         }
+
+        /**
+         * Test getBaseUrl with SSL enabled
+         */
+        public function testGetBaseUrlWithSsl(): void
+        {
+            $config = new RepositoryConfiguration('test', RepositoryType::GITHUB, 'github.com', true);
+            $this->assertEquals('https://github.com', $config->getBaseUrl());
+        }
+
+        /**
+         * Test getBaseUrl with SSL disabled
+         */
+        public function testGetBaseUrlWithoutSsl(): void
+        {
+            $config = new RepositoryConfiguration('test', RepositoryType::GITHUB, 'github.com', false);
+            $this->assertEquals('http://github.com', $config->getBaseUrl());
+        }
+
+        /**
+         * Test __toString magic method
+         */
+        public function testToStringMethod(): void
+        {
+            $config = new RepositoryConfiguration('test', RepositoryType::GITLAB, 'gitlab.example.com', true);
+            $this->assertEquals('https://gitlab.example.com', (string) $config);
+        }
+
+        /**
+         * Test toArray includes all properties
+         */
+        public function testToArrayStructure(): void
+        {
+            $config = new RepositoryConfiguration('my-repo', RepositoryType::GITEA, 'gitea.local', false);
+            $array = $config->toArray();
+            
+            $this->assertArrayHasKey('name', $array);
+            $this->assertArrayHasKey('type', $array);
+            $this->assertArrayHasKey('host', $array);
+            $this->assertArrayHasKey('ssl', $array);
+            
+            $this->assertEquals('my-repo', $array['name']);
+            $this->assertEquals('gitea', $array['type']);
+            $this->assertEquals('gitea.local', $array['host']);
+            $this->assertFalse($array['ssl']);
+        }
+
+        /**
+         * Test fromArray handles missing type gracefully with default
+         */
+        public function testFromArrayWithMissingType(): void
+        {
+            $data = [
+                'name' => 'test',
+                'host' => 'example.com',
+                'ssl' => true
+            ];
+            
+            $config = RepositoryConfiguration::fromArray($data);
+            $this->assertEquals(RepositoryType::GITHUB, $config->getType());
+        }
+
+        /**
+         * Test fromArray handles invalid type with default
+         */
+        public function testFromArrayWithInvalidType(): void
+        {
+            $data = [
+                'name' => 'test',
+                'type' => 'invalid-type',
+                'host' => 'example.com',
+                'ssl' => true
+            ];
+            
+            $config = RepositoryConfiguration::fromArray($data);
+            $this->assertEquals(RepositoryType::GITHUB, $config->getType());
+        }
+
+        /**
+         * Test with IPv4 address as host
+         */
+        public function testWithIPv4Host(): void
+        {
+            $config = new RepositoryConfiguration('local', RepositoryType::GITEA, '192.168.1.100', false);
+            $this->assertEquals('192.168.1.100', $config->getHost());
+            $this->assertEquals('http://192.168.1.100', $config->getBaseUrl());
+        }
+
+        /**
+         * Test with port number in host
+         */
+        public function testWithPortInHost(): void
+        {
+            $config = new RepositoryConfiguration('local', RepositoryType::GITLAB, 'gitlab.local:8080', true);
+            $this->assertEquals('gitlab.local:8080', $config->getHost());
+            $this->assertEquals('https://gitlab.local:8080', $config->getBaseUrl());
+        }
+
+        /**
+         * Test configuration immutability after creation
+         */
+        public function testConfigurationValues(): void
+        {
+            $config = new RepositoryConfiguration('immutable', RepositoryType::GITHUB, 'github.com', true);
+            
+            // Verify values are set correctly
+            $this->assertEquals('immutable', $config->getName());
+            $this->assertEquals(RepositoryType::GITHUB, $config->getType());
+            $this->assertEquals('github.com', $config->getHost());
+            $this->assertTrue($config->isSslEnabled());
+            
+            // Verify toString returns base URL
+            $this->assertEquals('https://github.com', (string) $config);
+        }
     }
+
