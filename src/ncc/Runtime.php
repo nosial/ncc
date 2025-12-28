@@ -703,6 +703,57 @@
         }
 
         /**
+         * Executes a package from either a file path or package manager.
+         * 
+         * This method supports two ways of executing a package:
+         *  1. From a file directly (package parameter is a file path)
+         *  2. From the package manager (package parameter is a package name)
+         *
+         * @param string $package The path to the package file or the package name
+         * @param string $version The version of the package to execute (ignored for file paths, default 'latest')
+         * @param string|null $executionUnit The specific execution unit to run (null for default)
+         * @param array $arguments Arguments to pass to the executed package
+         * @return mixed The result from the package execution
+         * @throws IOException If the package file cannot be accessed
+         * @throws PackageException If there is an error executing the package
+         */
+        public static function execute(string $package, string $version='latest', ?string $executionUnit=null, array $arguments=[]): mixed
+        {
+            Logger::getLogger()->debug(sprintf('Execute requested: %s@%s, unit=%s', $package, $version, $executionUnit ?? 'default'));
+            self::initializeStreamWrapper();
+
+            // Determine if package is a file path or package name
+            if(is_file($package))
+            {
+                $packagePath = realpath($package);
+                if($packagePath === false)
+                {
+                    throw new IOException('The specified package file does not exist.');
+                }
+                
+                Logger::getLogger()->verbose(sprintf('Executing package from file: %s', $packagePath));
+            }
+            else
+            {
+                // Look up package in package manager
+                $packagePath = self::getPackagePath($package, $version);
+                if($packagePath === null)
+                {
+                    throw new PackageException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
+                }
+                
+                Logger::getLogger()->verbose(sprintf('Executing package from package manager: %s@%s', $package, $version));
+            }
+
+            // Create package reader with cache for faster loading
+            $packageReader = new PackageReader($packagePath, true);
+            Logger::getLogger()->verbose(sprintf('Executing package: %s, unit=%s, args=%d', $packageReader->getAssembly()->getPackage(), $executionUnit ?? 'default', count($arguments)));
+            
+            // Execute the package
+            return $packageReader->execute($executionUnit, $arguments);
+        }
+
+        /**
          * Finds a satisfying version for a package using semver matching.
          *
          * @param string $package The package name

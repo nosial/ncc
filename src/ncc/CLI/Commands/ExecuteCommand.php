@@ -25,7 +25,6 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Classes\PackageReader;
     use ncc\Runtime;
 
     class ExecuteCommand extends AbstractCommandHandler
@@ -54,28 +53,9 @@
                 return 1;
             }
 
-            if(is_file($package))
-            {
-                $packagePath = realpath($package);
-                if($packagePath === false)
-                {
-                    Console::error('The specified package file does not exist.');
-                    return 1;
-                }
-            }
-            else
-            {
-                $packagePath = Runtime::getPackagePath($package, $version);
-                if($packagePath === null)
-                {
-                    Console::error(sprintf('The specified package "%s" is not installed.', $package));
-                    return 1;
-                }
-            }
-
             try
             {
-                $result = (new PackageReader($packagePath, true))->execute($executionUnit, $arguments);
+                $result = Runtime::execute($package, $version, $executionUnit, $arguments);
                 
                 // Convert result to exit code
                 // For PHP scripts, the return value might not be an integer
