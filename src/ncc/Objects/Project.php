@@ -28,6 +28,7 @@
     use ncc\Classes\Logger;
     use ncc\Classes\Utilities;
     use ncc\Compilers\PackageCompiler;
+    use ncc\Compilers\PhpCompiler;
     use ncc\Enums\BuildType;
     use ncc\Enums\MacroVariable;
     use ncc\Exceptions\CompileException;
@@ -862,6 +863,7 @@
             return match ($buildConfiguration->getType())
             {
                 BuildType::NCC_PACKAGE => new PackageCompiler(dirname($filePath), $buildConfigurationName),
+                BuildType::PHP_PACKAGE => new PhpCompiler(dirname($filePath), $buildConfigurationName),
                 default => throw new CompileException('Compiler method not implemented yet'),
             };
         }

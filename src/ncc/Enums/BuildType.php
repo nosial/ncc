@@ -25,6 +25,7 @@
     enum BuildType : string
     {
         case NCC_PACKAGE = 'ncc';
+        case PHP_PACKAGE = 'php';
         case PHAR_PACKAGE = 'phar';
         case NATIVE = 'native';
     }
