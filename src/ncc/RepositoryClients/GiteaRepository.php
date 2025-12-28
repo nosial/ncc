@@ -110,6 +110,12 @@
          */
         public function getTagArchive(string $group, string $project, string $tag): ?RemotePackage
         {
+            // Handle "latest" by getting the actual latest tag
+            if(strtolower($tag) === 'latest')
+            {
+                $tag = $this->getLatestTag($group, $project);
+                Logger::getLogger()->verbose(sprintf('Resolved "latest" to %s for %s/%s', $tag, $group, $project));
+            }
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/tags/%s', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), rawurlencode($group), rawurlencode($project), rawurlencode($tag));
             $curl = curl_init($endpoint);
             $headers = [
@@ -214,6 +220,12 @@
          */
         public function getReleaseArchive(string $group, string $project, string $release): ?RemotePackage
         {
+            // Handle "latest" by getting the actual latest release tag
+            if(strtolower($release) === 'latest')
+            {
+                $release = $this->getLatestRelease($group, $project);
+                Logger::getLogger()->verbose(sprintf('Resolved "latest" to %s for %s/%s', $release, $group, $project));
+            }
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/releases/tags/%s', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), rawurlencode($group), rawurlencode($project), rawurlencode($release));
             $curl = curl_init($endpoint);
             $headers = [

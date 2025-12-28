@@ -116,6 +116,12 @@
          */
         public function getTagArchive(string $group, string $project, string $tag): ?RemotePackage
         {
+            // Handle "latest" by getting the actual latest tag
+            if(strtolower($tag) === 'latest')
+            {
+                $tag = $this->getLatestTag($group, $project);
+                Logger::getLogger()->verbose(sprintf('Resolved "latest" to %s for %s/%s', $tag, $group, $project));
+            }
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/repository/archive.zip?sha=%s', $this->getConfiguration()->isSslEnabled() ? 'https' : 'http', $this->getConfiguration()->getHost(), $group, rawurlencode($project), rawurlencode($tag));
             $curl = curl_init($endpoint);
@@ -220,6 +226,12 @@
          */
         public function getReleaseArchive(string $group, string $project, string $release): ?RemotePackage
         {
+            // Handle "latest" by getting the actual latest release tag
+            if(strtolower($release) === 'latest')
+            {
+                $release = $this->getLatestRelease($group, $project);
+                Logger::getLogger()->verbose(sprintf('Resolved "latest" to %s for %s/%s', $release, $group, $project));
+            }
             $project = str_replace('.', '/', $project); // Gitlab doesn't like dots in project names (eg; "libs/config" becomes "libs%2Fconfig")
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s/releases/%s', $this->getConfiguration()->isSslEnabled() ? 'https' : 'http', $this->getConfiguration()->getHost(), $group, rawurlencode($project), rawurlencode($release));
             $curl = curl_init($endpoint);
