@@ -542,6 +542,42 @@
                 throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.definitions', 'Build configuration definitions must be an array if set');
             }
 
+            if(isset($data['include_components']) && !is_array($data['include_components']))
+            {
+                throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.include_components', 'Build configuration include_components must be an array if set');
+            }
+
+            if(isset($data['exclude_components']) && !is_array($data['exclude_components']))
+            {
+                throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.exclude_components', 'Build configuration exclude_components must be an array if set');
+            }
+
+            if(isset($data['include_resources']) && !is_array($data['include_resources']))
+            {
+                throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.include_resources', 'Build configuration include_resources must be an array if set');
+            }
+
+            if(isset($data['exclude_resources']) && !is_array($data['exclude_resources']))
+            {
+                throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.exclude_resources', 'Build configuration exclude_resources must be an array if set');
+            }
+
+            if(isset($data['dependencies']) && $data['dependencies'] !== null)
+            {
+                if(!is_array($data['dependencies']))
+                {
+                    throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.dependencies', 'Build configuration dependencies must be an array if set');
+                }
+
+                foreach($data['dependencies'] as $key => $dep)
+                {
+                    if(!is_string($dep))
+                    {
+                        throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.dependencies.' . $key, 'Each dependency must be a string');
+                    }
+                }
+            }
+
             if(isset($data['options']) && !is_array($data['options']))
             {
                 throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.options', 'Build configuration options must be an array if set');
