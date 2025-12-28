@@ -23,13 +23,13 @@
     namespace ncc\Compilers;
 
     use Exception;
+    use ncc\Exceptions\OperationException;
     use Phar;
     use ncc\Abstracts\AbstractCompiler;
     use ncc\Classes\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
     use ncc\Enums\ExecutionUnitType;
-    use ncc\Exceptions\CompileException;
     use ncc\Libraries\pal\Autoloader;
     use ncc\Objects\ResolvedDependency;
     use function msgpack_pack;
@@ -132,7 +132,7 @@
             // Check if phar creation is allowed
             if(ini_get('phar.readonly'))
             {
-                throw new CompileException('phar.readonly must be disabled in php.ini to create Phar archives. Set phar.readonly=0');
+                throw new OperationException('phar.readonly must be disabled in php.ini to create Phar archives. Set phar.readonly=0');
             }
 
             $outputPath = $this->getOutputPath();
@@ -147,7 +147,7 @@
                 }
                 else
                 {
-                    throw new CompileException('Output file already exists and overwrite is disabled');
+                    throw new OperationException('Output file already exists and overwrite is disabled');
                 }
             }
 
@@ -275,7 +275,7 @@
             }
             catch(Exception $e)
             {
-                throw new CompileException(sprintf('Failed to create Phar archive: %s', $e->getMessage()), $e->getCode(), $e);
+                throw new OperationException(sprintf('Failed to create Phar archive: %s', $e->getMessage()), $e->getCode(), $e);
             }
         }
 

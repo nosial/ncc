@@ -32,7 +32,6 @@
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\OperationException;
     use ncc\Objects\Authentication\AccessToken;
     use ncc\Objects\Authentication\UsernamePassword;
@@ -148,7 +147,7 @@
             if ($response === false)
             {
                 Logger::getLogger()->error(sprintf('Failed to get tag archive for %s/%s/%s: %s', $group, $project, $tag, curl_error($curl)));
-                throw new NetworkException(sprintf('Failed to get tag archive for %s/%s/%s: %s', $group, $project, $tag, curl_error($curl)));
+                throw new OperationException(sprintf('Failed to get tag archive for %s/%s/%s: %s', $group, $project, $tag, curl_error($curl)));
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -157,7 +156,7 @@
             if ($http_code !== 200)
             {
                 Logger::getLogger()->error(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
-                throw new NetworkException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
+                throw new OperationException(sprintf('Server responded with HTTP code %s when getting tag archive for %s/%s/%s', $http_code, $group, $project, $tag));
             }
 
             Logger::getLogger()->verbose(sprintf('Found tag archive for %s/%s/%s', $group, $project, $tag));
@@ -258,7 +257,7 @@
             if(!isset($response['assets']['sources']))
             {
                 Logger::getLogger()->error(sprintf('No source assets found for %s/%s/%s', $group, $project, $release));
-                throw new NetworkException(sprintf('No source assets found for %s/%s/%s', $group, $project, $release));
+                throw new OperationException(sprintf('No source assets found for %s/%s/%s', $group, $project, $release));
             }
 
             Logger::getLogger()->verbose(sprintf('Found %d source assets for release %s in %s/%s', count($response['assets']['sources']), $release, $group, $project));
@@ -282,14 +281,14 @@
                 else
                 {
                     Logger::getLogger()->error(sprintf('Unknown source asset format "%s" for %s/%s/%s', $asset['format'], $group, $project, $release));
-                    throw new NetworkException(sprintf('Unknown source asset format "%s" for %s/%s/%s', $asset['format'], $group, $project, $release));
+                    throw new OperationException(sprintf('Unknown source asset format "%s" for %s/%s/%s', $asset['format'], $group, $project, $release));
                 }
 
                 return $results;
             }
 
             Logger::getLogger()->error(sprintf('No archive found for %s/%s/%s', $group, $project, $release));
-            throw new NetworkException(sprintf('No archive found for %s/%s/%s', $group, $project, $release));
+            throw new OperationException(sprintf('No archive found for %s/%s/%s', $group, $project, $release));
         }
 
         /**
@@ -443,7 +442,7 @@
             if($response === false)
             {
                 Logger::getLogger()->error(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $group, $project, curl_error($curl)));
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
+                throw new OperationException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);

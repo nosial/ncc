@@ -25,7 +25,7 @@
     use ncc\Enums\ExecutionMode;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
-    use ncc\Exceptions\ExecutionUnitException;
+    use ncc\Exceptions\OperationException;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
     use ncc\Objects\Project\ExecutionUnit;
@@ -39,7 +39,6 @@
          * @param string $projectPath The project path where the configuration is located.
          * @param ExecutionUnit $unit The execution unit to run.
          * @return int The exit code of the executed unit.
-         * @throws ExecutionUnitException If the execution unit cannot be executed.
          */
         public static function fromSource(string $projectPath, ExecutionUnit $unit): int
         {
@@ -51,7 +50,7 @@
                 Logger::getLogger()->verbose(sprintf('Checking required file: %s', $requiredFile));
                 if(!IO::exists($projectPath . DIRECTORY_SEPARATOR . $requiredFile))
                 {
-                    throw new ExecutionUnitException(sprintf('The execution unit %s is missing the required file %s', $unit->getName(), $projectPath . DIRECTORY_SEPARATOR . $requiredFile));
+                    throw new OperationException(sprintf('The execution unit %s is missing the required file %s', $unit->getName(), $projectPath . DIRECTORY_SEPARATOR . $requiredFile));
                 }
             }
 
@@ -63,7 +62,7 @@
                 
                 if(!IO::exists($entryPointPath))
                 {
-                    throw new ExecutionUnitException(sprintf('The execution unit %s entrypoint %s does not exist', $unit->getName(), $entryPointPath));
+                    throw new OperationException(sprintf('The execution unit %s entrypoint %s does not exist', $unit->getName(), $entryPointPath));
                 }
 
                 // We're going to execute the PHP file using the current PHP binary.
@@ -80,7 +79,7 @@
                 if($entryPointPath === null)
                 {
                     // Binary not found, throw an exception.
-                    throw new ExecutionUnitException(sprintf('The execution unit %s entrypoint %s could not be found in system PATH', $unit->getName(), $unit->getEntryPoint()));
+                    throw new OperationException(sprintf('The execution unit %s entrypoint %s could not be found in system PATH', $unit->getName(), $unit->getEntryPoint()));
                 }
                 
                 Logger::getLogger()->verbose(sprintf('Found system binary at: %s', $entryPointPath));
@@ -91,7 +90,7 @@
             else
             {
                 // In every other case, we throw an exception since we don't know how to handle it :(
-                throw new ExecutionUnitException(sprintf('Cannot execute unit type %s', $unit->getType()->value));
+                throw new OperationException(sprintf('Cannot execute unit type %s', $unit->getType()->value));
             }
 
             // If all goes well, we apply the configuration from the unit to the process.

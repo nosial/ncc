@@ -30,9 +30,8 @@
     use ncc\Classes\PathResolver;
     use ncc\Classes\RepositoryManager;
     use ncc\Classes\StreamWrapper;
-    use ncc\Exceptions\ImportException;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PackageException;
+    use ncc\Exceptions\OperationException;
     use ncc\Libraries\semver\Semver;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
@@ -62,7 +61,6 @@
          *
          * @param string $package The path to the package or the package name
          * @param string $version The version of the package to import if importing from a package manager
-         * @throws ImportException If the package cannot be imported.
          */
         public static function import(string|PackageReader $package, string $version='latest'): void
         {
@@ -121,7 +119,7 @@
             }
             catch(IOException $e)
             {
-                throw new ImportException('Fatal error while read the package: ' . $package, $e->getCode(), $e);
+                throw new OperationException('Fatal error while read the package: ' . $package, $e->getCode(), $e);
             }
 
             // Check again with the actual package name (in case a file path was used)
@@ -175,8 +173,6 @@
          * @param string $version The version of the package (use 'latest' for the most recent version)
          * @return PackageReader Returns the PackageReader
          * @throws IOException
-         * @throws ImportException If the package cannot be found or imported
-         * @throws PackageException
          */
         private static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
@@ -228,7 +224,7 @@
                 }
             }
 
-            throw new ImportException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
+            throw new OperationException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
         }
 
         /**
@@ -322,7 +318,6 @@
          * Returns null when running as root/system user.
          *
          * @return PackageManager|null The user-level PackageManager instance, or null if running as system user.
-         * @throws PackageException Thrown if there is an error initializing the package manager.
          * @throws IOException Thrown if there is an error creating the package manager directory.
          */
         public static function getUserPackageManager(): ?PackageManager
@@ -352,7 +347,6 @@
          *
          * @return PackageManager The system-level PackageManager instance.
          * @throws IOException
-         * @throws PackageException
          */
         public static function getSystemPackageManager(): PackageManager
         {
@@ -378,7 +372,6 @@
          *
          * @return PackageManager The primary PackageManager instance.
          * @throws IOException
-         * @throws PackageException
          */
         public static function getPackageManager(): PackageManager
         {
@@ -545,7 +538,6 @@
          * @param string|null $version
          * @return PackageLockEntry[]
          * @throws IOException
-         * @throws PackageException
          */
         public static function uninstallPackage(string $package, ?string $version='latest'): array
         {
@@ -715,7 +707,6 @@
          * @param array $arguments Arguments to pass to the executed package
          * @return mixed The result from the package execution
          * @throws IOException If the package file cannot be accessed
-         * @throws PackageException If there is an error executing the package
          */
         public static function execute(string $package, string $version='latest', ?string $executionUnit=null, array $arguments=[]): mixed
         {
@@ -739,7 +730,7 @@
                 $packagePath = self::getPackagePath($package, $version);
                 if($packagePath === null)
                 {
-                    throw new PackageException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
+                    throw new OperationException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
                 }
                 
                 Logger::getLogger()->verbose(sprintf('Executing package from package manager: %s@%s', $package, $version));

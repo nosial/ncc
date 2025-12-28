@@ -32,7 +32,6 @@
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
@@ -180,7 +179,6 @@
          * @param string $project The name of the project to get the latest tag for
          * @return string Returns the latest tag for the given project
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getLatestTag(string $group, string $project): string;
 
@@ -192,7 +190,6 @@
          * @param string $tag The tag for which to get the archive
          * @return RemotePackage|null Returns a RemotePackage object if found, or null if not found
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getTagArchive(string $group, string $project, string $tag): ?RemotePackage;
 
@@ -203,7 +200,6 @@
          * @param string $project The name of the project to get releases for
          * @return string[] Returns an array of available releases for the given project
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getReleases(string $group, string $project): array;
 
@@ -214,7 +210,6 @@
          * @param string $project The name of the project to get the latest release for
          * @return string Returns the latest release for the given project
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getLatestRelease(string $group, string $project): string;
 
@@ -226,7 +221,6 @@
          * @param string $release The release for which to get the archive
          * @return RemotePackage|null Returns a RemotePackage object if found, or null if not found
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getReleaseArchive(string $group, string $project, string $release): ?RemotePackage;
 
@@ -238,7 +232,6 @@
          * @param string $release The release for which to get the package
          * @return RemotePackage|null Returns a RemotePackage object if found, or null if not found
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getReleasePackage(string $group, string $project, string $release): ?RemotePackage;
 
@@ -249,7 +242,6 @@
          * @param string $project The name of the project
          * @return RemotePackage|null Returns the source of the git repository
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getGit(string $group, string $project): ?RemotePackage;
 

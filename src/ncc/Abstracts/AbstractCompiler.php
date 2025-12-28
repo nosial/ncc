@@ -29,8 +29,6 @@
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
-    use ncc\Exceptions\CompileException;
-    use ncc\Exceptions\ExecutionUnitException;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
@@ -593,7 +591,6 @@
          * Executes the execution units that is required to run in the pre-compile stage
          *
          * @return void
-         * @throws ExecutionUnitException Thrown if one or more execution unit(s) failed to run
          */
         protected function preCompile(): void
         {
@@ -617,7 +614,6 @@
         /**
          * Executes the execution units that is required to run in the post-compile stage
          *
-         * @throws ExecutionUnitException Thrown if one or more execution unit(s) failed to run
          */
         protected function postCompile(): void
         {
@@ -648,7 +644,6 @@
          *                                        progress: A float value between 0.0 and 1.0 indicating
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
          * @return string The path to the compiled output file.
-         * @throws CompileException Thrown if the compiler encounters an error.
          * @throws IOException thrown if there was an IO error
          */
         protected abstract function compile(?callable $progressCallback=null, bool $overwrite=true): string;
@@ -663,8 +658,6 @@
          *                                        progress: A float value between 0.0 and 1.0 indicating
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
          * @return string The path to the built output file.
-         * @throws CompileException Thrown if the compiler encounters an error.
-         * @throws ExecutionUnitException Thrown if one or more execution unit failed to run
          * @throws IOException Thrown if there was an IO error
          */
         public function build(?callable $progressCallback=null, bool $overwrite=true): string

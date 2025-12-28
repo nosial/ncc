@@ -24,8 +24,6 @@
 
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Exceptions\CompileException;
-    use ncc\Exceptions\ExecutionUnitException;
     use ncc\Exceptions\IOException;
     use ncc\Objects\Project;
 
@@ -82,7 +80,7 @@
                 });
                 Console::completeProgress("Build completed: " . $outputPath);
             }
-            catch (CompileException | ExecutionUnitException | IOException $e)
+            catch (IOException $e)
             {
                 Console::clearInlineProgress();
                 Console::error($e->getMessage());

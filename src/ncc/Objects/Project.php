@@ -32,9 +32,9 @@
     use ncc\Compilers\PhpCompiler;
     use ncc\Enums\BuildType;
     use ncc\Enums\MacroVariable;
-    use ncc\Exceptions\CompileException;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
     use ncc\Interfaces\SerializableInterface;
     use ncc\Interfaces\ValidatorInterface;
     use ncc\Libraries\Yaml\Yaml;
@@ -842,7 +842,6 @@
          * @return AbstractCompiler Returns the Abstract compiler object allowing you to compile the project, the compiler
          *                          type is based off the build configuration however; still allowing you to run the
          *                          build() method the same way no matter the compiler
-         * @throws CompileException Thrown if there was an issue creating the compiler for the project
          */
         public static function compilerFromFile(string $filePath, ?string $buildConfigurationName=null): AbstractCompiler
         {
@@ -858,7 +857,7 @@
             $buildConfiguration = $projectConfiguration->getBuildConfiguration($buildConfigurationName);
             if($buildConfiguration === null)
             {
-                throw new CompileException('Could not find the build configuration in the project configuration');
+                throw new OperationException('Could not find the build configuration in the project configuration');
             }
 
             return match ($buildConfiguration->getType())
@@ -866,7 +865,7 @@
                 BuildType::NCC_PACKAGE => new PackageCompiler(dirname($filePath), $buildConfigurationName),
                 BuildType::PHP_PACKAGE => new PhpCompiler(dirname($filePath), $buildConfigurationName),
                 BuildType::PHAR_PACKAGE => new PharCompiler(dirname($filePath), $buildConfigurationName),
-                default => throw new CompileException('Compiler method not implemented yet'),
+                default => throw new OperationException('Compiler method not implemented yet'),
             };
         }
 

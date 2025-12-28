@@ -26,8 +26,8 @@
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
-    use ncc\Exceptions\ExecutionUnitException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
     use ncc\Interfaces\ReferenceInterface;
     use ncc\Libraries\pal\Autoloader;
     use ncc\Libraries\Process\ExecutableFinder;
@@ -445,7 +445,6 @@
 
         /**
          * @throws IOException
-         * @throws ExecutionUnitException
          */
         public function extract(string $outputDirectory): void
         {
@@ -487,7 +486,6 @@
          * @param ExecutionUnitReference $reference The execution unit reference.
          * @param string $outputDirectory The directory where the script will be created.
          * @return string The path to the created shell script.
-         * @throws ExecutionUnitException If the shell cannot be found.
          * @throws IOException If there is an error writing the file.
          */
         public function createExecutionUnit(ExecutionUnitReference $reference, string $outputDirectory): string
@@ -499,7 +497,7 @@
             if($shell === null)
             {
                 // If we can't find the shell, we can't proceed because the generated script would not be executable
-                throw new ExecutionUnitException('Unable to locate \'sh\', cannot generate shell script.');
+                throw new OperationException('Unable to locate \'sh\', cannot generate shell script.');
             }
 
             // Shell script begins with the first line.
@@ -1070,7 +1068,6 @@
          * @param string|null $executionUnit The name of the execution unit to execute. If null, uses the main entry point.
          * @param array $arguments Arguments to pass to the execution unit (similar to $argv in PHP).
          * @return mixed The return value from the executed script (for PHP/WEB) or exit code (for SYSTEM).
-         * @throws ExecutionUnitException If the execution unit is not found or execution fails.
          * @throws IOException If there's an I/O error during execution.
          */
         public function execute(?string $executionUnit = null, array $arguments = []): mixed
@@ -1084,7 +1081,7 @@
                 $entryPoint = $this->header->getEntryPoint();
                 if($entryPoint === null)
                 {
-                    throw new ExecutionUnitException('No execution unit specified and no main entry point defined in package');
+                    throw new OperationException('No execution unit specified and no main entry point defined in package');
                 }
                 
                 Logger::getLogger()->verbose(sprintf('Using main entry point: %s', $entryPoint));
@@ -1095,7 +1092,7 @@
             $executionUnitRef = $this->findExecutionUnit($executionUnit);
             if($executionUnitRef === null)
             {
-                throw new ExecutionUnitException(sprintf('Execution unit not found: %s', $executionUnit));
+                throw new OperationException(sprintf('Execution unit not found: %s', $executionUnit));
             }
             
             $unit = $this->readExecutionUnit($executionUnitRef);
@@ -1112,7 +1109,7 @@
                     return $this->executeSystemUnit($unit, $arguments);
                     
                 default:
-                    throw new ExecutionUnitException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value));
+                    throw new OperationException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value));
             }
         }
 
@@ -1155,12 +1152,12 @@
                     }
                     else
                     {
-                        throw new ExecutionUnitException(sprintf('Script not found in package: %s (also tried %s)', $scriptPath, $scriptPathWithExtension));
+                        throw new OperationException(sprintf('Script not found in package: %s (also tried %s)', $scriptPath, $scriptPathWithExtension));
                     }
                 }
                 else
                 {
-                    throw new ExecutionUnitException(sprintf('Script not found in package: %s', $scriptPath));
+                    throw new OperationException(sprintf('Script not found in package: %s', $scriptPath));
                 }
             }
             
@@ -1200,7 +1197,7 @@
             }
             catch(\Throwable $e)
             {
-                throw new ExecutionUnitException(sprintf('Failed to execute PHP script: %s', $e->getMessage()), 0, $e);
+                throw new OperationException(sprintf('Failed to execute PHP script: %s', $e->getMessage()), 0, $e);
             }
             finally
             {
@@ -1234,7 +1231,6 @@
          * @param ExecutionUnit $unit The execution unit to execute.
          * @param array $arguments Arguments to pass to the command.
          * @return int The exit code from the executed process.
-         * @throws ExecutionUnitException If execution fails.
          */
         private function executeSystemUnit(ExecutionUnit $unit, array $arguments): int
         {
@@ -1298,7 +1294,7 @@
             }
             catch(\Throwable $e)
             {
-                throw new ExecutionUnitException(sprintf('Failed to execute system command: %s', $e->getMessage()), 0, $e);
+                throw new OperationException(sprintf('Failed to execute system command: %s', $e->getMessage()), 0, $e);
             }
         }
 

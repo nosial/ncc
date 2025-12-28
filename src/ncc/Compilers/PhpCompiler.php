@@ -24,8 +24,8 @@
 
     use ncc\Classes\IO;
     use ncc\Classes\Logger;
-    use ncc\Exceptions\CompileException;
     use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
 
     /**
      * PhpCompiler extends PackageCompiler to create self-executable PHP packages.
@@ -67,7 +67,6 @@
          * back to the file. The file is then made executable.
          *
          * @param string $packagePath The path to the compiled package file
-         * @throws CompileException If there's an error reading or writing the package
          */
         private function addPhpHeader(string $packagePath): void
         {
@@ -102,7 +101,7 @@
             }
             catch(IOException $e)
             {
-                throw new CompileException(sprintf('Failed to add PHP header to package: %s', $e->getMessage()), $e->getCode(), $e);
+                throw new OperationException(sprintf('Failed to add PHP header to package: %s', $e->getMessage()), $e->getCode(), $e);
             }
         }
 
@@ -191,7 +190,7 @@ try
         $packageReader->execute($entryPoint, []);
     }
 }
-catch(\ncc\Exceptions\ImportException $e)
+catch(\ncc\Exceptions\OperationException $e)
 {
     if(php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg')
     {

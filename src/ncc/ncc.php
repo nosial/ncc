@@ -65,7 +65,7 @@
             {
                 \ncc\Runtime::import($packagePath);
             }
-            catch (\ncc\Exceptions\ImportException $e)
+            catch (\ncc\Exceptions\OperationException $e)
             {
                 trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
             }

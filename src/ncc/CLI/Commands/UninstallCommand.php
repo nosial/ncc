@@ -27,7 +27,6 @@
     use ncc\Classes\Console;
     use ncc\Classes\Validate;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
 

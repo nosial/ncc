@@ -31,7 +31,6 @@
     use ncc\Classes\Logger;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\semver\Comparator;
     use ncc\Libraries\semver\Semver;
@@ -103,7 +102,7 @@
             if(!isset($response['package']['versions']))
             {
                 Logger::getLogger()->error(sprintf('Invalid response from %s/%s, missing "package.versions" key', $group, $project));
-                throw new NetworkException(sprintf('Invalid response from %s/%s, missing "package.versions" key', $group, $project));
+                throw new OperationException(sprintf('Invalid response from %s/%s, missing "package.versions" key', $group, $project));
             }
 
             $versions = array_keys($response['package']['versions']);
@@ -176,13 +175,13 @@
             if(!isset($response['package']['versions'][$version]))
             {
                 Logger::getLogger()->error(sprintf('Invalid response from %s/%s, version %s does not exist', $group, $project, $version));
-                throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not exist', $group, $project, $version));
+                throw new OperationException(sprintf('Invalid response from %s/%s, version %s does not exist', $group, $project, $version));
             }
 
             if(!isset($response['package']['versions'][$version]['dist']['url']))
             {
                 Logger::getLogger()->error(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
-                throw new NetworkException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
+                throw new OperationException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
             }
 
             Logger::getLogger()->verbose(sprintf('Found archive URL for %s/%s version %s', $group, $project, $version));
@@ -266,7 +265,7 @@
             if($response === false)
             {
                 Logger::getLogger()->error(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $vendor, $project, curl_error($curl)));
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $vendor, $project, curl_error($curl)));
+                throw new OperationException(sprintf('HTTP request failed for %s/%s: %s', $vendor, $project, curl_error($curl)));
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);

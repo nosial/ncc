@@ -31,7 +31,6 @@
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\Process\Exception\InvalidArgumentException;
     use ncc\Objects\Authentication\AccessToken;
@@ -437,7 +436,7 @@
             if($response === false)
             {
                 Logger::getLogger()->error(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $group, $project, curl_error($curl)));
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
+                throw new OperationException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);

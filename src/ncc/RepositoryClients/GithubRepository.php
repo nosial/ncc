@@ -32,7 +32,6 @@
     use ncc\Enums\AuthenticationType;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\NetworkException;
     use ncc\Exceptions\OperationException;
     use ncc\Objects\Authentication\AccessToken;
     use ncc\Objects\Authentication\UsernamePassword;
@@ -146,7 +145,7 @@
             if($response === false)
             {
                 Logger::getLogger()->error(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
+                throw new OperationException(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -390,7 +389,6 @@
          * @param string $group Used for error reporting, group name
          * @param string $project Used for error reporting, project name
          * @return array The decoded results
-         * @throws NetworkException Thrown if there was a network issue while submitting the request
          * @throws OperationException Thrown if there was a general operation exception
          */
         private function processRequest(CurlHandle $curl, string $group, string $project): array
@@ -422,7 +420,7 @@
             if($response === false)
             {
                 Logger::getLogger()->error(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $group, $project, curl_error($curl)));
-                throw new NetworkException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
+                throw new OperationException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);

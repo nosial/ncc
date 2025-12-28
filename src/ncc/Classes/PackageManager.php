@@ -26,7 +26,6 @@
     use JsonException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
-    use ncc\Exceptions\PackageException;
     use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
 
@@ -49,7 +48,6 @@
          * @param bool $autoSave If true, automatically save after each write operation (default: true)
          * @throws InvalidArgumentException If the directory path is invalid
          * @throws IOException If the lock file cannot be read
-         * @throws PackageException If the lock file contains invalid data
          */
         public function __construct(string $dataDirectoryPath, bool $autoSave=true)
         {
@@ -97,7 +95,6 @@
          * Load and parse the package lock file
          *
          * @throws IOException If the lock file cannot be read
-         * @throws PackageException If the lock file contains invalid data
          */
         private function loadLockFile(): void
         {
@@ -116,19 +113,19 @@
             }
             catch(JsonException $e)
             {
-                throw new PackageException(sprintf('Invalid JSON in lock file %s: %s', $this->packageLockPath, $e->getMessage()), 0, $e);
+                throw new OperationException(sprintf('Invalid JSON in lock file %s: %s', $this->packageLockPath, $e->getMessage()), 0, $e);
             }
 
             if(!is_array($data))
             {
-                throw new PackageException('Lock file must contain a JSON array');
+                throw new OperationException('Lock file must contain a JSON array');
             }
 
             foreach($data as $index => $entryData)
             {
                 if(!is_array($entryData))
                 {
-                    throw new PackageException(sprintf('Invalid entry at index %d: expected array', $index));
+                    throw new OperationException(sprintf('Invalid entry at index %d: expected array', $index));
                 }
 
                 try
@@ -139,7 +136,7 @@
                 }
                 catch(InvalidArgumentException $e)
                 {
-                    throw new PackageException(sprintf('Invalid entry at index %d: %s', $index, $e->getMessage()), 0, $e);
+                    throw new OperationException(sprintf('Invalid entry at index %d: %s', $index, $e->getMessage()), 0, $e);
                 }
             }
             

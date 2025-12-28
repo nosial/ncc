@@ -26,7 +26,7 @@
     use ncc\Enums\PackageStructure;
     use ncc\Enums\WritingMode;
     use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PackageException;
+    use ncc\Exceptions\OperationException;
 
     class PackageWriter
     {
@@ -62,7 +62,7 @@
             {
                 if(!$overwrite)
                 {
-                    throw new PackageException("File already exists: " . $filePath);
+                    throw new OperationException("File already exists: " . $filePath);
                 }
                 Logger::getLogger()->verbose('Overwriting existing file');
                 IO::rm($filePath, false);
@@ -75,7 +75,7 @@
             $this->fileHandler = fopen($filePath, 'a+b');
             if($this->fileHandler === false)
             {
-                throw new PackageException("Could not open file for writing: " . $filePath);
+                throw new OperationException("Could not open file for writing: " . $filePath);
             }
 
             // Write the package header signature
@@ -141,13 +141,12 @@
          * @param string $data The data to write to the package.
          * @param string|null $name The name identifier for the data. Required for EXECUTION_UNITS, COMPONENTS, and RESOURCES modes.
          * @return void
-         * @throws PackageException if the file is not open, if name is missing for collection modes, or if the writing mode is unknown.
          */
         public function writeData(string $data, ?string $name=null): void
         {
             if($this->isClosed())
             {
-                throw new PackageException("File is not open.");
+                throw new OperationException("File is not open.");
             }
 
             switch($this->writingMode)
@@ -177,7 +176,7 @@
                     // Name is required for collection-type sections
                     if($name === null)
                     {
-                        throw new PackageException("Name is required for " . $this->writingMode->name . " mode.");
+                        throw new OperationException("Name is required for " . $this->writingMode->name . " mode.");
                     }
 
                     // Write the section marker if this is the first item in this section
@@ -209,13 +208,12 @@
          * This allows empty sections to be skipped entirely, as per the package specification.
          *
          * @return void
-         * @throws PackageException if the file is not open.
          */
         public function endSection(): void
         {
             if($this->isClosed())
             {
-                throw new PackageException("File is not open.");
+                throw new OperationException("File is not open.");
             }
 
             // Transition to the next section mode without writing the section marker

@@ -30,7 +30,7 @@
     use ncc\Classes\PackageWriter;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\WritingMode;
-    use ncc\Exceptions\CompileException;
+    use ncc\Exceptions\OperationException;
     use ncc\Libraries\pal\Autoloader;
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\Header;
@@ -253,7 +253,7 @@
                             if(empty($componentName) || $componentName === false)
                             {
                                 Logger::getLogger()->error(sprintf('Invalid component path: %s', $componentFilePath));
-                                throw new CompileException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
+                                throw new OperationException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
                             }
 
                             if($progressCallback !== null)
@@ -353,7 +353,7 @@
                             if(empty($resourceName) || $resourceName === false)
                             {
                                 Logger::getLogger()->error(sprintf('Invalid resource path: %s', $resourceFilePath));
-                                throw new CompileException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
+                                throw new OperationException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
                             }
 
                             $resourceData = IO::readFile($resourceFilePath);
@@ -425,7 +425,6 @@
          * Returns the package's header object built from the project's configuration
          *
          * @return Header THe package's header object
-         * @throws CompileException thrown if a dependency cannot be resolved when statically linking
          */
         private function createPackageHeader(?array $dependencyReaders=null): Header
         {
@@ -483,7 +482,7 @@
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
                     {
                         Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
-                        throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
+                        throw new OperationException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
                     $header->addDependencyReference($packageName, $packageVersion, $resolvedDependency->getPackageSource());
@@ -516,7 +515,7 @@
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
                     {
                         Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
-                        throw new CompileException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
+                        throw new OperationException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
                     $header->addDependencyReference($packageName, $packageVersion, $packageSource);
@@ -537,7 +536,6 @@
          *
          * @param array|null $dependencyReaders Array of PackageReader instances for statically linked dependencies
          * @return array<string, string> The autoloader mapping array (class name => ncc:// path)
-         * @throws CompileException If there's an error generating the autoloader
          */
         private function generateAutoloaderMapping(?array $dependencyReaders=null): array
         {
