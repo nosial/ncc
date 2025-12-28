@@ -93,6 +93,12 @@
         {
             $results = [];
 
+            // Treat "latest" as null to use the latest release/tag
+            if($version !== null && strtolower($version) === 'latest')
+            {
+                $version = null;
+            }
+
             // Find possible release archives
             try
             {
