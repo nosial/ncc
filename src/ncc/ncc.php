@@ -38,7 +38,7 @@
 
     // Include the autoloader
     /** @noinspection PhpIncludeInspection */
-    require 'Autoloader.php';
+    require __DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php';
 
     // Define NCC constants
     define('__NCC_DIR__', __DIR__); // The directory where ncc is located
