@@ -178,6 +178,14 @@
 
         public function validate(): void
         {
-            // TODO: Implement validate() method.
+            if(trim($this->name) === '')
+            {
+                throw new InvalidPropertyException('repository.name', 'The repository name cannot be empty');
+            }
+
+            if(trim($this->host) === '')
+            {
+                throw new InvalidPropertyException('repository.host', 'The repository host cannot be empty');
+            }
         }
     }

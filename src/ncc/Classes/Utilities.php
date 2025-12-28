@@ -49,7 +49,7 @@
             return [
                 'organization' => $matches['organization'],
                 'package_name' => $matches['package_name'],
-                'version' => (!empty($matches['version'])) ? $matches['version'] : null,
+                'version' => (!empty($matches['version'])) ? $matches['version'] : 'latest',
                 'repository' => (!empty($matches['repository'])) ? $matches['repository'] : null
             ];
         }

@@ -24,10 +24,12 @@
 
     use InvalidArgumentException;
     use ncc\Classes\Utilities;
+    use ncc\Exceptions\InvalidPropertyException;
     use ncc\Interfaces\SerializableInterface;
+    use ncc\Interfaces\ValidatorInterface;
     use ncc\Libraries\semver\VersionParser;
 
-    class PackageSource implements SerializableInterface
+    class PackageSource implements SerializableInterface, ValidatorInterface
     {
         private string $organization;
         private string $name;
@@ -230,5 +232,51 @@
             }
 
             return $result;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public static function validateArray(array $data): void
+        {
+            if(!isset($data['organization']) || !is_string($data['organization']) || trim($data['organization']) === '')
+            {
+                throw new InvalidPropertyException('package.organization', 'The package organization is required and must be a non-empty string');
+            }
+
+            if(!isset($data['name']) || !is_string($data['name']) || trim($data['name']) === '')
+            {
+                throw new InvalidPropertyException('package.name', 'The package name is required and must be a non-empty string');
+            }
+
+            if(isset($data['version']) && $data['version'] !== null)
+            {
+                if(!is_string($data['version']) || trim($data['version']) === '')
+                {
+                    throw new InvalidPropertyException('package.version', 'The package version must be a non-empty string or null');
+                }
+
+                $version = $data['version'];
+                if(strtolower($version) !== 'latest' && !(new VersionParser())->isValid($version))
+                {
+                    throw new InvalidPropertyException('package.version', sprintf('The package version "%s" is not a valid SemVer version or "latest"', $version));
+                }
+            }
+
+            if(isset($data['repository']) && $data['repository'] !== null)
+            {
+                if(!is_string($data['repository']) || trim($data['repository']) === '')
+                {
+                    throw new InvalidPropertyException('package.repository', 'The package repository must be a non-empty string or null');
+                }
+            }
+        }
+
+        /**
+         * @inheritDoc
+         */
+        public function validate(): void
+        {
+            self::validateArray($this->toArray());
         }
     }

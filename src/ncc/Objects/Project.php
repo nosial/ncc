@@ -946,6 +946,16 @@
                 throw new InvalidPropertyException('update_source', 'The update source must be a string if set');
             }
 
+            if(isset($data['update_source']) && is_string($data['update_source']) && trim($data['update_source']) !== '')
+            {
+                // Validate that it's a valid package source string
+                $parsedSource = \ncc\Classes\Utilities::parsePackageSource($data['update_source']);
+                if($parsedSource === null)
+                {
+                    throw new InvalidPropertyException('update_source', 'The update source must be a valid package source string');
+                }
+            }
+
             if(isset($data['pre_compile']) && !self::validateExecutionUnitExists($data, $data['pre_compile']))
             {
                 throw new InvalidPropertyException('pre_compile', 'The pre-compile property must point to a valid execution point if it\'s set.');
@@ -969,6 +979,11 @@
             if(isset($data['repository']) && !is_array($data['repository']))
             {
                 throw new InvalidPropertyException('repository', 'The repository configuration must be an array if set');
+            }
+
+            if(isset($data['repository']) && is_array($data['repository']))
+            {
+                RepositoryConfiguration::validateArray($data['repository']);
             }
 
             if(isset($data['assembly']))

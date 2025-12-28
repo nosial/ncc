@@ -77,6 +77,12 @@
         private ?array $dirEntries = null;
         /** @var int Current position in directory listing */
         private int $dirPosition = 0;
+        /** @var array<string, string> Cache of extracted phar files (ncc path => filesystem path) */
+        private static array $pharCache = [];
+        /** @var resource|null File handle for proxied phar file */
+        private $pharHandle = null;
+        /** @var bool Whether this stream is proxying to a real phar file */
+        private bool $isPharProxy = false;
 
         /**
          * Registers the ncc:// stream wrapper.
@@ -177,6 +183,36 @@
                 return false;
             }
 
+            // Special handling for .phar files - extract to temp location
+            if (str_ends_with(strtolower($resourcePath), '.phar'))
+            {
+                $tempPath = $this->extractPharToTemp($path, $resourcePath);
+                if ($tempPath === null)
+                {
+                    if ($options & STREAM_REPORT_ERRORS)
+                    {
+                        trigger_error("Failed to extract phar file: $resourcePath", E_USER_WARNING);
+                    }
+                    return false;
+                }
+                // Open the temporary file for reading
+                $this->pharHandle = fopen($tempPath, $mode);
+                if ($this->pharHandle === false)
+                {
+                    if ($options & STREAM_REPORT_ERRORS)
+                    {
+                        trigger_error("Failed to open extracted phar file: $tempPath", E_USER_WARNING);
+                    }
+                    return false;
+                }
+                // Mark this as a phar proxy
+                $this->isPharProxy = true;
+                $this->reference = null;
+                $this->position = 0;
+                $opened_path = $tempPath;
+                return true;
+            }
+
             // Initialize position and clear data cache
             $this->position = 0;
             $this->data = null;
@@ -193,6 +229,13 @@
          */
         public function stream_read(int $count): string
         {
+            // If proxying to a phar file, read from the temp file handle
+            if ($this->isPharProxy && $this->pharHandle !== null)
+            {
+                $data = fread($this->pharHandle, $count);
+                return $data !== false ? $data : '';
+            }
+
             // Lazy load the data only when needed
             if ($this->data === null)
             {
@@ -238,6 +281,11 @@
          */
         public function stream_tell(): int
         {
+            if ($this->isPharProxy && $this->pharHandle !== null)
+            {
+                $pos = ftell($this->pharHandle);
+                return $pos !== false ? $pos : 0;
+            }
             return $this->position;
         }
 
@@ -248,6 +296,11 @@
          */
         public function stream_eof(): bool
         {
+            if ($this->isPharProxy && $this->pharHandle !== null)
+            {
+                return feof($this->pharHandle);
+            }
+
             // We need to load data to know the size
             if ($this->data === null)
             {
@@ -278,6 +331,11 @@
          */
         public function stream_seek(int $offset, int $whence = SEEK_SET): bool
         {
+            if ($this->isPharProxy && $this->pharHandle !== null)
+            {
+                return fseek($this->pharHandle, $offset, $whence) === 0;
+            }
+
             // Load data if not already loaded
             if ($this->data === null)
             {
@@ -323,6 +381,11 @@
          */
         public function stream_stat(): array|false
         {
+            if ($this->isPharProxy && $this->pharHandle !== null)
+            {
+                return fstat($this->pharHandle);
+            }
+
             // Handle package-only reference (no resource path)
             $size = 0;
             if ($this->reference !== null)
@@ -380,6 +443,12 @@
          */
         public function url_stat(string $path, int $flags): array|false
         {
+            // Check if this is a cached phar file
+            if (isset(self::$pharCache[$path]) && file_exists(self::$pharCache[$path]))
+            {
+                return stat(self::$pharCache[$path]);
+            }
+
             // Parse the URL
             $parsed = $this->parseUrl($path);
             if ($parsed === null)
@@ -450,6 +519,12 @@
          */
         public function stream_close(): void
         {
+            if ($this->pharHandle !== null)
+            {
+                fclose($this->pharHandle);
+                $this->pharHandle = null;
+            }
+            $this->isPharProxy = false;
             $this->packageReader = null;
             $this->reference = null;
             $this->position = 0;
@@ -720,6 +795,68 @@
             $this->dirEntries = null;
             $this->dirPosition = 0;
             return true;
+        }
+
+        /**
+         * Extracts a .phar file from an NCC package to a temporary location.
+         * PHP's Phar extension requires real filesystem paths, so we extract
+         * .phar files to temp storage and return the filesystem path.
+         *
+         * @param string $nccPath The full ncc:// URL (for caching)
+         * @param string $resourcePath The resource path within the package
+         * @return string|null The temporary filesystem path, or null on failure
+         */
+        private function extractPharToTemp(string $nccPath, string $resourcePath): ?string
+        {
+            // Check if already extracted
+            if (isset(self::$pharCache[$nccPath]))
+            {
+                if (file_exists(self::$pharCache[$nccPath]))
+                {
+                    return self::$pharCache[$nccPath];
+                }
+                // Cache entry exists but file doesn't, remove it
+                unset(self::$pharCache[$nccPath]);
+            }
+
+            try
+            {
+                // Read the phar data from the package
+                $pharData = $this->packageReader->read($this->reference);
+                if (!is_string($pharData))
+                {
+                    return null;
+                }
+
+                // Create temp directory if it doesn't exist
+                $tempDir = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . 'phars';
+                if (!IO::isDir($tempDir))
+                {
+                    IO::mkdir($tempDir, true);
+                }
+
+                // Generate unique temp file path
+                $tempPath = $tempDir . DIRECTORY_SEPARATOR . basename($resourcePath) . '.' . uniqid();
+
+                // Write the phar data to the temp file
+                if (file_put_contents($tempPath, $pharData) === false)
+                {
+                    return null;
+                }
+
+                // Register for cleanup on shutdown
+                ShutdownHandler::flagTemporary($tempPath);
+
+                // Cache the mapping
+                self::$pharCache[$nccPath] = $tempPath;
+
+                return $tempPath;
+            }
+            catch (\Exception $e)
+            {
+                trigger_error("Failed to extract phar: " . $e->getMessage(), E_USER_WARNING);
+                return null;
+            }
         }
 
         /**

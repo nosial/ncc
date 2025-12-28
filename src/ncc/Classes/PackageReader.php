@@ -1140,7 +1140,7 @@
             // Build the ncc:// protocol path
             $scriptPath = 'ncc://' . $packageName . '/' . ltrim($unit->getEntryPoint(), '/');
             Logger::getLogger()->verbose(sprintf('Executing PHP script: %s', $scriptPath));
-            
+
             // Verify the script exists, if not try with .php extension
             if(!file_exists($scriptPath))
             {

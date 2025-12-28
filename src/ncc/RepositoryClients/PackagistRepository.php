@@ -146,6 +146,12 @@
         public function getReleaseArchive(string $group, string $project, string $release): ?RemotePackage
         {
             Logger::getLogger()->debug(sprintf('Getting release archive for %s/%s version %s', $group, $project, $release));
+            // Handle "latest" by getting the actual latest release version
+            if(strtolower($release) === 'latest')
+            {
+                $release = $this->getLatestRelease($group, $project);
+                Logger::getLogger()->verbose(sprintf('Resolved "latest" to %s for %s/%s', $release, $group, $project));
+            }
             $version = $this->resolveVersion($group, $project, $release);
             Logger::getLogger()->verbose(sprintf('Resolved version %s to %s for %s/%s', $release, $version, $group, $project));
             $endpoint = sprintf('%s://%s/packages/%s/%s.json', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), rawurlencode($group), rawurlencode($project));

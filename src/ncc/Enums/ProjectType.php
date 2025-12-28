@@ -40,6 +40,9 @@
          */
         public function getFilePath(string $path): ?string
         {
+            // Directories to skip when searching for project files
+            $skipDirs = ['build', 'dist', 'target', 'out'];
+            
             // First, check if the file exists in the current directory
             $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
             if (file_exists($directFilePath) && is_file($directFilePath))
@@ -54,6 +57,12 @@
                 foreach ($items as $item)
                 {
                     if ($item === '.' || $item === '..')
+                    {
+                        continue;
+                    }
+                    
+                    // Skip common build directories
+                    if (in_array($item, $skipDirs, true))
                     {
                         continue;
                     }
