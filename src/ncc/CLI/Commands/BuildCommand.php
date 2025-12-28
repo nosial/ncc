@@ -65,6 +65,7 @@
             {
                 $projectPath = $argv['path'];
             }
+            $configuration = $argv['configuration'] ?? $argv['config'] ?? $argv['c'] ?? null;
 
             $projectPath = Helper::resolveProjectConfigurationPath($projectPath);
             if($projectPath === null)
@@ -75,7 +76,7 @@
 
             try
             {
-                $compiler = Project::compilerFromFile($projectPath);
+                $compiler = Project::compilerFromFile($projectPath, $configuration);
                 $outputPath = $compiler->compile(function(int $current, int $total, string $message) {
                     Console::inlineProgress($current, $total, $message);
                 });
