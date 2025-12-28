@@ -352,14 +352,62 @@
                 throw new InvalidPropertyException('execution_units.' . $data['name'] . '.arguments', 'Property \'arguments\' must be an array if set');
             }
 
+            if(isset($data['arguments']) && is_array($data['arguments']))
+            {
+                foreach($data['arguments'] as $index => $arg)
+                {
+                    if(!is_string($arg))
+                    {
+                        throw new InvalidPropertyException('execution_units.' . $data['name'] . '.arguments.' . $index, 'Each argument must be a string');
+                    }
+                }
+            }
+
             if(isset($data['environment']) && !is_array($data['environment']))
             {
                 throw new InvalidPropertyException('execution_units.' . $data['name'] . '.environment', 'Property \'environment\' must be an array if set');
             }
 
+            if(isset($data['environment']) && is_array($data['environment']))
+            {
+                foreach($data['environment'] as $key => $value)
+                {
+                    if(!is_string($key) || trim($key) === '')
+                    {
+                        throw new InvalidPropertyException('execution_units.' . $data['name'] . '.environment', 'Environment variable keys must be non-empty strings');
+                    }
+
+                    if(!is_string($value))
+                    {
+                        throw new InvalidPropertyException('execution_units.' . $data['name'] . '.environment.' . $key, 'Environment variable values must be strings');
+                    }
+                }
+            }
+
+            if(isset($data['required_files']) && $data['required_files'] !== null)
+            {
+                if(!is_array($data['required_files']))
+                {
+                    throw new InvalidPropertyException('execution_units.' . $data['name'] . '.required_files', 'Property \'required_files\' must be an array if set');
+                }
+
+                foreach($data['required_files'] as $index => $file)
+                {
+                    if(!is_string($file) || trim($file) === '')
+                    {
+                        throw new InvalidPropertyException('execution_units.' . $data['name'] . '.required_files.' . $index, 'Each required file must be a non-empty string');
+                    }
+                }
+            }
+
             if(isset($data['timeout']) && !is_int($data['timeout']))
             {
                 throw new InvalidPropertyException('execution_units.' . $data['name'] . '.timeout', 'Property \'timeout\' must be an integer if set');
+            }
+
+            if(isset($data['timeout']) && is_int($data['timeout']) && $data['timeout'] <= 0)
+            {
+                throw new InvalidPropertyException('execution_units.' . $data['name'] . '.timeout', 'Timeout must be a positive integer');
             }
         }
 
