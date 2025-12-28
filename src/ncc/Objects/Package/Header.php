@@ -471,6 +471,7 @@
                 'statically_linked' => $this->staticallyLinked,
                 'build_number' => $this->buildNumber,
                 'entry_point' => $this->entryPoint,
+                'web_entry_point' => $this->webEntryPoint,
                 'pre_install' => $this->preInstall,
                 'post_install' => $this->postInstall,
                 'dependencies' => $this->dependencyReferences ? array_map(function($item){ return $item->toArray(); }, $this->dependencyReferences) : null,
