@@ -21,4 +21,4 @@
      *
      */
 
-    require_once __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'target' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'Autoloader.php';
+    require_once __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'target' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'ncc.php';
