@@ -297,26 +297,6 @@
             return $this->buildNumber;
         }
 
-        private function applyMacrosFromInput(string $input, bool $strict=false): string
-        {
-            return MacroVariable::fromInput($input, $strict, function($input){
-                return match($input)
-                {
-                    // Note: We don't resolve CWD at this time as it may be needed/preserved depending
-                    //       on the context, everything else should be fine.
-                    MacroVariable::PROCESS_ID->value => Utilities::getProcessId(),
-                    MacroVariable::USER_ID->value => Utilities::getUserId(),
-                    MacroVariable::GLOBAL_ID->value => Utilities::getGroupId(),
-                    MacroVariable::USER_HOME_PATH->value => Utilities::getUserHomePath(),
-                    MacroVariable::COMPILE_TIMESTAMP->value => time(),
-                    MacroVariable::NCC_BUILD_VERSION->value => __NCC_VERSION__,
-                    MacroVariable::PROJECT_PATH->value => $this->projectPath,
-                    MacroVariable::DEFAULT_BUILD_CONFIGURATION->value => $this->projectConfiguration->getDefaultBuild(),
-                    MacroVariable::SOURCE_PATH->value => $this->sourcePath
-                };
-            });
-        }
-
         /**
          * Returns the build configurations defined in the project
          *

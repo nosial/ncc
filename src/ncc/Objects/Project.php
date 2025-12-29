@@ -191,11 +191,22 @@
             $this->entryPoint = $unitName;
         }
 
+        /**
+         * Returns the web entry point execution unit name
+         *
+         * @return string|null The web entry point execution unit name or null if not set
+         */
         public function getWebEntryPoint(): ?string
         {
             return $this->webEntryPoint;
         }
 
+        /**
+         * Sets the web entry point execution unit name
+         *
+         * @param string|null $unitName The new web entry point execution unit name or null to unset
+         * @throws InvalidArgumentException If the provided unit name is an empty string or does not exist
+         */
         public function setWebEntryPoint(?string $unitName): void
         {
             if($unitName !== null && trim($unitName) === '')
@@ -431,7 +442,7 @@
             {
                 if (!is_string($unit))
                 {
-                    throw new InvalidArgumentException("All execution units must be strings. Invalid value at index {$index}.");
+                    throw new InvalidArgumentException("All execution units must be strings. Invalid value at index $index.");
                 }
 
                 $this->validateSingleExecutionUnit($unit, $context);
@@ -449,12 +460,12 @@
         {
             if (trim($unitName) === '')
             {
-                throw new InvalidArgumentException("The {$context} command cannot be an empty string");
+                throw new InvalidArgumentException("The $context command cannot be an empty string");
             }
 
             if (!$this->executionUnitExists($unitName))
             {
-                throw new InvalidArgumentException("The execution unit '{$unitName}' does not exist");
+                throw new InvalidArgumentException("The execution unit '$unitName' does not exist");
             }
         }
 
@@ -543,7 +554,7 @@
 
             if($this->dependencyExists($package))
             {
-                throw new InvalidArgumentException('A dependency with the name \'' . (string)$package . '\' already exists');
+                throw new InvalidArgumentException('A dependency with the name \'' . $package . '\' already exists');
             }
 
             $this->dependencies[$package] = $dependency;
@@ -795,6 +806,7 @@
          * @param string $filePath The path to the YAML file
          * @param bool $macros Optional. Whether to process macros in the YAML file (default: false)
          * @return Project The loaded Project configuration
+         * @throws IOException If there was an issue reading the file
          */
         public static function fromFile(string $filePath, bool $macros=false): Project
         {
@@ -825,6 +837,8 @@
                         MacroVariable::ASSEMBLY_PRODUCT->value => $results['assembly']['product'] ?? null,
                         MacroVariable::ASSEMBLY_COPYRIGHT->value => $results['assembly']['copyright'] ?? null,
                         MacroVariable::ASSEMBLY_TRADEMARK->value => $results['assembly']['trademark'] ?? null,
+                        MacroVariable::DEFAULT_BUILD_CONFIGURATION->value => $results['default_build'] ?? null,
+                        MacroVariable::SOURCE_PATH->value => $results['source'] ?? null,
                         default => $input
                     };
                 });
@@ -842,6 +856,8 @@
          * @return AbstractCompiler Returns the Abstract compiler object allowing you to compile the project, the compiler
          *                          type is based off the build configuration however; still allowing you to run the
          *                          build() method the same way no matter the compiler
+         * @throws IOException Thrown if there was an issue reading the project configuration file
+         * @throws OperationException If the build configuration could not be found or the compiler type is not implemented
          */
         public static function compilerFromFile(string $filePath, ?string $buildConfigurationName=null): AbstractCompiler
         {

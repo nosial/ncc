@@ -49,7 +49,6 @@
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
             Logger::getLogger()->debug('Initializing PackageCompiler');
-            
             parent::__construct($projectFilePath, $buildConfiguration);
 
             // Package-specific compression attributes

@@ -22,6 +22,7 @@
 
     namespace ncc\Enums;
 
+    use ncc\Classes\Utilities;
     use RuntimeException;
 
     enum MacroVariable : string
@@ -140,6 +141,13 @@
                 self::c => date('c', $currentTime),
                 self::r => date('r', $currentTime),
                 self::u => $currentTime,
+
+                self::PROCESS_ID => Utilities::getProcessId(),
+                self::USER_ID => Utilities::getUserId(),
+                self::GLOBAL_ID => Utilities::getGroupId(),
+                self::USER_HOME_PATH => Utilities::getUserHomePath(),
+                self::COMPILE_TIMESTAMP => time(),
+                self::NCC_BUILD_VERSION => __NCC_VERSION__,
 
                 // No matches
                 default => null
