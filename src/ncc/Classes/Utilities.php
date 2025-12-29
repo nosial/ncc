@@ -211,4 +211,89 @@
             return $result;
         }
 
+        /**
+         * Gets the current process ID
+         *
+         * @return int The process ID
+         */
+        public static function getProcessId(): int
+        {
+            return getmypid();
+        }
+
+        /**
+         * Gets the current user ID
+         *
+         * @return int The user ID
+         */
+        public static function getUserId(): int
+        {
+            if (function_exists('posix_getuid'))
+            {
+                return posix_getuid();
+            }
+
+            // Fallback for systems without POSIX extension
+            return 0;
+        }
+
+        /**
+         * Gets the current group ID (global ID)
+         *
+         * @return int The group ID
+         */
+        public static function getGroupId(): int
+        {
+            if (function_exists('posix_getgid'))
+            {
+                return posix_getgid();
+            }
+
+            // Fallback for systems without POSIX extension
+            return 0;
+        }
+
+        /**
+         * Gets the user's home directory path
+         *
+         * @return string The user's home directory path
+         */
+        public static function getUserHomePath(): string
+        {
+            // Try HOME environment variable first (works on Unix/Linux/macOS)
+            $home = getenv('HOME');
+            if ($home !== false && $home !== '')
+            {
+                return $home;
+            }
+
+            // Try USERPROFILE for Windows
+            $userProfile = getenv('USERPROFILE');
+            if ($userProfile !== false && $userProfile !== '')
+            {
+                return $userProfile;
+            }
+
+            // Try HOMEDRIVE + HOMEPATH for Windows
+            $homeDrive = getenv('HOMEDRIVE');
+            $homePath = getenv('HOMEPATH');
+            if ($homeDrive !== false && $homePath !== false)
+            {
+                return $homeDrive . $homePath;
+            }
+
+            // Last resort: use posix if available
+            if (function_exists('posix_getpwuid') && function_exists('posix_getuid'))
+            {
+                $userInfo = posix_getpwuid(posix_getuid());
+                if ($userInfo !== false && isset($userInfo['dir']))
+                {
+                    return $userInfo['dir'];
+                }
+            }
+
+            // Fallback to root or current directory
+            return DIRECTORY_SEPARATOR;
+        }
+
     }

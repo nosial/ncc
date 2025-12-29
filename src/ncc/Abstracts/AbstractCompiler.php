@@ -27,6 +27,7 @@
     use ncc\Classes\FileCollector;
     use ncc\Classes\IO;
     use ncc\Classes\Logger;
+    use ncc\Classes\Utilities;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
@@ -303,10 +304,10 @@
                 {
                     // Note: We don't resolve CWD at this time as it may be needed/preserved depending
                     //       on the context, everything else should be fine.
-                    MacroVariable::PROCESS_ID->value => '100', //      TODO: Placeholder for now
-                    MacroVariable::USER_ID->value => '200', //         TODO: Placeholder for now
-                    MacroVariable::GLOBAL_ID->value => '300', //       TODO: Placeholder for now
-                    MacroVariable::USER_HOME_PATH->value => '400', //  TODO: Placeholder for now
+                    MacroVariable::PROCESS_ID->value => Utilities::getProcessId(),
+                    MacroVariable::USER_ID->value => Utilities::getUserId(),
+                    MacroVariable::GLOBAL_ID->value => Utilities::getGroupId(),
+                    MacroVariable::USER_HOME_PATH->value => Utilities::getUserHomePath(),
                     MacroVariable::COMPILE_TIMESTAMP->value => time(),
                     MacroVariable::NCC_BUILD_VERSION->value => '0.0.0', // TODO: Placeholder for now
                     MacroVariable::PROJECT_PATH->value => $this->projectPath,
