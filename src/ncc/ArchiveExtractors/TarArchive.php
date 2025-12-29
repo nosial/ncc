@@ -310,12 +310,12 @@
                 $meta = stream_get_meta_data($handle);
                 $wrapper = $meta['wrapper_type'] ?? '';
 
-                if ($wrapper === 'ZLIB' || strpos($meta['uri'] ?? '', 'compress.zlib://') === 0)
+                if ($wrapper === 'ZLIB' || str_starts_with($meta['uri'] ?? '', 'compress.zlib://'))
                 {
                     // Gzip stream
                     $chunk = gzread($handle, $remaining);
                 }
-                elseif ($wrapper === 'BZ2' || strpos($meta['uri'] ?? '', 'compress.bzip2://') === 0)
+                elseif ($wrapper === 'BZ2' || str_starts_with($meta['uri'] ?? '', 'compress.bzip2://'))
                 {
                     // Bzip2 stream
                     $chunk = bzread($handle, $remaining);
