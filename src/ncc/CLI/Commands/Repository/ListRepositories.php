@@ -46,7 +46,7 @@
                 Console::out(sprintf(' %s%s (%s:%s)', $repository->getName(), self::SYSTEM_FLAG, $repository->getType()->value, $repository->getHost()));
             }
 
-            foreach(Runtime::getUserRepositoryManager()->getEntries() ?? [] as $repository)
+            foreach(Runtime::getUserRepositoryManager()?->getEntries() ?? [] as $repository)
             {
                 Console::out(sprintf(' %s (%s:%s)', $repository->getName(), $repository->getType()->value, $repository->getHost()));
             }
