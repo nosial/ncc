@@ -27,9 +27,6 @@
     use ncc\Classes\Console;
     use ncc\Classes\IO;
     use ncc\Classes\PackageReader;
-    use ncc\Objects\Package\ComponentReference;
-    use ncc\Objects\Package\ExecutionUnitReference;
-    use ncc\Objects\Package\ResourceReference;
 
     class InspectCommand extends AbstractCommandHandler
     {

@@ -24,7 +24,6 @@
 
     use ncc\Abstracts\AbstractAuthentication;
     use ncc\Enums\AuthenticationType;
-    use ncc\Interfaces\SerializableInterface;
 
     class UsernamePassword extends AbstractAuthentication
     {

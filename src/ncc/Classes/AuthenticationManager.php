@@ -24,7 +24,6 @@
 
     use Exception;
     use ncc\Abstracts\AbstractAuthentication;
-    use ncc\Classes\IO;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\PhpEncryption\Crypto;
     use ncc\Libraries\PhpEncryption\Exception\EnvironmentIsBrokenException;

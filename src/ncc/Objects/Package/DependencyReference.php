@@ -24,7 +24,6 @@
 
     use ncc\Interfaces\SerializableInterface;
     use ncc\Objects\PackageSource;
-    use ncc\Objects\RepositoryConfiguration;
 
     class DependencyReference implements SerializableInterface
     {

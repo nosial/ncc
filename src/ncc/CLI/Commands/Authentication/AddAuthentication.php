@@ -25,7 +25,6 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Enums\AuthenticationType;
     use ncc\Objects\Authentication\AccessToken;
     use ncc\Objects\Authentication\UsernamePassword;
     use ncc\Runtime;
