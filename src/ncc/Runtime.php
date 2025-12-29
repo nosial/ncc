@@ -471,6 +471,17 @@
             return self::$systemAuthenticationManager;
         }
 
+        public static function getAuthenticationManager(): AuthenticationManager
+        {
+            $userManager = self::getUserAuthenticationManager();
+            if($userManager !== null)
+            {
+                return $userManager;
+            }
+
+            return self::getSystemAuthenticationManager();
+        }
+
         public static function packageInstalled(string $package, ?string $version='latest'): bool
         {
             if(self::getSystemPackageManager()->entryExists($package, $version))
