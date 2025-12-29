@@ -90,7 +90,7 @@
             return [
                 'package' => $this->package,
                 'version' => $this->version,
-                'source' => (string)$this->source ?? null,
+                'source' => $this->source !== null ? (string)$this->source : null,
             ];
         }
 
@@ -99,17 +99,11 @@
          */
         public static function fromArray(array $data): DependencyReference
         {
-            $repository = null;
-            if(isset($data['repository']) && is_array($data['repository']))
-            {
-                $repository = RepositoryConfiguration::fromArray($data['repository']);
-            }
-
-            return new self($data['package'], $data['version'], $data['source'] ?? null, $repository);
+            return new self($data['package'], $data['version'], $data['source'] ?? null);
         }
 
         public function __toString(): string
         {
-            return (string)$this->source;
+            return $this->source !== null ? (string)$this->source : '';
         }
     }
