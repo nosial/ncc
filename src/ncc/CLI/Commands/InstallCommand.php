@@ -60,6 +60,17 @@
             $autoConfirm = $argv['yes'] ?? $argv['y'] ?? false;
             $skipDependencies = $argv['skip-dependencies'] ?? $argv['skip-deps'] ?? $argv['sd'] ?? false;
             $skipRepositories = $argv['skip-repositories'] ?? $argv['skip-repos'] ?? $argv['sr'] ?? false;
+            
+            // Parse dynamic repository authentication arguments (e.g., --github-auth=foo)
+            $repositoryAuth = [];
+            foreach($argv as $key => $value)
+            {
+                if(preg_match('/^(.+)-auth$/', $key, $matches))
+                {
+                    $repositoryName = $matches[1];
+                    $repositoryAuth[$repositoryName] = $value;
+                }
+            }
 
             if($skipDependencies)
             {
@@ -162,7 +173,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromRemote($packageSource, [], []);
+                $installedPackages = self::installFromRemote($packageSource, [], [], $repositoryAuth);
             }
 
             if(count($installedPackages) === 0)
@@ -243,7 +254,7 @@
 
                     Console::out(sprintf("Installing dependency %s for package %s", $dependency, $packageReader->getPackageName()));
                     $dependencySource = new PackageSource($dependency);
-                    $installed = self::installFromRemote($dependencySource, $options, $installed);
+                    $installed = self::installFromRemote($dependencySource, $options, $installed, []);
                 }
             }
 
@@ -252,7 +263,7 @@
             return $installed;
         }
 
-        public static function installFromRemote(PackageSource $source, array $options=[], array $installed=[]): array
+        public static function installFromRemote(PackageSource $source, array $options=[], array $installed=[], array $repositoryAuth=[]): array
         {
             Console::out(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
             $options = self::parseOptions($options);
@@ -264,6 +275,46 @@
             if(!Runtime::repositoryExists($source->getRepository()))
             {
                 throw new OperationException(sprintf('Cannot install "%s", unknown remote repository "%s"', $source, $source->getRepository()));
+            }
+            
+            // Handle authentication if specified for this repository
+            $authentication = null;
+            if(isset($repositoryAuth[$source->getRepository()]))
+            {
+                $authEntryName = $repositoryAuth[$source->getRepository()];
+                Console::out(sprintf("Authenticating with entry '%s' for repository '%s'", $authEntryName, $source->getRepository()));
+                
+                try
+                {
+                    $authManager = Runtime::getAuthenticationManager();
+                    
+                    // Check if vault exists
+                    if(!$authManager->vaultExists())
+                    {
+                        throw new OperationException('Authentication vault does not exist. Please create authentication entries first.');
+                    }
+                    
+                    // Unlock the vault if not already unlocked
+                    if(!$authManager->isUnlocked())
+                    {
+                        $masterPassword = Console::getPassword('Enter vault master password: ');
+                        $authManager->unlock($masterPassword);
+                        Console::out('Vault unlocked successfully.');
+                    }
+                    
+                    // Retrieve the authentication entry
+                    $authentication = $authManager->getEntry($authEntryName);
+                    if($authentication === null)
+                    {
+                        throw new OperationException(sprintf('Authentication entry "%s" not found in vault', $authEntryName));
+                    }
+                    
+                    Console::out(sprintf('Using authentication entry "%s"', $authEntryName));
+                }
+                catch(Exception $e)
+                {
+                    throw new OperationException('Failed to authenticate: ' . $e->getMessage(), $e->getCode(), $e);
+                }
             }
 
             // Define stages with weights for dynamic progress calculation
@@ -291,8 +342,7 @@
                 return (int)($stage['start'] + ($stage['weight'] * $stageProgress));
             };
 
-            // TODO: Implement authentication handling here
-            $repository = Runtime::getRepository($source->getRepository())->createClient();
+            $repository = Runtime::getRepository($source->getRepository())->createClient($authentication);
             $resolvedPackages = $repository->getAll($source->getOrganization(), $source->getName(), $source->getVersion());
             $selectedPackage = null;
 
@@ -486,9 +536,13 @@
             Console::out('                    Skip installing package dependencies');
             Console::out('  --skip-repositories, --skip-repos, --sr');
             Console::out('                    Skip adding package repositories');
+            Console::out('  --<repository>-auth=<entry>');
+            Console::out('                    Authenticate using the specified vault entry for a repository');
+            Console::out('                    Example: --github-auth=mytoken');
             Console::out(PHP_EOL . 'Examples:');
             Console::out('  ncc install mypackage.ncc');
             Console::out('  ncc install com.example.package --yes');
             Console::out('  ncc install package.ncc --skip-deps');
+            Console::out('  ncc install github:owner/repo --github-auth=mytoken');
         }
     }
