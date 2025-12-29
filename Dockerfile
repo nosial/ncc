@@ -44,6 +44,9 @@ RUN apt-get update -yqq && \
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
 	install-php-extensions zip xsl msgpack
 
+# Set PHP memory limit to 2GB
+RUN echo "memory_limit = 2048M" > /usr/local/etc/php/conf.d/memory-limit.ini
+
 # Install ncc using the installer script
 RUN chmod +x /tmp/install.sh && \
     /tmp/install.sh install && \
