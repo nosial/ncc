@@ -22,6 +22,7 @@
 
     namespace ncc\CLI;
 
+    use ncc\Classes\Cache;
     use ncc\Classes\Console;
     use ncc\Classes\IO;
     use ncc\CLI\Commands\AuthenticationCommand;
@@ -68,7 +69,7 @@
             // Check for global --no-cache flag
             if(isset($argv['no-cache']))
             {
-                \ncc\Classes\Cache::disable();
+                Cache::disable();
             }
 
             if(isset($argv['project']))
