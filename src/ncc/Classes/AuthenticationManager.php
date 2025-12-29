@@ -24,6 +24,7 @@
 
     use Exception;
     use ncc\Abstracts\AbstractAuthentication;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\PhpEncryption\Crypto;
     use ncc\Libraries\PhpEncryption\Exception\EnvironmentIsBrokenException;
@@ -102,7 +103,6 @@
          * Removes an authentication entry from the vault
          *
          * @param string $name The unique identifier of the entry to remove
-         * @return void
          * @throws OperationException If the vault is locked
          */
         public function removeEntry(string $name): void
@@ -158,7 +158,7 @@
          * will be used to decrypt and load the stored entries.
          *
          * @param string $masterPassword The master password to unlock/create the vault
-         * @return void
+         * @throws IOException Thrown on file I/O errors
          * @throws OperationException If the vault file is not accessible or decryption fails
          */
         public function unlock(string $masterPassword): void
@@ -205,8 +205,8 @@
          * Creates an empty vault file encrypted with the master password.
          * The master password must be set before calling this method.
          *
-         * @return void
          * @throws OperationException If the vault already exists or the data directory is not writable
+         * @throws IOException Thrown on file I/O errors
          */
         private function initializeVault(): void
         {
@@ -223,7 +223,7 @@
                 {
                     IO::mkdir($this->dataDirectoryPath);
                 }
-                catch(\ncc\Exceptions\IOException $e)
+                catch(IOException $e)
                 {
                     throw new OperationException(sprintf('Cannot create data directory \'%s\': %s', $this->dataDirectoryPath, $e->getMessage()), $e->getCode(), $e);
                 }
@@ -270,7 +270,7 @@
                 {
                     IO::mkdir($this->dataDirectoryPath);
                 }
-                catch(\ncc\Exceptions\IOException $e)
+                catch(IOException $e)
                 {
                     // Cannot create directory, skip saving (likely a read-only system directory)
                     return;
@@ -298,7 +298,7 @@
                 // Set permissions: owner can read/write, others cannot access (0600)
                 IO::chmod($this->vaultPath, 0600);
             }
-            catch(\ncc\Exceptions\IOException $e)
+            catch(IOException $e)
             {
                 // Failed to write file, skip silently
                 return;

@@ -835,7 +835,7 @@
                     }
                 }
             }
-            catch(\Exception $e)
+            catch(Exception $e)
             {
                 // Semver matching failed, return null
                 return null;

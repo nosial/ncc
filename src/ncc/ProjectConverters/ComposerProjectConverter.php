@@ -689,7 +689,7 @@ PHP;
                         IO::mkdir($directory, true);
                         Logger::getLogger()->verbose(sprintf('Created directory: %s', $directory));
                     }
-                    catch (\Exception $e)
+                    catch (Exception $e)
                     {
                         Logger::getLogger()->warning(sprintf('Failed to create directory %s: %s', $directory, $e->getMessage()));
                         continue;
@@ -710,7 +710,7 @@ PHP;
                         Logger::getLogger()->debug(sprintf('Added stub to build configurations: %s', $location));
                     }
                 }
-                catch (\Exception $e)
+                catch (Exception $e)
                 {
                     Logger::getLogger()->warning(sprintf('Failed to create compatibility stub %s: %s', $location, $e->getMessage()));
                 }

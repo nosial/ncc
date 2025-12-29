@@ -196,7 +196,7 @@
                         {
                             IO::chmod($fullPath, $fileInfo['mode']);
                         }
-                        catch(\ncc\Exceptions\IOException $e)
+                        catch(IOException $e)
                         {
                             // Ignore permission errors, continue extraction
                         }

@@ -968,7 +968,7 @@
             if(isset($data['update_source']) && is_string($data['update_source']) && trim($data['update_source']) !== '')
             {
                 // Validate that it's a valid package source string
-                $parsedSource = \ncc\Classes\Utilities::parsePackageSource($data['update_source']);
+                $parsedSource = Utilities::parsePackageSource($data['update_source']);
                 if($parsedSource === null)
                 {
                     throw new InvalidPropertyException('update_source', 'The update source must be a valid package source string');
