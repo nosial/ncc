@@ -25,6 +25,33 @@
     class Cache
     {
         private static array $cache = [];
+        private static bool $enabled = true;
+
+        /**
+         * Disables caching globally.
+         */
+        public static function disable(): void
+        {
+            self::$enabled = false;
+        }
+
+        /**
+         * Enables caching globally.
+         */
+        public static function enable(): void
+        {
+            self::$enabled = true;
+        }
+
+        /**
+         * Checks if caching is enabled.
+         *
+         * @return bool True if caching is enabled, false otherwise.
+         */
+        public static function isEnabled(): bool
+        {
+            return self::$enabled;
+        }
 
         /**
          * Sets a value in the cache.
@@ -34,6 +61,11 @@
          */
         public static function set(string $key, mixed $value): void
         {
+            if (!self::$enabled)
+            {
+                return;
+            }
+
             self::$cache[$key] = $value;
         }
 

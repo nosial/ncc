@@ -65,6 +65,12 @@
             ShutdownHandler::register();
             $argv = Parse::parseArgument($argv);
 
+            // Check for global --no-cache flag
+            if(isset($argv['no-cache']))
+            {
+                \ncc\Classes\Cache::disable();
+            }
+
             if(isset($argv['project']))
             {
                 return ProjectCommand::handle($argv);
@@ -156,6 +162,7 @@
                 Console::out(PHP_EOL . 'Options:');
                 Console::out('  --version, -v     Display version information');
                 Console::out('  --help, -h        Display this help message');
+                Console::out('  --no-cache        Disable caching for this execution');
                 Console::out(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.');
                 return;
             }
