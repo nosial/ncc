@@ -69,7 +69,6 @@
          *
          * @param string $name The unique identifier for this entry
          * @param AbstractAuthentication $entry The authentication entry to store
-         * @return void
          * @throws OperationException If the vault is locked
          */
         public function addEntry(string $name, AbstractAuthentication $entry): void
@@ -284,23 +283,20 @@
                 return;
             }
 
-            // Convert AbstractAuthentication objects to arrays for serialization
-            $dataToSave = [];
-            foreach($this->entries as $name => $entry)
-            {
-                $dataToSave[$name] = $entry->toArray();
-            }
-
-            // Write the file
             try
             {
-                IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode($dataToSave), $this->masterPassword));
+                // Write the file
+                IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode(array_map(
+                    function ($entry) {return $entry->toArray();}, $this->entries
+                )), $this->masterPassword));
+
                 // Set permissions: owner can read/write, others cannot access (0600)
                 IO::chmod($this->vaultPath, 0600);
             }
             catch(IOException $e)
             {
                 // Failed to write file, skip silently
+                Logger::getLogger()->warning('Failed to write vault file: ' . $e->getMessage(), $e);
                 return;
             }
             catch(EnvironmentIsBrokenException $e)
@@ -316,7 +312,14 @@
         {
             if($this->unlocked)
             {
-                $this->save();
+                try
+                {
+                    $this->save();
+                }
+                catch (OperationException $e)
+                {
+                    Logger::getLogger()->error('Failed to save vault on destruction: ' . $e->getMessage(), $e);
+                }
             }
         }
     }
