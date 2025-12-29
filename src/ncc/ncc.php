@@ -104,6 +104,9 @@
             }
         }
 
+        \ncc\Classes\Logger::getLogger()->debug(sprintf('ncc v%s initialized', __NCC_VERSION__));
+        \ncc\Classes\Logger::getLogger()->debug(sprintf('ncc directory: %s', __NCC_DIR__));
+
         // Ensure that ncc's CLI mode only runs when executed from the command line
         if(php_sapi_name() === 'cli')
         {

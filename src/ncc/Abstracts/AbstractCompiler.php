@@ -309,7 +309,7 @@
                     MacroVariable::GLOBAL_ID->value => Utilities::getGroupId(),
                     MacroVariable::USER_HOME_PATH->value => Utilities::getUserHomePath(),
                     MacroVariable::COMPILE_TIMESTAMP->value => time(),
-                    MacroVariable::NCC_BUILD_VERSION->value => '0.0.0', // TODO: Placeholder for now
+                    MacroVariable::NCC_BUILD_VERSION->value => __NCC_VERSION__,
                     MacroVariable::PROJECT_PATH->value => $this->projectPath,
                     MacroVariable::DEFAULT_BUILD_CONFIGURATION->value => $this->projectConfiguration->getDefaultBuild(),
                     MacroVariable::SOURCE_PATH->value => $this->sourcePath
