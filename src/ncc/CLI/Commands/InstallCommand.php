@@ -541,8 +541,9 @@
             Console::out('                    Example: --github-auth=mytoken');
             Console::out(PHP_EOL . 'Examples:');
             Console::out('  ncc install mypackage.ncc');
+            Console::out('  ncc install symfony/console=5.0@packagist');
             Console::out('  ncc install com.example.package --yes');
             Console::out('  ncc install package.ncc --skip-deps');
-            Console::out('  ncc install github:owner/repo --github-auth=mytoken');
+            Console::out('  ncc install group/project=latest@repo --github-auth=mytoken');
         }
     }

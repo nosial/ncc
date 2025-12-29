@@ -80,8 +80,6 @@
                     return 1;
                 }
 
-                $authEntry = null;
-
                 switch($type)
                 {
                     case 'access-token':
