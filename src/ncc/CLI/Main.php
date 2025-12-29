@@ -24,6 +24,7 @@
 
     use ncc\Classes\Console;
     use ncc\Classes\IO;
+    use ncc\CLI\Commands\AuthenticationCommand;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecuteCommand;
     use ncc\CLI\Commands\ExtractCommand;
@@ -71,6 +72,10 @@
             elseif(isset($argv['build']))
             {
                 return BuildCommand::handle($argv);
+            }
+            elseif(isset($argv['authenticate']) || isset($argv['auth']))
+            {
+                return AuthenticationCommand::handle($argv);
             }
             elseif(isset($argv['inspect']) || isset($argv['ins']))
             {
