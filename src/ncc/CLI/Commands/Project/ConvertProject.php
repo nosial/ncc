@@ -35,6 +35,12 @@
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                // Delegate to parent's help command
+                return 0;
+            }
+
             $projectPath = getcwd();
             if(isset($argv['path']))
             {

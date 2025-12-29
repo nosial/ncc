@@ -31,8 +31,17 @@
 
     class UninstallCommand extends AbstractCommandHandler
     {
+        /**
+         * @inheritDoc
+         */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                self::help();
+                return 0;
+            }
+
             $allPackages = $argv['all'] ?? null;
             $package = $argv['package'] ?? $argv['p'] ?? null;
             $version = $argv['version'] ?? $argv['v'] ?? null;
@@ -162,8 +171,26 @@
             return 0;
         }
 
+        /**
+         * Prints out the help menu for the uninstall command
+         *
+         * @return void
+         */
         public static function help(): void
         {
-            return;
+            Console::out('Usage: ncc uninstall [options]' . PHP_EOL);
+            Console::out('Uninstalls one or more ncc packages from the system.' . PHP_EOL);
+            Console::out('By default, uninstalls require confirmation unless --yes is specified.');
+            Console::out('When uninstalling by package name, all versions are removed unless');
+            Console::out('a specific version is provided.' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --package, -p     Package name to uninstall');
+            Console::out('  --version, -v     Specific version to uninstall (default: all versions)');
+            Console::out('  --all             Uninstall all packages with write access');
+            Console::out('  --yes, -y         Automatically confirm all prompts');
+            Console::out(PHP_EOL . 'Examples:');
+            Console::out('  ncc uninstall --package=com.example.myapp');
+            Console::out('  ncc uninstall -p=com.example.myapp -v=1.0.0');
+            Console::out('  ncc uninstall --all --yes');
         }
     }

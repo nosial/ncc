@@ -35,6 +35,12 @@
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                // Delegate to parent's help command
+                return 0;
+            }
+
             if(!isset($argv['name']))
             {
                 Console::error("Missing parameter: --name, please provide a name for the new project eg; --name=\"My Project\"");

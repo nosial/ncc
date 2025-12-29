@@ -120,6 +120,11 @@
             return 0;
         }
 
+        /**
+         * Prints out the version information for ncc
+         *
+         * @return void
+         */
         private static function version(): void
         {
             $versionFile = __NCC_DIR__ . DIRECTORY_SEPARATOR . 'VERSION';
@@ -157,8 +162,10 @@
                 Console::out('  build             Build a project into an ncc package');
                 Console::out('  install           Install an ncc package from file or repository');
                 Console::out('  uninstall         Uninstall an installed ncc package');
+                Console::out('  execute           Execute an installed ncc package');
                 Console::out('  inspect           Display information about an ncc package');
                 Console::out('  extract           Extract package contents to a directory');
+                Console::out('  authenticate      Manage authentication entries for repositories');
                 Console::out('  repository        Manage package repositories');
                 Console::out('  list              List all installed ncc packages');
                 Console::out(PHP_EOL . 'Options:');
@@ -187,9 +194,24 @@
                     InstallCommand::help();
                     break;
 
+                case 'uninstall':
+                    UninstallCommand::help();
+                    break;
+
+                case 'execute':
+                case 'exec':
+                case 'exe':
+                    ExecuteCommand::help();
+                    break;
+
                 case 'extract':
                 case 'ext':
                     ExtractCommand::help();
+                    break;
+
+                case 'authenticate':
+                case 'auth':
+                    AuthenticationCommand::help();
                     break;
 
                 case 'repository':

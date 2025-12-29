@@ -30,24 +30,6 @@
     class BuildCommand extends AbstractCommandHandler
     {
         /**
-         * Prints out the help menu for the build command
-         *
-         * @return void
-         */
-        public static function help(): void
-        {
-            Console::out('Usage: ncc build [options]' . PHP_EOL);
-            Console::out('Builds the current project into an ncc package.' . PHP_EOL);
-            Console::out('The build command compiles your project according to the project.json');
-            Console::out('configuration file, creating a distributable .ncc package file.' . PHP_EOL);
-            Console::out('Options:');
-            Console::out('  --path=<path>     Path to the project directory (defaults to current directory)');
-            Console::out(PHP_EOL . 'Example:');
-            Console::out('  ncc build');
-            Console::out('  ncc build --path=/path/to/project');
-        }
-
-        /**
          * @inheritDoc
          */
         public static function handle(array $argv): int
@@ -88,5 +70,26 @@
             }
 
             return 0;
+        }
+
+        /**
+         * Prints out the help menu for the build command
+         *
+         * @return void
+         */
+        public static function help(): void
+        {
+            Console::out('Usage: ncc build [options]' . PHP_EOL);
+            Console::out('Builds the current project into an ncc package.' . PHP_EOL);
+            Console::out('The build command compiles your project according to the project.json');
+            Console::out('configuration file, creating a distributable .ncc package file.' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --path=<path>           Path to the project directory (defaults to current directory)');
+            Console::out('  --configuration=<name>  Specific build configuration to use');
+            Console::out('  --config, -c            Alias for --configuration');
+            Console::out(PHP_EOL . 'Examples:');
+            Console::out('  ncc build');
+            Console::out('  ncc build --path=/path/to/project');
+            Console::out('  ncc build --configuration=release');
         }
     }

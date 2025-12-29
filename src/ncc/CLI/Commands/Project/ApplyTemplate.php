@@ -23,6 +23,7 @@
     namespace ncc\CLI\Commands\Project;
 
     use ncc\Abstracts\AbstractCommandHandler;
+    use ncc\Classes\Console;
 
     class ApplyTemplate extends AbstractCommandHandler
     {
@@ -31,6 +32,14 @@
          */
         public static function handle(array $argv): int
         {
-            return 0;
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                // Delegate to parent's help command
+                return 0;
+            }
+
+            // TODO: Implement template application functionality
+            Console::warning('Template application is not yet implemented.');
+            return 1;
         }
     }

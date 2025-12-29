@@ -29,8 +29,17 @@
 
     class ExecuteCommand extends AbstractCommandHandler
     {
+        /**
+         * @inheritDoc
+         */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                self::help();
+                return 0;
+            }
+
             $package = $argv['package'] ?? $argv['p'] ?? null;
             $version = $argv['version'] ?? $argv['v'] ?? 'latest';
             $executionUnit = $argv['unit'] ?? $argv['u'] ?? null;
@@ -79,5 +88,29 @@
                 Console::error(sprintf('Failed to execute package: %s', $e->getMessage()));
                 return 1;
             }
+        }
+
+        /**
+         * Prints out the help menu for the execute command
+         *
+         * @return void
+         */
+        public static function help(): void
+        {
+            Console::out('Usage: ncc execute --package=<package> [options]' . PHP_EOL);
+            Console::out('Executes an installed ncc package.' . PHP_EOL);
+            Console::out('The execute command runs an execution unit from an installed package.');
+            Console::out('If no execution unit is specified, the default entry point is used.');
+            Console::out('Arguments passed after --args will be forwarded to the executed package.' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --package, -p     (Required) Package name to execute');
+            Console::out('  --version, -v     Package version to execute (default: latest)');
+            Console::out('  --unit, -u        Specific execution unit to run (default: main entry point)');
+            Console::out('  --args            Arguments to pass to the executed package');
+            Console::out(PHP_EOL . 'Examples:');
+            Console::out('  ncc execute --package=com.example.myapp');
+            Console::out('  ncc execute --package=com.example.myapp --version=1.2.0');
+            Console::out('  ncc execute -p=com.example.tool -u=convert');
+            Console::out('  ncc execute -p=com.example.app --args input.txt output.txt');
         }
     }

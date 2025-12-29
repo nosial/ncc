@@ -34,6 +34,12 @@
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                // Delegate to parent's help command
+                return 0;
+            }
+
             $name = $argv['name'] ?? $argv['n'] ?? null;
             $type = $argv['type'] ?? $argv['t'] ?? null;
             $host = $argv['host'] ?? $argv['h'] ?? null;

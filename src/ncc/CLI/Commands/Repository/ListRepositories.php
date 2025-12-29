@@ -35,6 +35,12 @@
          */
         public static function handle(array $argv): int
         {
+            if(isset($argv['help']) || isset($argv['h']))
+            {
+                // Delegate to parent's help command
+                return 0;
+            }
+
             foreach(Runtime::getSystemRepositoryManager()->getEntries() as $repository)
             {
                 Console::out(sprintf(' %s%s (%s:%s)', $repository->getName(), self::SYSTEM_FLAG, $repository->getType()->value, $repository->getHost()));
