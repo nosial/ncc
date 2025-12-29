@@ -127,22 +127,7 @@
          */
         private static function version(): void
         {
-            $versionFile = __NCC_DIR__ . DIRECTORY_SEPARATOR . 'VERSION';
-            $buildFile = __NCC_DIR__ . DIRECTORY_SEPARATOR . 'BUILD';
-
-            if(!IO::exists($versionFile))
-            {
-                Console::out('ncc version file not found!' . PHP_EOL);
-                return;
-            }
-
-            if(!IO::exists($buildFile))
-            {
-                Console::out('ncc build file not found!' . PHP_EOL);
-                return;
-            }
-
-            Console::out(sprintf("ncc v%s build %s", IO::readFile($versionFile), IO::readFile($buildFile)));
+            Console::out(sprintf("ncc v%s build %s", __NCC_VERSION__, __NCC_BUILD__));
         }
 
         /**

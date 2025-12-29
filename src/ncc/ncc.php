@@ -53,6 +53,15 @@
             define('__NCC_VERSION__', 'unknown');
         }
 
+        if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD'))
+        {
+            define('__NCC_BUILD__', trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD')));
+        }
+        else
+        {
+            define('__NCC_BUILD__', 'unknown');
+        }
+
         // Define the core methods
         if(!function_exists('import'))
         {
