@@ -448,13 +448,22 @@
                 Logger::getLogger()->verbose(sprintf('Verifying execution unit: %s (type: %s)', $executionUnitName, $executionUnit->getType()->value));
 
                 // Only handle PHP execution units for entry points, since system commands are not part of the project files.
-                if($executionUnit->getType() === ExecutionUnitType::PHP)
+                if($executionUnit->getType() === ExecutionUnitType::PHP || $executionUnit->getType() === ExecutionUnitType::WEB)
                 {
-                    $entryPointPath = $this->sourcePath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
+                    // Try to find the entry point, first relative to the project path (for bin scripts),
+                    // then relative to the source path (for source files)
+                    $entryPointPath = $this->projectPath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
+                    
                     if(!IO::exists($entryPointPath))
                     {
-                        Logger::getLogger()->error(sprintf('Entry point not found: %s for unit %s', $entryPointPath, $executionUnitName));
-                        throw new OperationException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
+                        // If not found in project path, try source path (legacy behavior)
+                        $entryPointPath = $this->sourcePath . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
+                        
+                        if(!IO::exists($entryPointPath))
+                        {
+                            Logger::getLogger()->error(sprintf('Entry point not found: %s (tried project path and source path) for unit %s', $executionUnit->getEntryPoint(), $executionUnitName));
+                            throw new OperationException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
+                        }
                     }
 
                     $this->sourceResources[] = realpath($entryPointPath);
