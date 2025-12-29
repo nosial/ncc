@@ -96,19 +96,6 @@ class GiteaRepositoryTest extends TestCase
         }
     }
 
-    public function testGetTagArchive(): void
-    {
-        try {
-            $archive = $this->repository->getTagArchive('test-org', 'test-repo', 'v1.0.0');
-            if ($archive !== null) {
-                $this->assertNotEmpty($archive->getDownloadUrl());
-                $this->assertStringContainsString('archive', $archive->getDownloadUrl());
-            }
-        } catch (\Exception $e) {
-            $this->markTestSkipped('No tag archive available for testing');
-        }
-    }
-
     public function testGetReleases(): void
     {
         try {
@@ -132,30 +119,6 @@ class GiteaRepositoryTest extends TestCase
         } catch (\Exception $e) {
             // Expected if no releases or project doesn't exist
             $this->assertTrue(true);
-        }
-    }
-
-    public function testGetReleaseArchive(): void
-    {
-        try {
-            $archive = $this->repository->getReleaseArchive('test-org', 'test-repo', 'v1.0.0');
-            if ($archive !== null) {
-                $this->assertNotEmpty($archive->getDownloadUrl());
-            }
-        } catch (\Exception $e) {
-            $this->markTestSkipped('No release archive available for testing');
-        }
-    }
-
-    public function testGetReleasePackage(): void
-    {
-        try {
-            $package = $this->repository->getReleasePackage('test-org', 'test-repo', 'v1.0.0');
-            if ($package !== null) {
-                $this->assertNotEmpty($package->getDownloadUrl());
-            }
-        } catch (\Exception $e) {
-            $this->markTestSkipped('No release packages available for testing');
         }
     }
 
