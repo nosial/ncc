@@ -150,7 +150,7 @@
         {
             if($command === null || $command === true)
             {
-                Console::out('ncc - Nosial Code Compiler');
+                Console::out(sprintf('ncc - Nosial Code Compiler v%s', __NCC_VERSION__));
                 Console::out('Usage: ncc [command] [options]' . PHP_EOL);
                 Console::out('Commands:');
                 Console::out('  project           Manage ncc projects (create, validate, convert, apply templates)');

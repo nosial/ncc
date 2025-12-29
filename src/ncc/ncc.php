@@ -23,118 +23,122 @@
      *
      */
 
-    use ncc\CLI\Main;
-
-    if(defined('__NCC__'))
+    if(!defined('__NCC__'))
     {
-        // NCC is already loaded, prevent re-initialization
-        return;
-    }
-
-    if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php'))
-    {
-        throw new Exception('Autoloader.php not found, was ncc built correctly?');
-    }
-
-    // Include the autoloader
-    /** @noinspection PhpIncludeInspection */
-    require __DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php';
-
-    // Define NCC constants
-    define('__NCC_DIR__', __DIR__); // The directory where ncc is located
-    define('__NCC__', true); // Flag to indicate that ncc is loaded
-
-    // Register the shutdown handler
-    \ncc\Classes\ShutdownHandler::register();
-
-    // Register the ncc:// stream wrapper
-    \ncc\Classes\StreamWrapper::register();
-
-    // Define the core methods
-    if(!function_exists('import'))
-    {
-        /**
-         * Imports a package into the runtime environment.
-         *
-         * @param string $packagePath The path to the package file. Can be a .ncc file or a file containing a package.
-         * @noinspection PhpUnused
-         */
-        function import(string $packagePath): void
+        if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php'))
         {
-            try
-            {
-                \ncc\Runtime::import($packagePath);
-            }
-            catch (\ncc\Exceptions\OperationException $e)
-            {
-                trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
-            }
+            throw new Exception('Autoloader.php not found, was ncc built correctly?');
         }
-    }
 
-    if(!function_exists('get_imported'))
-    {
-        /**
-         * Returns an array of imported package names in the runtime environment.
-         *
-         * @return array An array of imported package names.
-         * @noinspection PhpUnused
-         */
-        function get_imported(): array
-        {
-            return \ncc\Runtime::getImportedPackages();
-        }
-    }
+        // Include the autoloader
+        /** @noinspection PhpIncludeInspection */
+        require __DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php';
 
-    if(!function_exists('is_imported'))
-    {
-        /**
-         * Checks if a package is imported in the runtime environment.
-         *
-         * @param string $packageName The name of the package to check.
-         * @return bool True if the package is imported, false otherwise.
-         * @noinspection PhpUnused
-         */
-        function is_imported(string $packageName): bool
-        {
-            return \ncc\Runtime::isImported($packageName);
-        }
-    }
+        // Define NCC constants
+        define('__NCC__', true); // Flag to indicate that ncc is loaded
+        define('__NCC_DIR__', __DIR__); // The directory where ncc is located
 
-    // Ensure that ncc's CLI mode only runs when executed from the command line
-    if(php_sapi_name() === 'cli')
-    {
-        // Check if $argv contains '--ncc-cli'
-        if(!isset($argv) || !is_array($argv) || !in_array('--ncc-cli', $argv, true))
+        // Register the shutdown handler
+        \ncc\Classes\ShutdownHandler::register();
+
+        // Register the ncc:// stream wrapper
+        \ncc\Classes\StreamWrapper::register();
+
+        if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION'))
         {
-            define('__NCC_CLI__', false);
+            define('__NCC_VERSION__', trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION')));
         }
         else
         {
-            // Check if all the extensions are available
-            $required = [
-                'curl',
-                'json',
-                'msgpack',
-                'tokenizer',
-                'phar',
-                'ctype'
-            ];
+            define('__NCC_VERSION__', 'unknown');
+        }
 
-            foreach($required as $extension)
+        // Define the core methods
+        if(!function_exists('import'))
+        {
+            /**
+             * Imports a package into the runtime environment.
+             *
+             * @param string $packagePath The path to the package file. Can be a .ncc file or a file containing a package.
+             * @noinspection PhpUnused
+             */
+            function import(string $packagePath): void
             {
-                if(!extension_loaded($extension))
+                try
                 {
-                    fwrite(STDERR, "Required PHP extension '$extension' is not loaded. Please install/enable it to use ncc.\n");
-                    exit(1);
+                    \ncc\Runtime::import($packagePath);
+                }
+                catch (\ncc\Exceptions\OperationException $e)
+                {
+                    trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
                 }
             }
-
-            define('__NCC_CLI__', true);
-            exit(Main::main(array_slice($argv, array_search('--ncc-cli', $argv, true) + 1)));
         }
-    }
-    else
-    {
-        define('__NCC_CLI__', false);
+
+        if(!function_exists('get_imported'))
+        {
+            /**
+             * Returns an array of imported package names in the runtime environment.
+             *
+             * @return array An array of imported package names.
+             * @noinspection PhpUnused
+             */
+            function get_imported(): array
+            {
+                return \ncc\Runtime::getImportedPackages();
+            }
+        }
+
+        if(!function_exists('is_imported'))
+        {
+            /**
+             * Checks if a package is imported in the runtime environment.
+             *
+             * @param string $packageName The name of the package to check.
+             * @return bool True if the package is imported, false otherwise.
+             * @noinspection PhpUnused
+             */
+            function is_imported(string $packageName): bool
+            {
+                return \ncc\Runtime::isImported($packageName);
+            }
+        }
+
+        // Ensure that ncc's CLI mode only runs when executed from the command line
+        if(php_sapi_name() === 'cli')
+        {
+            // Check if $argv contains '--ncc-cli'
+            if(!isset($argv) || !is_array($argv) || !in_array('--ncc-cli', $argv, true))
+            {
+                define('__NCC_CLI__', false);
+            }
+            else
+            {
+                // Check if all the extensions are available
+                $required = [
+                    'curl',
+                    'json',
+                    'msgpack',
+                    'tokenizer',
+                    'phar',
+                    'ctype'
+                ];
+
+                foreach($required as $extension)
+                {
+                    if(!extension_loaded($extension))
+                    {
+                        fwrite(STDERR, "Required PHP extension '$extension' is not loaded. Please install/enable it to use ncc.\n");
+                        exit(1);
+                    }
+                }
+
+                define('__NCC_CLI__', true);
+                exit(\ncc\CLI\Main::main(array_slice($argv, array_search('--ncc-cli', $argv, true) + 1)));
+            }
+        }
+        else
+        {
+            define('__NCC_CLI__', false);
+        }
     }
