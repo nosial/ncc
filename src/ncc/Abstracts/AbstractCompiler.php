@@ -27,10 +27,8 @@
     use ncc\Classes\FileCollector;
     use ncc\Classes\IO;
     use ncc\Classes\Logger;
-    use ncc\Classes\Utilities;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
-    use ncc\Enums\MacroVariable;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
@@ -90,6 +88,7 @@
          *
          * @param string $projectFilePath The path to the project configuration file or the project directory.
          * @param string $buildConfiguration The build configuration to use.
+         * @throws IOException Thrown if there was an IO error.
          * @throws OperationException Thrown if there was an error setting up the compiler.
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
@@ -420,7 +419,7 @@
          * Refreshes the list of component and resource files based on the current include/exclude patterns and
          * verifies the required execution units are correctly configured.
          *
-         * @return void
+         * @throws OperationException Thrown if a required execution unit is not found or misconfigured.
          */
         protected function refreshFiles(): void
         {
@@ -486,6 +485,12 @@
             Logger::getLogger()->verbose(sprintf('Build number calculated: %s', $this->buildNumber));
         }
 
+        /**
+         * Resolves and retrieves all dependency readers for the defined package dependencies
+         *
+         * @return ResolvedDependency[] An array of ResolvedDependency objects representing the resolved dependencies
+         * @throws OperationException Thrown if a dependency cannot be resolved
+         */
         protected function getDependencyReaders(): array
         {
             Logger::getLogger()->debug(sprintf('Resolving dependency readers for %d packages', count($this->packageDependencies)));
@@ -501,6 +506,14 @@
             return $results;
         }
 
+        /**
+         * Recursively resolves dependency readers for a given package and its transitive dependencies
+         *
+         * @param string $package The name of the package to resolve
+         * @param PackageSource $source The PackageSource object representing the package source
+         * @return ResolvedDependency[] An array of ResolvedDependency objects for the package and its dependencies
+         * @throws OperationException Thrown if a dependency cannot be resolved
+         */
         private function resolveDependencyReaders(string $package, PackageSource $source): array
         {
             Logger::getLogger()->verbose(sprintf('Resolving dependency: %s', $package));
@@ -573,6 +586,7 @@
          * Executes the execution units that is required to run in the pre-compile stage
          *
          * @return void
+         * @throws OperationException
          */
         protected function preCompile(): void
         {
@@ -595,7 +609,6 @@
 
         /**
          * Executes the execution units that is required to run in the post-compile stage
-         *
          */
         protected function postCompile(): void
         {
@@ -641,6 +654,7 @@
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
          * @return string The path to the built output file.
          * @throws IOException Thrown if there was an IO error
+         * @throws OperationException Thrown if there was an error during the build process
          */
         public function build(?callable $progressCallback=null, bool $overwrite=true): string
         {
