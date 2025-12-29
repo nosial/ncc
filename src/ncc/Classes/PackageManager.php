@@ -22,10 +22,12 @@
 
     namespace ncc\Classes;
 
+    use Exception;
     use InvalidArgumentException;
     use JsonException;
     use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
 
@@ -273,7 +275,7 @@
             // Normalize the requested version and compare with all installed versions
             try
             {
-                $versionParser = new \ncc\Libraries\semver\VersionParser();
+                $versionParser = new VersionParser();
                 $normalizedRequestedVersion = $versionParser->normalize($version);
                 
                 // Check all versions of this package
@@ -291,7 +293,7 @@
                                 return $packageEntry;
                             }
                         }
-                        catch(\Exception $e)
+                        catch(Exception $e)
                         {
                             // Skip invalid versions
                             continue;
@@ -299,7 +301,7 @@
                     }
                 }
             }
-            catch(\Exception $e)
+            catch(Exception $e)
             {
                 // If normalization fails, try fallback methods
             }
@@ -505,7 +507,7 @@
                 Logger::getLogger()->debug('Creating cache file for faster imports');
                 $packageReader->exportCache($packageInstallationPath . '.cache');
             }
-            catch(\Exception $e)
+            catch(Exception $e)
             {
                 Logger::getLogger()->debug(sprintf('Failed to create cache file: %s', $e->getMessage()));
                 // Cache creation is not critical, so we just log and continue

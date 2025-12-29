@@ -22,6 +22,7 @@
 
     namespace ncc\Classes;
 
+    use Exception;
     use InvalidArgumentException;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
@@ -40,7 +41,9 @@
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\ExecutionUnit;
     use ncc\Runtime;
+    use ReflectionClass;
     use RuntimeException;
+    use Throwable;
     use function msgpack_unpack;
 
     class PackageReader
@@ -92,7 +95,7 @@
                         Logger::getLogger()->verbose('Successfully loaded from cache');
                         return;
                     }
-                    catch(\Exception $e)
+                    catch(Exception $e)
                     {
                         Logger::getLogger()->debug(sprintf('Cache loading failed: %s, falling back to normal parsing', $e->getMessage()));
                         // If cache loading fails, fall back to normal parsing
@@ -1009,7 +1012,7 @@
             }
 
             // Use reflection to create instance without calling constructor
-            $reflection = new \ReflectionClass(self::class);
+            $reflection = new ReflectionClass(self::class);
             $instance = $reflection->newInstanceWithoutConstructor();
             
             $instance->filePath = $packageFilePath;
@@ -1195,7 +1198,7 @@
                 Logger::getLogger()->verbose('PHP script execution completed');
                 return $result;
             }
-            catch(\Throwable $e)
+            catch(Throwable $e)
             {
                 throw new OperationException(sprintf('Failed to execute PHP script: %s', $e->getMessage()), 0, $e);
             }
@@ -1292,7 +1295,7 @@
                 
                 return $exitCode;
             }
-            catch(\Throwable $e)
+            catch(Throwable $e)
             {
                 throw new OperationException(sprintf('Failed to execute system command: %s', $e->getMessage()), 0, $e);
             }

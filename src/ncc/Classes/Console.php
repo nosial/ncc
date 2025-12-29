@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use Exception;
+    use ncc\Libraries\LogLib2\Enums\LogLevel;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
 
@@ -55,8 +56,8 @@
             {
                 $currentLevel = \ncc\Libraries\LogLib2\Classes\Utilities::getEnvironmentLogLevel();
                 self::$isVerboseOrDebugMode = in_array($currentLevel, [
-                    \ncc\Libraries\LogLib2\Enums\LogLevel::VERBOSE,
-                    \ncc\Libraries\LogLib2\Enums\LogLevel::DEBUG
+                    LogLevel::VERBOSE,
+                    LogLevel::DEBUG
                 ], true);
             }
             

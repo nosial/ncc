@@ -24,6 +24,7 @@
 
     use ncc\Classes\IO;
     use ncc\Classes\Logger;
+    use ncc\Exceptions\IOException;
 
     class ShutdownHandler
     {
@@ -73,7 +74,7 @@
                     {
                         IO::rm($temporaryFile, false);
                     }
-                    catch(\ncc\Exceptions\IOException $e)
+                    catch(IOException $e)
                     {
                         Logger::getLogger()->warning(sprintf("Cannot delete temporary file '%s' due to insufficient permissions", $temporaryFile));
                     }

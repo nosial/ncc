@@ -22,6 +22,7 @@
 
     namespace ncc\Classes;
 
+    use Exception;
     use ncc\Enums\ExecutionMode;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
@@ -116,7 +117,7 @@
         public static function executeFromDistribution(ExecutionUnit $unit, PackageReader $packageReader): int
         {
             // TODO: Complete this method to execute from distribution packages.
-            throw new \Exception('The method is not yet implemented');
+            throw new Exception('The method is not yet implemented');
         }
 
         /**

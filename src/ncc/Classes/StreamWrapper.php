@@ -22,6 +22,7 @@
 
     namespace ncc\Classes;
 
+    use Exception;
     use ncc\Interfaces\ReferenceInterface;
     use ncc\Runtime;
 
@@ -852,7 +853,7 @@
 
                 return $tempPath;
             }
-            catch (\Exception $e)
+            catch (Exception $e)
             {
                 trigger_error("Failed to extract phar: " . $e->getMessage(), E_USER_WARNING);
                 return null;
@@ -916,7 +917,7 @@
                 {
                     Runtime::import($packageName, $version);
                 }
-                catch (\Exception $e)
+                catch (Exception $e)
                 {
                     // Import failed, return null to trigger error handling in caller
                     trigger_error("Failed to auto-import package '$packageName' version '$version': " . $e->getMessage(), E_USER_WARNING);

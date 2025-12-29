@@ -24,6 +24,7 @@
 
     use InvalidArgumentException;
     use ncc\Enums\RepositoryType;
+    use ncc\Exceptions\IOException;
     use ncc\Objects\RepositoryConfiguration;
 
     class RepositoryManager
@@ -207,7 +208,7 @@
                 {
                     IO::mkdir($this->dataDirectoryPath);
                 }
-                catch(\ncc\Exceptions\IOException $e)
+                catch(IOException $e)
                 {
                     // Cannot create directory, skip saving (likely a read-only system directory)
                     return;
@@ -228,7 +229,7 @@
                 // Set permissions: owner can read/write, others can only read (0644)
                 IO::chmod($this->repositoriesPath, 0644);
             }
-            catch(\ncc\Exceptions\IOException $e)
+            catch(IOException $e)
             {
                 // Failed to write file, skip silently
                 return;
