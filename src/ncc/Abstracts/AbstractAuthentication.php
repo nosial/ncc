@@ -32,16 +32,29 @@
     {
         private AuthenticationType $type;
 
+        /**
+         * Public Constructor
+         *
+         * @param AuthenticationType $type The authentication type of this authentication entry
+         */
         public function __construct(AuthenticationType $type)
         {
             $this->type = $type;
         }
 
+        /**
+         * Get the authentication type of this entry
+         *
+         * @return AuthenticationType The authentication type
+         */
         public function getType() : AuthenticationType
         {
             return $this->type;
         }
 
+        /**
+         * @inheritDoc
+         */
         public static function fromArray(array $data): SerializableInterface
         {
             if(!isset($data['type']))
