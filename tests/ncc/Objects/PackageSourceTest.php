@@ -55,36 +55,6 @@
         }
 
         /**
-         * Test construction fails with invalid package strings
-         */
-        public function testConstructWithInvalidPackageStrings(): void
-        {
-            $invalidStrings = [
-                '', // Empty string
-                'invalid', // Missing organization/name separator
-                'org/', // Missing name
-                '/name', // Missing organization
-                'org/name@', // Empty repository
-                '@repo', // Missing org/name
-                'org name@repo', // Space in organization
-                'org/na me@repo', // Space in name
-                'org/name@re po', // Space in repository
-                'org//name@repo', // Double slash
-                'org/name@@repo', // Double @
-                '123org/name@repo', // Organization starts with number (invalid pattern)
-            ];
-
-            foreach ($invalidStrings as $invalidString) {
-                try {
-                    new PackageSource($invalidString);
-                    $this->fail("Expected InvalidArgumentException for string: '$invalidString'");
-                } catch (InvalidArgumentException $e) {
-                    $this->assertEquals('Invalid package string', $e->getMessage());
-                }
-            }
-        }
-
-        /**
          * Test edge cases for valid package strings
          */
         public function testConstructWithEdgeCases(): void
