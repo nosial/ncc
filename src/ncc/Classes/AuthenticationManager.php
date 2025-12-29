@@ -216,6 +216,21 @@
                 throw new OperationException(sprintf('Vault already exists at \'%s\'', $this->vaultPath));
             }
 
+            // Ensure the directory exists
+            if(!IO::isDir($this->dataDirectoryPath))
+            {
+                // Check if we can create the directory
+                try
+                {
+                    IO::mkdir($this->dataDirectoryPath);
+                }
+                catch(\ncc\Exceptions\IOException $e)
+                {
+                    throw new OperationException(sprintf('Cannot create data directory \'%s\': %s', $this->dataDirectoryPath, $e->getMessage()), $e->getCode(), $e);
+                }
+            }
+
+            // Check if we have write permission to the directory
             if(!IO::isWritable($this->dataDirectoryPath))
             {
                 throw new OperationException(sprintf('Data directory \'%s\' is not writeable', $this->dataDirectoryPath));
@@ -224,6 +239,8 @@
             try
             {
                 IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode([]), $this->masterPassword));
+                // Set permissions: owner can read/write, others cannot access (0600)
+                IO::chmod($this->vaultPath, 0600);
             }
             catch(EnvironmentIsBrokenException $e)
             {
@@ -246,6 +263,28 @@
                 throw new OperationException('Cannot save vault: Vault is locked');
             }
 
+            // Ensure the directory exists
+            if(!IO::isDir($this->dataDirectoryPath))
+            {
+                // Check if we can create the directory
+                try
+                {
+                    IO::mkdir($this->dataDirectoryPath);
+                }
+                catch(\ncc\Exceptions\IOException $e)
+                {
+                    // Cannot create directory, skip saving (likely a read-only system directory)
+                    return;
+                }
+            }
+
+            // Check if we have write permission to the directory
+            if(!IO::isWritable($this->dataDirectoryPath))
+            {
+                // No write permission, skip saving (likely a read-only system directory)
+                return;
+            }
+
             // Convert AbstractAuthentication objects to arrays for serialization
             $dataToSave = [];
             foreach($this->entries as $name => $entry)
@@ -253,6 +292,32 @@
                 $dataToSave[$name] = $entry->toArray();
             }
 
-            IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode($dataToSave), $this->masterPassword));
+            // Write the file
+            try
+            {
+                IO::writeFile($this->vaultPath, Crypto::encryptWithPassword(json_encode($dataToSave), $this->masterPassword));
+                // Set permissions: owner can read/write, others cannot access (0600)
+                IO::chmod($this->vaultPath, 0600);
+            }
+            catch(\ncc\Exceptions\IOException $e)
+            {
+                // Failed to write file, skip silently
+                return;
+            }
+            catch(EnvironmentIsBrokenException $e)
+            {
+                throw new OperationException('Failed to save vault: ' . $e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        
+        /**
+         * Destructor - saves the vault if unlocked
+         */
+        public function __destruct()
+        {
+            if($this->unlocked)
+            {
+                $this->save();
+            }
         }
     }
