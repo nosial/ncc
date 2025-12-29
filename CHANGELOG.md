@@ -13,7 +13,9 @@ maintainability of the project
 ### Added
  - Added the ability to build ncc in a self-contained php archive (phar)
  - Added legacy project conversion tool to convert ncc 1.* & 2.* projects to ncc 3.* format
- - 
+ - Added the ability to compile `php` packages, where ncc is embedded into a file with a executable php header
+ - Added the ability to compile `phar` packages
+
 ### Changed
  - Changed the ncc package structure, ncc v3+ Will no longer be compatible with ncc 1.* & 2.* package structure versions
    the project must be rebuilt
