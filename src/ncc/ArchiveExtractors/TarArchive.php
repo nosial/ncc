@@ -23,6 +23,7 @@
     namespace ncc\ArchiveExtractors;
 
     use ncc\Classes\IO;
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\ArchiveInterface;
 
@@ -115,9 +116,10 @@
         /**
          * Extracts the tar archive
          *
-         * @param resource $handle
-         * @param string $destinationPath
-         * @throws OperationException
+         * @param resource $handle A file handle to the opened tar archive
+         * @param string $destinationPath The path to extract the archive contents to
+         * @throws OperationException Thrown on extraction errors
+         * @throws IOException Thrown on IO errors
          */
         private static function extractTar($handle, string $destinationPath): void
         {
@@ -222,8 +224,8 @@
         /**
          * Parses a tar header block
          *
-         * @param string $header
-         * @return array|null
+         * @param string $header The 512-byte tar header block
+         * @return array|null Returns an associative array of file info or null on failure
          */
         private static function parseTarHeader(string $header): ?array
         {
@@ -288,11 +290,11 @@
         /**
          * Reads bytes from the handle (works with regular and compressed streams)
          *
-         * @param resource $handle
-         * @param int $length
-         * @return string|false
+         * @param resource $handle The file handle
+         * @param int $length Number of bytes to read
+         * @return string The read bytes
          */
-        private static function readBytes($handle, int $length)
+        private static function readBytes($handle, int $length): string
         {
             if ($length <= 0)
             {
@@ -339,8 +341,8 @@
         /**
          * Checks if the file is gzip compressed
          *
-         * @param string $filePath
-         * @return bool
+         * @param string $filePath The file path
+         * @return bool True if gzip compressed, false otherwise
          */
         private static function isGzipCompressed(string $filePath): bool
         {
@@ -359,8 +361,8 @@
         /**
          * Checks if the file is bzip2 compressed
          *
-         * @param string $filePath
-         * @return bool
+         * @param string $filePath The file path
+         * @return bool True if bzip2 compressed, false otherwise
          */
         private static function isBzip2Compressed(string $filePath): bool
         {

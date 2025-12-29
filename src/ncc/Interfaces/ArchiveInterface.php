@@ -22,6 +22,7 @@
 
     namespace ncc\Interfaces;
 
+    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
 
     interface ArchiveInterface
@@ -32,6 +33,7 @@
          * @param string $archivePath The path to the archive file.
          * @param string $destinationPath The path where the archive should be extracted.
          * @throws OperationException If the extraction fails.
+         * @throws IOException If there is an I/O error during extraction.
          */
         public static function extract(string $archivePath, string $destinationPath): void;
     }
