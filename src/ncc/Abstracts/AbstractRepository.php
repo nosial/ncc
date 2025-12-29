@@ -83,10 +83,10 @@
          * Attempts to resolve all the possible remote packages ncc can obtain to use to attempt to install/convert
          * the package
          *
-         * @param string $group The group
-         * @param string $project
-         * @param string|null $version
-         * @return RemotePackage[]
+         * @param string $group The group or namespace the project belongs to
+         * @param string $project The name of the project
+         * @param string|null $version The specific version (release/tag) to get packages for, or null for latest
+         * @return RemotePackage[] Returns an array of RemotePackage objects representing possible sources
          */
         public function getAll(string $group, string $project, ?string $version=null): array
         {
@@ -168,7 +168,6 @@
          * @param string $project The name of the project to get tags for
          * @return string[] Returns an array of available tags for the given project
          * @throws OperationException Thrown if there was an error during the operation
-         * @throws NetworkException Thrown if the requests fails
          */
         public abstract function getTags(string $group, string $project): array;
 
@@ -251,6 +250,7 @@
          * @param RemotePackage $remotePackage The remote package to download
          * @param callable|null $progress Optional callback function to report progress
          * @return string The path to the downloaded and extracted package
+         * @throws IOException Thrown if there was an error writing files
          * @throws OperationException Thrown if there was an error during the operation
          */
         public function download(RemotePackage $remotePackage, ?callable $progress=null): string
@@ -348,6 +348,7 @@
          * @param string $path The path where the file should be saved
          * @param callable|null $progressCallback Optional callback function to report progress
          * @return string The path to the downloaded file
+         * @throws IOException Thrown if there was an error writing the file
          * @throws OperationException Thrown if the download fails
          */
         private function downloadFile(string $url, string $path, ?callable $progressCallback=null): string
