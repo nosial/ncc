@@ -127,7 +127,7 @@
         public static function writeFile(string $path, string $content): void
         {
             Logger::getLogger()->verbose(sprintf('Writing file %s', $path));
-            if(!@file_put_contents($path, $content))
+            if(@file_put_contents($path, $content) === false)
             {
                 throw new IOException(sprintf('Failed to write file %s', $path));
             }
