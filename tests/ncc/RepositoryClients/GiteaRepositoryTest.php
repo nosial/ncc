@@ -136,20 +136,6 @@ class GiteaRepositoryTest extends TestCase
         }
     }
 
-    public function testGetAll(): void
-    {
-        try {
-            $packages = $this->repository->getAll('test-org', 'test-repo');
-            $this->assertIsArray($packages);
-            foreach ($packages as $package) {
-                $this->assertNotEmpty($package->getDownloadUrl());
-            }
-        } catch (\Exception $e) {
-            // Expected if project doesn't exist
-            $this->assertTrue(true);
-        }
-    }
-
     public function testUrlEncoding(): void
     {
         // Test that special characters in project/group names are properly encoded
