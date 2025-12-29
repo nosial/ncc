@@ -43,7 +43,7 @@
          */
         public function __construct(?string $sourceString=null)
         {
-            if(is_null($sourceString))
+            if(is_null($sourceString) || trim($sourceString) === '')
             {
                 $this->organization = 'organization';
                 $this->name = 'name';
