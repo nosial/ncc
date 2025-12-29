@@ -26,21 +26,42 @@
     {
         private static array $cache = [];
 
+        /**
+         * Sets a value in the cache.
+         *
+         * @param string $key The key to set.
+         * @param mixed $value The value to set.
+         */
         public static function set(string $key, mixed $value): void
         {
             self::$cache[$key] = $value;
         }
 
+        /**
+         * Gets a value from the cache.
+         *
+         * @param string $key The key to get.
+         * @return mixed The value, or null if not found.
+         */
         public static function get(string $key): mixed
         {
             return self::$cache[$key] ?? null;
         }
 
+        /**
+         * Checks if a key exists in the cache.
+         *
+         * @param string $key The key to check.
+         * @return bool True if the key exists, false otherwise.
+         */
         public static function has(string $key): bool
         {
             return array_key_exists($key, self::$cache);
         }
 
+        /**
+         * Clears the cache.
+         */
         public static function clear(): void
         {
             self::$cache = [];
