@@ -56,11 +56,12 @@
          *
          * Importing a file directly does not support the $version parameter, hence it will be ignored.
          * Importing a package from the package manager allows the user of the $version parameter if
-         * a specific version of the package is needed. Otherwise use `latest` to only import the latest
+         * a specific version of the package is needed. Otherwise, use `latest` to only import the latest
          * version of the installed package.
          *
-         * @param string $package The path to the package or the package name
+         * @param string|PackageReader $package The path to the package or the package name
          * @param string $version The version of the package to import if importing from a package manager
+         * @throws OperationException Thrown if there is an error during the import process
          */
         public static function import(string|PackageReader $package, string $version='latest'): void
         {
@@ -101,7 +102,6 @@
                 {
                     Logger::getLogger()->verbose(sprintf('Importing from file: %s', $package));
                     $packageReader = self::importFromFile($package);
-                    $packageName = $packageReader->getAssembly()->getPackage();
                 }
                 else
                 {
@@ -114,8 +114,9 @@
                     
                     Logger::getLogger()->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
                     $packageReader = self::importFromPackageManager($package, $version);
-                    $packageName = $packageReader->getAssembly()->getPackage();
                 }
+
+                $packageName = $packageReader->getAssembly()->getPackage();
             }
             catch(IOException $e)
             {
@@ -167,17 +168,488 @@
         }
 
         /**
+         * Gets the list of imported packages.
+         *
+         * @return array An array of imported packages.
+         */
+        public static function getImportedPackages(): array
+        {
+            return array_map(function ($referenceId)
+            {
+                return self::$packageReaderReferences[$referenceId];
+            }, self::$importedPackages);
+        }
+
+        /**
+         * Checks if a package is imported.
+         *
+         * @param string $packageName The name of the package.
+         * @return bool True if the package is imported, false otherwise.
+         */
+        public static function isImported(string $packageName): bool
+        {
+            return isset(self::$importedPackages[$packageName]);
+        }
+
+        /**
+         * Returns True if the specified package is installed in either package manager.
+         *
+         * @param string $package The package name
+         * @param string|null $version The version of the package (use 'latest' for the most recent version)
+         * @return bool True if the package is installed, false otherwise
+         * @throws IOException Thrown if there is an error accessing the package managers
+         */
+        public static function packageInstalled(string $package, ?string $version='latest'): bool
+        {
+            if(self::getSystemPackageManager()->entryExists($package, $version))
+            {
+                return true;
+            }
+
+            return self::getUserPackageManager()?->entryExists($package, $version) ?? false;
+        }
+
+        /**
+         * Returns the PackageLockEntry for the specified package from either package manager.
+         *
+         * @param string $package The package name
+         * @param string $version The version of the package (use 'latest' for the most recent version)
+         * @return PackageLockEntry|null The PackageLockEntry if found, null otherwise
+         * @throws IOException Thrown if there is an error accessing the package managers
+         */
+        public static function getPackageEntry(string $package, string $version='latest'): ?PackageLockEntry
+        {
+            $systemPackageEntry = self::getSystemPackageManager()->getEntry($package, $version);
+            if($systemPackageEntry === null)
+            {
+                return self::getUserPackageManager()?->getEntry($package, $version);
+            }
+
+            return $systemPackageEntry;
+        }
+
+        /**
+         * Returns all PackageLockEntries for the specified package from both package managers.
+         * If no package is specified, returns all installed packages from both package managers.
+         *
+         * @param string|null $package The package name, or null to get all packages
+         * @return PackageLockEntry[] An array of PackageLockEntries
+         * @throws IOException Thrown if there is an error accessing the package managers
+         */
+        public static function getPackageEntries(?string $package=null): array
+        {
+
+            $entries = [];
+
+            if($package === null)
+            {
+                $entries = array_merge($entries, self::getSystemPackageManager()->getEntries());
+                if(self::getUserPackageManager() !== null)
+                {
+                    $entries = array_merge($entries, self::getUserPackageManager()->getEntries());
+                }
+            }
+            else
+            {
+                $entries = array_merge($entries, self::getSystemPackageManager()->getAllVersions($package));
+                if(self::getUserPackageManager() !== null)
+                {
+                    $entries = array_merge($entries, self::getUserPackageManager()->getAllVersions($package));
+                }
+            }
+
+            return $entries;
+        }
+
+        /**
+         * Returns True if the specified package is installed in the system package manager.
+         *
+         * @param string $package The package name
+         * @param string|null $version The version of the package (use 'latest' for the most recent version)
+         * @return bool True if the package is installed in the system package manager, false otherwise
+         * @throws IOException Thrown if there is an error accessing the system package manager
+         */
+        public static function isSystemPackage(string $package, ?string $version='latest'): bool
+        {
+            return self::getSystemPackageManager()->entryExists($package, $version);
+        }
+
+        /**
+         * Returns the installation path of the specified package from either package manager.
+         *
+         * @param string $package The package name
+         * @param string $version The version of the package (use 'latest' for the most recent version)
+         * @return string|null The installation path if found, null otherwise
+         * @throws IOException Thrown if there is an error accessing the package managers
+         */
+        public static function getPackagePath(string $package, string $version='latest'): ?string
+        {
+            $systemPackagePath = self::getSystemPackageManager()->getPackagePath($package, $version);
+            if($systemPackagePath === null)
+            {
+                return self::getUserPackageManager()->getPackagePath($package, $version);
+            }
+
+            return $systemPackagePath;
+        }
+
+        /**
+         * Returns an array of PackageLockEntries for packages that were uninstalled from either package manager.
+         *
+         * @param string $package The package name
+         * @param string|null $version The version of the package (use 'latest' for the most recent version)
+         * @return PackageLockEntry[] An array of PackageLockEntries for uninstalled packages
+         * @throws IOException Thrown if there is an error accessing the package managers
+         */
+        public static function uninstallPackage(string $package, ?string $version='latest'): array
+        {
+            return array_merge(
+                self::getSystemPackageManager()->uninstall($package, $version),
+                self::getUserPackageManager()?->uninstall($package, $version) ?? []
+            );
+        }
+
+        /**
+         * Gets the user-level PackageManager instance, initializing it if necessary.
+         * Returns null when running as root/system user.
+         *
+         * @return PackageManager|null The user-level PackageManager instance, or null if running as system user.
+         * @throws IOException Thrown if there is an error creating the package manager directory.
+         */
+        public static function getUserPackageManager(): ?PackageManager
+        {
+            if(self::$userPackageManager === null)
+            {
+                $userLocation = PathResolver::getUserLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                if(!IO::exists($userLocation))
+                {
+                    IO::mkdir($userLocation);
+                }
+
+                self::$userPackageManager = new PackageManager($userLocation);
+            }
+
+            return self::$userPackageManager;
+        }
+
+        /**
+         * Gets the system-level PackageManager instance, initializing it if necessary.
+         * This always returns a valid PackageManager instance.
+         *
+         * @return PackageManager The system-level PackageManager instance.
+         * @throws IOException Thrown if there is an error creating the package manager directory.
+         */
+        public static function getSystemPackageManager(): PackageManager
+        {
+            if(self::$systemPackageManager === null)
+            {
+                $systemLocation = PathResolver::getSystemLocation();
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
+                if($hasWriteAccess && !IO::exists($systemLocation))
+                {
+                    IO::mkdir($systemLocation);
+                }
+
+                self::$systemPackageManager = new PackageManager($systemLocation);
+            }
+
+            return self::$systemPackageManager;
+        }
+
+        /**
+         * Gets the primary (writable) PackageManager instance.
+         * Returns user-level package manager for regular users,
+         * and system-level package manager for system users (root).
+         *
+         * @return PackageManager The primary PackageManager instance.
+         * @throws IOException Thrown if there is an error creating the package manager directory.
+         */
+        public static function getPackageManager(): PackageManager
+        {
+            $userManager = self::getUserPackageManager();
+            if($userManager !== null)
+            {
+                return $userManager;
+            }
+
+            return self::getSystemPackageManager();
+        }
+
+        /**
+         * Gets the user-level RepositoryManager instance, initializing it if necessary.
+         * Returns null when running as root/system user.
+         *
+         * @return RepositoryManager|null The user-level RepositoryManager instance, or null if running as system user.
+         * @throws IOException Thrown if there is an error creating the repository manager directory.
+         */
+        public static function getUserRepositoryManager(): ?RepositoryManager
+        {
+            if(self::$userRepositoryManager === null)
+            {
+                $userLocation = PathResolver::getUserLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                if(!IO::exists($userLocation))
+                {
+                    IO::mkdir($userLocation);
+                }
+
+                self::$userRepositoryManager = new RepositoryManager($userLocation);
+            }
+
+            return self::$userRepositoryManager;
+        }
+
+        /**
+         * Gets the system-level RepositoryManager instance, initializing it if necessary.
+         * This always returns a valid RepositoryManager instance.
+         *
+         * @return RepositoryManager The system-level RepositoryManager instance.
+         * @throws IOException Thrown if there is an error creating the repository manager directory.
+         */
+        public static function getSystemRepositoryManager(): RepositoryManager
+        {
+            if(self::$systemRepositoryManager === null)
+            {
+                $systemLocation = PathResolver::getSystemLocation();
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
+                if($hasWriteAccess && !IO::exists($systemLocation))
+                {
+                    IO::mkdir($systemLocation);
+                }
+
+                self::$systemRepositoryManager = new RepositoryManager($systemLocation);
+            }
+
+            return self::$systemRepositoryManager;
+        }
+
+        /**
+         * Gets the primary (writable) RepositoryManager instance.
+         * Returns user-level repository manager for regular users,
+         * and system-level repository manager for system users (root).
+         *
+         * @return RepositoryManager The primary RepositoryManager instance.
+         * @throws IOException Thrown if there is an error creating the repository manager directory.
+         */
+        public static function getRepositoryManager(): RepositoryManager
+        {
+            $userManager = self::getUserRepositoryManager();
+            if($userManager !== null)
+            {
+                return $userManager;
+            }
+
+            return self::getSystemRepositoryManager();
+        }
+
+        /**
+         * Gets the user-level AuthenticationManager instance, initializing it if necessary.
+         * Returns null when running as root/system user.
+         *
+         * @return AuthenticationManager|null The user-level AuthenticationManager instance, or null if running as system user.
+         * @throws IOException Thrown if there is an error creating the authentication manager directory.
+         */
+        public static function getUserAuthenticationManager(): ?AuthenticationManager
+        {
+            if(self::$userAuthenticationManager === null)
+            {
+                $userLocation = PathResolver::getUserLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                if(!IO::exists($userLocation))
+                {
+                    IO::mkdir($userLocation);
+                }
+
+                self::$userAuthenticationManager = new AuthenticationManager($userLocation);
+            }
+
+            return self::$userAuthenticationManager;
+        }
+
+        /**
+         * Gets the system-level AuthenticationManager instance, initializing it if necessary.
+         * This always returns a valid AuthenticationManager instance.
+         *
+         * @return AuthenticationManager The system-level AuthenticationManager instance.
+         * @throws IOException Thrown if there is an error creating the authentication manager directory.
+         */
+        public static function getSystemAuthenticationManager(): AuthenticationManager
+        {
+            if(self::$systemAuthenticationManager === null)
+            {
+                $systemLocation = PathResolver::getSystemLocation();
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation) || (IO::exists($systemLocation) && IO::isWritable($systemLocation)));
+                if($hasWriteAccess && !IO::exists($systemLocation))
+                {
+                    IO::mkdir($systemLocation);
+                }
+
+                self::$systemAuthenticationManager = new AuthenticationManager($systemLocation);
+            }
+
+            return self::$systemAuthenticationManager;
+        }
+
+        /**
+         * Gets the primary (writable) AuthenticationManager instance.
+         * Returns user-level authentication manager for regular users,
+         * and system-level authentication manager for system users (root).
+         *
+         * @return AuthenticationManager The primary AuthenticationManager instance.
+         * @throws IOException Thrown if there is an error creating the authentication manager directory.
+         */
+        public static function getAuthenticationManager(): AuthenticationManager
+        {
+            $userManager = self::getUserAuthenticationManager();
+            if($userManager !== null)
+            {
+                return $userManager;
+            }
+
+            return self::getSystemAuthenticationManager();
+        }
+
+        /**
+         * Gets a repository configuration by name from either repository manager.
+         *
+         * @param string $name The name of the repository
+         * @return RepositoryConfiguration|null The RepositoryConfiguration if found, null otherwise
+         * @throws IOException Thrown if there is an error accessing the repository managers
+         */
+        public static function getRepository(string $name): ?RepositoryConfiguration
+        {
+            return self::getSystemRepositoryManager()->getRepository($name) ?? self::getUserRepositoryManager()?->getRepository($name);
+        }
+
+        /**
+         * Checks if a repository exists in either repository manager.
+         *
+         * @param string $name The name of the repository
+         * @return bool True if the repository exists, false otherwise
+         * @throws IOException Thrown if there is an error accessing the repository managers
+         */
+        public static function repositoryExists(string $name): bool
+        {
+            return self::getSystemRepositoryManager()->repositoryExists($name) || (self::getUserRepositoryManager()?->repositoryExists($name) ?? false);
+        }
+
+        /**
+         * Gets all repository configurations from both repository managers.
+         *
+         * @return RepositoryConfiguration[] An array of RepositoryConfigurations
+         * @throws IOException Thrown if there is an error accessing the repository managers
+         */
+        public static function getRepositories(): array
+        {
+            return array_merge(
+                self::getSystemRepositoryManager()->getEntries(),
+                self::getUserRepositoryManager()?->getEntries() ?? []
+            );
+        }
+
+        /**
+         * Executes a package from either a file path or package manager.
+         *
+         * This method supports two ways of executing a package:
+         *  1. From a file directly (package parameter is a file path)
+         *  2. From the package manager (package parameter is a package name)
+         *
+         * @param string $package The path to the package file or the package name
+         * @param string $version The version of the package to execute (ignored for file paths, default 'latest')
+         * @param string|null $executionUnit The specific execution unit to run (null for default)
+         * @param array $arguments Arguments to pass to the executed package
+         * @return mixed The result from the package execution
+         * @throws IOException If the package file cannot be accessed
+         * @throws OperationException If the package or version is not found in the package manager
+         */
+        public static function execute(string $package, string $version='latest', ?string $executionUnit=null, array $arguments=[]): mixed
+        {
+            Logger::getLogger()->debug(sprintf('Execute requested: %s@%s, unit=%s', $package, $version, $executionUnit ?? 'default'));
+            self::initializeStreamWrapper();
+
+            // Determine if package is a file path or package name
+            if(is_file($package))
+            {
+                $packagePath = realpath($package);
+                if($packagePath === false)
+                {
+                    throw new IOException('The specified package file does not exist.');
+                }
+
+                Logger::getLogger()->verbose(sprintf('Executing package from file: %s', $packagePath));
+            }
+            else
+            {
+                // Look up package in package manager
+                $packagePath = self::getPackagePath($package, $version);
+                if($packagePath === null)
+                {
+                    throw new OperationException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
+                }
+
+                Logger::getLogger()->verbose(sprintf('Executing package from package manager: %s@%s', $package, $version));
+            }
+
+            // Create package reader with cache for faster loading
+            $packageReader = new PackageReader($packagePath, true);
+            Logger::getLogger()->verbose(sprintf('Executing package: %s, unit=%s, args=%d', $packageReader->getAssembly()->getPackage(), $executionUnit ?? 'default', count($arguments)));
+
+            // Execute the package
+            return $packageReader->execute($executionUnit, $arguments);
+        }
+
+        /**
+         * Checks if the current user is a system user (root on Unix, Administrator on Windows).
+         *
+         * @return bool True if running as system user, false otherwise
+         */
+        public static function isSystemUser(): bool
+        {
+            // Check if running as root on Unix-like systems
+            if (function_exists('posix_geteuid') && posix_geteuid() === 0)
+            {
+                return true;
+            }
+
+            // Check if running with elevated privileges on Windows
+            if (PHP_OS_FAMILY === 'Windows')
+            {
+                $identity = shell_exec('whoami /groups 2>nul | findstr /i "S-1-16-12288" 2>nul');
+                if ($identity !== null && trim($identity) !== '')
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /**
          * Imports a package from the package manager
          *
          * @param string $package The package name
          * @param string $version The version of the package (use 'latest' for the most recent version)
          * @return PackageReader Returns the PackageReader
-         * @throws IOException
+         * @throws IOException Thrown if there is an error reading the package file
+         * @throws OperationException Thrown if the package or version is not found
          */
         private static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
             Logger::getLogger()->debug(sprintf('Looking up package in package managers: %s@%s', $package, $version));
-            
+
             // Try user package manager first
             $userManager = self::getUserPackageManager();
             if($userManager !== null && $userManager->entryExists($package, $version))
@@ -210,7 +682,7 @@
                         $packagePath = $userManager->getPackagePath($package, $satisfyingVersion);
                         return self::importFromFileWithCache($packagePath);
                     }
-                    
+
                     // Check system manager
                     if($systemManager->entryExists($package, $satisfyingVersion))
                     {
@@ -287,327 +759,6 @@
         }
 
         /**
-         * Gets the list of imported packages.
-         *
-         * @return array An array of imported packages.
-         */
-        public static function getImportedPackages(): array
-        {
-            $results = [];
-            foreach(self::$importedPackages as $packageName => $referenceId)
-            {
-                $results[$packageName] = self::$packageReaderReferences[$referenceId];
-            }
-
-            return $results;
-        }
-
-        /**
-         * Checks if a package is imported.
-         *
-         * @param string $packageName The name of the package.
-         * @return bool True if the package is imported, false otherwise.
-         */
-        public static function isImported(string $packageName): bool
-        {
-            return isset(self::$importedPackages[$packageName]);
-        }
-
-        /**
-         * Gets the user-level PackageManager instance, initializing it if necessary.
-         * Returns null when running as root/system user.
-         *
-         * @return PackageManager|null The user-level PackageManager instance, or null if running as system user.
-         * @throws IOException Thrown if there is an error creating the package manager directory.
-         */
-        public static function getUserPackageManager(): ?PackageManager
-        {
-            if(self::$userPackageManager === null)
-            {
-                $userLocation = PathResolver::getUserLocation();
-                if($userLocation === null)
-                {
-                    return null;
-                }
-
-                if(!IO::exists($userLocation))
-                {
-                    IO::mkdir($userLocation);
-                }
-
-                self::$userPackageManager = new PackageManager($userLocation);
-            }
-
-            return self::$userPackageManager;
-        }
-
-        /**
-         * Gets the system-level PackageManager instance, initializing it if necessary.
-         * This always returns a valid PackageManager instance.
-         *
-         * @return PackageManager The system-level PackageManager instance.
-         * @throws IOException
-         */
-        public static function getSystemPackageManager(): PackageManager
-        {
-            if(self::$systemPackageManager === null)
-            {
-                $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
-                if($hasWriteAccess && !IO::exists($systemLocation))
-                {
-                    IO::mkdir($systemLocation);
-                }
-
-                self::$systemPackageManager = new PackageManager($systemLocation);
-            }
-
-            return self::$systemPackageManager;
-        }
-
-        /**
-         * Gets the primary (writable) PackageManager instance.
-         * Returns user-level package manager for regular users,
-         * and system-level package manager for system users (root).
-         *
-         * @return PackageManager The primary PackageManager instance.
-         * @throws IOException
-         */
-        public static function getPackageManager(): PackageManager
-        {
-            $userManager = self::getUserPackageManager();
-            if($userManager !== null)
-            {
-                return $userManager;
-            }
-
-            return self::getSystemPackageManager();
-        }
-
-        public static function getUserRepositoryManager(): ?RepositoryManager
-        {
-            if(self::$userRepositoryManager === null)
-            {
-                $userLocation = PathResolver::getUserLocation();
-                if($userLocation === null)
-                {
-                    return null;
-                }
-
-                if(!IO::exists($userLocation))
-                {
-                    IO::mkdir($userLocation);
-                }
-
-                self::$userRepositoryManager = new RepositoryManager($userLocation);
-            }
-
-            return self::$userRepositoryManager;
-        }
-
-        public static function getSystemRepositoryManager(): RepositoryManager
-        {
-            if(self::$systemRepositoryManager === null)
-            {
-                $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
-                if($hasWriteAccess && !IO::exists($systemLocation))
-                {
-                    IO::mkdir($systemLocation);
-                }
-
-                self::$systemRepositoryManager = new RepositoryManager($systemLocation);
-            }
-
-            return self::$systemRepositoryManager;
-        }
-
-        public static function getRepositoryManager(): RepositoryManager
-        {
-            $userManager = self::getUserRepositoryManager();
-            if($userManager !== null)
-            {
-                return $userManager;
-            }
-
-            return self::getSystemRepositoryManager();
-        }
-
-        public static function getUserAuthenticationManager(): ?AuthenticationManager
-        {
-            if(self::$userAuthenticationManager === null)
-            {
-                $userLocation = PathResolver::getUserLocation();
-                if($userLocation === null)
-                {
-                    return null;
-                }
-
-                if(!IO::exists($userLocation))
-                {
-                    IO::mkdir($userLocation);
-                }
-
-                self::$userAuthenticationManager = new AuthenticationManager($userLocation);
-            }
-
-            return self::$userAuthenticationManager;
-        }
-
-        public static function getSystemAuthenticationManager(): AuthenticationManager
-        {
-            if(self::$systemAuthenticationManager === null)
-            {
-                $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = IO::isWritable(dirname($systemLocation) || (IO::exists($systemLocation) && IO::isWritable($systemLocation)));
-                if($hasWriteAccess && !IO::exists($systemLocation))
-                {
-                    IO::mkdir($systemLocation);
-                }
-
-                self::$systemAuthenticationManager = new AuthenticationManager($systemLocation);
-            }
-
-            return self::$systemAuthenticationManager;
-        }
-
-        public static function getAuthenticationManager(): AuthenticationManager
-        {
-            $userManager = self::getUserAuthenticationManager();
-            if($userManager !== null)
-            {
-                return $userManager;
-            }
-
-            return self::getSystemAuthenticationManager();
-        }
-
-        public static function packageInstalled(string $package, ?string $version='latest'): bool
-        {
-            if(self::getSystemPackageManager()->entryExists($package, $version))
-            {
-                return true;
-            }
-
-            return self::getUserPackageManager()?->entryExists($package, $version) ?? false;
-        }
-
-        public static function getPackageEntry(string $package, string $version='latest'): ?PackageLockEntry
-        {
-            $systemPackageEntry = self::getSystemPackageManager()->getEntry($package, $version);
-            if($systemPackageEntry === null)
-            {
-                return self::getUserPackageManager()?->getEntry($package, $version);
-            }
-
-            return $systemPackageEntry;
-        }
-
-        public static function getPackageEntries(?string $package=null): array
-        {
-
-            $entries = [];
-
-            if($package === null)
-            {
-                $entries = array_merge($entries, self::getSystemPackageManager()->getEntries());
-                if(self::getUserPackageManager() !== null)
-                {
-                    $entries = array_merge($entries, self::getUserPackageManager()->getEntries());
-                }
-            }
-            else
-            {
-                $entries = array_merge($entries, self::getSystemPackageManager()->getAllVersions($package));
-                if(self::getUserPackageManager() !== null)
-                {
-                    $entries = array_merge($entries, self::getUserPackageManager()->getAllVersions($package));
-                }
-            }
-
-            return $entries;
-        }
-
-        public static function isSystemPackage(string $package, ?string $version='latest'): bool
-        {
-            return self::getSystemPackageManager()->entryExists($package, $version);
-        }
-
-        public static function getPackagePath(string $package, string $version='latest'): ?string
-        {
-            $systemPackagePath = self::getSystemPackageManager()->getPackagePath($package, $version);
-            if($systemPackagePath === null)
-            {
-                return self::getUserPackageManager()->getPackagePath($package, $version);
-            }
-
-            return $systemPackagePath;
-        }
-
-        /**
-         * @param string $package
-         * @param string|null $version
-         * @return PackageLockEntry[]
-         * @throws IOException
-         */
-        public static function uninstallPackage(string $package, ?string $version='latest'): array
-        {
-            return array_merge(
-                self::getSystemPackageManager()->uninstall($package, $version),
-                self::getUserPackageManager()?->uninstall($package, $version) ?? []
-            );
-        }
-
-        public static function getRepository(string $name): ?RepositoryConfiguration
-        {
-            return self::getSystemRepositoryManager()->getRepository($name) ?? self::getUserRepositoryManager()?->getRepository($name);
-        }
-
-        public static function repositoryExists(string $name): bool
-        {
-            if(self::getSystemRepositoryManager()->repositoryExists($name))
-            {
-                return true;
-            }
-
-            return self::getUserRepositoryManager()?->repositoryExists($name) ?? false;
-        }
-
-        public static function getRepositories(): array
-        {
-            return array_merge(
-                self::getSystemRepositoryManager()->getEntries(),
-                self::getUserRepositoryManager()?->getEntries() ?? []
-            );
-        }
-
-        public static function deleteRepository(string $name): bool
-        {
-            return self::getSystemRepositoryManager()->removeRepository($name) || self::getUserRepositoryManager()?->removeRepository($name) ?? false;
-        }
-
-        public static function isSystemUser(): bool
-        {
-            // Check if running as root on Unix-like systems
-            if (function_exists('posix_geteuid') && posix_geteuid() === 0)
-            {
-                return true;
-            }
-
-            // Check if running with elevated privileges on Windows
-            if (PHP_OS_FAMILY === 'Windows')
-            {
-                $identity = shell_exec('whoami /groups 2>nul | findstr /i "S-1-16-12288" 2>nul');
-                if ($identity !== null && trim($identity) !== '')
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /**
          * Initializes the StreamWrapper if not already initialized.
          * This is called automatically on the first package import.
          *
@@ -631,7 +782,8 @@
          * a custom autoloader function that maps class names to ncc:// protocol paths.
          *
          * @param PackageReader $packageReader The package reader to register an autoloader for
-         * @return void
+         * @noinspection PhpRedundantOptionalArgumentInspection
+         * @noinspection PhpConditionCheckedByNextConditionInspection
          */
         private static function registerAutoloader(PackageReader $packageReader): void
         {
@@ -703,56 +855,6 @@
             {
                 trigger_error(sprintf('NCC Autoloader: Failed to register autoloader for package "%s"', $packageName), E_USER_WARNING);
             }
-        }
-
-        /**
-         * Executes a package from either a file path or package manager.
-         * 
-         * This method supports two ways of executing a package:
-         *  1. From a file directly (package parameter is a file path)
-         *  2. From the package manager (package parameter is a package name)
-         *
-         * @param string $package The path to the package file or the package name
-         * @param string $version The version of the package to execute (ignored for file paths, default 'latest')
-         * @param string|null $executionUnit The specific execution unit to run (null for default)
-         * @param array $arguments Arguments to pass to the executed package
-         * @return mixed The result from the package execution
-         * @throws IOException If the package file cannot be accessed
-         */
-        public static function execute(string $package, string $version='latest', ?string $executionUnit=null, array $arguments=[]): mixed
-        {
-            Logger::getLogger()->debug(sprintf('Execute requested: %s@%s, unit=%s', $package, $version, $executionUnit ?? 'default'));
-            self::initializeStreamWrapper();
-
-            // Determine if package is a file path or package name
-            if(is_file($package))
-            {
-                $packagePath = realpath($package);
-                if($packagePath === false)
-                {
-                    throw new IOException('The specified package file does not exist.');
-                }
-                
-                Logger::getLogger()->verbose(sprintf('Executing package from file: %s', $packagePath));
-            }
-            else
-            {
-                // Look up package in package manager
-                $packagePath = self::getPackagePath($package, $version);
-                if($packagePath === null)
-                {
-                    throw new OperationException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
-                }
-                
-                Logger::getLogger()->verbose(sprintf('Executing package from package manager: %s@%s', $package, $version));
-            }
-
-            // Create package reader with cache for faster loading
-            $packageReader = new PackageReader($packagePath, true);
-            Logger::getLogger()->verbose(sprintf('Executing package: %s, unit=%s, args=%d', $packageReader->getAssembly()->getPackage(), $executionUnit ?? 'default', count($arguments)));
-            
-            // Execute the package
-            return $packageReader->execute($executionUnit, $arguments);
         }
 
         /**
