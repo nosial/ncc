@@ -86,7 +86,7 @@
                     return 1;
                 }
 
-                Runtime::deleteRepository($name);
+                Runtime::getSystemRepositoryManager()->removeRepository($name) || Runtime::getUserRepositoryManager()?->removeRepository($name);
             }
 
             Runtime::getRepositoryManager()->addRepository($name, $type, $host, $ssl);
