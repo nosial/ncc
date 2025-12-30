@@ -54,7 +54,7 @@
                 return 1;
             }
 
-            Runtime::deleteRepository($name);
+            Runtime::getSystemRepositoryManager()->removeRepository($name) || Runtime::getUserRepositoryManager()?->removeRepository($name);
             Console::out(sprintf('Repository "%s" has been deleted.', $name));
             return 0;
         }
