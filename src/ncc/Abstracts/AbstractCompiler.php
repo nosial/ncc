@@ -505,10 +505,11 @@
             Logger::getLogger()->debug(sprintf('Resolving dependency readers for %d packages', count($this->packageDependencies)));
             
             $results = [];
+            $visited = [];
 
             foreach($this->packageDependencies as $packageName => $packageSource)
             {
-                $results = array_merge($results, $this->resolveDependencyReaders($packageName, $packageSource));
+                $results = array_merge($results, $this->resolveDependencyReaders($packageName, $packageSource, $visited));
             }
 
             Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers total', count($results)));
@@ -520,12 +521,23 @@
          *
          * @param string $package The name of the package to resolve
          * @param PackageSource $source The PackageSource object representing the package source
+         * @param array $visited Reference to array tracking visited packages to prevent circular dependencies
          * @return ResolvedDependency[] An array of ResolvedDependency objects for the package and its dependencies
          * @throws OperationException Thrown if a dependency cannot be resolved
          */
-        private function resolveDependencyReaders(string $package, PackageSource $source): array
+        private function resolveDependencyReaders(string $package, PackageSource $source, array &$visited): array
         {
+            // Check if this package has already been visited to prevent circular dependencies
+            if(isset($visited[$package]))
+            {
+                Logger::getLogger()->debug(sprintf('Skipping already visited package: %s (circular dependency detected)', $package));
+                return [];
+            }
+            
             Logger::getLogger()->verbose(sprintf('Resolving dependency: %s', $package));
+            
+            // Mark this package as visited
+            $visited[$package] = true;
             
             $resolvedDependency = new ResolvedDependency($package, $source);
             if($resolvedDependency->getPackageReader() === null)
@@ -565,7 +577,7 @@
                         $depSource->setVersion($dependencyReference->getVersion());
                     }
                     
-                    $results = array_merge($results, $this->resolveDependencyReaders($dependencyReference->getPackage(), $depSource));
+                    $results = array_merge($results, $this->resolveDependencyReaders($dependencyReference->getPackage(), $depSource, $visited));
                 }
             }
 

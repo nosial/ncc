@@ -295,8 +295,8 @@
                                     $progressCallback($currentStage, $totalStages, sprintf('Embedding dependency: %s', $packageReader->getPackageName()));
                                 }
                                 
-                                // Get the dependency assembly name to namespace its components
-                                $depPackageName = $packageReader->getAssembly()->getName();
+                                // Component names from the dependency already include their assembly prefix,
+                                // so we write them as-is without adding another prefix
                                 
                                 // For each component reference
                                 /** @var ComponentReference $componentReference */
@@ -314,10 +314,9 @@
                                         Logger::getLogger()->debug(sprintf('Compressed embedded component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
                                     }
                                     
-                                    // Namespace the component under the dependency's package directory
-                                    $namespacedComponentName = $depPackageName . '/' . $componentName;
-                                    $packageWriter->writeData($componentData, $namespacedComponentName);
-                                    Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $namespacedComponentName));
+                                    // Component name already includes assembly prefix from original package, use as-is
+                                    $packageWriter->writeData($componentData, $componentName);
+                                    Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $componentName));
                                 }
                             }
                         }
@@ -383,8 +382,8 @@
                                     continue;
                                 }
                                 
-                                // Get the dependency assembly name to namespace its resources
-                                $depPackageName = $packageReader->getAssembly()->getName();
+                                // Resource names from the dependency already include their assembly prefix,
+                                // so we write them as-is without adding another prefix
                                 
                                 /** @var ComponentReference $componentReference */
                                 foreach($packageReader->getResourceReferences() as $resourceName => $resourceReference)
@@ -402,10 +401,9 @@
                                         Logger::getLogger()->debug(sprintf('Compressed embedded resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
                                     }
                                     
-                                    // Namespace the resource under the dependency's package directory
-                                    $namespacedResourceName = $depPackageName . '/' . $resourceName;
-                                    $packageWriter->writeData($resourceData, $namespacedResourceName);
-                                    Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $namespacedResourceName));
+                                    // Resource name already includes assembly prefix from original package, use as-is
+                                    $packageWriter->writeData($resourceData, $resourceName);
+                                    Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $resourceName));
                                 }
                             }
                         }
@@ -544,6 +542,8 @@
             $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
             $baseDirectory = 'ncc://' . $packageName . '/' . $assemblyName . '/';
             
+            Logger::getLogger()->debug(sprintf('Main package: %s, assembly: %s, baseDirectory: %s', $packageName, $assemblyName, $baseDirectory));
+            
             // Generate mapping for source components using pal
             $mapping = [];
             
@@ -635,13 +635,15 @@
                     }
                     
                     $depPackageName = $packageReader->getAssembly()->getPackage();
-                    // For statically linked dependencies, components are namespaced with assembly name
-                    // and stored in the main package, so use main package + assembly name prefix
+                    // For statically linked dependencies, components already have assembly name prefixed
+                    // in their component names, so use the package root as base directory
                     $depAssemblyName = $packageReader->getAssembly()->getName();
-                    $depBaseDirectory = $baseDirectory . $depAssemblyName . '/';
                     
-                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s (mapped to %s)', $depPackageName, $depBaseDirectory));
+                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s', $depPackageName));
                     
+                    // For static linking, components from dependencies are stored with assembly name prefixed
+                    // (e.g., "laravel/collections/Collection.php"), so we only need the package root
+                    $depBaseDirectory = 'ncc://' . $packageName . '/';
                     $depMapping = $this->parsePackageComponents($packageReader, $depBaseDirectory);
                     $mapping = array_merge($mapping, $depMapping);
                     
@@ -673,7 +675,9 @@
                 {
                     // Read the component data
                     $componentData = $packageReader->readComponent($componentRef);
-                    $componentPath = $baseDirectory . $componentRef->getName();
+                    $componentName = $componentRef->getName();
+                    Logger::getLogger()->debug(sprintf('Component name from reader: %s, baseDirectory: %s', $componentName, $baseDirectory));
+                    $componentPath = $baseDirectory . $componentName;
                     
                     // Parse the PHP code to extract class names
                     $classes = $this->parsePhpClasses($componentData);

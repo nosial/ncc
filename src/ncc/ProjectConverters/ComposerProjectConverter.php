@@ -105,7 +105,8 @@
             if(isset($composerData['target-dir']))
             {
                 Logger::getLogger()->verbose(sprintf('Using deprecated target-dir for source path: %s', $composerData['target-dir']));
-                $project->setSourcePath($this->validateSourcePath($baseDir, $composerData['target-dir']));
+                $validatedPath = $this->validateSourcePath($baseDir, $composerData['target-dir']);
+                $project->setSourcePath($validatedPath ?? $this->detectSourcePath($baseDir));
             }
             // PSR-4 autoloading
             elseif(isset($composerData['autoload']['psr-4']))
@@ -123,8 +124,9 @@
                 
                 // Empty string in PSR-4 means the root directory, use '.' instead
                 $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
-                $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
-                Logger::getLogger()->verbose(sprintf('Set source path from PSR-4 autoload: %s', $normalizedPath));
+                $validatedPath = $this->validateSourcePath($baseDir, $normalizedPath);
+                $project->setSourcePath($validatedPath ?? $this->detectSourcePath($baseDir));
+                Logger::getLogger()->verbose(sprintf('Set source path from PSR-4 autoload: %s', $validatedPath ?? $this->detectSourcePath($baseDir)));
 
                 // If there are more than one, add them as included components
                 if(count($psr4Paths) > 1)
@@ -162,8 +164,9 @@
                 $firstPath = $composerData['autoload']['classmap'][0] ?? 'src';
                 // Empty string in classmap means the root directory, use '.' instead
                 $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
-                $project->setSourcePath($this->validateSourcePath($baseDir, $normalizedPath));
-                Logger::getLogger()->verbose(sprintf('Set source path from classmap autoload: %s', $normalizedPath));
+                $validatedPath = $this->validateSourcePath($baseDir, $normalizedPath);
+                $project->setSourcePath($validatedPath ?? $this->detectSourcePath($baseDir));
+                Logger::getLogger()->verbose(sprintf('Set source path from classmap autoload: %s', $validatedPath ?? $this->detectSourcePath($baseDir)));
 
                 // If there are more than one, add them as included components
                 if(count($composerData['autoload']['classmap']) > 1)
@@ -416,8 +419,10 @@
             Logger::getLogger()->debug(sprintf('Generated package name: %s from %s', $packageName, $composerData['name']));
             $assembly->setPackage($packageName);
             
-            // Set the friendly name from the composer package name
-            $assembly->setName($composerData['name']);
+            // Set the assembly name from the composer package name (without vendor prefix)
+            // Assembly names must not contain slashes to avoid path conflicts
+            list($vendor, $name) = explode('/', $composerData['name'], 2);
+            $assembly->setName($name);
 
             // Extract and normalize version
             // First prioritize the version provided externally (from repository)
