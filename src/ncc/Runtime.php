@@ -153,6 +153,22 @@
             Logger::getLogger()->debug(sprintf('Registering autoloader for: %s', $packageName));
             self::registerAutoloader($packageReader);
 
+            // Register the definitions if there are any
+            if(!empty($packageReader->getHeader()->getDefinedConstants()))
+            {
+                foreach($packageReader->getHeader()->getDefinedConstants() as $key => $value)
+                {
+                    if(!defined($key))
+                    {
+                        define($key, $value);
+                    }
+                    else
+                    {
+                        Logger::getLogger()->warning(sprintf('Cannot define %s from %s because it\'s already been defined', $key, $packageReader->getAssembly()->getPackage()));
+                    }
+                }
+            }
+
             // For non-statically linked packages, import dependencies separately
             if(!$packageReader->getHeader()->isStaticallyLinked() && count($packageReader->getHeader()->getDependencyReferences()) > 0)
             {
