@@ -31,6 +31,7 @@
     use ncc\Enums\ProjectType;
     use ncc\Enums\RemotePackageType;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\semver\Semver;
     use ncc\Objects\Package\DependencyReference;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
@@ -198,7 +199,7 @@
         {
             $options = self::parseOptions($options);
             $packageReader = $reader;
-            $packageIdentifier = sprintf("%s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion());
+            $packageIdentifier = sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
 
             // Check if package is already in the installed list (to avoid duplicates in current session)
             if(in_array($packageIdentifier, $installed, true))
@@ -207,10 +208,21 @@
             }
 
             // Check if package is already installed on the system
-            if(Runtime::packageInstalled($packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()) && !$options['reinstall'])
+            if(!$options['reinstall'])
             {
-                Console::out(sprintf("Package %s is already installed, skipping installation.", $packageIdentifier));
-                return $installed;
+                $isInstalled = Runtime::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+                
+                // Also check if a satisfying version exists using semver matching
+                if(!$isInstalled)
+                {
+                    $isInstalled = self::isPackageSatisfied($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+                }
+                
+                if($isInstalled)
+                {
+                    Console::out(sprintf("Package %s is already installed, skipping installation.", $packageIdentifier));
+                    return $installed;
+                }
             }
 
             Console::out(sprintf("Installing package %s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()));
@@ -246,8 +258,14 @@
                         continue;
                     }
                     
-                    // Check if already installed on the system
-                    if(Runtime::packageInstalled($dependency->getPackage(), $dependency->getVersion()))
+                    // Check if already installed on the system (exact match or semver match)
+                    $isInstalled = Runtime::packageInstalled($dependency->getPackage(), $dependency->getVersion());
+                    if(!$isInstalled)
+                    {
+                        $isInstalled = self::isPackageSatisfied($dependency->getPackage(), $dependency->getVersion());
+                    }
+                    
+                    if($isInstalled)
                     {
                         continue;
                     }
@@ -265,7 +283,6 @@
 
         public static function installFromRemote(PackageSource $source, array $options=[], array $installed=[], array $repositoryAuth=[]): array
         {
-            Console::out(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
             $options = self::parseOptions($options);
             if($source->getRepository() === null)
             {
@@ -276,6 +293,8 @@
             {
                 throw new OperationException(sprintf('Cannot install "%s", unknown remote repository "%s"', $source, $source->getRepository()));
             }
+            
+            Console::out(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
             
             // Handle authentication if specified for this repository
             $authentication = null;
@@ -514,6 +533,70 @@
             }
 
             return $results;
+        }
+
+        /**
+         * Checks if a package is already installed with a version that satisfies the requested version constraint
+         *
+         * @param string $packageName The name of the package (e.g., "organization/name")
+         * @param string|null $requestedVersion The requested version or version constraint
+         * @return bool True if a satisfying version is already installed, false otherwise
+         */
+        private static function isPackageSatisfied(string $packageName, ?string $requestedVersion): bool
+        {
+            // If no specific version is requested, check if any version is installed
+            if($requestedVersion === null || $requestedVersion === 'latest')
+            {
+                return Runtime::packageInstalled($packageName, 'latest');
+            }
+
+            // First check for exact match
+            if(Runtime::packageInstalled($packageName, $requestedVersion))
+            {
+                return true;
+            }
+
+            // Try to find a satisfying version using semver
+            try
+            {
+                // Get all installed versions of this package
+                $allVersions = [];
+                
+                // Get versions from system package manager
+                $systemManager = Runtime::getSystemPackageManager();
+                foreach($systemManager->getAllVersions($packageName) as $entry)
+                {
+                    $allVersions[] = $entry->getVersion();
+                }
+                
+                // Get versions from user package manager
+                $userManager = Runtime::getUserPackageManager();
+                if($userManager !== null)
+                {
+                    foreach($userManager->getAllVersions($packageName) as $entry)
+                    {
+                        $allVersions[] = $entry->getVersion();
+                    }
+                }
+
+                if(empty($allVersions))
+                {
+                    return false;
+                }
+
+                // Remove duplicates
+                $allVersions = array_unique($allVersions);
+
+                // Try to find a satisfying version
+                $satisfying = Semver::satisfiedBy($allVersions, $requestedVersion);
+                
+                return !empty($satisfying);
+            }
+            catch(Exception $e)
+            {
+                // If semver matching fails, fall back to exact match only
+                return false;
+            }
         }
 
         /**

@@ -27,6 +27,7 @@
     use ncc\CLI\Commands\Project\ApplyTemplate;
     use ncc\CLI\Commands\Project\ConvertProject;
     use ncc\CLI\Commands\Project\CreateProject;
+    use ncc\CLI\Commands\Project\InstallDependencies;
     use ncc\CLI\Commands\Project\ValidateProject;
 
     class ProjectCommand extends AbstractCommandHandler
@@ -51,6 +52,10 @@
             elseif(isset($argv['convert']))
             {
                 return ConvertProject::handle($argv);
+            }
+            elseif(isset($argv['install']))
+            {
+                return InstallDependencies::handle($argv);
             }
             elseif(isset($argv['help']) || isset($argv['h']))
             {
@@ -84,6 +89,7 @@
                 Console::out('  validate         Validates a given ncc project and gives inspection results');
                 Console::out('  template         Apply automatic templates to your existing project');
                 Console::out('  convert          Convert an existing project to an ncc project');
+                Console::out('  install          Install all project dependencies');
                 Console::out(PHP_EOL . 'Use "ncc project [command] --help" for more information about a command.');
                 return;
             }
@@ -141,6 +147,30 @@
                     Console::out(PHP_EOL . 'Examples:');
                     Console::out('  ncc project convert');
                     Console::out('  ncc project convert --path=/path/to/project --format=composer');
+                    break;
+
+                case 'install':
+                    Console::out('Usage: ncc project install [options]' . PHP_EOL);
+                    Console::out('Installs all dependencies defined in the project configuration.');
+                    Console::out('This includes dependencies from the project itself and all build');
+                    Console::out('configurations. The project itself is not installed, only its');
+                    Console::out('dependencies.' . PHP_EOL);
+                    Console::out('Options:');
+                    Console::out('  --path            (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out('  --build, -b       (Optional) Install dependencies only for a specific build configuration');
+                    Console::out('                    If not specified, installs dependencies from all build configurations');
+                    Console::out('  --yes, -y         Automatically confirm all prompts');
+                    Console::out('  --skip-repositories, --skip-repos, --sr');
+                    Console::out('                    Skip adding package repositories');
+                    Console::out('  --<repository>-auth=<entry>');
+                    Console::out('                    Authenticate using the specified vault entry for a repository');
+                    Console::out(PHP_EOL . 'Examples:');
+                    Console::out('  ncc project install');
+                    Console::out('  ncc project install --path=/path/to/project');
+                    Console::out('  ncc project install --build=debug');
+                    Console::out('  ncc project install --yes');
+                    Console::out('  ncc project install --github-auth=mytoken');
                     break;
 
                 default:
