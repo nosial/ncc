@@ -38,7 +38,7 @@
             $this->assertEquals('release', $project->getDefaultBuild());
             $this->assertNull($project->getEntryPoint());
             $this->assertNull($project->getUpdateSource());
-            $this->assertNull($project->getRepository());
+            $this->assertNull($project->getRepositories());
             $this->assertInstanceOf(Assembly::class, $project->getAssembly());
             $this->assertNull($project->getDependencies());
             $this->assertEmpty($project->getBuildConfigurations());
@@ -87,7 +87,7 @@
             $this->assertEquals('debug', $project->getDefaultBuild());
             $this->assertEquals('main.php', $project->getEntryPoint());
             $this->assertInstanceOf(PackageSource::class, $project->getUpdateSource());
-            $this->assertInstanceOf(RepositoryConfiguration::class, $project->getRepository());
+            $this->assertInstanceOf(RepositoryConfiguration::class, $project->getRepositories());
             $this->assertInstanceOf(Assembly::class, $project->getAssembly());
             $this->assertIsArray($project->getDependencies());
             $this->assertCount(2, $project->getDependencies());
@@ -196,11 +196,11 @@
                 'host' => 'github.com',
                 'ssl' => true
             ]);
-            $project->setRepository($repo);
-            $this->assertSame($repo, $project->getRepository());
+            $project->setRepositories($repo);
+            $this->assertSame($repo, $project->getRepositories());
             
-            $project->setRepository(null);
-            $this->assertNull($project->getRepository());
+            $project->setRepositories(null);
+            $this->assertNull($project->getRepositories());
         }
 
         public function testAssemblyGetter(): void
