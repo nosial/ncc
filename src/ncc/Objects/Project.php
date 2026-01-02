@@ -57,7 +57,7 @@
         private string|array|null $preInstall;
         /** @var string|string[]|null */
         private string|array|null $postInstall;
-        private RepositoryConfiguration|array|null $repository;
+        private RepositoryConfiguration|array|null $repositories;
         private Assembly $assembly;
         private ?array $dependencies;
         /** @var ExecutionUnit[]|null */
@@ -90,16 +90,16 @@
             {
                 if(isset($data['repository']['name']))
                 {
-                    $this->repository = RepositoryConfiguration::fromArray($data['repository']);
+                    $this->repositories = RepositoryConfiguration::fromArray($data['repository']);
                 }
                 else
                 {
-                    $this->repository = array_map(function($item){ return RepositoryConfiguration::fromArray($item); }, $data['repository']);
+                    $this->repositories = array_map(function($item){ return RepositoryConfiguration::fromArray($item); }, $data['repository']);
                 }
             }
             else
             {
-                $this->repository = null;
+                $this->repositories = null;
             }
         }
 
@@ -376,19 +376,19 @@
          *
          * @return RepositoryConfiguration|null The repository configuration or null if not set
          */
-        public function getRepository(): ?RepositoryConfiguration
+        public function getRepositories(): ?RepositoryConfiguration
         {
-            return $this->repository;
+            return $this->repositories;
         }
 
         /**
          * Sets the repository configuration
          *
-         * @param RepositoryConfiguration|null $repository The new repository configuration or null to unset
+         * @param RepositoryConfiguration|null $repositories The new repository configuration or null to unset
          */
-        public function setRepository(?RepositoryConfiguration $repository): void
+        public function setRepositories(?RepositoryConfiguration $repositories): void
         {
-            $this->repository = $repository;
+            $this->repositories = $repositories;
         }
 
         /**
@@ -792,7 +792,7 @@
                 'post_compile' => $this->postCompile,
                 'pre_install' => $this->preInstall,
                 'post_install' => $this->postInstall,
-                'repository' => $this->repository?->toArray(),
+                'repository' => $this->repositories?->toArray(),
                 'assembly' => $this->assembly->toArray(),
                 'dependencies' => $dependenciesArray,
                 'execution_units' => $this->executionUnits ? array_map(function($item) { return $item->toArray(); }, $this->executionUnits) : null,
