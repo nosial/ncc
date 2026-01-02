@@ -73,15 +73,14 @@ jobs:
       - name: Build ncc (for testing)
         run: make target
 
-      - name: Run PHPUnit tests
+      - name: Install PHPUnit
         run: |
-          if [ -f vendor/bin/phpunit ]; then
-            vendor/bin/phpunit
-          elif command -v phpunit &> /dev/null; then
-            phpunit
-          else
-            echo "PHPUnit not found, skipping tests"
-          fi
+          wget -O phpunit.phar https://phar.phpunit.de/phpunit-10.phar
+          chmod +x phpunit.phar
+          sudo mv phpunit.phar /usr/local/bin/phpunit
+
+      - name: Run PHPUnit tests
+        run: phpunit --configuration phpunit.xml
 
   test-install:
     runs-on: ubuntu-latest
@@ -110,8 +109,18 @@ jobs:
 
       - name: Verify installation
         run: |
-          which ncc
-          ncc --version
+          # Check common installation paths
+          if [ -f /usr/local/bin/ncc ]; then
+            echo "ncc installed at /usr/local/bin/ncc"
+            /usr/local/bin/ncc --version
+          elif [ -f /usr/bin/ncc ]; then
+            echo "ncc installed at /usr/bin/ncc"
+            /usr/bin/ncc --version
+          else
+            echo "Searching for ncc installation..."
+            sudo find /usr -name ncc -type f 2>/dev/null || true
+            exit 1
+          fi
 
   upload-release:
     runs-on: ubuntu-latest
