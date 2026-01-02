@@ -80,7 +80,7 @@ jobs:
           sudo mv phpunit.phar /usr/local/bin/phpunit
 
       - name: Run PHPUnit tests
-        run: phpunit --configuration phpunit.xml
+        run: phpunit --configuration phpunit.xml --no-coverage --dont-report-useless-tests
 
   test-install:
     runs-on: ubuntu-latest
@@ -105,20 +105,29 @@ jobs:
       - name: Test ncc installation
         run: |
           ls -lh
-          sudo php ncc.phar --install --auto || sudo ./install.sh
+          echo "Installing ncc..."
+          sudo ./install.sh || { echo "Installation failed"; exit 1; }
 
       - name: Verify installation
         run: |
-          # Check common installation paths
+          echo "Checking for ncc installation..."
+          
+          # Search for ncc in all common locations
           if [ -f /usr/local/bin/ncc ]; then
-            echo "ncc installed at /usr/local/bin/ncc"
+            echo "✓ Found ncc at /usr/local/bin/ncc"
             /usr/local/bin/ncc --version
           elif [ -f /usr/bin/ncc ]; then
-            echo "ncc installed at /usr/bin/ncc"
+            echo "✓ Found ncc at /usr/bin/ncc"
             /usr/bin/ncc --version
+          elif [ -f "$HOME/.local/bin/ncc" ]; then
+            echo "✓ Found ncc at $HOME/.local/bin/ncc"
+            "$HOME/.local/bin/ncc" --version
           else
-            echo "Searching for ncc installation..."
-            sudo find /usr -name ncc -type f 2>/dev/null || true
+            echo "✗ ncc not found in expected locations"
+            echo "Searching entire system..."
+            find /usr /home -name "ncc" -type f 2>/dev/null || true
+            echo "Checking PHP include paths..."
+            php -r "echo get_include_path();"
             exit 1
           fi
 
