@@ -174,7 +174,7 @@
                     else
                     {
                         Logger::getLogger()->verbose(sprintf('Configuring project update source repository: %s (%s)', $name, $type->value));
-                        $project->setRepository(new RepositoryConfiguration($name, $type, $host, $ssl));
+                        $project->setRepositories(new RepositoryConfiguration($name, $type, $host, $ssl));
                     }
                 }
             }
