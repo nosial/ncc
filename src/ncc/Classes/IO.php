@@ -52,7 +52,7 @@
          * @param bool $recursive Whether to remove directories recursively.
          * @throws IOException If the file or directory cannot be removed.
          */
-        public static function rm(string $path, bool $recursive): void
+        public static function rm(string $path, bool $recursive=true): void
         {
             Logger::getLogger()->verbose(sprintf('Deleting %s', $path));
 

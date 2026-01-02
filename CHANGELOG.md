@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.1] - Ongoing
 
-This is an ongoing update
+### Changed
+ - Made the parameter `$recusrive` in \ncc\Classes\IO::rm optional, by default it's set to true
 
 
 ## [3.0.0] - 2026-01-02
