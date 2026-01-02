@@ -1,0 +1,173 @@
+name: Build and Release Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'release/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    strategy:
+      matrix:
+        php_version: ['8.3']
+        variant:
+          - name: "alpine"
+            fpm_enabled: ""
+            tag: "latest"
+          - name: "fpm"
+            fpm_enabled: "-fpm"
+            tag: "fpm"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch,suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
+            type=ref,event=pr,suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
+            type=semver,pattern={{version}},suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
+            type=semver,pattern={{major}},suffix=-${{ matrix.variant.tag }},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.variant.tag != 'latest' }}
+            type=raw,value=${{ matrix.variant.tag }},enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag != 'latest' }}
+            type=ref,event=branch,enable=${{ matrix.variant.tag == 'latest' }}
+            type=ref,event=pr,enable=${{ matrix.variant.tag == 'latest' }}
+            type=semver,pattern={{version}},enable=${{ matrix.variant.tag == 'latest' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.variant.tag == 'latest' }}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.variant.tag == 'latest' }}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag == 'latest' }}
+          labels: |
+            org.opencontainers.image.title=ncc
+            org.opencontainers.image.description=ncc's official Docker image (${{ matrix.variant.name }})
+            org.opencontainers.image.vendor=Nosial
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PHP_VERSION=${{ matrix.php_version }}
+            FPM_ENABLED=${{ matrix.variant.fpm_enabled }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            echo "## Changes since $PREVIOUS_TAG" > changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> changelog.md
+          else
+            echo "## Initial Release" > changelog.md
+            echo "" >> changelog.md
+            echo "First release of ncc Docker images." >> changelog.md
+          fi
+          
+          echo "" >> changelog.md
+          echo "## Docker Images" >> changelog.md
+          echo "" >> changelog.md
+          echo "This release includes the following Docker images:" >> changelog.md
+          echo "" >> changelog.md
+          echo "### Alpine Version (Standard)" >> changelog.md
+          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${GITHUB_REF#refs/tags/v}\` (Version tag)" >> changelog.md
+          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:latest\` (Latest from main/master)" >> changelog.md
+          echo "" >> changelog.md
+          echo "### PHP-FPM Version" >> changelog.md
+          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${GITHUB_REF#refs/tags/v}-fpm\` (Version tag with FPM)" >> changelog.md
+          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:fpm\` (Latest FPM from main/master)" >> changelog.md
+          echo "" >> changelog.md
+          echo "### Usage" >> changelog.md
+          echo "" >> changelog.md
+          echo "\`\`\`bash" >> changelog.md
+          echo "# Pull the alpine version (standard)" >> changelog.md
+          echo "docker pull ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
+          echo "docker pull ${{ env.REGISTRY }}/${{ github.repository }}:latest" >> changelog.md
+          echo "" >> changelog.md
+          echo "# Pull the PHP-FPM version" >> changelog.md
+          echo "docker pull ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.tag.outputs.tag }}-fpm" >> changelog.md
+          echo "docker pull ${{ env.REGISTRY }}/${{ github.repository }}:fpm" >> changelog.md
+          echo "\`\`\`" >> changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

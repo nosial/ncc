@@ -1,0 +1,149 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, ctype, json, zip, msgpack, tokenizer, phar, curl
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git make
+
+      - name: Build ncc phar
+        run: make target/ncc.phar
+
+      - name: Verify build artifacts
+        run: |
+          test -f target/ncc.phar
+          test -f target/install.sh
+          ls -lh target/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncc-build
+          path: |
+            target/ncc.phar
+            target/install.sh
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, ctype, json, zip, msgpack, tokenizer, phar, curl
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git make
+
+      - name: Build ncc (for testing)
+        run: make target
+
+      - name: Run PHPUnit tests
+        run: |
+          if [ -f vendor/bin/phpunit ]; then
+            vendor/bin/phpunit
+          elif command -v phpunit &> /dev/null; then
+            phpunit
+          else
+            echo "PHPUnit not found, skipping tests"
+          fi
+
+  test-install:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ncc-build
+          path: .
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, ctype, json, zip, msgpack, tokenizer, phar, curl
+
+      - name: Make install script executable
+        run: chmod +x install.sh
+
+      - name: Test ncc installation
+        run: |
+          ls -lh
+          sudo php ncc.phar --install --auto || sudo ./install.sh
+
+      - name: Verify installation
+        run: |
+          which ncc
+          ncc --version
+
+  upload-release:
+    runs-on: ubuntu-latest
+    needs: [build, test, test-install]
+    if: github.event_name == 'release' && github.event.action == 'created'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ncc-build
+          path: .
+
+      - name: Create release package
+        run: |
+          mkdir -p release
+          cp ncc.phar release/
+          cp install.sh release/
+          cd release
+          zip -r ../ncc-release.zip .
+          cd ..
+          tar czf ncc-release.tar.gz -C release .
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/ncc.phar
+            release/install.sh
+            ncc-release.zip
+            ncc-release.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
