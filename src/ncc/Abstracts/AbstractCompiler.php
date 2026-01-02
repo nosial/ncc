@@ -543,7 +543,7 @@
             if($resolvedDependency->getPackageReader() === null)
             {
                 Logger::getLogger()->error(sprintf('Package not installed: %s', $package));
-                throw new OperationException(sprintf('Cannot resolve %s becaues the package is not installed', $package));
+                throw new OperationException(sprintf('Cannot resolve %s because the package is not installed', $package));
             }
 
             $results = [$resolvedDependency];
