@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="Symfony\polyfill-uuid" pattern="file[Nosial Code Compiler]:src/ncc/ThirdParty/Symfony/polyfill_uuid//*" />
-</component>

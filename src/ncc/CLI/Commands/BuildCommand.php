@@ -1,134 +1,95 @@
 <?php
     /*
-     * Copyright (c) Nosial 2022-2023, all rights reserved.
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
-     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-     *  conditions:
-     *
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
-     *  of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     *  DEALINGS IN THE SOFTWARE.
-     *
-     */
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     namespace ncc\CLI\Commands;
 
-    use Exception;
-    use ncc\Enums\Options\BuildConfigurationOptions;
-    use ncc\Enums\Options\BuildConfigurationValues;
-    use ncc\Managers\ProjectManager;
-    use ncc\Objects\CliHelpSection;
-    use ncc\Utilities\Console;
-    use ncc\Utilities\Functions;
+    use ncc\Abstracts\AbstractCommandHandler;
+    use ncc\Classes\Console;
+    use ncc\Exceptions\IOException;
+    use ncc\Objects\Project;
 
-    class BuildCommand
+    class BuildCommand extends AbstractCommandHandler
     {
         /**
-         * Displays the main help menu
-         *
-         * @param array $args
-         * @return int
+         * @inheritDoc
          */
-        public static function start(array $args): int
+        public static function handle(array $argv): int
         {
-            if(isset($args['help']))
+            if(isset($argv['help']) || isset($argv['h']))
             {
-                return self::displayOptions();
+                self::help();
+                return 0;
             }
 
-            return self::build($args);
-        }
+            $projectPath = getcwd();
+            if(isset($argv['path']))
+            {
+                $projectPath = $argv['path'];
+            }
+            $configuration = $argv['configuration'] ?? $argv['config'] ?? $argv['c'] ?? null;
 
-        /**
-         * Builds the current project
-         *
-         * @param array $args
-         * @return int
-         */
-        private static function build(array $args): int
-        {
-            if(isset($args['path']) || isset($args['p']))
+            $projectPath = Helper::resolveProjectConfigurationPath($projectPath);
+            if($projectPath === null)
             {
-                $project_path = $args['path'] ?? $args['p'];
-            }
-            elseif(is_file(getcwd() . DIRECTORY_SEPARATOR . 'project.json'))
-            {
-                $project_path = getcwd();
-            }
-            else
-            {
-                Console::outError('Missing option: --path|-p, please specify the path to the project', true, 1);
+                Console::error("No project configuration file found");
                 return 1;
             }
 
-            $output_path = $args['output'] ?? $args['o'] ?? null;
-            $options = [];
-
-            if($output_path !== null)
-            {
-                $options[BuildConfigurationOptions::OUTPUT_FILE->value] = $output_path;
-            }
-
-            // Load the project
             try
             {
-                $project_manager = new ProjectManager($project_path);
+                $compiler = Project::compilerFromFile($projectPath, $configuration);
+                $outputPath = $compiler->compile(function(int $current, int $total, string $message) {
+                    Console::inlineProgress($current, $total, $message);
+                });
+                Console::completeProgress("Build completed: " . $outputPath);
             }
-            catch (Exception $e)
+            catch (IOException $e)
             {
-                Console::outException('There was an error loading the project', $e, 1);
+                Console::clearInlineProgress();
+                Console::error($e->getMessage());
                 return 1;
             }
 
-            // Build the project
-            try
-            {
-                $build_configuration = $args['config'] ?? $args['c'] ?? BuildConfigurationValues::DEFAULT->value;
-                $output = $project_manager->build($build_configuration, $options);
-            }
-            catch (Exception $e)
-            {
-                Console::outException('Failed to build project', $e, 1);
-                return 1;
-            }
-
-            Console::out($output);
             return 0;
         }
 
         /**
-         * Displays the main options section
+         * Prints out the help menu for the build command
          *
-         * @return int
+         * @return void
          */
-        private static function displayOptions(): int
+        public static function help(): void
         {
-            $options = [
-                new CliHelpSection(['build'], 'Builds the current project'),
-                new CliHelpSection(['--help'], 'Displays this help menu about the value command'),
-                new CliHelpSection(['--path', '-p'], 'Specifies the path to the project where project.json is located (or the file itself), default: current working directory'),
-                new CliHelpSection(['--config', '-c'], 'Specifies the build configuration to use, default: default build configuration'),
-                new CliHelpSection(['--output', '-o'], 'Specifies the output path of the build, default: build configuration specified output path'),
-            ];
-
-            $options_padding = Functions::detectParametersPadding($options) + 4;
-
-            Console::out('Usage: ncc build [options]');
-            Console::out('Options:' . PHP_EOL);
-            foreach($options as $option)
-            {
-                Console::out('   ' . $option->toString($options_padding));
-            }
-
-            return 0;
+            Console::out('Usage: ncc build [options]' . PHP_EOL);
+            Console::out('Builds the current project into an ncc package.' . PHP_EOL);
+            Console::out('The build command compiles your project according to the project.json');
+            Console::out('configuration file, creating a distributable .ncc package file.' . PHP_EOL);
+            Console::out('Options:');
+            Console::out('  --path=<path>           Path to the project directory (defaults to current directory)');
+            Console::out('  --configuration=<name>  Specific build configuration to use');
+            Console::out('  --config, -c            Alias for --configuration');
+            Console::out(PHP_EOL . 'Examples:');
+            Console::out('  ncc build');
+            Console::out('  ncc build --path=/path/to/project');
+            Console::out('  ncc build --configuration=release');
         }
     }

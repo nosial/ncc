@@ -1,36 +1,33 @@
-[submodule "src/ncc/ThirdParty/Symfony/Uid"]
-	path = src/ncc/ThirdParty/Symfony/Uid
-	url = https://github.com/symfony/uid
-[submodule "src/ncc/ThirdParty/Symfony/Process"]
-	path = src/ncc/ThirdParty/Symfony/Process
-	url = https://github.com/symfony/process
-[submodule "src/ncc/ThirdParty/Symfony/Yaml"]
-	path = src/ncc/ThirdParty/Symfony/Yaml
-	url = https://github.com/symfony/yaml
-[submodule "src/ncc/ThirdParty/Symfony/polyfill_uuid"]
-	path = src/ncc/ThirdParty/Symfony/polyfill_uuid
-	url = https://github.com/symfony/polyfill-uuid
-[submodule "src/ncc/ThirdParty/Symfony/polyfill_mbstring"]
-	path = src/ncc/ThirdParty/Symfony/polyfill_mbstring
-	url = https://github.com/symfony/polyfill-mbstring
-[submodule "src/ncc/ThirdParty/Symfony/polyfill_ctype"]
-	path = src/ncc/ThirdParty/Symfony/polyfill_ctype
+[submodule "dependencies/pal"]
+	path = dependencies/pal
+	url = https://github.com/nosial/pal
+[submodule "dependencies/LogLib2"]
+	path = dependencies/LogLib2
+	url = https://github.com/nosial/LogLib2
+[submodule "dependencies/PHP-Parser"]
+	path = dependencies/PHP-Parser
+	url = https://github.com/nikic/PHP-Parser.git
+[submodule "dependencies/deprecation-contracts"]
+	path = dependencies/deprecation-contracts
+	url = https://github.com/symfony/deprecation-contracts
+[submodule "dependencies/polyfill-ctype"]
+	path = dependencies/polyfill-ctype
 	url = https://github.com/symfony/polyfill-ctype
-[submodule "src/ncc/ThirdParty/Symfony/Filesystem"]
-	path = src/ncc/ThirdParty/Symfony/Filesystem
-	url = https://github.com/symfony/filesystem
-[submodule "src/ncc/ThirdParty/nikic/PhpParser"]
-	path = src/ncc/ThirdParty/nikic/PhpParser
-	url = https://github.com/nikic/PHP-Parser
-[submodule "src/ncc/ThirdParty/jelix/version"]
-	path = src/ncc/ThirdParty/jelix/version
-	url = https://github.com/jelix/version
-[submodule "src/ncc/ThirdParty/defuse/Crypto"]
-	path = src/ncc/ThirdParty/defuse/Crypto
+[submodule "dependencies/yaml"]
+	path = dependencies/yaml
+	url = https://github.com/symfony/yaml
+[submodule "dependencies/optslib"]
+	path = dependencies/optslib
+	url = https://github.com/nosial/optslib
+[submodule "dependencies/Process"]
+	path = dependencies/Process
+	url = https://github.com/symfony/process
+[submodule "dependencies/semver"]
+	path = dependencies/semver
+	url = https://github.com/composer/semver.git
+[submodule "dependencies/random_compat"]
+	path = dependencies/random_compat
+	url = https://github.com/paragonie/random_compat
+[submodule "dependencies/php-encryption"]
+	path = dependencies/php-encryption
 	url = https://github.com/defuse/php-encryption
-[submodule "src/ncc/ThirdParty/composer/Semver"]
-	path = src/ncc/ThirdParty/composer/Semver
-	url = https://github.com/composer/semver
-[submodule "src/ncc/ThirdParty/theseer/DirectoryScanner"]
-	path = src/ncc/ThirdParty/theseer/DirectoryScanner
-	url = https://github.com/theseer/DirectoryScanner

@@ -2,85 +2,33 @@
 
 [![wakatime](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada.svg)](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada)
 
-Nosial Code Compiler is a package compiler, manager & installer for PHP. Allowing you to install and manage multiple
-versions of php packages on your system that your PHP programs/projects can share and use. Additionally, ncc also allows
-you to create a redistributable package of your PHP program/project in the form of a `.ncc` binary package file.
+ncc (Nosial Code Compiler) php package compiler written in PHP, it's designed to replace composer as a dependency manager
+and package manager for PHP projects, with a focus on simplicity and the ability to create standalone packages while
+trying to ensure (somewhat) compatibility with existing composer packages.
 
-## Community
-
-This project and many others from Nosial are available on multiple publicly available and free git repositories at
-
-- [n64](https://git.n64.cc/nosial/ncc)
-- [GitHub](https://github.com/nosial/ncc)
-- [Codeberg](https://codeberg.org/nosial/ncc)
-
-Issues & Pull Requests are frequently checked and to be referenced accordingly in commits and changes, Nosial remains
-dedicated to keep these repositories up to date when possible.
-
-For questions & discussions see the public Telegram community at [@NosialDiscussions](https://t.me/NosialDiscussions).
-We do encourage community support and discussions, please be respectful and follow the rules of the community.
-
-## Features
-
-- [x] Package Manager
-- [x] Support for repositories such as GitHub, GitLab, GitTea and Packagist
-- [x] Package compiler
-- [x] Execution Handler
-- [x] Import System (*No need for autoloaders!*)
-
-
-## Dependencies
-
-- PHP 8.0 or higher
-- php-mbstring extension
-- php-zip extension
-- php-mbcrypt extension
-- php-ctype extension
-- php-curl extension
-
+Version 3.+ is a complete rewrite of ncc, with a new architecture and design aiming to have better code maintainability
+with a less-chaotic/hacky approach, allowing you to compiler your php projects into a ncc, phar or a single php file.
 
 ## Documentation
 
-Extensive documentation for ncc can be found on at [DOCUMENTATION.md](DOCUMENTATION.md), explaining how from how to
-build and install ncc to how to use it, it is highly recommended that you read the documentation before using ncc.
-
-
-## Bugs and issues
-
-If you encounter any bugs or issues with ncc, please report them on the [issue tracker](https://git.n64.cc/nosial/ncc/-/issues).
-
+The documentation/usage manual for ncc can be found at [DOCUMENTATION.md](DOCUMENTATION.md).
 
 ## Changelog
 
 The changelog for ncc can be found in the [CHANGELOG.md](CHANGELOG.md) file.
 
 
-
 ## Repository Mirrors
 
 The official repository for ncc is hosted on [n64](https://git.n64.cc/nosial/ncc); however, you can also find
-mirrors of the repository mirrored on different platforms, including 
-community-powered mirrors. (more to come)
+mirrors of the repository mirrored on different platforms, including
 
- - [git.it-kuny.ch](https://git.it-kuny.ch)
- - [git.martinvlba.eu](https://git.martinvlba.eu/Nosial/ncc)
- - [github.com](https://github.com/Nosial/ncc)
-
+- [github.com](https://github.com/nosial/ncc)
+- [codeberg](https://codeberg.org/nosial/ncc)
 
 # Contributing
 
-We welcome contributions to ncc! If you have an idea for how to improve the project, please don't hesitate to reach out.
-There are many ways to contribute, and we appreciate all forms of support.
-
-For more information on how to contribute, please read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
-
-
-
-# Code of Conduct
-
-We are committed to maintaining a welcoming and inclusive environment for all contributors. Please read and follow our
-[Code of Conduct](CODE_OF_CONDUCT.md).
-
+We welcome contributions to ncc! just make a pull request or find us in a community and ask us about something
 
 # Authors
 
@@ -97,7 +45,7 @@ We are committed to maintaining a welcoming and inclusive environment for all co
 
 # Copyright
 
-- Copyright (c) 2022-2025, Nosial—All Rights Reserved
+- Copyright (c) 2022-2026, Nosial—All Rights Reserved
 
 
 # Licenses

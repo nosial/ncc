@@ -1,0 +1,101 @@
+<?php
+    /*
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+    namespace ncc\Classes;
+
+    class Cache
+    {
+        private static array $cache = [];
+        private static bool $enabled = true;
+
+        /**
+         * Disables caching globally.
+         */
+        public static function disable(): void
+        {
+            self::$enabled = false;
+        }
+
+        /**
+         * Enables caching globally.
+         */
+        public static function enable(): void
+        {
+            self::$enabled = true;
+        }
+
+        /**
+         * Checks if caching is enabled.
+         *
+         * @return bool True if caching is enabled, false otherwise.
+         */
+        public static function isEnabled(): bool
+        {
+            return self::$enabled;
+        }
+
+        /**
+         * Sets a value in the cache.
+         *
+         * @param string $key The key to set.
+         * @param mixed $value The value to set.
+         */
+        public static function set(string $key, mixed $value): void
+        {
+            if (!self::$enabled)
+            {
+                return;
+            }
+
+            self::$cache[$key] = $value;
+        }
+
+        /**
+         * Gets a value from the cache.
+         *
+         * @param string $key The key to get.
+         * @return mixed The value, or null if not found.
+         */
+        public static function get(string $key): mixed
+        {
+            return self::$cache[$key] ?? null;
+        }
+
+        /**
+         * Checks if a key exists in the cache.
+         *
+         * @param string $key The key to check.
+         * @return bool True if the key exists, false otherwise.
+         */
+        public static function has(string $key): bool
+        {
+            return array_key_exists($key, self::$cache);
+        }
+
+        /**
+         * Clears the cache.
+         */
+        public static function clear(): void
+        {
+            self::$cache = [];
+        }
+    }

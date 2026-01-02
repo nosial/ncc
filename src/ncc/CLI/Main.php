@@ -1,244 +1,225 @@
 <?php
     /*
-     * Copyright (c) Nosial 2022-2023, all rights reserved.
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
-     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-     *  conditions:
-     *
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
-     *  of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     *  DEALINGS IN THE SOFTWARE.
-     *
-     */
-
-    /** @noinspection PhpMissingFieldTypeInspection */
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     namespace ncc\CLI;
 
-    use Exception;
-    use ncc\Classes\ShutdownHandler;
+    use ncc\Classes\Cache;
+    use ncc\Classes\Console;
+    use ncc\Classes\IO;
+    use ncc\CLI\Commands\AuthenticationCommand;
     use ncc\CLI\Commands\BuildCommand;
-    use ncc\CLI\Commands\ExecCommand;
-    use ncc\CLI\Commands\PackageInspectorCommand;
-    use ncc\CLI\Commands\SetupCommand;
-    use ncc\CLI\Management\ConfigMenu;
-    use ncc\CLI\Management\CredentialMenu;
-    use ncc\CLI\Management\PackageManagerMenu;
-    use ncc\CLI\Management\ProjectMenu;
-    use ncc\CLI\Management\RepositoryMenu;
-    use ncc\Enums\Flags\NccBuildFlags;
-    use ncc\Enums\LogLevel;
-    use ncc\Exceptions\PathNotFoundException;
-    use ncc\ncc;
-    use ncc\Utilities\Console;
-    use ncc\Utilities\Resolver;
+    use ncc\CLI\Commands\ExecuteCommand;
+    use ncc\CLI\Commands\ExtractCommand;
+    use ncc\CLI\Commands\InspectCommand;
+    use ncc\CLI\Commands\InstallCommand;
+    use ncc\CLI\Commands\ListPackagesCommand;
+    use ncc\CLI\Commands\ProjectCommand;
+    use ncc\CLI\Commands\RepositoryCommand;
+    use ncc\CLI\Commands\UninstallCommand;
+    use ncc\Libraries\OptsLib\Parse;
 
     class Main
     {
         /**
-         * @var array
-         */
-        private static $args;
-
-        /**
-         * @var array
-         */
-        private static $raw_args;
-
-        /**
-         * @var LogLevel|null
-         */
-        private static $log_level;
-
-        /**
-         * Executes the main CLI process
+         * The main execution point for ncc's command-line interface
          *
-         * @param array $argv
-         * @return int
+         * @param array $argv Command-line arguments to be passed on
+         * @return int The exit code
          */
-        public static function start(array $argv): int
+        public static function main(array $argv): int
         {
-            self::$args = Resolver::parseArguments(implode(' ', $argv));
-            self::$raw_args = $argv;
+            // Note, while this is the main execution pointer for the command-line interface, we should never use
+            // any exit calls here. Instead, we return exit codes to the caller so they can handle it appropriately.
 
-            if(!isset(self::$args['ncc-cli']))
+            // If the CLI definition isn't created, we assume we're not in CLI mode.
+            if(!defined('__NCC_CLI__'))
             {
-                Console::outError('No command specified, please verify your command and try again.', true, 1);
-                return 1;
-            }
-
-            // Initialize ncc
-            try
-            {
-                ncc::initialize();
-            }
-            catch (PathNotFoundException $e)
-            {
-                Console::outException('Cannot initialize ncc, one or more files were not found.', $e, 1);
-                return 1;
-            }
-            catch (Exception $e)
-            {
-                Console::outException('Cannot initialize ncc due to an unexpected error.', $e, 1);
-                return 1;
-            }
-
-            define('NCC_CLI_MODE', 1);
-            register_shutdown_function([ShutdownHandler::class, 'shutdown']);
-
-            if(isset(self::$args['l']) || isset(self::$args['log-level']))
-            {
-               self::$log_level = LogLevel::fromOrDefault(strtolower(self::$args['l'] ?? self::$args['log-level']));
-            }
-            else
-            {
-                self::$log_level = LogLevel::INFO;
-            }
-
-            if(self::$log_level->checkLogLevel(LogLevel::DEBUG))
-            {
-                Console::outDebug('Debug logging enabled');
-
-                /** @noinspection JsonEncodingApiUsageInspection */
-                Console::outDebug(sprintf('const: %s', json_encode(ncc::getConstants(), JSON_UNESCAPED_SLASHES)));
-
-                /** @noinspection JsonEncodingApiUsageInspection */
-                Console::outDebug(sprintf('args: %s', json_encode(self::$args, JSON_UNESCAPED_SLASHES)));
-            }
-
-            if(in_array(NccBuildFlags::UNSTABLE->value, NCC_VERSION_FLAGS, true))
-            {
-                Console::outWarning('This is an unstable build of ncc, expect some features to not work as expected');
-            }
-
-            if(in_array(NccBuildFlags::BETA->value, NCC_VERSION_FLAGS, true))
-            {
-                Console::outWarning('This is a beta build of ncc, expect some features to not work as expected');
-            }
-
-            if(isset(self::$args['version']))
-            {
-                self::displayVersion();
                 return 0;
             }
 
-            try
+            // Check for a CLI environment
+            if(php_sapi_name() !== 'cli')
             {
-                switch(strtolower(self::$args['ncc-cli']))
-                {
-                    default:
-                        Console::out('Unknown command ' . strtolower(self::$args['ncc-cli']));
-                        break;
-
-                    case 'setup':
-                        return SetupCommand::start(self::$args);
-
-                    case 'project':
-                        return ProjectMenu::start(self::$args);
-
-                    case 'build':
-                        return BuildCommand::start(self::$args);
-
-                    case 'ins':
-                        return PackageInspectorCommand::start(self::$args);
-
-                    case 'exec':
-                        return ExecCommand::start(self::$args);
-
-                    case 'cred':
-                        return CredentialMenu::start(self::$args);
-
-                    case 'pkg':
-                    case 'package':
-                        return PackageManagerMenu::start(self::$args);
-
-                    case 'config':
-                        return ConfigMenu::start(self::$args);
-
-                    case 'repo':
-                    case 'repository':
-                        return RepositoryMenu::start(self::$args);
-
-                    case 'version':
-                        return self::displayVersion();
-
-                    case '1':
-                    case 'help':
-                        return HelpMenu::start(self::$args);
-                }
-            }
-            catch(Exception $e)
-            {
-                Console::outException($e->getMessage(), $e, 1);
+                Console::out('This program can only be run from the command line.' . PHP_EOL);
                 return 1;
             }
 
+            ShutdownHandler::register();
+            $argv = Parse::parseArgument($argv);
+
+            // Check for global --no-cache flag
+            if(isset($argv['no-cache']))
+            {
+                Cache::disable();
+            }
+
+            if(isset($argv['project']))
+            {
+                return ProjectCommand::handle($argv);
+            }
+            elseif(isset($argv['build']))
+            {
+                return BuildCommand::handle($argv);
+            }
+            elseif(isset($argv['authenticate']) || isset($argv['auth']))
+            {
+                return AuthenticationCommand::handle($argv);
+            }
+            elseif(isset($argv['inspect']) || isset($argv['ins']))
+            {
+                return InspectCommand::handle($argv);
+            }
+            elseif(isset($argv['install']))
+            {
+                return InstallCommand::handle($argv);
+            }
+            elseif(isset($argv['uninstall']))
+            {
+                return UninstallCommand::handle($argv);
+            }
+            elseif(isset($argv['extract']) || isset($argv['ext']))
+            {
+                return ExtractCommand::handle($argv);
+            }
+            elseif(isset($argv['execute']) || isset($argv['exec']) || isset($argv['exe']))
+            {
+                return ExecuteCommand::handle($argv);
+            }
+            elseif(isset($argv['repository']) || isset($argv['repo']))
+            {
+                return RepositoryCommand::handle($argv);
+            }
+            elseif(isset($argv['list']) || isset($argv['ls']))
+            {
+                return ListPackagesCommand::handle($argv);
+            }
+            elseif(isset($argv['version']) || isset($argv['v']))
+            {
+                self::version();
+                return 0;
+            }
+            elseif(isset($argv['help']) || isset($argv['h']))
+            {
+                self::help($argv['help'] ?? $argv['h'] ?? null);
+                return 0;
+            }
+
+            self::help();
             return 0;
         }
 
         /**
-         * Displays the current version of ncc
+         * Prints out the version information for ncc
          *
-         * @return int
+         * @return void
          */
-        private static function displayVersion(): int
+        private static function version(): void
         {
-            Console::out(sprintf('ncc version %s (%s)', NCC_VERSION_NUMBER, NCC_VERSION_BRANCH));
-            return 0;
+            Console::out(sprintf("ncc v%s build %s", __NCC_VERSION__, __NCC_BUILD__));
         }
 
         /**
-         * Returns the arguments passed to ncc
+         * Prints out the help menu for the command-line interface
          *
-         * @return array
+         * @param string|true|null $command The command to get help information about
+         * @return void
          */
-        public static function getArgs(): array
+        private static function help(string|null|true $command=null): void
         {
-            if (self::$args === null)
+            if($command === null || $command === true)
             {
-                /** @noinspection IssetArgumentExistenceInspection */
-                if(isset($argv))
-                {
-                    self::$args = Resolver::parseArguments(implode(' ', $argv));
-                }
-                else
-                {
-                    self::$args = [];
-                }
+                Console::out(sprintf('ncc - Nosial Code Compiler v%s', __NCC_VERSION__));
+                Console::out('Usage: ncc [command] [options]' . PHP_EOL);
+                Console::out('Commands:');
+                Console::out('  project           Manage ncc projects (create, validate, convert, apply templates)');
+                Console::out('  build             Build a project into an ncc package');
+                Console::out('  install           Install an ncc package from file or repository');
+                Console::out('  uninstall         Uninstall an installed ncc package');
+                Console::out('  execute           Execute an installed ncc package');
+                Console::out('  inspect           Display information about an ncc package');
+                Console::out('  extract           Extract package contents to a directory');
+                Console::out('  authenticate      Manage authentication entries for repositories');
+                Console::out('  repository        Manage package repositories');
+                Console::out('  list              List all installed ncc packages');
+                Console::out(PHP_EOL . 'Options:');
+                Console::out('  --version, -v     Display version information');
+                Console::out('  --help, -h        Display this help message');
+                Console::out('  --no-cache        Disable caching for this execution');
+                Console::out(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.');
+                return;
             }
 
-            return self::$args;
-        }
-
-        /**
-         * Returns the raw arguments passed to ncc
-         *
-         * @return array
-         */
-        public static function getRawArgs(): array
-        {
-            return self::$raw_args;
-        }
-
-        /**
-         * @return LogLevel
-         */
-        public static function getLogLevel(): LogLevel
-        {
-            if(self::$log_level === null)
+            switch(strtolower($command))
             {
-                self::$log_level = LogLevel::INFO;
-            }
+                case 'project':
+                    ProjectCommand::help();
+                    break;
 
-            return self::$log_level;
+                case 'build':
+                    BuildCommand::help();
+                    break;
+
+                case 'inspect':
+                case 'ins':
+                    InspectCommand::help();
+                    break;
+
+                case 'install':
+                    InstallCommand::help();
+                    break;
+
+                case 'uninstall':
+                    UninstallCommand::help();
+                    break;
+
+                case 'execute':
+                case 'exec':
+                case 'exe':
+                    ExecuteCommand::help();
+                    break;
+
+                case 'extract':
+                case 'ext':
+                    ExtractCommand::help();
+                    break;
+
+                case 'authenticate':
+                case 'auth':
+                    AuthenticationCommand::help();
+                    break;
+
+                case 'repository':
+                case 'repo':
+                    RepositoryCommand::help();
+                    break;
+
+                case 'list':
+                case 'ls':
+                    ListPackagesCommand::help();
+                    break;
+
+                default:
+                    Console::out('No help available for command ' . $command);
+                    break;
+            }
         }
     }

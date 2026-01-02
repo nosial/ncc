@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="Installer Source files" pattern="file:src/installer/extension||file:src/installer/generate_build_files.php||file:src/installer/hash_check.php||file:src/installer/installer" />
-</component>

@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="Symfony\Process" pattern="file[Nosial Code Compiler]:src/ncc/ThirdParty/Symfony/Process//*" />
-</component>

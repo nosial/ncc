@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright (c) Nosial 2022-2023, all rights reserved.
+    /*
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
@@ -20,20 +20,15 @@
  *
  */
 
-namespace ncc\Exceptions;
+    namespace ncc\Exceptions;
 
     use Exception;
-    use ncc\Enums\ExceptionCodes;
     use Throwable;
 
     class IOException extends Exception
     {
-        /**
-         * @param string $message
-         * @param Throwable|null $previous
-         */
-        public function __construct(string $message = "", ?Throwable $previous = null)
+        public function __construct(string $message = "", int $code = 0, ?Throwable $previous = null)
         {
-            parent::__construct($message, ExceptionCodes::IO_EXCEPTION->value, $previous);
+            parent::__construct($message, $code, $previous);
         }
     }

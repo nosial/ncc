@@ -1,161 +1,208 @@
 <?php
-
-    /** @noinspection PhpMissingFieldTypeInspection */
-
     /*
-     * Copyright (c) Nosial 2022-2023, all rights reserved.
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
-     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-     *  conditions:
-     *
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
-     *  of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     *  DEALINGS IN THE SOFTWARE.
-     *
-     */
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     namespace ncc\Classes;
 
     use Exception;
-    use ncc\Classes\BashExtension\BashRunner;
-    use ncc\Classes\NccExtension\ConstantCompiler;
-    use ncc\Classes\PhpExtension\PhpRunner;
-    use ncc\Enums\Runners;
-    use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\IntegrityException;
-    use ncc\Exceptions\IOException;
-    use ncc\Exceptions\NotSupportedException;
+    use ncc\Enums\ExecutionMode;
+    use ncc\Enums\ExecutionUnitType;
+    use ncc\Enums\MacroVariable;
     use ncc\Exceptions\OperationException;
-    use ncc\Extensions\ZiProto\ZiProto;
-    use ncc\Objects\Package\ExecutionUnit;
-    use ncc\ThirdParty\Symfony\Process\ExecutableFinder;
-    use ncc\ThirdParty\Symfony\Process\Process;
-    use ncc\Utilities\IO;
+    use ncc\Libraries\Process\ExecutableFinder;
+    use ncc\Libraries\Process\Process;
+    use ncc\Objects\Project\ExecutionUnit;
+    use RuntimeException;
 
     class ExecutionUnitRunner
     {
         /**
-         * Constructs and returns a process object based off the Execution Unit
+         * Executes the unit directly using the project's source files
          *
-         * @param ExecutionUnit $unit
-         * @param array $args
-         * @return Process
-         * @throws NotSupportedException
+         * @param string $projectPath The project path where the configuration is located.
+         * @param ExecutionUnit $unit The execution unit to run.
+         * @return int The exit code of the executed unit.
          */
-        public static function constructProcess(ExecutionUnit $unit, array $args=[]): Process
+        public static function fromSource(string $projectPath, ExecutionUnit $unit): int
         {
-            $bin = match($unit->getExecutionPolicy()->getRunner())
+            Logger::getLogger()->debug(sprintf('Executing unit from source: %s (type: %s)', $unit->getName(), $unit->getType()->value));
+            
+            // Check if all the required files are available
+            foreach($unit->getRequiredFiles() as $requiredFile)
             {
-                Runners::PHP->value => (new ExecutableFinder())->find('php'),
-                Runners::BASH->value => (new ExecutableFinder())->find('bash'),
-                Runners::PYTHON->value => (new ExecutableFinder())->find('python'),
-                Runners::LUA->value => (new ExecutableFinder())->find('lua'),
-                Runners::PERL->value => (new ExecutableFinder())->find('perl'),
-
-                default => throw new NotSupportedException(sprintf('The execution policy %s is not supported because it uses the %s runner', $unit->getExecutionPolicy()->getName(), $unit->getExecutionPolicy()->getRunner()))
-            };
-
-            $process = new Process(array_merge([$bin], $args, $unit->getExecutionPolicy()->getExecute()->getOptions()));
-            $process->setWorkingDirectory(ConstantCompiler::compileRuntimeConstants($unit->getExecutionPolicy()->getExecute()->getWorkingDirectory()));
-            $process->setEnv($unit->getExecutionPolicy()->getExecute()->getEnvironmentVariables());
-
-            if($unit->getExecutionPolicy()->getExecute()->isTty())
-            {
-                $process->setTty(true);
+                Logger::getLogger()->verbose(sprintf('Checking required file: %s', $requiredFile));
+                if(!IO::exists($projectPath . DIRECTORY_SEPARATOR . $requiredFile))
+                {
+                    throw new OperationException(sprintf('The execution unit %s is missing the required file %s', $unit->getName(), $projectPath . DIRECTORY_SEPARATOR . $requiredFile));
+                }
             }
 
-            if($unit->getExecutionPolicy()->getExecute()->getTimeout() !== null)
+            // If we're executing a PHP unit, we verify if the PHP file exists in the source before executing it.
+            if($unit->getType() === ExecutionUnitType::PHP)
             {
-                $process->setTimeout($unit->getExecutionPolicy()->getExecute()->getTimeout());
+                $entryPointPath = $projectPath . DIRECTORY_SEPARATOR . $unit->getEntryPoint();
+                Logger::getLogger()->debug(sprintf('PHP execution unit entry point: %s', $entryPointPath));
+                
+                if(!IO::exists($entryPointPath))
+                {
+                    throw new OperationException(sprintf('The execution unit %s entrypoint %s does not exist', $unit->getName(), $entryPointPath));
+                }
+
+                // We're going to execute the PHP file using the current PHP binary.
+                $phpPath = self::findBin('php'); // We assume 'php' is in the system PATH since we're running this script. (Wow, such confidence!)
+                Logger::getLogger()->verbose(sprintf('Using PHP binary: %s', $phpPath));
+                $process = new Process(array_merge([$phpPath, $entryPointPath], $unit->getArguments() ?? []));
+            }
+            // Otherwise, if it's a system unit, we look for the binary in the system PATH.
+            elseif($unit->getType() === ExecutionUnitType::SYSTEM)
+            {
+                Logger::getLogger()->debug(sprintf('Looking for system binary: %s', $unit->getEntryPoint()));
+                // Find the binary in the system PATH.
+                $entryPointPath = self::findBin($unit->getEntryPoint());
+                if($entryPointPath === null)
+                {
+                    // Binary not found, throw an exception.
+                    throw new OperationException(sprintf('The execution unit %s entrypoint %s could not be found in system PATH', $unit->getName(), $unit->getEntryPoint()));
+                }
+                
+                Logger::getLogger()->verbose(sprintf('Found system binary at: %s', $entryPointPath));
+
+                // Create the process with the found binary and arguments.
+                $process = new Process(array_merge([$entryPointPath], $unit->getArguments() ?? []));
             }
             else
             {
-                $process->setTimeout(null);
+                // In every other case, we throw an exception since we don't know how to handle it :(
+                throw new OperationException(sprintf('Cannot execute unit type %s', $unit->getType()->value));
             }
 
-            if($unit->getExecutionPolicy()->getExecute()->getIdleTimeout() !== null)
+            // If all goes well, we apply the configuration from the unit to the process.
+            Logger::getLogger()->debug('Applying process configuration');
+            $process = self::applyProcessConfig($process, $unit);
+
+            try
             {
-                $process->setIdleTimeout($unit->getExecutionPolicy()->getExecute()->getIdleTimeout());
+                Logger::getLogger()->verbose(sprintf('Executing unit %s...', $unit->getName()));
+                $process->run();
             }
-            else
+            catch(RuntimeException $e)
             {
-                $process->setIdleTimeout(null);
+                Logger::getLogger()->error(sprintf('Execution unit %s failed to execute: %s', $unit->getName(), $e->getMessage()));
+            }
+            finally
+            {
+                Logger::getLogger()->verbose(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
+                return $process->getExitCode();
+            }
+        }
+
+        public static function executeFromDistribution(ExecutionUnit $unit, PackageReader $packageReader): int
+        {
+            // TODO: Complete this method to execute from distribution packages.
+            throw new Exception('The method is not yet implemented');
+        }
+
+        /**
+         * Applies the configuration from the ExecutionUnit to the Process instance.
+         *
+         * @param Process $process The process to configure.
+         * @param ExecutionUnit $unit The execution unit containing the configuration.
+         * @return Process The configured process.
+         */
+        private static function applyProcessConfig(Process $process, ExecutionUnit $unit): Process
+        {
+            Logger::getLogger()->debug(sprintf('Configuring process for unit: %s (mode: %s)', $unit->getName(), $unit->getMode()->value));
+            
+            // Set environment variables
+            $env = $unit->getEnvironment();
+            if($env !== null)
+            {
+                Logger::getLogger()->verbose(sprintf('Setting %d environment variables', count($env)));
+                $process->setEnv($env);
+            }
+
+            // Set working directory
+            $workingDirectory = MacroVariable::fromInput($unit->getWorkingDirectory());
+            if(!empty($workingDirectory))
+            {
+                Logger::getLogger()->verbose(sprintf('Setting working directory: %s', $workingDirectory));
+                $process->setWorkingDirectory($workingDirectory);
+            }
+
+            switch($unit->getMode())
+            {
+                case ExecutionMode::TTY:
+                    if(!Process::isTtySupported())
+                    {
+                        Logger::getLogger()->warning(sprintf('The execution unit %s requested TTY mode, but it is not supported on this platform. Falling back to PIPE mode.', $unit->getName()));
+                        $process->setTty(false);
+                    }
+                    else
+                    {
+                        $process->setTty(true);
+                    }
+                    break;
+
+                case ExecutionMode::PTY:
+                    if(!Process::isPtySupported())
+                    {
+                        Logger::getLogger()->warning(sprintf('The execution unit %s requested PTY mode, but it is not supported on this platform. Falling back to PIPE mode.', $unit->getName()));
+                        $process->setPty(false);
+                    }
+                    else
+                    {
+                        $process->setPty(true);
+                    }
+                    break;
+
+                case ExecutionMode::AUTO:
+                    // AUTO mode tries to use TTY/PTY if available, otherwise falls back to PIPE.
+                    if(Process::isTtySupported())
+                    {
+                        $process->setTty(true);
+                    }
+                    elseif(Process::isPtySupported())
+                    {
+                        $process->setPty(true);
+                    }
+                    else
+                    {
+                        $process->setTty(false);
+                        $process->setPty(false);
+                    }
+                    break;
             }
 
             return $process;
         }
 
         /**
-         * Executes a ExecutionUnit locally on the system
+         * Finds the full path of an executable in the system PATH.
          *
-         * @param string $package_path
-         * @param string $policy_name
-         * @param array $args
-         * @return int
-         * @throws IOException
-         * @throws OperationException
+         * @param string $name The name of the executable.
+         * @return string|null The full path to the executable, or null if not found.
          */
-        public static function executeFromSystem(string $package_path, string $policy_name, array $args=[]): int
+        private static function findBin(string $name): ?string
         {
-            $unit_path = $package_path . DIRECTORY_SEPARATOR . 'units' . DIRECTORY_SEPARATOR . $policy_name . '.unit';
-
-            if(!is_file($unit_path))
-            {
-                throw new IOException(sprintf('The execution policy %s does not exist in the package %s (%s)', $policy_name, $package_path, $unit_path));
-            }
-
-            try
-            {
-                $execution_unit = ExecutionUnit::fromArray(ZiProto::decode(IO::fread($unit_path)));
-                return match ($execution_unit->getExecutionPolicy()->getRunner())
-                {
-                    Runners::PHP->value => PhpRunner::executeUnit($execution_unit, $args),
-                    Runners::BASH->value => BashRunner::executeUnit($execution_unit, $args),
-                    default => throw new NotSupportedException(sprintf('The execution policy %s is not supported because it uses the %s runner', $execution_unit->getExecutionPolicy()->getName(), $execution_unit->getExecutionPolicy()->getRunner())),
-                };
-            }
-            catch(Exception $e)
-            {
-                throw new OperationException(sprintf('There was an error executing the execution policy %s: %s', $policy_name, $e->getMessage()), $e);
-            }
+            return (new ExecutableFinder())->find($name);
         }
 
-        /**
-         * Executes the execution policy directly from a package (if supported) and returns the exit code
-         *
-         * @param PackageReader $package_reader
-         * @param string $policy_name
-         * @param array $args
-         * @return int
-         * @throws ConfigurationException
-         * @throws OperationException
-         * @throws IntegrityException
-         */
-        public static function executeFromPackage(PackageReader $package_reader, string $policy_name, array $args=[]): int
-        {
-            $execution_unit = $package_reader->getExecutionUnit($policy_name);
-
-            try
-            {
-                return match ($execution_unit->getExecutionPolicy()->getRunner())
-                {
-                    Runners::PHP->value => PhpRunner::executeUnit($execution_unit, $args, false),
-                    Runners::BASH->value => BashRunner::executeUnit($execution_unit, $args),
-                    default => throw new NotSupportedException(sprintf('The execution policy %s is not supported because it uses the %s runner', $execution_unit->getExecutionPolicy()->getName(), $execution_unit->getExecutionPolicy()->getRunner())),
-                };
-            }
-            catch(Exception $e)
-            {
-                throw new OperationException(sprintf('There was an error executing the execution policy from a package %s: %s', $policy_name, $e->getMessage()), $e);
-            }
-        }
     }

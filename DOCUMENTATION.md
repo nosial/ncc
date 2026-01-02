@@ -1,1682 +1,1046 @@
-# ncc Documentation
+# Nosial Code Compiler
 
-This document serves the purpose of presenting the documentation for using/developing ncc, from basic installation,
-basic usage, standards, and much more.
+Nosial Code Compiler (ncc) is a program written in PHP that assists with the process of compiling PHP projects into
+self-contained packages, ncc designed to replace composer as a package manager while offering additional runtime
+capabilities to improve the development process of php projects.
 
 ## Table of contents
 
 <!-- TOC -->
-* [ncc Documentation](#ncc-documentation)
+* [Nosial Code Compiler](#nosial-code-compiler)
   * [Table of contents](#table-of-contents)
   * [Introduction](#introduction)
-    * [What is ncc?](#what-is-ncc)
-    * [How does ncc work?](#how-does-ncc-work)
-    * [What do I need to use ncc?](#what-do-i-need-to-use-ncc)
-    * [How do I get started?](#how-do-i-get-started)
-* [Building & installing ncc](#building--installing-ncc)
-  * [Building from source](#building-from-source)
-    * [Requirements to build](#requirements-to-build)
-    * [Installing phpab](#installing-phpab)
-    * [Building ncc](#building-ncc)
-      * [Redist](#redist)
-      * [Tar](#tar)
-      * [Debian](#debian)
-  * [Building ncc for docker](#building-ncc-for-docker)
+  * [ncc packages](#ncc-packages)
+    * [Difference between ncc and phar archives](#difference-between-ncc-and-phar-archives)
+    * [Package Naming Convention](#package-naming-convention)
+    * [Binary Structure](#binary-structure)
+      * [A0 - Start Package](#a0---start-package)
+      * [A1 - Package Version](#a1---package-version)
+      * [A2 - Header](#a2---header)
+      * [A3 - Assembly Information](#a3---assembly-information)
+      * [A4 - Execution Units](#a4---execution-units)
+      * [A5 - Components](#a5---components)
+      * [A6 - Resources](#a6---resources)
+      * [Compression](#compression)
+    * [Reading compiled ncc packages](#reading-compiled-ncc-packages)
+    * [Filesystem Permissions](#filesystem-permissions)
+  * [Building ncc](#building-ncc)
+    * [Producing a phar build](#producing-a-phar-build)
+    * [Producing a regular build](#producing-a-regular-build)
+    * [Preparing dependencies](#preparing-dependencies)
   * [Installing ncc](#installing-ncc)
-    * [Command line arguments](#command-line-arguments)
-  * [Uninstalling ncc](#uninstalling-ncc)
-* [Helpful Information](#helpful-information)
-  * [Package Naming](#package-naming)
-  * [Remote Package Syntax (RPS)](#remote-package-syntax-rps)
-  * [ncc Binary Package](#ncc-binary-package)
-    * [Package Header](#package-header)
-    * [Package Data](#package-data)
-  * [How to build binary executable files](#how-to-build-binary-executable-files)
-    * [How are they compiled?](#how-are-they-compiled)
-    * [Can I adjust the compiler process?](#can-i-adjust-the-compiler-process)
-    * [What does an executable build configuration look like?](#what-does-an-executable-build-configuration-look-like)
-* [ncc cli](#ncc-cli)
-  * [Project Management (project)](#project-management-project)
-    * [Creating a new project (create)](#creating-a-new-project-create)
-    * [Applying Templates (template)](#applying-templates-template)
-      * [phpcli template](#phpcli-template)
-      * [phplib template](#phplib-template)
-    * [Install Dependencies (install)](#install-dependencies-install)
-  * [Package Management (package or pkg)](#package-management-package-or-pkg)
-    * [Listing Installed Packages (list)](#listing-installed-packages-list)
-    * [Installing Packages (install)](#installing-packages-install)
-    * [Uninstalling Packages (uninstall)](#uninstalling-packages-uninstall)
-    * [Uninstalling All Packages (uninstall-all)](#uninstalling-all-packages-uninstall-all)
-    * [Fix Broken Packages (fix-broken)](#fix-broken-packages-fix-broken)
-  * [Credentials Management (cred)](#credentials-management-cred)
-    * [Adding a credential (add)](#adding-a-credential-add)
-    * [Removing a credential (remove)](#removing-a-credential-remove)
-    * [Listing credential entries (list)](#listing-credential-entries-list)
-  * [Managing Repositories (repository or repo)](#managing-repositories-repository-or-repo)
-    * [Adding a repository (add)](#adding-a-repository-add)
-    * [Removing a repository (remove)](#removing-a-repository-remove)
-    * [Listing repositories (list)](#listing-repositories-list)
-  * [Inspecting a package (ins)](#inspecting-a-package-ins)
-    * [Package Information (info)](#package-information-info)
-    * [Package Headers (headers)](#package-headers-headers)
-    * [Package Metadata (metadata)](#package-metadata-metadata)
-    * [Assembly Information (assembly)](#assembly-information-assembly)
-    * [Package Dependencies (dependencies)](#package-dependencies-dependencies)
-    * [Execution Units (execution_units)](#execution-units-execution_units)
-  * [Building Projects (build)](#building-projects-build)
-  * [Execute (exec)](#execute-exec)
-* [Project Configuration (package.json)](#project-configuration-packagejson)
-  * [Root Section](#root-section)
-    * [Project (object)](#project-object)
-      * [Compiler (object)](#compiler-object)
-      * [UpdateSource (object)](#updatesource-object)
-        * [Repository (object)](#repository-object)
-    * [Assembly (object)](#assembly-object)
-    * [Build (object)](#build-object)
-      * [Dependency (Object)](#dependency-object)
-      * [BuildConfiguration (Object)](#buildconfiguration-object)
-    * [ExecutionPolicy (object)](#executionpolicy-object)
-      * [Execute (object)](#execute-object)
+  * [Runtime Environment](#runtime-environment)
+    * [Modes](#modes)
+    * [Stream wrapper and autoloading](#stream-wrapper-and-autoloading)
+    * [Importing packages](#importing-packages)
+      * [Signature](#signature)
+      * [Behavior](#behavior)
+      * [Version selection](#version-selection)
+      * [Examples](#examples)
+  * [Build Types](#build-types)
+    * [ncc](#ncc)
+    * [php](#php)
+    * [phar](#phar)
+  * [Project Configuration](#project-configuration)
+    * [Project Conversion](#project-conversion)
+    * [Creating a project from scratch](#creating-a-project-from-scratch)
+    * [Macro Variables](#macro-variables)
+    * [Project Structure (root)](#project-structure-root)
+    * [PackageSource Object](#packagesource-object)
+    * [RepositoryConfiguration Object](#repositoryconfiguration-object)
+    * [Assembly Object](#assembly-object)
+    * [ExecutionUnit Object](#executionunit-object)
+    * [BuildConfiguration Object](#buildconfiguration-object)
+  * [Building Projects](#building-projects)
+  * [Repository Manager](#repository-manager)
+    * [Adding a repository](#adding-a-repository)
+    * [Deleting a repository](#deleting-a-repository)
+    * [Listing repositories](#listing-repositories)
+  * [Package Manager](#package-manager)
+    * [Remote Package Format](#remote-package-format)
+    * [Installing a package](#installing-a-package)
+    * [Uninstalling a package](#uninstalling-a-package)
+    * [Listing installed packages](#listing-installed-packages)
+    * [Updating packages](#updating-packages)
 <!-- TOC -->
-
-
-------------------------------------------------------------------------------------------------------------------------
-
 
 ## Introduction
 
-This section serves the basic introduction of ncc, what it's used for and how you can use it in your own projects or use 
-it to run and build other projects that are designed to be used with ncc. 
+`ncc` is both a runtime extension for php and a command-line tool, upon installing ncc the `ncc` runtime environment
+is made available to your PHP environment simply by using the `require 'ncc';` statement, additional global functions are
+provided to allow you to import packages from ncc's package manager or directly from a ncc package file.
+
+## ncc packages
+
+ncc provides its own package format that can only be parsed by ncc, php does not support ncc packages natively but ncc
+projects has the ability to produce a self-contained statically built phar output if needed. This part of the
+documentation will explain what a ncc package is, how the internal structures work and how it's intended to be used and
+it's differences between a standard php `phar` archive file.
 
 
-### What is ncc?
+### Difference between ncc and phar archives
 
-ncc (*Acronym for **N**osial **C**ode **C**ompiler*) is a multipurpose compiler, package manager and toolkit. Allowing 
-projects to be managed and built more easily without having to mess with all the traditional tools that comes with your 
-language of choice. Right now ncc only supports PHP as it's written in PHP but extensions for other languages/frameworks
-can be built into the software in the future when the need comes for it.
+ncc package files are designed to be compiled based off a ncc project configuration, a ncc project configuration dictates
+properties and options of how a php project should be compiled just like how composer `composer.json` files operatate.
+The major difference is how the files are read in-memory, to avoid execessive memory usage or unnecessary CPU cycles being
+wasted in parsing the package, ncc packages are lazily-loaded which means only parts of the files are read initially and
+everything else that's needed afterward are accessed when needed.
 
-ncc can make the process of building your code into a redistributable package much more efficient by treating each 
-building block of your project as a component that is interconnected in your environment instead of the more popular 
-route taken by package/dependency managers such as [composer](https://getcomposer.org/) which attempts to copy what [npm](https://www.npmjs.com/) does but for
-PHP, which is not a bad thing, but it's not the best approach for PHP and its ecosystem.
-
-
-### How does ncc work?
-
-ncc's command-line interface serves as the central hub for managing your projects and packages. This CLI empowers you to
-perform tasks like project creation, package installation, and project building.
-
-When you compile your project, it generates a "ncc package" file with a ".ncc" extension. This unique file consolidates
-all essential project files, including the utilized components. Optionally, you have the flexibility to create a static
-version of your project that contains all dependencies and components, simplifying deployment and execution across
-different machines through a single file.
-
-ncc harnesses these packages to install its dependencies and components globally, akin to how Composer installs packages
-into a project's vendor directory. However, in ncc's case, it installs them into a global directory accessible to other
-projects. Moreover, ncc can retrieve packages from various remote sources, including GitHub, GitLab, Gitea, and even 
-Packagist. If ncc cannot locate a specific ncc package for a dependency or package, it will attempt to build it from 
-source using the package's source code. Additionally, ncc features a compatibility layer for Composer packages, enabling 
-you to install them without needing to install or use Composer itself.
-
-You can imagine ncc as apt-get for PHP, but with a few extra features that make it more powerful and flexible.
+Unlike phar files, phar files are loaded entirely into memory which causes a very noticable delay when atttempting to
+execute or include a phar file into the PHP during runtime. By eliminating the "zip" arcihve structure and simply compressing
+the package contents if necessary. We access contents of the package during runtime only when needed to reduce the need to
+parse the entire package, especially for cases where a project may be big and complex.
 
 
-### What do I need to use ncc?
+### Package Naming Convention
 
-ncc is a command-line tool, so you will need to be familiar with using the command-line interface. You will also need to
-have PHP 8.0+ installed on your machine, along with the following PHP extensions:
+Package names serve as a unique identifier for packages within ncc's package manager and runtime environment, in ncc
+they follow a reverse domain name notation similar to Java package naming conventions. This format helps ensure
+uniqueness and clarity in package identification. A package name consists of multiple segments separated by dots (`.`),
+where each segment represents a level in the namespace hierarchy. For example:
 
-- php-mbstring
-- php-ctype
-- php-common (covers tokenizer & posix among others)
-- php-zip
+- `com.example.library`: A package named "library" under the "example" domain owned by "com".
+- `org.opensource.project.module`: A package named "module" under the "project" owned by "opensource" under the "org"
 
-These extensions are required for ncc to function properly, if you don't have these extensions installed, ncc may not
-work correctly or may suffer from performance issues. For instance, `php-ctype` & `php-mbstring` are required for ncc
-however, they will still work without them thanks to Symfony's polyfill library, but it's recommended to install the
-extensions for better performance.
+For compatibility with existing packages such as composer packages, ncc converts hyphenated package names into dot
+notation by replacing hyphens (`-`) with underscores (`_`). This allows for seamless integration of packages from other
+ecosystems while adhering to ncc's naming conventions. For example:
+
+- `monolog/monolog` becomes `com.monolog.monolog`
+- `league/oauth2-client` becomes `com.league.oauth2_client`
+
+### Binary Structure
+
+The ncc package structure is a simple yet effective rules of basic structure of a binary package, essentially a ncc
+package consits of multiple sections seperated by clear terminators. In this part of the documentation we're going to
+refer to most of the parts of the internal package structure in a hex representation for simplicity 
+
+Package structures are sperated by the hex value `A*`"starting from 0 until `9`, if `9` is to be exceeded, the next
+letter in the alphabet is used, currently in this implementation we have not gone as far as that to have to use another
+differance in it's hex values.
+
+ - `A0` - Start Package
+ - `A1` - Package Version
+ - `A2` - Header
+ - `A3` - Assembly Information
+ - `A4` - Execution Units
+ - `A5` - Components
+ - `A6` - Resources
+
+Each section contains ends in a termination byte which is `E0 E0` or `E1` for soft termination, the diffence between
+the two is normal termination (`EO EO`) means the entire section is ended, which is one of the `A*` sections above,
+`E1` means part of that data section is terminated, which indicates additional entries of the same section exists, this
+only applies to sections such as "Execution Units", "Components" or "Resources" where more than one data entry may exist.
+
+An ncc package's entry will always begin with `A0` followed by `4E 43 43 50 48 47` which essentially becomes "NCCPKG"
+in ASCII characters, this section is immediately followed by `A1` which is the package structure version to indicate
+if this is a differnet version of the package structure that the package reader must account for, the ASCII string
+followed by the `A1` byte is a 4-character string indicating the version number of the package structure starting from
+version `1000`, future iterations will increment this ASCII number to represnet that the package includes in-compatible
+changes with the previous version.
+
+If an ncc package is embedded into another file type while retaining the exact bytes of the ncc package structure, the
+package reader will be able to locate the `A0` section and read the package normally as long as the bytes are not altered
+or corrupted. This is useful in cases where a ncc package may be embedded in an executable package or even a regular php
+file where __halt_compiler()__ is used to embed the ncc package at the end of the php file.
+
+#### A0 - Start Package
+
+The `A0` section marks the beginning of the ncc package. It contains a fixed ASCII signature that identifies the file
+as a ncc package. This dictates the start of the package structure. The following bytes represent the signature,
+
+![a0](assets/a0.png "[A0][4E 43 43 50 48 47]")
+
+When the package reader encounters the `A0` byte (`\xA0`), it reads the next 6 bytes and verifies that they match the
+ASCII string "NCCPKG". If the signature does not match, the reader will throw an error indicating that the file is not
+a valid ncc package.
 
 
-### How do I get started?
+#### A1 - Package Version
 
-[RTFM](https://en.wikipedia.org/wiki/RTFM), this documentation is a good place to start, it covers everything you need
-to know about ncc and how to use it.
+The `A1` section contains the package structure version number as a 4-character ASCII string. This version number is
+separate from the project version and specifically identifies which version of the binary package format is being used.
+
+**Binary Structure:**
+
+![a1](assets/a1.png "[A1][31 30 30 30]")
+
+**Parsing:**
+When the package reader encounters the `A1` byte (`\xA1`), it reads the next 4 bytes as an ASCII string representing
+the version number. The version starts at is `1000`. This allows ncc to support future package format changes while
+maintaining backwards compatibility or providing clear error messages when encountering incompatible formats.
+
+#### A2 - Header
+
+The `A2` section contains the package header, which stores metadata and configuration information about the package. The
+header is serialized using MessagePack format for efficient binary encoding. This part of the package is never compressed
+even if the package contents are compressed so that the reader can always access the header information and determine if
+the rest of the package is compressed.
+
+**Binary Structure:**
+
+![a2](assets/a2.png "[A2][SIZE][E1][MSGPACK_DATA][E0 E0]")
 
 
-------------------------------------------------------------------------------------------------------------------------
+**Parsing:**
+1. The reader encounters the `A2` byte (`\xA2`)
+2. Reads the size prefix (platform-dependent long integer in little-endian)
+3. Expects a soft terminator (`E1` / `\xE1`)
+4. Reads the MessagePack-encoded header data
+5. Expects a full terminator (`E0 E0` / `\xE0\xE0`) to end the section
+
+**Header Contents:**
+The header contains:
+- **flags**: Array of package flags/features
+- **build_number**: Unique 8-byte identifier for this build
+- **statically_linked**: Boolean indicating if dependencies are embedded
+- **entry_point**: Name of the main execution unit to run
+- **web_entry_point**: Entry point for web/HTTP requests
+- **pre_install**: Execution unit(s) to run before installation
+- **post_install**: Execution unit(s) to run after installation
+- **defined_constants**: Key-value pairs of constants to define at runtime
+- **dependency_references**: Array of package dependencies
+- **update_source**: Source location for package updates
+- **repositories**: Array of repository configurations
+- **autoloader**: Class-to-file mapping for PHP autoloading
+- **compressed**: Boolean indicating if package contents are compressed
+
+#### A3 - Assembly Information
+
+The `A3` section contains assembly metadata that identifies and describes the package. Like the header, it's serialized
+using MessagePack format.
+
+**Binary Structure:**
+
+![a3](assets/a3.png "[A3][SIZE][E1][MSGPACK_DATA][E0 E0]")
+
+**Parsing:**
+1. The reader encounters the `A3` byte (`\xA3`)
+2. Reads the size prefix
+3. Expects a soft terminator (`E1`)
+4. Reads the MessagePack-encoded assembly data
+5. Expects a full terminator (`E0 E0`) to end the section
+
+**Assembly Contents:**
+The assembly section contains:
+- **name**: The human-readable name of the project
+- **package**: The unique package identifier (e.g., `com.example.library`)
+- **version**: The semantic version number (e.g., `1.0.0`)
+- **url**: Project website URL (optional)
+- **license**: License identifier (e.g., `MIT`, `GPL-3.0`)
+- **description**: Project description text
+- **author**: Author name and contact information
+- **organization**: Organization or company name
+- **product**: Product name if part of a larger product line
+- **copyright**: Copyright notice
+- **trademark**: Trademark information
+
+#### A4 - Execution Units
+
+The `A4` section contains zero or more execution units. Execution units are executable components like CLI commands,
+scripts, or binaries that can be invoked by name. This section supports multiple entries.
+
+**Binary Structure:**
+
+![a4](assets/a4.png "[A4][NAME][E1][SIZE][E1][MSGPACK_DATA][E0 E0]...[NAME][E1][SIZE][E1][MSGPACK_DATA][E0 E0]")
+
+**Parsing:**
+1. The reader encounters the `A4` byte (`\xA4`)
+2. For each execution unit:
+   - Reads the name string until soft terminator (`E1`)
+   - Reads the size prefix
+   - Expects a soft terminator (`E1`)
+   - Stores the offset and size as a reference (lazy loading)
+   - Skips the data and expects terminator (`E0 E0`)
+3. Continues until reaching the next section marker or end of package
+
+**Execution Unit Contents:**
+Each execution unit contains:
+- **name**: Unique identifier for this execution unit
+- **type**: Type of executable (PHP, PYTHON, NODE, BINARY, SYSTEM)
+- **mode**: Execution mode (AUTO, CLI, WEB)
+- **entry**: Entry point path or command to execute
+- **working_directory**: Working directory for execution
+- **arguments**: Default arguments to pass
+- **environment**: Environment variables to set
+- **required_files**: Files that must exist for execution
+- **timeout**: Maximum execution time in seconds
+
+Execution units are lazily loaded - the reader only stores their location and size during initial parsing, and the full
+data is read and deserialized from MessagePack only when specifically requested.
+
+#### A5 - Components
+
+The `A5` section contains the PHP source code files that make up the package. Components are the actual executable code
+that gets loaded at runtime. This section supports multiple entries.
+
+**Binary Structure:**
+
+![a5](assets/a5.png "[A5][PATH][E1][SIZE][E1][DATA][E0 E0]...[PATH][E1][SIZE][E1][DATA][E0 E0]")
+
+**Parsing:**
+1. The reader encounters the `A5` byte (`\xA5`)
+2. For each component:
+   - Reads the path/name string until soft terminator (`E1`)
+   - Reads the size prefix
+   - Expects a soft terminator (`E1`)
+   - Stores the offset and size as a reference
+   - Skips the actual data and expects terminator (`E0 E0`)
+3. Continues until reaching the next section marker or end of package
+
+**Component Details:**
+Components are PHP source files stored with their relative path within the package structure. The path typically follows
+the package namespace structure. For example, a component for `\Library\Utils\Helper` would be stored with a
+path like `com.example.library/Utils/Helper.php`.
+
+The actual file contents may be compressed if the header's `compressed` flag is set. Components are lazily loaded to
+minimize memory usage - the full file content is only read when the component is actually required by the application.
+
+#### A6 - Resources
+
+The `A6` section contains non-code resources like configuration files, templates, images, or any other binary data
+needed by the package. This is the final section before package termination.
+
+**Binary Structure:**
+
+![a6](assets/a6.png "[A6][PATH][E1][SIZE][E1][DATA][E0 E0]...[PATH][E1][SIZE][E1][DATA][E0 E0]")
 
 
-# Building & installing ncc
+**Parsing:**
+1. The reader encounters the `A6` byte (`\xA6`)
+2. For each resource:
+   - Reads the resource path string until soft terminator (`E1`)
+   - Reads the size prefix
+   - Expects a soft terminator (`E1`)
+   - Stores the offset and size as a reference
+   - Skips the data and expects terminator (`E0 E0`)
+3. Continues until reaching end-of-section marker (`E0 E0`)
+4. After all resources, a final terminator marks the end of the package
 
-ncc must be built from source before it can be installed, this is because ncc is a PHP application and PHP applications
-are not compiled into machine code, instead, they are compiled into a redistributable source that can be installed on
-the machine. This includes the auto-loader files that ncc needs to locate its components and dependencies.
+**Resource Details:**
+Resources can be any type of file - text files, binary files, images, etc. They are stored with their full path as it
+should appear when extracted or accessed. Like components, resources may be compressed if the header flag indicates
+compression is enabled.
+
+Resources are also lazily loaded for efficiency. The package reader maintains an index of resource locations and only
+reads the actual data when the resource is requested by the application.
+
+#### Compression
+
+ncc packages support optional compression of the package contents (components and resources) to reduce file size, by
+default this is enabled unless explicitly disabled by the build configuration. Compression is applied using the `gzdeflate` algorithm.
+
+Note that only the contents of the package is compressed, the header and assembly sections are never compressed to
+ensure that the package reader can always access the necessary metadata to interpret the package structure.
+
+When reading a compressed package, the package reader will automatically decompress the contents on-the-fly when they
+are accessed, ensuring seamless access to package files without requiring manual decompression steps.
+
+### Reading compiled ncc packages
+
+ncc provides a class called `\ncc\Classes\PackageReader` which can be constructed using the file path of a pre-compiled
+ncc package, upon creating the object the class would have already initialized all the references to all the contents
+within the package without needing to load the entirty of the package into memory, when certain parts of the package is
+accessed, it is read and optionally decompressed using the active file stream on the fly.
+
+This class makes all the content and properties of a package acessisable but none of the contents can be altered without
+re-compiling the package, additionally the class provides a `extract(string $outputDirectory)` method which allows the
+contents of the package to be extracted to a local directory with an autoloader pre-generated so that the extracted
+package can immediately work out the box.
+
+ > Reading compiled ncc packages is not natively supported by ncc, requiring ncc to read & access ncc packages.
 
 
-## Building from source
+### Filesystem Permissions
 
-Building ncc from source is easy with very few requirements to start building. At the moment, ncc can only be debugged or
-tested by building a redistributable source and installing it.
+ncc has to store data in order to operate correctly, for example upon installation the installer will include default 
+repositories to be made availbale out of the box, the repositories are often necessary for most if not all packages to
+be installed correctly, as such ncc requires the ability to write this information to the filesystem, but among other
+pieces of data that ncc needs to store this is how ncc decides where to store this data; there are two permission scopes
+ncc can operate in, these are
 
-### Requirements to build
+ - User Scope
+ - System Scope
 
-- php8.0+
-- php-mbstring
-- php-ctype
-- php-common (covers tokenizer & posix among others)
-- make
-- phpab
-- tar *(optional)*
+A user scope is where ncc will store data in the current user's home directory, this is the default behavior of ncc, this
+ensures that ncc can operate without requiring elevated permissions, this is ideal for most use-cases where ncc is being used in a
+development environment or in scenarios where multiple users may be using the same system but do not have access to each other's data.
 
-For building different variants, such as building a debian package, you will need to install the required tools for that
-specific variant. For more information, check the [Makefile](Makefile) for the required tools for a specific variant.
+A system scope is where ncc will store data in a system-wide location, this often requires elevated permissions to write to these
+locations, but everyone else can access the data stored in these locations, this is ideal for scenarios where ncc is being used in a
+server environment or in scenarios where multiple users need to share the same ncc data.
 
-### Installing phpab
+These scopes are used to determine where data is written/read from, for instance, when running ncc under a normal user ncc will have
+both the user and system scope accessiable but only the user scope can be written to, when using ncc as a system user (such as running
+ncc with `sudo`), only the system scope is made accessiable, not the user scope. The idea is that when a user installs makes a change
+under the system scope, the data would become available for every user on the system, and vice versa for user scopes where that data
+is only available to that user.
 
-phpab is also known as [PHP Autoload Builder](https://github.com/theseer/Autoload), phpab is an open-source tool used 
-for creating autoload files, ncc needs this tool in order to generate its autoload files whenever there are any changes
-to its source code. This tool is only required for building and or creating a redistributable package of ncc.
-This component is not required to be installed to use ncc.
+Currently only the Package Manager, Authentication Manager and Repository Manager makes use of these permission scopes.
 
-for some components that require static loading, ncc will automatically load it using its own [autoloader](src/autoload/autoload.php)
+## Building ncc
 
-The recommended way to install phpab is by using [phive](https://phar.io/), if you don't have phive installed, you can 
-install it by running these commands in your terminal (from the official documentation)
+The build process for ncc is streamlined using the provided [Makefile](Makefile) which automates the compilation and
+packaging of ncc into a distributable phar archive. The Makefile is also responsible for generating the dependencies
+located within source code files, this part of the documentation will explain how the Makefile works and how to use it
+for building or contributing to ncc.
 
-```shell
-wget -O phive.phar https://phar.io/releases/phive.phar
-wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc
-gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79
-gpg --verify phive.phar.asc phive.phar
-chmod +x phive.phar
-sudo mv phive.phar /usr/local/bin/phive
+First when cloning the ncc repository, make sure to initialize the git submodules by running the following command:
+
+```sh
+git submodule update --init --recursive
 ```
 
-Once phive is installed, you can run the final command to install phpab
+Or to update the submodules to the latest version:
 
-```shell
-sudo phive install phpab --global
+```sh
+git submodule update --remote --force
 ```
 
-or you can run this command to install it locally
+The build process requires the following PHP extensions to be installed and enabled in your PHP environment:
 
-```shell
-phive install phpab
+ - PHP curl extension
+ - PHP mbstring extension
+ - PHP json
+ - PHP zip extension
+ - PHP msgpack extension
+ - PHP tokenizer extension
+ - PHP Phar extension
+ - PHP ctype extension
+
+The Makefile generally uses commonly available tools on most unix-like systems, other than that no further special
+tools are required to build ncc, to build ncc simply run the following command in the root directory of the repository:
+
+### Producing a phar build
+
+To produce a phar build of ncc, simply run the following command:
+
+```sh
+make target/ncc.phar
 ```
 
-**Note:** Optionally, you may want to have `phab` available in your `$PATH`, this can be done with this command. 
-*(Replace `x.xx.x` with your version number)* this is if you installed it locally
+This target will run through most of the steps of the build process to produce a clean build of ncc, the resulting
+phar archive will be located at `target/ncc.phar` alongside with another file `target/install.sh` which is a simple
+installation script that can be used to install ncc onto the system only requiring the `ncc.phar` file being in the
+same directory as the installation script.
 
-```shell
-ln -s /home/user/.phive/phars/phpab-x.xx.x.phar /usr/local/bin/phpab
+
+### Producing a regular build
+
+Producing a regular build of ncc is the process of producing a working build of ncc as a set of php files without
+packaging it into a phar archive, this is useful for testing/development purposes where a working build of ncc is needed.
+
+To produce a regular build of ncc, simply run the following command:
+
+```sh
+make target
 ```
 
-### Building ncc
+This process also generates an autoloader, to require ncc in this build mode, you would use the following statement:
 
-First, navigate to the main directory of ncc's source code where the [Makefile](Makefile) is present. If you
-already attempted to or had built ncc before, it's  recommended to use `make clean` before building.
-
-#### Redist
-
-Running `redist` from the Makefile will generate all the required autoloader for ncc and move all the required files 
-into one redistributable source folder under a directory called `build/src`
-
-```shell
-make redist
-```
-
-
-#### Tar
-
-Running `tar` will run redist before packaging the redistributable source into a tar.gz file that can be distributed to 
-other machines, this process is not a requirement.
-
-```shell
-make tar
+```php
+<?php
+    require 'target/build/ncc.php';
 ```
 
 
-#### Debian
+### Preparing dependencies
 
-Running `deb` will run `redist` before packaging the redistributable source into a debian package that can be installed
-on debian based machines, this process is not a requirement.
+While the build process automatically prepares dependencies when building the phar archive, you may also prepare the
+dependencies manually by running the following command:
 
-```shell
-make deb
+```sh
+make clean dependencies
 ```
 
-Once you have a populated `build/ncc_x.x.x` folder, you can simply run execute the `installer` file to install your build
-of ncc onto the running machine.
-
- > Note: you may need to run `sudo` before executing the installer file.
-
-
-------------------------------------------------------------------------------------------------------------------------
-
-
-## Building ncc for docker
-
-ncc is also available for docker, you can build ncc for docker by running the `docker-debian` or `docker-alpine` make
-tasks, this will build ncc for docker and create a docker image that you can use to run ncc.
-
-```shell
-make docker-debian docker-alpine
-```
-
-The respective docker files are located in 
-
-- [Dockerfile Debian](Dockerfile.debian)
-- [Dockerfile Alpine](Dockerfile)
-
-You may also run and test these docker builds with the `docker-debian-run` and `docker-alpine-run` make tasks.
-
-```shell
-make docker-debian-run docker-alpine-run
-```
-
- > Contributor Note: contributions are welcomed here to expand ncc's docker support to other distros and to improve the
- > existing docker files.
-
-------------------------------------------------------------------------------------------------------------------------
+This process simply copies all of the required PHP dependencies from the `dependencies/` directory where the git
+submodules are located to the `src/ncc/Libraries/` while refactoring the namespaces to match the ncc internal structure
+as to not conflict with any other packages that may be using the same dependencies during the runtime.
 
 
 ## Installing ncc
 
-Installing ncc is easy, you can either download the redistributable source from the [releases](https://git.n64.cc/nosial/ncc/-/releases)
-page or you can build it from source using the instructions above.
+ncc can be installed using the provided installation script located at `target/install.sh` which is produced during
+the phar build process, to install ncc simply ensure that the script and the `ncc.phar` file are in the same
+and the script has executable permissions, then simply run the script with elevated permissions to install ncc in
+the current system
 
-Once you have the redistributable source, you can simply run execute the `INSTALL` file to install ncc onto the running 
-machine. usually this installation process will require root privileges, so it's recommended to run the installer with
-`sudo` or as root.
+Once the installation is complete, ncc can be accessed globally using the `ncc` command in the terminal, or within the
+php environment using the `require 'ncc';` statement.
 
+## Runtime Environment
 
-### Command line arguments
+ncc operates in two primary modes: Command-Line Interface (CLI) and Runtime. The CLI mode is intended for building,
+installing and managing packages and is accessed by executing the built phar archive with the `--ncc-cli` argument.
+When `require 'ncc';` is used in a PHP script, ncc initializes as a Runtime that exposes APIs to the running PHP process.
 
-The installer accepts a few command line arguments that can be used to alter the installation process.
+### Modes
 
-`--help` Displays the help message
+- CLI: Use the phar build and the `--ncc-cli` flag to access commands for building, installing and managing packages.
+- Runtime: Use `require 'ncc';` to enable runtime features such as autoloading, the `ncc://` stream wrapper and the `import` helper.
 
-`--bypass-cli-check` Bypasses the check in the installer that checks if the installer is being run from the command
-line, this is useful if you want to install ncc from a script.
+### Stream wrapper and autoloading
 
-`--bypass-checksum` Bypasses the checksum check in the installer, this is useful if you made modifications to the 
-installation files and want to install a modified version of ncc. But this isn't recommended, and the proper way to
-do this is to modify the source code and build ncc from source, the Makefile task will automatically rebuild the
-checksum file for you.
+When initialized, the runtime registers the `ncc://` stream wrapper. Any package imported into the runtime becomes
+accessible through that wrapper (for example, `ncc://com.example.package/`). Importing a package also registers its
+autoloader so classes inside the package can be used via normal PHP `use`/`class` constructs. Package contents are
+accessed lazily — file data is read only when required — which keeps memory usage low.
 
+### Importing packages
 
-## Uninstalling ncc
+Importing a package is done via the global helper `import`, an alias for `\ncc\Runtime::import`. The import API is
+flexible and designed to cover common use cases while enforcing package integrity.
 
-Uninstalling ncc is easy, simply delete the directory where ncc was installed to, by default this is `/etc/ncc`.
+#### Signature
 
-It's recommended to run `ncc package --uninstall-all` before uninstalling ncc, this will uninstall all the packages
-that were installed using ncc and remove any artifacts that is installed on the system such as symlink registrations
-and so on.
+  - `import($package, $version = null)`
+  - `$package`: `string` \| `\ncc\Classes\PackageReader`
+  - `$version`: `string` (optional; used only when resolving through the Package Manager)
 
-**Note:**
+#### Behavior
 
-- To delete all the data that ncc has created, you can also delete the `/usr/share/ncc` directory.
-- Finally, remove the symlink that was created in `/usr/bin`to the `ncc` entry point file.
+- If `$package` is a path to a pre-compiled ncc file on disk (for example, `build/com.example.foo.ncc`), ncc opens that
+  file directly with a `PackageReader`.
+- If `$package` is a package name (for example, `com.example.foo`), ncc resolves it via the Package Manager and opens
+  the selected installed package.
+- Importing a package also causes its declared dependencies to be imported. Missing dependencies will trigger an
+  exception unless the package is statically built (dependencies embedded).
+- Multiple versions of a package can be installed side-by-side, but only one version may be imported into the runtime.
+  Once imported, a package remains loaded for the life of the process.
 
+#### Version selection
 
-------------------------------------------------------------------------------------------------------------------------
+- Passing a specific version (for example, `1.0.0`) instructs the Package Manager to locate that exact or a satisfying version.
+- Passing `latest` selects the newest available version.
+- The `$version` parameter applies only to package-manager imports, not to local file imports.
 
-
-# Helpful Information
-
-This section covers helpful information about ncc, such as conventions, standards, and so on.
-
-
-## Package Naming
-
-ncc follows a package naming convention that is inspired by Java's package naming convention. This convention is
-designed to ensure clarity, avoid naming conflicts, and make it easier to identify the origin of packages. Below
-are the key rules for naming packages in ncc:
-
- - The package name must be in all lowercases
- - The package name must be in reverse domain notation
- - The package name must be separated by a dot `.`
- - The package name must not contain any special characters other than '-' or '_'
- - The package name must not contain any spaces
-
-In PHP, similar to Java, package naming conventions follow the reversed domain notation. This means that a package name,
-such as "symfony/process" in Composer, is transformed into "com.symfony.process" in PHP. The components of the package
-name are separated by dots (".") to create a hierarchical structure.
-
-It's essential to adhere to specific guidelines when naming packages in PHP:
-
- - **Character Limitation**: Package names should consist of only hyphens ("-") or underscores ("_") as special
-   characters. This restriction ensures compatibility with both file systems and package management tools.
- - **Avoiding Spaces**: Spaces should be avoided in package names. The inclusion of spaces can lead to confusion and
-   compatibility issues. Instead, use hyphens or underscores if spacing is necessary within a package name.
-
-
-## Remote Package Syntax (RPS)
-
-Remote packages are packages that are hosted on a remote source, such as GitHub, GitLab, Gitea, and so on. ncc uses
-a special syntax for specifying remote packages, this syntax is called Remote Package Syntax or RPS for short.
-This syntax is simply a query to tell ncc what package to install and where to install it from. This syntax is used when
-installing packages from the command-line or defining dependencies in a project's package.json file.
-
-The syntax for RPS is as follows:
-
-```
-<vendor>/<package-name>=<version>@<repository>
-```
-
-| Component      | Description                                                                                                   |
-|----------------|---------------------------------------------------------------------------------------------------------------|
-| `<vendor>`     | The vendor name of the package, this is usually the username or organization name on the source eg; symfony   |
-| `<package>`    | The package name, this is the name of the package eg; console                                                 |
-| `<version>`    | The version of the package to install, this can be a version number or simply "latest" for the latest version |
-| `<repository>` | The repository to install the package from, this has to be a name of a repository that's configured in ncc    |
-
-**Note:** The version number can be omitted, in which case ncc will install the latest version of the package.
-
-Here are some examples of RPS:
-
-```text
-symfony/console=latest@packagist # installs the latest version of symfony/console from packagist
-johndoe/hello_world=latest@github # installs the latest version of hello_world from github
-```
-
-For instances like Gitlab where organizations may have subgroups, you can specify the subgroup by using a dot (".")
-to separate the group name from the subgroup name.
-
-```text
-nosial/libs.config@n64 # installs the latest version of ConfigLib from n64
-nosial/libs.config=1.0.0@n64 # installs version 1.0.0 of ConfigLib from n64
-```
-
-
-## ncc Binary Package
-
-ncc binary packages are packages that are compiled by ncc, these packages are used to install packages on the system and
-can also be executed directly by ncc, the file format is a flexible memory safe archive type similiar to `PHAR` or the
-`ZIP` file format. This section will attempt to explain the file sturcture of a binary package and how they work.
-
-![ncc binary package file structure](assets/package_structure.png)
-
-The ncc Binary Package File consists of three main sections: the package header, the package data, and the end of package marker.
-
-### Package Header
-
-The package header is the data that ncc will load into memory to be able to find data on the package without needing to
-load the entire package into memory. The package begins with the magic bytes `ncc_pkg` followed by the header data,
-this header data ends with the sequence of bytes `1F 1F 1F 1F` to indicate the end of the header data.
-
-![ncc binary package file structure](assets/header_structure.png)
-
-Once ncc is able to locate and decode the header data, it's able to identify where all the files and components are
-located in the package, this is because the header data provides an offset and length for each component. It's up to
-ncc's PackageReader to determine the correct offset to be able to read the data correctly, as ncc binary packages may
-also be embedded into other files such as an executable file.
-
-The header data is encoded using `msgpack` to ensure that the data is compact and can be decoded quickly, the header
-cannot be compressed as it's required to be loaded into memory as-is.
-
-### Package Data
-
-After the end of the header marker, the package data begins, this is where all the files and components are located,
-each component and file and it's data contents are not seperated or easily identifiable, this is because the package
-data is located using the header data. The data section ends with the sequence of bytes `FF AA 55 F0` to indicate that
-this is the end of the ncc binary package data, any data beyond that is not part of the package file.
-
-![ncc binary package file structure](assets/data_structure.png)
-
-The data sections can be any sort of data. Additionally, if the headers contain a flag for compression, ncc will attempt
-to decompress the data as you read it, this is useful for reducing the size of the package file and to reduce the amount
-of memory required to load the package into memory. Though this is optional and is not required for ncc to be able to
-read the package file.
-
-
-## How to build binary executable files
-
-ncc can build binary executable files for your project, this is useful for CLI applications or for creating a single
-file that can be directly executed on any machine or even used as a dependency for other projects. This section will
-attempt to explain how to build binary executable files and more importantly, how they work.
-
- > **Note:** This process requires `gcc` to be installed on the system.
-
-### How are they compiled?
-
-ncc utilizes a bootstrap approach to transform your project into a binary executable file. However, it's important to
-note that your project won't be able to function independently without ncc. This dependency exists because ncc needs to
-load your project's components and dependencies into memory before execution, this also requires php to actually execute
-the code. The key component for this process is the bootstrap file, which is located at
-[src/ncc/Classes/PhpExtension/bootstrap_main.c](src/ncc/Classes/PhpExtension/bootstrap_main.c).
-
-![ncc compiler process](assets/execution_process.png)
-
-Here's how the compiler process unfolds: initially, it generates an ncc binary package file for your project. To achieve
-this, your executable build configuration must include an option called `ncc_configuration`. This option anticipates a
-value where the key corresponds to the name of a build configuration that produces an ncc binary package file. Once the
-ncc binary package file is created, ncc proceeds to convert it into a hexadecimal representation.
-
-Following the creation of the hex representation of the binary package file, ncc invokes the gcc compiler. This, in
-combination with the hex representation of the binary package file, results in the creation of an executable file. If
-your package contains a designated main execution point, this executable file can be run directly. If your package lacks
-a main execution point, the executable file will function as a library and can be employed as a dependency in other
-projects or imported during runtime.
-
-![ncc compiler process](assets/compiler_process.png)
-
- > **Note:** If the program requires dependencies that are not available on the system, direct execution will fail. In
- > such cases, you should add the `static` option to the build configuration to create a static executable file. This
- > file will contain all the dependencies and components required to run the program.
-
-### Can I adjust the compiler process?
-
-You have the flexibility to customize the compiler process by providing additional parameters to gcc. This customization
-can be achieved by modifying the `options` property within your executable build configuration, with each option name
-prefixed by gcc-, for example:
-
-If you need to pass a key-value option, include it like this: `{ "gcc-<option>": "<value>" }` within the `options` property.
-
-```json
-{
-  "options": {
-    "gcc-O": "3"
-  }
-}
-```
-
-If an option doesn't require a value, you can pass null instead. For instance:
-
-```json
-{
-  "options": {
-    "gcc-Wall": null
-  }
-}
-```
-
-This way, you can fine-tune the behavior of the gcc compiler to suit your project's specific requirements.
-
-### What does an executable build configuration look like?
-
-Here's an example of a build configuration that produces an executable file, you can append this to your
-`build_configurations` property in your project's build section in the package.json file.
-
-```json
-{
-  "name": "release_executable",
-  "build_type": "executable",
-  "output": "build/%ASSEMBLY.NAME%",
-  "options": {
-    "ncc_configuration": "release"
-  }
-}
-```
-
-
-------------------------------------------------------------------------------------------------------------------------
-
-
-# ncc cli
-
-ncc's command-line interface serves as the central hub for managing your projects and packages. This CLI empowers you to
-perform tasks like project creation, package installation, and project building.
-
-
-## Project Management (project)
-
-The command `project` provides a set of commands for managing projects, such as creating a new project and applying
-a builtin template to a project. This part of the documentation will guide you through the process of creating a new
-project and applying a template to it both for CLI-based projects and library projects.
-
-
-### Creating a new project (create)
-
-To create a new project, you can use the `project create` command, this command will create a new project in the current
-working directory. You must specify details about the project you want to create, such as the project name, package name,
-and the compiler extension to use.
-
-| Option               | Required | Example             | Description                                                                                                   |
-|----------------------|----------|---------------------|---------------------------------------------------------------------------------------------------------------|
-| `--name`, `-n`       | Yes      | ExampleProject      | The name of the project                                                                                       |
-| `--package`, `--pkg` | Yes      | com.example.project | The package name to use, see [Package Naming](#package-naming) for more information                           |
-| `--path`, `-p`       | No       | example_project     | The directory to create/use to initialize the project in, if not provided then `--name` would be used instead |
-| `--ext`              | No       | php                 | The compiler extension to use, defaults to `php`                                                              |
-
-```shell
-ncc project create --name ExampleProject --package com.example.project --ext php
-```
-
-Once the project is created, will see a new directory with the name of the project you specified, this directory will
-contain the project's source code and other files that are required for the project to function properly, more importantly
-it will contain the `package.json` file which is the project's configuration file that ncc uses to manage and build
-the project.
-
-### Applying Templates (template)
-
-Templates are used to apply a predefined structure to a project, this is not a requirement but makes it easier to get
-started with a project. ncc comes with a few builtin templates that you can use to create a project
-
-| Template Name | Description                                 |
-|---------------|---------------------------------------------|
-| `phpcli`      | A template for creating a CLI-based project |
-| `phplib`      | A template for creating a library project   |
-
-To apply a template, simply use the `project template` command, this command will apply a template to the project in
-the current working directory or the directory specified by the `--path` option.
-
-| Option         | Required | Example         | Description                                                                                                                        |
-|----------------|----------|-----------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `--name`, `-n` | Yes      | phpcli          | The name of the template to apply                                                                                                  |
-| `--path`, `-p` | No       | example_project | The directory to create/use to apply the the template to, if not provided then the current working directory would be used instead |
-
-```shell
-ncc project template --name phpcli
-```
-
-Once the template is applied, you will see additional files and directories created by ncc; these files and directories
-are part of the template and are required for the project to function properly, your project.json file will also be
-updated to reflect the changes made by the template.
-
-#### phpcli template
-
-The phpcli template is a template for creating a CLI-based project, allowing you to create a CLI application with ease
-similar to how C and C++ CLI applications are created. This section will demonstrate what the template does and how to
-use it.
-
-Assuming you have a project already created, if not, see [Creating a new project (create)](#creating-a-new-project-create)
-for more information on how to create a new project.
-
-```shell
-$ ncc project create -n MyCommandLineProgram --pkg com.example.cli_program --ext php
-No path specified, using 'MyCommandLineProgram'
-Project successfully created in 'MyCommandLineProgram'
-Modify the project configuration in 'MyCommandLineProgram/project.json
-```
-
-Once the project is created, you can apply the phpcli template to it.
-
-```shell
-$ ncc project template -p MyCommandLineProgram -n phpcli
-Template successfully applied to project in 'MyCommandLineProgram'
-```
-
-Now if we take a look at the directory structure of the project, we will notice additional files and the project.json
-file containing two new build configurations for creating an executable file of the project.
-
-```shell
-$ tree MyCommandLineProgram
-MyCommandLineProgram/
-├── main
-├── Makefile
-├── project.json
-└── src
-    └── MyCommandLineProgram
-        └── Program.php
-
-2 directories, 4 files
-```
-
-The `main` file is the entry point of the project, this is where the project starts, this is defined as a execution
-policy in `project.json` as shown here
-
-```json
-{
-  "execution_policies": [
-    {
-      "name": "main_policy",
-      "runner": "php",
-      "execute": {
-        "working_directory": "%CWD%",
-        "silent": false,
-        "tty": true,
-        "timeout": null,
-        "idle_timeout": null,
-        "target": "main"
-      }
-    }
-  ]
-}
-```
-
-Note how the target points to the `main` file, this is the file that will be executed when the project is executed, the
-working directory is also configured to always use the current working directory as defined by the special constant
-`%CWD%`, this is useful for CLI applications as it allows you to execute the application from any directory.
-
-The `main` file can be altered however you want, but it serves one important purpose which is to determine how to self
-execute itself
+#### Examples
 
 ```php
 <?php
-    // First check if the script is being executed from the command line
-    if (PHP_SAPI !== 'cli')
-    {
-        print('com.example.cli_program must be run from the command line.' . PHP_EOL);
-        exit(1);
-    }
-
-    // Try to retrieve the command-line arguments
-    if(!isset($argv))
-    {
-        if(isset($_SERVER['argv']))
-        {
-            $argv = $_SERVER['argv'];
-        }
-        else
-        {
-            print('com.example.cli_program failed to run, no $argv found.' . PHP_EOL);
-            exit(1);
-        }
-    }
-
-    // Import ncc
-    require('ncc');
-    
-    // Import the package
-    \ncc\Classes\Runtime::import('com.example.cli_program', 'latest');
-    
-    // Run the program
-    exit(\MyCommandLineProgram\Program::main($argv));
+require 'ncc';
+import('com.example.foo');                // Resolve and import latest installed version
+import('com.example.foo', '1.0.0');       // Import a specific version
+\ncc\Runtime::import('build/com.example.foo.ncc'); // Import directly from a local package file
 ```
 
- > **Note:** In a case where the package is not installed on the system, but rather executed directly, ncc will already
- > have the package imported to memory before-hand so that an import statement will be skipped and the package will be
- > loaded from the package instead. In both scenarios where the package is installed or directly executed, this code
- > will work without any issues.
+## Build Types
 
-After the execution unit runs this code, the control is passed onto the your Program class to which you can find in
-`src/MyCommandLineProgram/Program.php`, this is where you can write your code for your CLI application.
+ncc supports multiple build types with's codebase architecture designed to be extensible for future build types. The
+default build type is `ncc`, which produces standard ncc packages. Additional build types can be implemented as
+plugins that extend the build system.
 
-```php
-<?php
+By default, the following options can be used in the build configuration's `options` property:
 
-    namespace MyCommandLineProgram;
+ - `static` (boolean): If set to true, all dependencies will be embedded into the package during the build process,
+                       resulting in a self-contained package that does not require external dependencies at runtime.
 
-    class Program
-    {
-        /**
-         * MyCommandLineProgram main entry point
-         *
-         * @param string[] $args Command-line arguments
-         * @return int Exit code
-         */
-        public static function main(array $args): int
-        {
-            print("Hello World from com.example.cli_program!" . PHP_EOL);
-            return 0;
-        }
-    }
+### ncc
+
+The `ncc` build type produces standard ncc packages as described in the [ncc package format](#ncc-packages). This
+build type is the default and is used when no specific build type is specified in the project configuration.
+
+This build configuration supports the following options:
+
+ - `compression` (boolean): If set to true, the package contents (components and resources) will be compressed
+                            using the `gzdeflate` algorithm to reduce file size. Default is true.
+ - `compression_level` (integer): Specifies the compression level (0-9) to use when compressing package contents.
+                                  Higher levels result in better compression but slightly slower build times.
+                                  Default is 9.
+
+### php
+
+The `php` build type is a similar approach to what the `phar` build type would do, but instead of producing a phar
+archive, it produces a .php file that contains executable php code as the header of the file followed by the raw bytes
+of a ncc package, this allows the produced file to be executed directly by the php interpreter while still being a valid
+ncc package that can be read by ncc's package reader. However, reading or using this file requires ncc to be installed.
+
+The `php` build extends the `ncc` build so it inherits all the options from the `ncc` build type.
+
+
+### phar
+
+The `phar` build type produces a self-contained PHP Archive (phar) file that can be executed directly by the PHP
+interpreter. This build type is useful for distributing built projects as a standard phar archive that can be
+understood by PHP.
+
+ > Note: To create a truly self-contained phar build of a project that doesn't require ncc to be installed, consider
+         using the `static` option in the build configuration to embed all dependencies into the phar archive.
+
+The following options are supported in the `phar` build configuration:
+
+ - `compression` (boolean): If set to true, the phar contents will be compressed using
+                            the `Phar::GZ` compression algorithm to reduce file size. Default is true.
+ - `compression_level` (integer): Specifies the compression level (0-9) to use when compressing phar contents.
+                                  Higher levels result in better compression but slightly slower build times.
+                                  Default is 9.
+ - `skip_execution`: Skips the inclusion of the self-executable logic in the phar file, resulting in a standard phar
+                     archive that cannot be executed directly by PHP. Default is false but can be imported as a standard
+                     phar archive.
+
+
+## Project Configuration
+
+PHP Projects must define a project configuration file that ncc can recognize and use to build the project, the project
+configuration file can be used to define everything about the project such as it's metadata, dependency requirements,
+build configurations and so forth.
+
+
+### Project Conversion
+
+to ensure compatibility ncc's command-line comes with a project conversion tool that can be used to generate a ncc
+project configuration based off the detected and supported project type, currently only two other project types are
+supported for the conversion process:
+
+ - ncc v2 (project.json)
+ - composer (composer.json)
+
+Using the `ncc project convert` command while in the current directory of the project will automatically attempt to
+detect and locate a project configuration file it can convert. Upon success, you will see a generated `project.yml`
+file in the same directory as the detected project configuration file. This generated file should work out the box
+unless there were unexpected/malformed properties in your existing project configuration.
+
+### Creating a project from scratch
+
+You can generate a basic project boilerplate with a configuration file provided by using the command `ncc project create`
+which will generate a directory for your project.
+
+ - `--name`: The name of the project, for example `MyLibrary`
+ - `--package`: The standard package name for the project, for example `com.example.foo`
+ - `--path`: Optional. The root directory of your project (not the source directory), otherwise it will default to the
+             current working directory.
+
+Once the command is executed, a directory will be created under the value of `--name` (if `--path` was not used) and
+within that directory you will see a `src/` directory and a `project.yml` file which would look like this:
+
+```yml
+source: src
+default_build: release
+assembly:
+  name: MyLibrary
+  package: com.example.foo
+  version: 0.1.0
+build_configurations:
+  -
+    name: debug
+    output: 'target/debug/${ASSEMBLY.PACKAGE}.ncc'
+    type: ncc
+    definitions:
+      NCC_DEBUG: true
+  -
+    name: release
+    output: 'target/release/${ASSEMBLY.PACKAGE}.ncc'
+    type: ncc
 ```
 
-To build this program you can run `ncc build` from the project's directory, this will build the project and create an
-executable file in the `build` directory.
+### Macro Variables
 
-```shell
-$ ncc build -p MyCommandLineProgram
-Building project 'MyCommandLineProgram'
-[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
-build/release/com.example.cli_program.ncc
+ncc supports the use of macro variables in certain string properties within the project configuration file. These
+macros allow for dynamic value substitution based on the project's assembly metadata. The following macros are supported:
+
+| Macro                            | Description                                               |
+|----------------------------------|-----------------------------------------------------------|
+| `${d}`                           | Day of the month, 2 digits with leading zeros (01–31)     |
+| `${D}`                           | Short textual day of the week (Mon–Sun)                   |
+| `${j}`                           | Day of the month without leading zeros (1–31)             |
+| `${l}`                           | Full textual day of the week (Sunday–Saturday)            |
+| `${N}`                           | ISO 8601 numeric day of week (1 = Monday … 7 = Sunday)    |
+| `${S}`                           | English ordinal suffix for day (`st`, `nd`, `rd`, `th`)   |
+| `${w}`                           | Numeric day of week (0 = Sunday … 6 = Saturday)           |
+| `${z}`                           | Day of the year (starting from 0)                         |
+| `${W}`                           | ISO 8601 week number of year                              |
+| `${F}`                           | Full month name (January–December)                        |
+| `${m}`                           | Month with leading zeros (01–12)                          |
+| `${M}`                           | Short month name (Jan–Dec)                                |
+| `${n}`                           | Month without leading zeros (1–12)                        |
+| `${t}`                           | Number of days in the given month (28–31)                 |
+| `${L}`                           | Leap year flag (1 = leap year, 0 = otherwise)             |
+| `${o}`                           | ISO week-numbering year (may differ from `${Y}`)          |
+| `${Y}`                           | Full numeric year (4+ digits)                             |
+| `${y}`                           | Two-digit year                                            |
+| `${a}`                           | Ante/post meridiem lowercase (`am`/`pm`)                  |
+| `${A}`                           | Ante/post meridiem uppercase (`AM`/`PM`)                  |
+| `${B}`                           | Swatch Internet time (000–999)                            |
+| `${g}`                           | 12-hour format without leading zeros (1–12)               |
+| `${G}`                           | 24-hour format without leading zeros (0–23)               |
+| `${h}`                           | 12-hour format with leading zeros (01–12)                 |
+| `${H}`                           | 24-hour format with leading zeros (00–23)                 |
+| `${i}`                           | Minutes with leading zeros (00–59)                        |
+| `${s}`                           | Seconds with leading zeros (00–59)                        |
+| `${c}`                           | ISO 8601 datetime (e.g., 2004-02-12T15:19:21)             |
+| `${r}`                           | RFC 2822 formatted date (e.g., Thu, 21 Dec 2000 16:01:07) |
+| `${u}`                           | Unix timestamp (seconds since Jan 1 1970)                 |
+| `${CWD}`                         | Current working directory                                 |
+| `${PID}`                         | Process ID                                                |
+| `${UID}`                         | User ID                                                   |
+| `${GID}`                         | Group ID                                                  |
+| `${HOME}`                        | User home path                                            |
+| `${PROJECT_PATH}`                | Project root path                                         |
+| `${DEFAULT_BUILD_CONFIGURATION}` | Default build configuration name                          |
+| `${SOURCE_PATH}`                 | Source directory path                                     |
+| `${ASSEMBLY.NAME}`               | Assembly name                                             |
+| `${ASSEMBLY.PACKAGE}`            | Assembly package identifier                               |
+| `${ASSEMBLY.VERSION}`            | Assembly version                                          |
+| `${ASSEMBLY.URL}`                | Assembly URL                                              |
+| `${ASSEMBLY.LICENSE}`            | Assembly license                                          |
+| `${ASSEMBLY.DESCRIPTION}`        | Assembly description                                      |
+| `${ASSEMBLY.AUTHOR}`             | Assembly author                                           |
+| `${ASSEMBLY.ORGANIZATION}`       | Assembly organization                                     |
+| `${ASSEMBLY.PRODUCT}`            | Assembly product                                          |
+| `${ASSEMBLY.COPYRIGHT}`          | Assembly copyright                                        |
+| `${ASSEMBLY.TRADEMARK}`          | Assembly trademark                                        |
+| `${COMPILE_TIMESTAMP}`           | Compilation timestamp                                     |
+| `${NCC_BUILD_VERSION}`           | ncc build version identifier                              |
+| `${BUILD_OUTPUT_PATH}`           | Build output path                                         |
+
+
+### Project Structure (root)
+
+The base of the project configuration structure implements the following properties
+
+| Property Name          | Property Type                                          | Description                                                                                                                                                                                    | Required |
+|------------------------|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| `source`               | `string`                                               | The relative path of the source directory, eg; `src/`                                                                                                                                          | **Yes**  |
+| `default_build`        | `string`                                               | The default build configuratoin to use, eg `release`                                                                                                                                           | **Yes**  |
+| `entry_point`          | `string`                                               | The main CLI execution entrypoint for the package, this value would be the name of the execution unit                                                                                          | No       |
+| `web_entry_point`      | `string`                                               | The main web execution entrypoint for the package, this value would be the name of the execution unit                                                                                          | No       |
+| `update_source`        | `PackageSource(string)[]`                              | The update source for the package                                                                                                                                                              | No       |
+| `pre_compile`          | `string`, `string[]`                                   | One or more execution units to execute in the pre-compile stage                                                                                                                                | No       |
+| `post_compile`         | `string`, `string[]`                                   | One or more execution units to execute in the post-compile stage                                                                                                                               | No       |
+| `pre_install`          | `string`, `string[]`                                   | One or more execution units to execute in the pre-installation stage                                                                                                                           | No       |
+| `post_install`         | `string`, `string[]`                                   | One or more execution units to execute in the post-installation stage                                                                                                                          | No       |
+| `repository`           | `RepositoryConfiguration`, `RepositoryConfiguration[]` | One or more repositories that this package will need in order to operate correctly                                                                                                             | No       |
+| `assembly`             | `Assembly`                                             | Assembly information, basically metadata about the package                                                                                                                                     | **Yes**  |
+| `dependencies`         | `string[]`                                             | An array of key-value dependencies such as `com.symfony.console` => `symfony/console=version@packagist` where the key is the package name and the value is the remote source of the dependency | No       |
+| `execution_units`      | `ExecutionUnit[]`                                      | An array of execution units defined in the project                                                                                                                                             | No       |
+| `build_configurations` | `BuildConfiguration[]`                                 | An array of build executions for ncc to use when compiling the project, at least one must be defined                                                                                           | **Yes**  |
+
+For dependencies, each dependency must be defined using the package name as the key and the remote source as the value, for example:
+
+```yml
+dependencies:
+  'com.symfony.console': 'symfony/console=^5.0@packagist'
+  'com.guzzlehttp.guzzle': 'guzzlehttp/guzzle=^7.0@packagist'
 ```
 
-To test your program, you can run `ncc exec` on the compiled binary package
+This would define two dependencies for the project, the first dependency is `com.symfony.console` which comes from the remote source
+`symfony/console` with a version constraint of `^5.0
 
-```shell
-$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
-Hello World from com.example.cli_program!
+### PackageSource Object
+
+The package source object is basically a syntax that defines where a package can be obtained from a remote source, for
+example `symfony/console=1.0.0@packagist` means the package `console` comes from the provider `symfony` under the
+repository `packagist` with the version `1.0.0`
+
+In the project configuration it's defined using tha that syntax as the update source, if you are using a repository that
+is not included in ncc by default, you will need to define the repository under the `repository` section where one or more
+repository can be defined. During installation these repositories are added unless the `--skip-repositories` option is
+in the command-line utility
+
+### RepositoryConfiguration Object
+
+The repository configuration object is used to define a repository configuration to add to the ncc's repository manager
+when the package is installed, these repositories are only added if a repository with the smae name does not already
+exist.
+
+| Property Name | Property Type | Description                                                                    | Required |
+|---------------|---------------|--------------------------------------------------------------------------------|----------|
+| `name`        | `string`      | The unique name of the repository                                              | Yes      |
+| `type`        | `string`      | The repository type, must be one of `github`, `gitlab`, `gitea` or `packagist` | Yes      |
+| `host`        | `string`      | The host of the repository such as `api.github.com` or `gitlab.com`            | Yes      |
+| `ssl`         | `boolean`     | If SSL is used when communicating with the repository (Default: True)          | No       |
+
+
+YAML Example:
+
+```yml
+repository:
+  name: 'github'
+  type: 'github'
+  host: 'api.github.com'
 ```
 
-If you'd like to build a executable program of your project, you may look at the `project.json` file for the build
-configuration that is used for building executable files, more specifically the `release_executable` and `debug_executable`
-configurations. You may alter how these configurations work to suit your needs, but the `build_type` must be set to
-`executable` rather than ncc, this template would already have created these configurations for you so all you'd have to
-do is run the `build` command with the `--config` option to specify which configuration to use.
-
-```shell
-$ ncc build -p MyCommandLineProgram --config release_executable`
-Building project 'MyCommandLineProgram'
-[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
-Processing build/release/com.example.cli_program.ncc to hex dump
-[ =========== ] 100% 3063/3063 remaining:  0 sec.  elapsed: 0 sec.  
-build/release/MyCommandLineProgram
-```
-
-Now you may directly run the program without the need of `ncc exec`
-
-```shell
-$ MyCommandLineProgram/build/release/MyCommandLineProgram
-Hello World from com.example.cli_program!
-```
-
-#### phplib template
-
-The phplib template is a template for creating a library project, allowing you to create a library with ease similar to
-creating a CLI program, this section will guide you through how to create a library for your program and how to use it
-as a dependency in another project. This section will use the previous `phpcli` template as a base for creating a library
-to use in a CLI program.
-
-First, let's begin by creating a new project.
-
-```shell
-$ ncc project create -n MyLibrary --pkg com.example.library --ext php
-No path specified, using 'MyLibrary'
-Project successfully created in 'MyLibrary'
-Modify the project configuration in 'MyLibrary/project.json'
-````
-
-Next, let's apply the `phplib` template to the project.
-
-```shell
-$ ncc project template -p MyLibrary -n phplib
-Template successfully applied to project in 'MyLibrary'
-```
-
-Similarly to phpcli, additional files will be created for your project
-
-```shell
-$ tree MyLibrary
-MyLibrary/
-├── Makefile
-├── project.json
-└── src
-    └── MyLibrary
-        └── MyLibrary.php
-```
-
-This is a blank library, you can write your code however you want, but for this example we are going to demonstrate
-a function call with this template to show how it works, first we'll modify the `MyLibrary.php` file to add a function
-that returns a string.
-
-```php
-<?php
-
-    namespace MyLibrary;
-
-    class MyLibrary
-    {
-        public function getName(string $name): string
-        {
-                return sprintf("Hello %s!", $name);
-        }
-    }
-```
-
-Next, we'll build the library
-
-```shell
-$ ncc build -p MyLibrary
-Building project 'MyLibrary'
-[ =========== ] 100% 1/1 remaining:  0 sec.  elapsed: 0 sec.  
-build/release/com.example.library.ncc
-```
-
-Finally, we'll install it onto the system so we can actually use it
-
-```shell
-$ sudo ncc package install -p build/release/com.example.library.ncc -y
-Package installation information:
-   UUID: de1df7b6-108f-4cfc-a818-416bad08daa9
-   Name: MyLibrary
-   Package: com.example.library
-   Version: 1.0.0
-
-Installing package com.example.library=1.0.0
-[ =========== ] 100% 7/7 remaining:  0 sec.  elapsed: 0 sec.  
-Installed 1 packages
-```
-
-Now we should be able to see the package on the system when we run `ncc package list`
-
-```shell
-$ ncc package list
-   com.example.library=1.0.0
-Total: 1 packages
-```
-
-Great! We created a library and installed it onto the system, let's test it by running `php -a` to open the PHP shell
-and import the package and test its function call
-
-```shell
-$ php -a
-
-Interactive shell
-
-php > require 'ncc';
-php > import('com.example.library');
-php > 
-php > $my_library = new \MyLibrary\MyLibrary();
-php > echo $my_library->getName('John');
-Hello John!
-```
-
-But libraries are usually used by other programs, so let's go back to our `MyCommandLineProgram` project and use the
-library we just created. If you don't have the project, you can create it by following the steps in the
-[phpcli template](#phpcli-template) section.
-
-First, we'll need to add the library as a dependency to the project, this can be done by editing the `project.json` in
-the `build` section by creating an array of dependencies you need, a dependency looks something like this once it's
-defined in `project.json`
-
-```json
-{
-  "dependencies": [
-      {
-        "name": "com.example.library",
-        "version": "latest"
-      }
-  ]
-}
-```
-
-Now if you hosted your project on a remote source, you may also define where ncc should get the package from if the
-dependency is not available on the system.
-
-```json
-{
-  "dependencies": [
-      {
-        "name": "com.example.library",
-        "version": "latest",
-        "source": "johndoe/example_library=latest@n64"
-      }
-  ]
-}
-```
-
-overall, your project.json file should look something like this
-
-```json
-{
-    "project": {
-        "compiler": {
-            "extension": "php",
-            "minimum_version": "8.2",
-            "maximum_version": "8.0"
-        },
-        "options": {
-            "create_symlink": true
-        }
-    },
-    "assembly": {
-        "name": "MyCommandLineProgram",
-        "package": "com.example.cli_program",
-        "version": "1.0.0",
-        "uuid": "462a7f76-2cdc-428a-bbc6-c5feba614799"
-    },
-    "build": {
-        "source_path": "src/MyCommandLineProgram",
-        "default_configuration": "release",
-        "main": "main_policy",
-        "define_constants": {
-            "ASSEMBLY_PACKAGE": "%ASSEMBLY.PACKAGE%",
-            "ASSEMBLY_VERSION": "%ASSEMBLY.VERSION%",
-            "ASSEMBLY_UID": "%ASSEMBLY.UID%"
-        },
-	    "dependencies": [
-            {
-              "name": "com.example.library", 
-              "version": "latest"
-            }
-	    ],
-        "configurations": [
-            {
-                "name": "release",
-                "build_type": "ncc",
-                "output": "build/release/%ASSEMBLY.PACKAGE%.ncc"
-            },
-            {
-                "name": "debug",
-                "build_type": "ncc",
-                "output": "build/debug/%ASSEMBLY.PACKAGE%.ncc",
-                "define_constants": {
-                    "DEBUG": "1"
-                }
-            },
-            {
-                "name": "release_executable",
-                "build_type": "executable",
-                "output": "build/release/%ASSEMBLY.NAME%",
-                "options": {
-                    "ncc_configuration": "release"
-                }
-            },
-            {
-                "name": "debug_executable",
-                "build_type": "executable",
-                "output": "build/debug/%ASSEMBLY.NAME%",
-                "options": {
-                    "ncc_configuration": "debug"
-                },
-                "define_constants": {
-                    "DEBUG": "1"
-                }
-            }
-        ]
-    },
-    "execution_policies": [
-        {
-            "name": "main_policy",
-            "runner": "php",
-            "execute": {
-                "working_directory": "%CWD%",
-                "silent": false,
-                "tty": true,
-                "timeout": null,
-                "idle_timeout": null,
-                "target": "main"
-            }
-        }
-    ]
-}
-```
-
-Once you have defined the dependency on your program, let's modify the CLI program to use the library we created, we'll
-modify the `src/MyCommandLineProgram/Program.php` file to use the library.
-
-```php
-<?php
-
-    namespace MyCommandLineProgram;
-
-    class Program
-    {
-        /**
-         * MyCommandLineProgram main entry point
-         *
-         * @param string[] $args Command-line arguments
-         * @return int Exit code
-         */
-        public static function main(array $args): int
-        {
-            // Create a new instance of the library
-            $my_library = new \MyLibrary\MyLibrary();
-            
-            // Call the getName function
-            print($my_library->getName('John') . PHP_EOL);
-            
-            return 0;
-        }
-    }
-```
-
-Notice how we don't use the `import()` function to import the package, this is because ncc's import system will take a
-look at the requirements that your package needs and automatically import them for you, this is useful for CLI programs
-as it allows you to import packages without having to worry about whether the package is installed or not. This works
-recursively, so if the package you imported also has a dependency, it will also be imported.
-
-Now let's build the program
-
-```shell
-$ ncc build -p MyCommandLineProgram
-Building project 'MyCommandLineProgram'
-[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.  
-build/release/com.example.cli_program.ncc
-```
-
-And let's test it!
-
-```shell
-$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
-Hello John!
-```
-
-Great! We successfully created a library and used it in a CLI program, this is just a simple example of how to use the
-phplib template, you can use it however you want to create your own libraries and use them in your projects.
-
-If you'd like to create a build a static version of your package where all your dependencies are bundled into one file,
-you can modify the project.json file to achieve this, more specifically the build configuration, in this case the
-default build configuration we're using is called `release` so we'd need to adjust the configuration as so by adding the
-`static` option to the configuration.
-
-```json
-{
-    "name": "release",
-    "build_type": "ncc",
-    "output": "build/release/%ASSEMBLY.PACKAGE%.ncc",
-    "options": {
-        "static": true
-    }
-}
-```
-
-Now let's build the program again and test it
-
-```shell
-$ ncc build -p MyCommandLineProgram
-Building project 'MyCommandLineProgram'
-[ =========== ] 100% 2/2 remaining:  0 sec.  elapsed: 0 sec.
-$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
-Hello John!
-```
-
-And if you'd like to confirm if the dependencies are actually bundled into your program, you may ues the package
-inspection command to view its headers, inside it you'll notice the components for `MyLibrary` being bundled into the
-package.
-
-```shell
-$ ncc ins -p MyCommandLineProgram/build/release/com.example.cli_program.ncc headers
-headers
-1937008233: '2.0'
-1936941414:
-  - static_dependencies
-1869898597:
-  '@1835365473': '0:137'
-  '@1634956133': '137:114'
-  '@1702389091:main_policy': '251:868'
-  '@1668246896:src/MyCommandLineProgram/Program.php': '1119:2996'
-  '@1668047219:MyCommandLineProgram\Program': '1119:2996'
-  '@1684369509:com.example.library': '4115:40'
-  '@1668246896:src/MyLibrary.php': '4155:1366'
-  '@1668047219:MyLibrary\MyLibrary': '4155:1366
-```
-
-You may uninstall the package `com.example.library` from the system and try to run the program again, you'll notice that
-the program will still run without any issues, this is because the package is bundled into the program itself.
-
-```shell
-$ sudo ncc package uninstall -p com.example.library -y
-Uninstalling package com.example.library=1.0.0
-Uninstalled 1 packages
-
-$ ncc exec --package MyCommandLineProgram/build/release/com.example.cli_program.ncc
-Hello John!
-```
-
-And that's the magic that ncc does for you, it allows you to create libraries and bundle them into your programs without
-having to worry about whether the library is installed or not, and with its import system you no longer have to worry
-about autoloaders or anything like that, ncc will take care of that for you. This is what composer cannot do, composer
-can only install packages onto your project directory, but it cannot bundle them into your programs if you wish to 
-have an easy way to distribute your project to other people, this is where ncc shines.
-
-### Install Dependencies (install)
-
-The `install` command satisfies the dependencies of a project by installing the required packages. This command is
-not the same as `package install`, this command will install the dependencies of a project, while `package install`
-only handles your dependencies, including dependencies defined in build configurations.
-
-| Option                   | Required | Example         | Description                                                                                                                                                         |
-|--------------------------|----------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--path`, `-p`           | No       | example_project | The project directory to use to install the dependencies, if not provided then the current working directory would be used instead                                  |
-| `--authentication`, `-a` | No       | johndoe         | The authentication credential to use when pulling from private repositories, see [Credentials Management (cred)](#credentials-management-cred) for more information |
-
-
-
-
-## Package Management (package or pkg)
-
-The command `package` provides a set of commands for managing packages, such as installing packages and uninstalling
-packages, `pkg` is an alias for `package` and can be used interchangeably.
-
-> **Note:** that most of these operations requires root privileges, so it's recommended to run ncc with `sudo` or as root.
-
-### Listing Installed Packages (list)
-
-To list all the installed packages, you can use the `package list` command, this command will list all the installed
-packages and their versions.
-
-```shell
-$ ncc package list
-   com.symfony.console=2.0.7
-   com.symfony.polyfill_php72=v1.28.0
-   com.symfony.http_kernel=2.0.7
-   com.symfony.event_dispatcher=2.0.7
-Total: 4 packages
+### Assembly Object
+
+The assembly object of a project configuration is used to define metadata information about the package, this is used to
+identify what the package is, who maintains it among other information.
+
+| Property Name  | Property Type | Description                                                               | Required |
+|----------------|---------------|---------------------------------------------------------------------------|----------|
+| `name`         | `string`      | The name of the project (Not the same as the package name), eg; MyLibrary | Yes      |
+| `package`      | `string`      | The name of the package, eg; com.example.package                          | Yes      |
+| `version`      | `string`      | A standard semver version format, eg; 1.0.0                               | Yes      |
+| `url`          | `string`      | The main homepage URL related to the package                              | No       |
+| `license`      | `string`      | The license type related to the project, eg; MIT                          | No       |
+| `description`  | `string`      | The description of the package                                            | No       |
+| `author`       | `string`      | The author(s) of the package                                              | No       |
+| `organization` | `string`      | The organization the maintains the package                                | No       |
+| `product`      | `string`      | The product the package is part of                                        | No       |
+| `copyright`    | `string`      | Copyright for the package                                                 | No       |
+| `trademark`    | `string`      | Trademark associated with the package                                     | No       |
+
+
+YAML Example:
+
+```yml
+assembly:
+  name: 'MyLibrary'
+  package: 'com.example.mylibrary'
+  version: '1.0.0'
+  url: 'https://example.com/mylibrary'
+  license: 'MIT'
+  description: 'A sample library for demonstration purposes.'
+  author: 'John Doe <johndoe@example.com>'
+  organization: 'Example Corp'
+  product: 'Example Suite'
+  copyright: 'Copyright © 1969-2030 Example Corp. All rights reserved.'
+  trademark: 'Example™'
 ```
 
 
-### Installing Packages (install)
+### ExecutionUnit Object
 
-To install a package, you can use the `package install` command, this command will install the specified package and
-all its dependencies. There are two ways to install a package, you can either install a package from a remote source
-or install a package from a local source such as a local .ncc file.
+The execution unit object is used to define an executable component of the project, these components can be CLI commands,
+web scripts or even binary executables that are part of the project.
 
-| Option                   | Required | Example                                                         | Description                                                                                                                                                                               |
-|--------------------------|----------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--package`, `-p`        | Yes      | `symfony/process=latest@packagist` or `com.example.package.ncc` | The package to install it can be a remote package or a local package, see [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for more information when installing a remote package |
-| `--version`, `-v`        | No       | `1.0.0` or `latest`                                             | The version of the package to install, defaults to `latest`                                                                                                                               |
-| `--reinstall`            | No       | Not Applicable                                                  | Reinstall the package even if it's already installed                                                                                                                                      |
-| `--skip-dependencies`    | No       | Not Applicable                                                  | Skips installing the package's dependencies                                                                                                                                               |
-| `--authentication`, `-a` | No       | johndoe                                                         | The authentication credential to use when pulling from private repositories, see [Credentials Management (cred)](#credentials-management-cred) for more information                       |
-| `-y`                     | No       | Not Applicable                                                  | Skips the confirmation prompt when installing a package                                                                                                                                   |
+| Property Name       | Property Type | Description                                                                                                                         | Required |
+|---------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|
+| `name`              | `string`      | The unique name of the execution unit                                                                                               | Yes      |
+| `type`              | `string`      | The type of execution unit, must be one of `php`, `web`, or `system`                                                                | Yes      |
+| `mode`              | `string`      | The execution mode, must be one of `auto`, `tty`, or `pty`, defualt is `auto`                                                       | No       |
+| `entry`             | `string`      | The entry point of the execution unit, eg; `src/cli.php`, in cases for a `system` type this would be the command/program to execute | Yes      |
+| `working_directory` | `string`      | The working directory for the execution unit                                                                                        |
+| `arguments`         | `string[]`    | An array of default arguments to pass to the execution unit                                                                         | No       |
+| `environment`       | `key-value`   | Key-value pairs of environment variables to set when executing the unit                                                             | No       |
+| `required_files`    | `string[]`    | An array of files that must exist for the execution unit to run                                                                     | No       |
+| `timeout`           | `integer`     | The maximum execution time in seconds, default is no timeout (0)                                                                    | No       |
 
-```shell
-ncc package install -p symfony/process=latest@packagist -y
-```
+YAML Example:
 
- > **Note** When installing a package from a local file such as a packge.ncc file, ncc will display information about
- > the package and ask you to confirm the installation before installing the package, but for remote packages, ncc will
- > cannot display this information without downloading the package first, so it will ask you to confirm the installation
-
-### Uninstalling Packages (uninstall)
-
-To uninstall a package, you can use the `package uninstall` command, this command will uninstall the specified package.
-If you don't specify a version, ncc will uninstall all versions of the package.
-
-| Option            | Required | Example                                        | Description                                                                      |
-|-------------------|----------|------------------------------------------------|----------------------------------------------------------------------------------|
-| `--package`, `-p` | Yes      | `com.example.package` or `com.symfony.process` | The package to uninstall                                                         |
-| `--version`, `-v` | No       | `1.0.0` or `latest`                            | The version to uninstall, if not specified then all versions will be uninstalled |
-| `-y`              | No       | Not Applicable                                 | Skips the confirmation prompt when uninstalling a package                        |
-
-```shell
-ncc package uninstall -p symfony/process -v 1.0.0 -y
-```
-
-### Uninstalling All Packages (uninstall-all)
-
-To uninstall all packages, you can use the `package uninstall-all` command, this command will uninstall all the packages
-that were installed using ncc. This command does not accept any options other than `-y` to skip the confirmation prompt.
-
-```shell
-ncc package uninstall-all -y
-```
-
-### Fix Broken Packages (fix-broken)
-
-To fix broken packages, you can use the `package fix-broken` command, this command will attempt to fix or uninstall
-packages that are broken. This command does not accept any options other than `-y` to skip the confirmation prompt.
-
-The command does the following checks
-
- - Check each package to see if they are broken eg; missing files, or any other unrecoverable error that would
-   prevent the package from being loaded correctly, these packages will be uninstalled.
- - Check each package's dependencies to see if they are installed, if not, it will try to determine all the missing
-   dependencies.
-
-```shell
-ncc package fix-broken -y
+```yml
+execution_units:
+  -
+    name: 'cli'
+    type: 'php'
+    mode: 'tty'
+    entry: 'src/cli.php'
+    working_directory: 'src'
+    arguments:
+      - '--verbose'
+    environment:
+      APP_ENV: 'production'
+    required_files:
+      - 'src/config.php'
+    timeout: 60
 ```
 
 
-## Credentials Management (cred)
+### BuildConfiguration Object
 
-Credentials are used in ncc to pull packages from private sources, such as private repositories on GitHub, GitLab, Gitea,
-and so on. ncc uses a credential manager to manage credentials for these sources, this command provides a set of commands
-for managing credentials.
+The build configuration object is used to define a build configuration for ncc to use when compiling the project, the
+default build configuration is defined in the `default_build` property of the project configuration. But when building
+the package, you can use the `--configuration`, `-c` option to specify which build configuration to use.
 
-All credentials stored by ncc are encrypted using the provided token/password, this means each entry in the credential manager
-is encrypted and requires a secret to decrypt it, so even if the credential database can be accessed, the credentials
-cannot be decrypted without the secret.
+| Property Name        | Property Type | Description                                                                                                                                                                                    | Required |
+|----------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| `name`               | `string`      | The unique name of the build configuration                                                                                                                                                     | Yes      |
+| `output`             | `string`      | The output path of the compiled package, supports macro variables such as `${ASSEMBLY.PACKAGE}`                                                                                                | Yes      |
+| `type`               | `string`      | The type of build, the supported types are `ncc`, `phar` and `php`                                                                                                                             | Yes      |
+| `definitions`        | `key-value`   | Key-value pairs of definitions to set when the package is imported, these use the builtin `define` method                                                                                      | No       |
+| `include_components` | `string[]`    | An array of component glob patterns to include in the build                                                                                                                                    | No       |
+| `exclude_components` | `string[]`    | An array of component glob patterns to exclude from the build                                                                                                                                  | No       |
+| `include_resources`  | `string[]`    | An array of resource glob patterns to include in the build                                                                                                                                     | No       |
+| `exclude_resources`  | `string[]`    | An array of resource glob patterns to exclude from the build                                                                                                                                   | No       |
+| `dependencies`       | `string[]`    | An array of key-value dependencies such as `com.symfony.console` => `symfony/console=version@packagist` where the key is the package name and the value is the remote source of the dependency | No       |
 
- > **Note:** The credential manager is not a password manager, it's only used to store credentials for private sources
- > such as private repositories on GitHub, GitLab, Gitea, and so on, root access is required to access and make changes
- > to the credential manager. The credential database is only accessible by root.
+YAML Example:
 
-### Adding a credential (add)
-
-To add a credential, you can use the `cred add` command, this command will add a new credential to the credential manager,
-this command will prompt you to enter the credential details such as the credential name, the credential type, and the
-credential token/password, if you provide the options needed for these details, you can skip the prompts by using the
-options instead.
-
-| Option        | Required       | Example          | Description                                                                                              |
-|---------------|----------------|------------------|----------------------------------------------------------------------------------------------------------|
-| `--alias`     | Yes            | `johndoe`        | The alias of the credential                                                                              |
-| `--auth-type` | Yes            | `login` or `pat` | The type of the credential, can either be `login` (Username & Password) or `pat` (Personal Access Token) |
-| `--username`  | Yes if `login` | `johndoe`        | The username of the credential, only required if the credential type is `login`                          |
-| `--password`  | Yes if `login` | `password`       | The password of the credential, only required if the credential type is `login`                          |
-| `--token`     | Yes if `pat`   | `token`          | The token of the credential, only required if the credential type is `pat`                               |
-
-For instance, to add a username/password entry, you can use the following command
-
-```shell
-ncc cred add --alias johndoe --auth-type login --username johndoe --password <password>
+```yaml
+build_configurations:
+  -
+    name: 'debug'
+    output: 'target/debug/${ASSEMBLY.PACKAGE}.ncc'
+    type: 'ncc'
+    definitions:
+      NCC_DEBUG: true
+    include_components:
+      - 'src/**/*.php'
+    exclude_components:
+      - 'src/tests/**'
+    include_resources:
+      - 'resources/**'
+    exclude_resources:
+      - 'resources/temp/**'
+  -
+    name: 'release'
+    output: 'target/release/${ASSEMBLY.PACKAGE}.ncc'
+    type: 'ncc'
 ```
 
-And similar for private access tokens
+## Building Projects
 
-```shell
-ncc cred add --alias secretdoe --auth-type pat --token <token>
+the `ncc build` command is used to build ncc projects into compiled packages, the build process is based entirely off
+the build configuration and project configuration defined in the project configuration file, the build process will
+also resolve dependencies defined in the project configuration file using the package manager before compiling the
+project.
+
+```sh
+ncc build # Builds the project using the default build configuration
+ncc build --configuration debug # Builds the project using the 'debug' build configuration
+ncc build -c release # Builds the project using the 'release' build configuration
 ```
 
-When installing a package, you may pass on the `--authentication` or `-a` option to specify the credential to use when
-pulling from private repositories, this option accepts the alias of the credential to use.
+If you are missing dependencies you can use the `ncc project install` command to install all the dependencies defined in the
+project configuration file before building the project.
 
-```shell
-ncc package install -p com.example.package -a johndoe
+
+## Repository Manager
+
+Repository Management in ncc provides a way for ncc to be able to find packages from different sources, by default ncc 
+comes  with a set of default repositories that are pre-configured during the installation process, these repositories
+are often stored as system repositories so that every user on the system can access them, however users can also add
+their own repositories in their user scope if they wish to do so.
+
+ - `packagist`: The packagist repository for retrieving most open-source php packages that are often used in php projects,
+   ncc provides composer compatibility to be able to convert composer projects into ncc projects while installing
+   packages from packagist and or any other source that supports composer packages.
+ - `n64`: A self-hosted git repository from Nosial, the maintainers of ncc, this repository contains packages that are
+   specifically built for ncc and are not available on packagist.
+ - `github`: The GitHub repository source, this repository allows ncc to retrieve packages directly from GitHub repositories
+ - `gitlab`: The GitLab repository source, this repository allows ncc to retrieve packages directly from GitLab repositories
+ - `codeberg`: The Codeberg repository source, this repository allows ncc to retrieve packages directly from Codeberg repositories
+
+### Adding a repository
+
+Repositories can be added using the command-line interface of ncc, for example to add a GitHub repository you would
+use the following command:
+
+```sh
+ncc repo add --name github --type github --host api.github.com
 ```
 
-### Removing a credential (remove)
+Currently, ncc only supports the following repository types which is basically an abstract API support layer for different
+repository implementations.
 
-To remove a credential, you can use the `cred remove` command, this command will remove a credential from the credential
-manager, this command requires the '--alias' option to specify the credential to remove.
+- `packagist`: Packagist Repository
+- `github`: GitHub Repository
+- `gitlab`: GitLab Repository
+- `gitea`: Gitea Repository
 
-| Option    | Required | Example   | Description           |
-|-----------|----------|-----------|-----------------------|
-| `--alias` | Yes      | `johndoe` | The alias of the user |
+Additional arguments can be provided:
 
-```shell
-ncc cred remove --alias johndoe
+ - `--ssl`: Enable SSL verification (default: true)
+ - `--overwrite`: Overwrite existing repository with the same name
+
+### Deleting a repository
+
+Repositories can be deleted using the command-line interface of ncc, for example to delete a repository you would use
+the following command:
+
+```sh
+ncc repo del --name github
+```
+
+ > Note: Deleting repositories from the system scope requires elevated permissions.
+
+### Listing repositories
+
+Repositories can be listed using the command-line interface of ncc, for example to list all available repositories
+you would use the following command:
+
+```sh
+ncc repo list
 ```
 
 
-### Listing credential entries (list)
+## Package Manager
 
-To list all the credential entries, you can use the `cred list` command, this command will list all the credential entries
-in the credential manager.
+ncc provides a package manager, packages can be installed in a System Scope or User Scope depending on the permissions
+of the user running ncc, packages installed in the System Scope are available to all users on the system while packages
+installed in the User Scope are only available to that user.
 
-```shell
-$ ncc cred list
-Entries:
- - johndoe  (encrypted)
- - secretdoe  (encrypted)
-Total: 2
+The package manager is only managed via the command-line interface of ncc, once packages are installed they can be imported
+into the runtime environment using the `import` method.
+
+### Remote Package Format
+
+Remote packages are identified by ncc using a simple syntax format such as: `organization/package=version@repository`
+where
+
+ - `organization`: The name of the organization that maintains the package
+ - `package`: The name of the package (Not the same as a package name such as `com.example.bar`)
+ - `version`: Optional. The version of the package
+ - `repository`: The repository name where the package is hosted
+
+This the same syntax used in an ncc project configuration to define dependencies that a project may require to be built
+or imported successfully.
+
+### Installing a package
+
+Packages can be installed either from a local pre-compiled ncc package file or from a remote repository, for example to
+install a package from a remote repository you would use the following command:
+
+```sh
+ncc install --package="com.example.foo.ncc"
 ```
 
+Installs the package `com.example.foo.ncc` from local disk if the file exists, when poviding a command such as:
 
-## Managing Repositories (repository or repo)
-
-Repositories are used in ncc to pull packages from remote sources, such as GitHub, GitLab, Gitea, and so on. ncc uses
-a repository manager to manage repositories for these sources, this command provides a set of commands for managing
-repositories.
-
-Note that ncc currently supports the following repository types:
-
- - GitHub
- - GitLab
- - Gitea
- - Packagist
-
-And by default, ncc comes with the following repositories:
-
-| Name       | Type      | Host                                               | Description                                                                                        |
-|------------|-----------|----------------------------------------------------|----------------------------------------------------------------------------------------------------|
-| n64        | gitlab    | [git.n64.cc](https://git.n64.cc)                   | The official n64 git instance, maintained by Nosial & a community of volunteers                    |
-| packagist  | packagist | [packagist.org](https://packagist.org)             | The official Packagist repository, mainly used for Composer packages                               |
-| github     | github    | [github.com](https://github.com)                   | GitHub's official Git instance                                                                     |
-| gitlab     | gitlab    | [gitlab.com](https://gitlab.com)                   | GitLab's official Git instance                                                                     |
-| gitgud     | gitlab    | [gitgud.io](https://gitgud.io)                     | Gitgud's public GitLab instance, maintained by a community of volunteers                           |
-| nocturn9x  | gitea     | [git.nocturn9x.space](https://git.nocturn9x.space) | Nocturn9x's private Gitea instance, maintained by a community of volunteers from the private cloud |
-| martinvlba | gitea     | [git.martinvlba.eu](https://git.martinvlba.eu)     | Martinvlba's public Gitea instance, maintained by the site owner                                   |
-| kuny       | gitea     | [git.it-kuny.ch](https://git.it-kuny.ch)           | Kuny's public Gitea instance, maintained by the site owner                                         |
-
-If you'd like to add your own repository to ncc as a default repository, you can submit a pull request to add it to
-the [repositories.json](src/config/default_repositories.json) file, this file contains all the default repositories
-that ncc will attempt to add when first installing ncc.
-
-
-### Adding a repository (add)
-
-To add a repository to ncc, you can use the `repo add` command, this command will add a new repository to the repository
-manager, this command requires you to provide the repository name, the repository type, and the repository host.
-
-| Option   | Required | Example           | Description                                                                                                                |
-|----------|----------|-------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `--name` | Yes      | `n64`             | The name of the repository                                                                                                 |
-| `--type` | Yes      | `gitlab`          | The type of the repository, can either be `gitlab`, `github`, `gitea`, or `packagist`                                      |
-| `--host` | Yes      | `git.n64.cc`      | The host of the repository, this is the URL to the repository eg; `git.n64.cc` for the n64 repository (Without http/https) |
-| `--ssl`  | No       | `true` or `false` | Whether or not to use SSL when connecting to the repository, defaults to `true`                                            |
-
-```shell
-ncc repo add --name n64 --type gitlab --host git.n64.cc
+```sh
+ncc install --package="organization/package@repository"
 ```
 
-### Removing a repository (remove)
+Would install the latest version of the package `organization/package` from the repository named `repository`.
+To install a specific version of a package from a remote repository you would use the following command:
 
-To remove a repository, you can use the `repo remove` command, this command will remove a repository from the repository
-manager, this command requires the '--name' option to specify the repository to remove.
-
-| Option   | Required | Example | Description      |
-|----------|----------|---------|------------------|
-| `--name` | Yes      | `n64`   | The name of repo |
-
-```shell
-ncc repo remove --name n64
+```sh
+ncc install --package="organization/package=1.0.0@repository"
 ```
 
-### Listing repositories (list)
+Would install version `1.0.0` of the package `organization/package` from the repository named `repository`.
 
-To list all the repositories, you can use the `repo list` command, this command will list all the repositories in the
-repository manager.
+ncc is designed to be compatible with composer packages, when installing packages from repositories such as packagist,
+or any other repository that contains an ncc project, ncc will automatically convert the composer package into a ncc
+project during the installation process and compile it. For example installing a library such as
+`symfony/process=latest@packagist` will have ncc retreive the package from the `packagist` repository, automatically
+parse the project structure and attempt to use a conversion process only if applicable.
 
-```shell
-$ ncc repo list
- - n64 (git.n64.cc) [gitlab]
- - packagist (packagist.org) [packagist]
- - github (api.github.com) [github]
- - gitlab (gitlab.com) [gitlab]
- - gitgud (gitgud.io) [gitlab]
- - nocturn9x (git.nocturn9x.space) [gitea]
- - martinvlba (git.martinvlba.eu) [gitea]
- - kuny (git.it-kuny.ch) [gitea]
-Total: 8
+
+### Uninstalling a package
+
+The `ncc uninstall` command has several different functions built into it, for example you can uninstall a specific
+version of a package using:
+
+```sh
+ncc uninstall --package="com.example.package" --version="1.0.0"
 ```
 
-## Inspecting a package (ins)
+or to uninstall all versions of a package, you omit the `--version` argument as such:
 
-This is more of a debugging tool, but it can be useful for inspecting a package to see what files are included in the
-package and what dependencies are required by the package, this command accepts multiple commands that can be used to
-inspect a package and display information about it, you can also inspect executable binaries if they contain the
-binary package data.
-
-To use this command, you need to specify the `--path` or `-p` option to specify the package to inspect, this must be a 
-local package file. You cannot inspect packages installed on your system using this command.
-
-You may also pass on the `--json` or `--json-pretty` option to output the information in JSON format, this is useful
-for debugging or if you want to use the output in a script.
-
-### Package Information (info)
-
-This command allows you to print out very basic information about the package's structure, such as where ncc detects
-different sections of the package.
-
-```shell
-$ ncc ins -p com.example.program.ncc info
-
-File Version: 2.0
-crc32: bb0feb59
-sha256: c25f0c7e2a30a98e76331dd9dc4589afa8d3a800a069ad8be8b7566a132bd26e
-Flags: gzip
-Package Offset: 12320
-Package Length: 2989
-Header Offset: 12327
-Header Length: 184
-Data Offset: 12515
-Data Length: 2790
-Directory Size: 5 items
+```sh
+ncc uninstall --package="com.example.package"
 ```
 
- - File Version: The version of the ncc binary package file format
- - crc32: The CRC32 checksum of the package itself, this is not the same as entirty of the file.
- - sha256: The SHA256 checksum of the package itself, this is not the same as entirty of the file.
- - Flags: The flags that were used when building the package, this is used to determine how to read the package.
- - Package Offset: The offset of the entire package data in the file.
- - Package Length: The length of the entire package data in the file.
- - Header Offset: The offset of the package header section in the file.
- - Header Length: The length of the package header section in the file.
- - Data Offset: The offset of the package data section in the file.
- - Data Length: The length of the package data section in the file.
- - Directory Size: The number of items in the package
+To uninstall all packages that are installed, you can use the `--all` command as such:
 
-### Package Headers (headers)
-
-This command allows you to print out the package headers, this includes information about how ncc can read the package
-and what contents are included in the package, this is a raw decoded representation of the package headers.
-
-```shell
-$ ncc ins -p com.example.program.ncc headers
-
-1937008233: '2.0'
-1936941414: {  }
-1869898597:
-  '@1835365473': '0:129'
-  '@1634956133': '129:98'
-  '@1702389091:main_policy': '227:828'
-  '@1668246896:src/TestProgram/Program.php': '1055:1735'
-  '@1668047219:TestProgram\Program': '1055:1735'
+```sh
+ncc uninstall --all
 ```
 
-### Package Metadata (metadata)
+Note that when uninstalling packages, you are only uninstalling packages you have write-access to, to uninstall packages
+from the system you need to run ncc with elevated permissions so that the ncc has write-access to the system scope.
 
-This command allows you to print out the package metadata, this includes minimal information associated with the package
-that tells ncc how to handle the package and how to execute it.
 
-```shell
-$ ncc ins -p com.example.program.ncc metadata
+### Listing installed packages
 
-compiler_extension:
-  extension: php
-  minimum_version: '8.2'
-  maximum_version: '8.0'
-compiler_version: 2.0.0
-update_source: null
-installer: null
-main_execution_policy: main_policy
-options:
-  create_symlink: true
-```
+You can list all the packages that are installed and currently available to ncc using the `ncc list` or `ncc ls` command,
+this will display packages both installed in the user-scope and system-scope
 
-### Assembly Information (assembly)
 
-This command allows you to print out the package assembly information, this includes information about the package's
-name, description, uuid and other attributes provided by the package.
+### Updating packages
 
-```shell
-$ ncc ins -p com.example.program.ncc assembly
+You can update installed packages by using the `ncc update` command, this will iterate through all the installed writeable
+packages from the package manager, check for a newer version than what you have installed and install the new version
+correctly.
 
-name: TestProgram
-package: com.example.test
-version: 1.0.0
-uuid: 25f93a3d-3cfc-49ed-aed4-d182dd804f48
-```
-
-### Package Dependencies (dependencies)
-
-This command allows you to print out the package dependencies, this includes information about the package's dependencies
-and what versions are required by the package.
-
-```shell
-$ ncc ins -p com.example.program.ncc dependencies
-
-com.symfony.console: 2.0.7
-com.symfony.polyfill_php72: v1.28.0
-com.symfony.http_kernel: 2.0.7
-```
-
-### Execution Units (execution_units)
-
-The execution units are the entry points of the package, this command allows you to print out the package's execution
-units, this includes information about the package's execution units and what attributes are required by the package.
-
-```shell
-$ ncc ins -p com.example.program.ncc execution_units
-
--
-  execution_policy:
-    name: main_policy
-    runner: php
-    execute:
-      working_directory: '%CWD%'
-      options: {  }
-      environment_variables: {  }
-      silent: false
-      tty: true
-      timeout: null
-      idle_timeout: null
-      target: main
-  data: <base64 data here>
-```
-
-## Building Projects (build)
-
-The build command is responsible for building projects, this command will build the project in the current working
-directory or the directory specified by the `--path` option.
-
-| Option           | Required | Example        | Description                                                                                                                   |
-|------------------|----------|----------------|-------------------------------------------------------------------------------------------------------------------------------|
-| `--path`, `-p`   | No       | ExampleProject | The directory to create/use to build the project in, if not provided then the current working directory would be used instead |
-| `--config`, `-c` | No       | `release`      | The build configuration file to use, if not provided then the default build configuration will be used instead                |
-| `--output`, `-o` | No       | `program`      | The output file to produce, if not provided then the default output in your build configuration will be used instead          |
-
-```shell
-ncc build
-```
-
-```shell
-ncc build --config release_executable --output program
-```
-
-## Execute (exec)
-
-The execute command is responsible for executing packages, this command can execute packages that are installed on your
-system, or you can specify a package to execute from directly.
-
- > **Note:** Depending on if the package is statically built, you need to ensure that you have the required dependencies
- > installed on your system, if you don't have the required dependencies installed, the package will fail to execute.
-
-| Option           | Required | Example                                                                           | Description                                                                                                                                     |
-|------------------|----------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--package`      | Yes      | `com.example.program` (From the system) or `com.example.program.ncc` (Local file) | The package to execute, this can either be a package installed on your system or a local package file                                           |
-| `--exec-version` | No       | `1.0.0` or `latest`                                                               | The version of the package to execute if the package is installed on your system, defaults to `latest`                                          |
-| `--exec-args`    | No       | `--arg1 --arg2`                                                                   | The arguments to pass to the package when executing it, this has to be the last option in the command before the options to pass to the package |
-
-```shell
-ncc exec --package com.example.program --exec-version latest --exec-args --arg1 --arg2
-```
-
-```shell
-ncc exec --package com.example.program.ncc --exec-args --arg1 --arg2
-```
-
-The exit code of the package will be returned as the exit code of the command, if the package fails to execute, the
-command will return an exit code of 1 and display the error details.
-
-
-------------------------------------------------------------------------------------------------------------------------
-
-
-Certainly, here's an expanded version of your project configuration documentation with even more details:
-
-
-# Project Configuration (package.json)
-
-The project configuration file is the cornerstone of managing your project in `ncc`. It contains comprehensive
-information about your project and how it should be built. Without this file, `ncc` won't have the necessary
-instructions to compile your project effectively. This section aims to provide an in-depth explanation of the structure
-of the project configuration file and the purpose of each section.
-
-## Root Section
-
-The root section serves as the foundation of the project configuration file, housing all the essential information about
-your project and its build process. It is a pivotal section that instructs `ncc` on how to manage your project effectively.
-
-| Property Name        | Object Type                                    | Required | Example | Description                                                                                                                                                                                                                       |
-|----------------------|------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `project`            | [`Project`](#project-object)                   | Yes      | N/A     | The primary project configuration defining how `ncc` compiles and handles the package. This object contains essential settings for your project.                                                                                  |
-| `assembly`           | [`Assembly`](#assembly-object)                 | Yes      | N/A     | Metadata information about the project, providing details such as the project's name, version, and author.                                                                                                                        |
-| `build`              | [`Build`](#build-object)                       | Yes      | N/A     | Build Configuration for the project, encompassing additional configuration options to guide `ncc` in building the project. This section houses build-specific settings.                                                           |
-| `execution_policies` | [`ExecutionPolicy[]`](#executionpolicy-object) | No       | N/A     | An array of execution policies defined within the project. Execution policies determine how different parts of the project should run after compilation. These policies offer fine-grained control and are optional.              |
-| `installer`          | `Installer`                                    | No       | N/A     | Installer configuration for specifying how the installation process is managed. Note that this feature is a work in progress (WIP) and is not yet available. It enables you to configure how the package installation is handled. |
-
-### Project (object)
-
-The project section is the core of your project's configuration, dictating how `ncc` compiles and manages your package.
-This object defines essential settings for your project.
-
-| Property Name   | Object Type                            | Required | Example | Description                                                                                                                                                                                                           |
-|-----------------|----------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `compiler`      | [`Compiler`](#compiler-object)         | Yes      | N/A     | Compiler configuration for the project. This property is crucial as it informs `ncc` about the type of project and how to compile it for a specific version.                                                          |
-| `options`       | `array`                                | No       | N/A     | An associative array of options. These options can be passed on to the compiler or package installer to customize the build process. This property is optional.                                                       |
-| `update_source` | [`UpdateSource`](#updatesource-object) | No       | N/A     | An `UpdateSource` object that allows your package to receive updates from its remote source. This feature enables you to add new repositories to the system when you install the package. It is an optional property. |
-
-#### Compiler (object)
-
-Compiler configuration is pivotal for the project, informing `ncc` about the project type and how to compile it accurately.
-
-| Property Name     | Object Type | Required | Example | Description                                                                                                           |
-|-------------------|-------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------|
-| `extension`       | `string`    | Yes      | `php`   | The compiler extension used. Currently, only `php` is supported as an extension for the compiler.                     |
-| `minimum_version` | `string`    | Yes      | `8.0`   | The minimum version of the compiler required for the project, ensuring compatibility with specific compiler versions. |
-| `maximum_version` | `string`    | Yes      | `8.2`   | The maximum version of the compiler allowed for the project, setting an upper limit on compiler compatibility.        |
-
-#### UpdateSource (object)
-
-The `UpdateSource` object enables your package to receive updates from its remote source, allowing you to add new
-repositories to the system during package installation.
-
-| Property Name | Object Type                        | Required | Example                            | Description                                                                                                                                                              |
-|---------------|------------------------------------|----------|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `source`      | `string`                           | Yes      | `symfony/process=latest@packagist` | The [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for instructing `ncc` how to fetch this package. This syntax specifies the package and its version source. |
-| `repository`  | [`Repository`](#repository-object) | No       | N/A                                | The repository configuration to add to the system. This allows you to define additional repositories, such as Packagist. This property is optional.                      |
-
-##### Repository (object)
-
-The repository configuration defines additional repositories, like Packagist, that can be added to the system.
-This is an optional property.
-
-| Property Name | Object Type | Required | Example      | Description                                                                                                                                                                      |
-|---------------|-------------|----------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name`        | `string`    | Yes      | `n64`        | The repository's name for system registration, serving as its identifier.                                                                                                        |
-| `type`        | `string`    | Yes      | `gitlab`     | The repository's type, which can be `github`, `gitlab`, `gitea`, or `packagist`.                                                                                                 |
-| `host`        | `string`    | Yes      | `git.n64.cc` | The repository's host without the protocol (e.g., http/https), specifying the server hosting the repository.                                                                     |
-| `ssl`         | `boolean`   | No       | `True`       | An optional property determining whether SSL should be used when sending requests to the repository's server. If `True`, SSL is enabled; if omitted or `False`, SSL is not used. |
-
-### Assembly (object)
-
-The `Assembly` object furnishes metadata about your project, including its name, version, author, and more.
-
-| Property Name | Object Type        | Required | Example                                   | Description                                                                                                                                               |
-|---------------|--------------------|----------|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `uuid`        | `string` (UUID v4) | Yes      | `2675498a-829e-4d1a-abdf-b9dbea8005c6`    | The Universally Unique Identifier (UUID) for the project. This is generated by `ncc` when you first create a project and is used to uniquely identify it. |
-| `name`        | `string`           | Yes      | `ExampleLibrary`                          | The project's name. It's crucial to avoid special characters and spaces when naming the project, as it serves as a unique identifier.                     |
-| `package`     | `string`           | Yes      | `com.example.library`                     | The package name, following package naming conventions, similar to Java packages.                                                                         |
-| `version`     | `string`           | Yes      | `1.0.0`                                   | The package version, adhering to the Semantic Versioning format to accurately indicate the project's version.                                             |
-| `description` | `string`           | No       | `This is an example library built in ncc` | An optional description of the project, providing insights into its functionality.                                                                        |
-| `company`     | `string`           | No       | `Nosial`                                  | An optional field for specifying the company or vendor name responsible for maintaining the package.                                                      |
-| `copyright`   | `string`           | No       | `Copyright 2022-2023 Nosial`              | An optional field for indicating the copyright associated with the package.                                                                               |
-| `trademark`   | `string`           | No       | `Nosial`                                  | An optional field for specifying any trademarks associated with the package.                                                                              |
-
-### Build (object)
-
-The build section is responsible for defining the build configuration for the project, encompassing additional
-configuration options to guide `ncc` in building the project. This section houses build-specific settings and one or
-more build configurations.
-
-| Property Name           | Object Type                                          | Required | Example                                   | Description                                                                                             |
-|-------------------------|------------------------------------------------------|----------|-------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `source_path`           | `string`                                             | Yes      | `src`                                     | The path to the source directory, relative to the project's root directory.                             |
-| `default_configuration` | `string`                                             | Yes      | `release`                                 | The default build configuration to use when building the project.                                       |
-| `exclude_files`         | `string[]`                                           | No       | `["*.md", "*.txt"]`                       | An array of glob patterns for files to exclude from the build process.                                  |
-| `options`               | `array`                                              | No       | N/A                                       | An associative array of customizable options for configuring the project.                               |
-| `main`                  | `string`                                             | No       | `main_policy`                             | The main execution policy to be used when executing the package.                                        |
-| `define_constants`      | `array`                                              | No       | `{ "DEBUG": true }`                       | An associative array of constants to define when importing the package (feature not yet implemented).   |
-| `pre_build`             | `string[]`                                           | No       | `["pre_setup_policy", "cleanup_policy"]`  | An array of execution policies to run before the project's build process (feature not yet implemented). |
-| `post_build`            | `string[]`                                           | No       | `["post_setup_policy", "cleanup_policy"]` | An array of execution policies to run after the project's build process (feature not yet implemented).  |
-| `dependencies`          | [`Dependency[]`](#dependency-object)                 | No       | N/A                                       | An array of dependencies to install or utilize during the project's build process.                      |
-| `build_configurations`  | [`BuildConfiguration[]`](#buildconfiguration-object) | No       | N/A                                       | An array of build configurations to use when building the project.                                      |
-
-
-#### Dependency (Object)
-
-The `Dependency` object is used to specify dependencies for installation or utilization during the project's build process.
-
-| Property Name | Object Type | Required | Example                            | Description                                                                                                                                                                                               |
-|---------------|-------------|----------|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name`        | `string`    | Yes      | `com.symfony.console`              | The name of the dependency to require.                                                                                                                                                                    |
-| `version`     | `string`    | Yes      | `latest` or `1.0.0`                | The version of the dependency to require. If set to `latest` and the package is already installed on the system, it will use the latest installed version; otherwise, it will install the latest version. |
-| `source`      | `string`    | No       | `symfony/console=latest@packagist` | The [Remote Package Syntax (RPS)](#remote-package-syntax-rps) for instructing ncc on how to fetch this package. This syntax specifies the package and its version source.                                 |
-
-#### BuildConfiguration (Object)
-
-The `BuildConfiguration` object is used to define specific build configurations for your project, allowing you to
-specify different build settings for different purposes. For example, you can create a `debug` build configuration for
-debugging purposes and a `release` build configuration for production use. Additionally, each build configuration can
-generate different versions of the package.
-
-Please note that when building the project using a build configuration, the project's root build properties will be
-merged with the properties defined in the build configuration, with the latter overriding any conflicting values.
-
-| Property Name      | Object Type                          | Required | Example                        | Description                                                                                             |
-|--------------------|--------------------------------------|----------|--------------------------------|---------------------------------------------------------------------------------------------------------|
-| `name`             | `string`                             | Yes      | `debug`                        | The name of the build configuration.                                                                    |
-| `build_type`       | `string`                             | Yes      | `ncc`                          | The build type to use when building the project. Currently, only `ncc` and `executable` are supported.  |
-| `output`           | `string`                             | Yes      | `build/%ASSEMBLY.PACKAGE%.ncc` | The output file to generate when building the project with this build configuration.                    |
-| `define_constants` | `array`                              | No       | `{ "DEBUG": true }`            | An associative array of constants to define when importing the package (feature not yet implemented).   |
-| `exclude_files`    | `string[]`                           | No       | `["*.md", "*.txt"]`            | An array of glob patterns specifying files to exclude from the build process.                           |
-| `pre_build`        | `string[]`                           | No       | `["pre_setup_policy"]`         | An array of execution policies to run before the project's build process (feature not yet implemented). |
-| `post_build`       | `string[]`                           | No       | `["post_setup_policy"]`        | An array of execution policies to run after the project's build process (feature not yet implemented).  |
-| `dependencies`     | [`Dependency[]`](#dependency-object) | No       | N/A                            | An array of additional dependencies to utilize during the project's build process.                      |
-
-### ExecutionPolicy (object)
-
-The `ExecutionPolicy` object is used to define execution policies for your project, allowing you to specify how different
-parts of the project should run after compilation. These policies offer fine-grained control and are optional.
-
-| Property Name   | Object Type                  | Required | Example          | Description                                                                                                                                                                         |
-|-----------------|------------------------------|----------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name`          | `string`                     | Yes      | `main_policy`    | The unique name of the execution policy.                                                                                                                                            |
-| `runner`        | `string`                     | Yes      | `php`            | The runner to use when executing the policy. Currently, `bash`, `lua`, `perl`, `php` and `python` are supported.                                                                    |
-| `execute`       | [`Execute`](#execute-object) | Yes      | N/A              | The execution configuration for the policy.                                                                                                                                         |
-| `exit_handlers` | `ExitHandler`                | No       | N/A              | The exit handlers for the policy allowing to execute other policies after the policy has finished executing at different stages, this is not yet implemented and planned to change. |
-| `message`       | `string`                     | No       | `"Hello World!"` | The message to display when the policy is invoked.                                                                                                                                  |
-
-#### Execute (object)
-
-The `Execute` object is used to define the execution configuration for the policy.
-
-| Property Name           | Object Type | Required | Example            | Description                                                                                            |
-|-------------------------|-------------|----------|--------------------|--------------------------------------------------------------------------------------------------------|
-| `target`                | `string`    | Yes      | `main.php`         | The target to execute when invoking the police, relative to the project's root directory.              |
-| `working_directory`     | `string`    | Yes      | `%CWD%`            | The working directory to use when executing the policy, you may use special constants such as `%CWD%`. |
-| `options`               | `array`     | No       | `{"static": true}` | An associative array of options to pass to the runner when executing the policy.                       |
-| `environment_variables` | `array`     | No       | `{"DEBUG": "1" }`  | An associative array of environment variables to set when executing the policy.                        |
-| `silent`                | `bool`      | No       | `true`             | Whether or not to silence the output of the policy.                                                    |
-| `tty`                   | `bool`      | No       | `true`             | Whether or not to allocate a TTY when executing the policy.                                            |
-| `timeout`               | `int`       | No       | `60`               | The timeout in seconds to use when executing the policy.                                               |
-| `idle_timeout`          | `int`       | No       | `60`               | The idle timeout in seconds to use when executing the policy.                                          |
+Note, this will only work for installed packages that had defined an update source in their project configuration file.

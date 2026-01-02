@@ -1,86 +1,61 @@
 <?php
     /*
-     * Copyright (c) Nosial 2022-2023, all rights reserved.
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
-     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-     *  conditions:
-     *
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
-     *  of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     *  DEALINGS IN THE SOFTWARE.
-     *
-     */
-
-    /** @noinspection PhpMissingFieldTypeInspection */
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     namespace ncc\Objects;
 
-    use InvalidArgumentException;
-    use ncc\Classes\GiteaExtension\GiteaRepository;
-    use ncc\Classes\GithubExtension\GithubRepository;
-    use ncc\Classes\GitlabExtension\GitlabRepository;
-    use ncc\Classes\PackagistExtension\PackagistRepository;
-    use ncc\Enums\Types\AuthenticationType;
-    use ncc\Enums\Types\RepositoryType;
-    use ncc\Enums\Versions;
-    use ncc\Exceptions\AuthenticationException;
-    use ncc\Exceptions\NetworkException;
-    use ncc\Exceptions\NotSupportedException;
-    use ncc\Interfaces\BytecodeObjectInterface;
-    use ncc\Objects\ProjectConfiguration\UpdateSource\Repository;
-    use ncc\Utilities\Functions;
+    use ncc\Abstracts\AbstractAuthentication;
+    use ncc\Abstracts\AbstractRepository;
+    use ncc\Enums\RepositoryType;
+    use ncc\Exceptions\InvalidPropertyException;
+    use ncc\Interfaces\SerializableInterface;
+    use ncc\Interfaces\ValidatorInterface;
 
-    class RepositoryConfiguration implements BytecodeObjectInterface
+    class RepositoryConfiguration implements SerializableInterface, ValidatorInterface
     {
-        /**
-         * @var string
-         */
-        private $name;
+        private string $name;
+        private RepositoryType $type;
+        private string $host;
+        private bool $ssl;
 
         /**
-         * @var string
-         */
-        private $host;
-
-        /**
-         * @var RepositoryType
-         */
-        private $type;
-
-        /**
-         * @var bool
-         */
-        private $ssl;
-
-        /**
-         * RemoteRepository constructor.
+         * RepositoryConfiguration constructor.
          *
-         * @param string $name The unique name of the remote source. (e.g. 'github')
-         * @param string $host The host of the service ncc should use with this source (gitlab.com, github.com, git.example.com:8080 etc...).
-         * @param RepositoryType $type The type of service ncc should use with this source (gitlab, github, etc...).
-         * @param bool $ssl If SSL should be used when connecting to the service
+         * @param string $name The name of the repository configuration
+         * @param RepositoryType $type The type of the repository (e.g., GITHUB, GITLAB)
+         * @param string $host The host URL of the repository (e.g., "github.com")
+         * @param bool $ssl Whether to use SSL (HTTPS) for connections. Default is true.
          */
-        public function __construct(string $name, string $host, RepositoryType $type, bool $ssl=true)
+        public function __construct(string $name, RepositoryType $type, string $host, bool $ssl=true)
         {
-            $this->setName($name);
-            $this->setHost($host);
-            $this->setType($type);
-            $this->setSsl($ssl);
+            $this->name = $name;
+            $this->type = $type;
+            $this->host = $host;
+            $this->ssl = $ssl;
         }
 
         /**
-         * Returns the unique name of the remote source. (e.g. 'github')
-         * 
-         * @return string
+         * Gets the name of the repository configuration.
+         *
+         * @return string The name of the repository configuration.
          */
         public function getName(): string
         {
@@ -88,19 +63,9 @@
         }
 
         /**
-         * Sets the unique name of the remote source. (e.g. 'github')
-         * 
-         * @param string $name
-         */
-        public function setName(string $name): void
-        {
-            $this->name = strtolower($name);
-        }
-
-        /**
-         * Returns the type of service ncc should use with this source (gitlab, github, etc...).
+         * Gets the type of the repository.
          *
-         * @return RepositoryType
+         * @return RepositoryType The type of the repository.
          */
         public function getType(): RepositoryType
         {
@@ -108,20 +73,9 @@
         }
 
         /**
-         * Sets the type of service ncc should use with this source (gitlab, github, etc...).
+         * Gets the host URL of the repository.
          *
-         * @param RepositoryType $type
-         * @see RepositoryType
-         */
-        public function setType(RepositoryType $type): void
-        {
-            $this->type = $type;
-        }
-
-        /**
-         * Returns the host of the service ncc should use with this source (gitlab.com, github.com, git.example.com:8080 etc...).
-         * 
-         * @return string
+         * @return string The host URL of the repository.
          */
         public function getHost(): string
         {
@@ -129,122 +83,109 @@
         }
 
         /**
-         * Sets the host of the service ncc should use with this source (gitlab.com, github.com, git.example.com:8080 etc...).
-         * 
-         * @param string $host
-         */
-        public function setHost(string $host): void
-        {
-            $this->host = $host;
-        }
-
-        /**
-         * Returns True if SSL should be used when connecting to the service
+         * Checks if SSL (HTTPS) is enabled for connections to the repository.
          *
-         * @return bool
+         * @return bool True if SSL is enabled, false otherwise.
          */
-        public function isSsl(): bool
+        public function isSslEnabled(): bool
         {
             return $this->ssl;
         }
 
         /**
-         * Sets if SSL should be used when connecting to the service
+         * Gets the base URL of the repository, including the protocol (http or https).
          *
-         * @param bool $ssl
+         * @return string The base URL of the repository.
          */
-        public function setSsl(bool $ssl): void
+        public function getBaseUrl(): string
         {
-            $this->ssl = $ssl;
+            return ($this->ssl ? 'https://' : 'http://') . $this->host;
         }
 
         /**
-         * Returns the archive URL for the ncc package of the specified group and project.
-         * This is useful for downloading the package.
+         * Creates an instance of the repository client based on the configuration.
          *
-         * @param string $vendor The vendor to get the package for (eg; "Nosial")
-         * @param string $project The project to get the package for (eg; "ncc" or "libs/config")
-         * @param string $version Optional. The version to get the package for. By default, it will get the latest version
-         * @param AuthenticationType|null $authentication Optional. The authentication to use. If null, No authentication will be used.
-         * @return RepositoryResult The url to the package archive
-         * @throws AuthenticationException If the authentication is invalid
-         * @throws NetworkException If there was an error getting the package
-         * @throws NotSupportedException If the repository type does not support fetching packages
+         * @param AbstractAuthentication|null $authentication Optional authentication method for the repository.
+         * @return AbstractRepository An instance of the repository client.
          */
-        public function fetchPackage(string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public function createClient(?AbstractAuthentication $authentication=null): AbstractRepository
         {
-            return match($this->type)
-            {
-                RepositoryType::GITHUB => GithubRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITLAB => GitlabRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITEA => GiteaRepository::fetchPackage($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::PACKAGIST => throw new NotSupportedException('Fetching ncc packages from Packagist is not supported'),
-                default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type->value)),
-            };
+            return AbstractRepository::fromConfiguration($this, $authentication);
         }
 
         /**
-         * Returns the archive URL for the source code of the specified group and project.
-         * This is useful for building the project from source.
+         * Magic method to convert the repository configuration to a string.
+         * This returns the base URL of the repository.
          *
-         * @param string $vendor The vendor to get the source for (eg; "Nosial")
-         * @param string $project The project to get the source for (eg; "ncc" or "libs/config")
-         * @param string $version Optional. The version to get the source for. By default, it will get the latest version
-         * @param AuthenticationType|null $authentication Optional. The authentication to use. If null, No authentication will be used.
-         * @return RepositoryResult The url to the source code archive
-         * @throws AuthenticationException If the authentication is invalid
-         * @throws NetworkException If there was an error getting the source
+         * @return string The base URL of the repository.
          */
-        public function fetchSourceArchive(string $vendor, string $project, string $version=Versions::LATEST->value, ?AuthenticationType $authentication=null, array $options=[]): RepositoryResult
+        public function __toString(): string
         {
-            return match($this->type)
-            {
-                RepositoryType::GITHUB => GithubRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITLAB => GitlabRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::GITEA => GiteaRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                RepositoryType::PACKAGIST => PackagistRepository::fetchSourceArchive($this, $vendor, $project, $version, $authentication, $options),
-                default => throw new InvalidArgumentException(sprintf('Invalid repository type \'%s\'', $this->type->value)),
-            };
-        }
-
-        /**
-         * Returns the repository object used for a project configuration
-         *
-         * @return Repository
-         */
-        public function getProjectRepository(): Repository
-        {
-            return new Repository($this->name, $this->host, $this->type, $this->ssl);
+            return $this->getBaseUrl();
         }
 
         /**
          * @inheritDoc
          */
-        public function toArray(bool $bytecode=false): array
+        public function toArray(): array
         {
             return [
-                ($bytecode ? Functions::cbc('name') : 'name') => $this->name,
-                ($bytecode ? Functions::cbc('type') : 'type') => ($this->type?->value),
-                ($bytecode ? Functions::cbc('host') : 'host') => $this->host,
-                ($bytecode ? Functions::cbc('ssl') : 'ssl') => $this->ssl
+                'name' => $this->name,
+                'type' => $this->type->value,
+                'host' => $this->host,
+                'ssl' => $this->ssl
             ];
         }
 
         /**
          * @inheritDoc
          */
-        public static function fromArray(array $data): self
+        public static function fromArray(array $data): RepositoryConfiguration
         {
-            $name = Functions::array_bc($data, 'name');
-            $type = RepositoryType::tryFrom(Functions::array_bc($data, 'type'));
-            $host = Functions::array_bc($data, 'host');
-            $ssl = Functions::array_bc($data, 'ssl') ?? true;
+            return new self(
+                $data['name'],
+                RepositoryType::tryFrom($data['type'] ?? '') ?? RepositoryType::GITHUB,
+                $data['host'],
+                $data['ssl']
+            );
+        }
 
-            if($type === null)
+        /**
+         * @inheritDoc
+         */
+        public static function validateArray(array $data): void
+        {
+            if(!isset($data['name']) || !is_string($data['name']) || trim($data['name']) === '')
             {
-                throw new InvalidArgumentException(sprintf("Unrecognized repository type %s", Functions::array_bc($data, 'type')));
+                throw new InvalidPropertyException('repository.name', 'The repository name is required and cannot be empty');
             }
 
-            return new self($name, $host, $type, $ssl);
+            if(!isset($data['type']) || !is_string($data['type']) || RepositoryType::tryFrom($data['type']) === null)
+            {
+                throw new InvalidPropertyException('repository.type', 'The repository type is required and must be a valid RepositoryType');
+            }
+
+            if(!isset($data['host']) || !is_string($data['host']) || trim($data['host']) === '')
+            {
+                throw new InvalidPropertyException('repository.host', 'The repository host is required and cannot be empty');
+            }
+
+            if(isset($data['ssl']) && !is_bool($data['ssl']))
+            {
+                throw new InvalidPropertyException('repository.ssl', 'The repository SSL flag must be a boolean value');
+            }
+        }
+
+        public function validate(): void
+        {
+            if(trim($this->name) === '')
+            {
+                throw new InvalidPropertyException('repository.name', 'The repository name cannot be empty');
+            }
+
+            if(trim($this->host) === '')
+            {
+                throw new InvalidPropertyException('repository.host', 'The repository host cannot be empty');
+            }
         }
     }

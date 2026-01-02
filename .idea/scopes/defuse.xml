@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="defuse" pattern="file[Nosial Code Compiler]:src/ncc/ThirdParty/defuse//*" />
-</component>

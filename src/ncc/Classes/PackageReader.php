@@ -1,919 +1,1336 @@
 <?php
-
-    /** @noinspection PhpMissingFieldTypeInspection */
-
     /*
-     * Copyright (c) Nosial 2022-2023, all rights reserved.
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
-     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-     *  conditions:
-     *
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
-     *  of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     *  DEALINGS IN THE SOFTWARE.
-     *
-     */
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
     namespace ncc\Classes;
 
     use Exception;
-    use ncc\Enums\Flags\PackageFlags;
-    use ncc\Enums\PackageDirectory;
-    use ncc\Exceptions\ConfigurationException;
-    use ncc\Exceptions\IntegrityException;
-    use ncc\Exceptions\IOException;
-    use ncc\Objects\Package\Component;
-    use ncc\Objects\Package\ExecutionUnit;
-    use ncc\Objects\Package\Metadata;
-    use ncc\Objects\Package\Resource;
-    use ncc\Objects\ProjectConfiguration\Assembly;
-    use ncc\Objects\ProjectConfiguration\Dependency;
-    use ncc\Objects\ProjectConfiguration\Installer;
-    use ncc\Extensions\ZiProto\ZiProto;
-    use RuntimeException;
+    use InvalidArgumentException;
+    use ncc\Enums\ExecutionUnitType;
+    use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
+    use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
+    use ncc\Interfaces\ReferenceInterface;
+    use ncc\Libraries\pal\Autoloader;
+    use ncc\Libraries\Process\ExecutableFinder;
+    use ncc\Libraries\Process\Process;
+    use ncc\Objects\Package\ComponentReference;
+    use ncc\Objects\Package\ExecutionUnitReference;
+    use ncc\Objects\Package\Header;
+    use ncc\Objects\Package\ResourceReference;
+    use ncc\Objects\PackageSource;
+    use ncc\Objects\Project\Assembly;
+    use ncc\Objects\Project\ExecutionUnit;
+    use ncc\Runtime;
+    use ReflectionClass;
+    use RuntimeException;
+    use Throwable;
+    use function msgpack_unpack;
 
     class PackageReader
     {
-        /**
-         * @var int
-         */
-        private $packageOffset;
+        private string $filePath;
+        private $fileHandle;
+        private int $startOffset;
+        private int $endOffset;
+        private string $packageVersion;
+        private Header $header;
+        private Assembly $assembly;
+        /** @var array<string, ExecutionUnitReference> */
+        private array $executionUnitReferences = [];
+        /** @var array<string, ComponentReference> */
+        private array $componentReferences = [];
+        /** @var array<string, ResourceReference> */
+        private array $resourceReferences = [];
 
         /**
-         * @var int
-         */
-        private $packageLength;
-
-        /**
-         * @var int
-         */
-        private $headerOffset;
-
-        /**
-         * @var int
-         */
-        private $headerLength;
-
-        /**
-         * @var int
-         */
-        private $dataOffset;
-
-        /**
-         * @var int
-         */
-        private $dataLength;
-
-        /**
-         * @var array
-         */
-        private $headers;
-
-        /**
-         * @var resource
-         */
-        private $packageFile;
-
-        /**
-         * @var string
-         */
-        private $packagePath;
-
-        /**
-         * @var array
-         */
-        private $cache;
-
-        /**
-         * PackageReader constructor.
+         * Public constructor for the PackageReader class.
          *
-         * @param string $file_path
+         * @param string $filePath The path to the package file. Must be a valid file path.
+         * @param bool $tryCache If true, attempt to load from cache file if available
+         */
+        public function __construct(string $filePath, bool $tryCache = false)
+        {
+            Logger::getLogger()->debug(sprintf('Initializing PackageReader for: %s', $filePath));
+            $this->filePath = $filePath;
+            if(!IO::exists($this->filePath))
+            {
+                throw new InvalidArgumentException("File does not exist: " . $this->filePath);
+            }
+
+            if(!IO::isReadable($this->filePath))
+            {
+                throw new InvalidArgumentException("File is not readable: " . $this->filePath);
+            }
+
+            // Try to load from cache if requested
+            if($tryCache)
+            {
+                $cacheFile = $this->filePath . '.cache';
+                if(IO::exists($cacheFile))
+                {
+                    Logger::getLogger()->verbose('Attempting to load from cache file');
+                    try
+                    {
+                        $this->importFromCacheFile($cacheFile);
+                        Logger::getLogger()->verbose('Successfully loaded from cache');
+                        return;
+                    }
+                    catch(Exception $e)
+                    {
+                        Logger::getLogger()->debug(sprintf('Cache loading failed: %s, falling back to normal parsing', $e->getMessage()));
+                        // If cache loading fails, fall back to normal parsing
+                        // Silently continue to normal parsing
+                    }
+                }
+            }
+            
+            Logger::getLogger()->verbose('Parsing package file');
+
+            $this->fileHandle = fopen($this->filePath, 'rb');
+            if(!$this->fileHandle)
+            {
+                throw new InvalidArgumentException("Could not open file: " . $this->filePath);
+            }
+
+            $this->startOffset = $this->findPackageStartOffset();
+
+            // Seek to the package start position
+            if (fseek($this->fileHandle, $this->startOffset) !== 0)
+            {
+                fclose($this->fileHandle);
+                throw new InvalidArgumentException("Could not seek to package start position: " . $this->startOffset);
+            }
+
+            // Seek to the package start + skip the START_PACKAGE marker
+            fseek($this->fileHandle, $this->startOffset + strlen(PackageStructure::START_PACKAGE->value) + strlen(PackageStructure::MAGIC_BYTES->value) + strlen(PackageStructure::TERMINATE->value));
+
+            // Read package version
+            $this->packageVersion = $this->readPackageVersion();
+            Logger::getLogger()->debug(sprintf('Package version: %s', $this->packageVersion));
+
+            // Read all sections
+            Logger::getLogger()->verbose('Reading package sections');
+            while(!feof($this->fileHandle))
+            {
+                $marker = fread($this->fileHandle, 1);
+                if($marker === false || $marker === '' || $marker === PackageStructure::TERMINATE->value[0])
+                {
+                    break;
+                }
+
+                switch($marker)
+                {
+                    case PackageStructure::HEADER->value:
+                        Logger::getLogger()->debug('Reading HEADER section');
+                        $this->header = $this->readHeader();
+                        break;
+
+                    case PackageStructure::ASSEMBLY->value:
+                        Logger::getLogger()->debug('Reading ASSEMBLY section');
+                        $this->assembly = $this->readAssembly();
+                        break;
+
+                    case PackageStructure::EXECUTION_UNITS->value:
+                        Logger::getLogger()->debug('Reading EXECUTION_UNITS section');
+                        $this->executionUnitReferences = $this->readExecutionUnitReferences();
+                        Logger::getLogger()->verbose(sprintf('Loaded %d execution units', count($this->executionUnitReferences)));
+                        break;
+
+                    case PackageStructure::COMPONENTS->value:
+                        Logger::getLogger()->debug('Reading COMPONENTS section');
+                        $this->componentReferences = $this->readComponentReferences();
+                        Logger::getLogger()->verbose(sprintf('Loaded %d components', count($this->componentReferences)));
+                        break;
+
+                    case PackageStructure::RESOURCES->value:
+                        Logger::getLogger()->debug('Reading RESOURCES section');
+                        $this->resourceReferences = $this->readResourceReferences();
+                        Logger::getLogger()->verbose(sprintf('Loaded %d resources', count($this->resourceReferences)));
+                        break;
+
+                    default:
+                        throw new RuntimeException("Unknown section marker: " . bin2hex($marker));
+                }
+            }
+
+            // After reading all sections, check if we need to read the final TERMINATE
+            // The marker check above breaks on TERMINATE, so we need to consume it if present
+            if($marker === PackageStructure::TERMINATE->value[0])
+            {
+                // Read the second byte of TERMINATE (it's \xE0\xE0)
+                fread($this->fileHandle, 1);
+            }
+
+            // Save the end offset - this is where the package ends
+            $this->endOffset = ftell($this->fileHandle);
+        }
+
+        public function getFilePath(): string
+        {
+            return $this->filePath;
+        }
+
+        public function getPackageSource(): ?PackageSource
+        {
+            $packageSource = null;
+
+            if($this->getHeader()->getUpdateSource() !== null)
+            {
+                return $this->getHeader()->getUpdateSource();
+            }
+            elseif($this->getHeader()->getMainRepository() !== null)
+            {
+                $packageSource = new PackageSource();
+                $packageSource->setRepository($this->getHeader()->getMainRepository()->getName());
+                $packageSource->setName($this->getAssembly()->getName());
+                $packageSource->setVersion($this->getAssembly()->getVersion());
+                if($this->getAssembly()->getOrganization() !== null)
+                {
+                    $packageSource->setOrganization($this->getAssembly()->getOrganization());
+                }
+            }
+
+            return $packageSource;
+        }
+
+        public function getPackageName(bool $includeVersion = false): string
+        {
+            $name = $this->getAssembly()->getName();
+            if($includeVersion)
+            {
+                $name .= '=' . $this->getAssembly()->getVersion();
+            }
+
+            return $name;
+        }
+
+        /**
+         * Gets the package version.
+         *
+         * @return string The package version.
+         */
+        public function getPackageVersion(): string
+        {
+            return $this->packageVersion;
+        }
+
+        /**
+         * Gets the package header.
+         *
+         * @return Header|null The header object or null if not present.
+         */
+        public function getHeader(): ?Header
+        {
+            return $this->header;
+        }
+
+        /**
+         * Gets the package assembly.
+         *
+         * @return Assembly|null The assembly object or null if not present.
+         */
+        public function getAssembly(): ?Assembly
+        {
+            return $this->assembly;
+        }
+
+        /**
+         * Gets all execution unit references.
+         *
+         * @return ExecutionUnitReference[] Array of execution unit references.
+         */
+        public function getExecutionUnitReferences(): array
+        {
+            return $this->executionUnitReferences;
+        }
+
+        /**
+         * Gets all component references.
+         *
+         * @return ComponentReference[] Array of component references.
+         */
+        public function getComponentReferences(): array
+        {
+            return $this->componentReferences;
+        }
+
+        /**
+         * Gets all resource references.
+         *
+         * @return ResourceReference[] Array of resource references.
+         */
+        public function getResourceReferences(): array
+        {
+            return $this->resourceReferences;
+        }
+
+        /**
+         * Reads an execution unit by its reference.
+         *
+         * @param ExecutionUnitReference $reference The execution unit reference.
+         * @return ExecutionUnit The execution unit object.
+         */
+        public function readExecutionUnit(ExecutionUnitReference $reference): ExecutionUnit
+        {
+            fseek($this->fileHandle, $reference->getOffset());
+            $data = fread($this->fileHandle, $reference->getSize());
+
+            if(strlen($data) !== $reference->getSize())
+            {
+                throw new RuntimeException("Failed to read execution unit data");
+            }
+
+            return ExecutionUnit::fromArray(msgpack_unpack($data));
+        }
+
+        /**
+         * Reads a component by its reference.
+         *
+         * @param ComponentReference $reference The component reference.
+         * @return string The component data.
+         */
+        public function readComponent(ComponentReference $reference): string
+        {
+            fseek($this->fileHandle, $reference->getOffset());
+            $data = fread($this->fileHandle, $reference->getSize());
+
+            if(strlen($data) !== $reference->getSize())
+            {
+                throw new RuntimeException("Failed to read component data");
+            }
+
+            if($this->header->isCompressed())
+            {
+                $data = gzinflate($data);
+            }
+
+            return $data;
+        }
+
+        /**
+         * Reads a resource by its reference.
+         *
+         * @param ResourceReference $reference The resource reference.
+         * @return string The resource data.
+         */
+        public function readResource(ResourceReference $reference): string
+        {
+            fseek($this->fileHandle, $reference->getOffset());
+            $data = fread($this->fileHandle, $reference->getSize());
+            if(strlen($data) !== $reference->getSize())
+            {
+                throw new RuntimeException("Failed to read resource data");
+            }
+
+            if($this->header->isCompressed())
+            {
+                $data = gzinflate($data);
+            }
+
+            return $data;
+        }
+
+        /**
+         * Finds a component reference by path.
+         *
+         * @param string $path The component path to search for.
+         * @return ComponentReference|null The component reference or null if not found.
+         */
+        public function findComponent(string $path): ?ComponentReference
+        {
+            return $this->componentReferences[$path] ?? null;
+        }
+
+        /**
+         * Finds a resource reference by path.
+         *
+         * @param string $path The resource path to search for.
+         * @return ResourceReference|null The resource reference or null if not found.
+         */
+        public function findResource(string $path): ?ResourceReference
+        {
+            return $this->resourceReferences[$path] ?? null;
+        }
+
+        /**
+         * Finds an execution unit reference by name.
+         *
+         * @param string $name The execution unit name to search for.
+         * @return ExecutionUnitReference|null The execution unit reference or null if not found.
+         */
+        public function findExecutionUnit(string $name): ?ExecutionUnitReference
+        {
+            return $this->executionUnitReferences[$name] ?? null;
+        }
+
+        /**
+         * Returns all components, resources and execution units as one array
+         *
+         * @return ReferenceInterface[]
+         */
+        public function getAllReferences(): array
+        {
+            return array_merge(
+                $this->getComponentReferences(),
+                $this->getResourceReferences(),
+                $this->getExecutionUnitReferences()
+            );
+        }
+
+        /**
+         * Reads data based on the reference type.
+         *
+         * @param ReferenceInterface $reference The reference to read.
+         * @return string|ExecutionUnit The data read from the reference.w
+         */
+        public function read(ReferenceInterface $reference): string|ExecutionUnit
+        {
+            if($reference instanceof ComponentReference)
+            {
+                return $this->readComponent($reference);
+            }
+            elseif($reference instanceof ResourceReference)
+            {
+                return $this->readResource($reference);
+            }
+            elseif($reference instanceof ExecutionUnitReference)
+            {
+                return $this->readExecutionUnit($reference);
+            }
+            else
+            {
+                throw new InvalidArgumentException("Unknown reference type");
+            }
+        }
+
+        /**
+         * Finds a reference by name or path.
+         *
+         * @param string $name The name or path to search for.
+         * @return ReferenceInterface|null The found reference or null if not found.
+         */
+        public function find(string $name): ?ReferenceInterface
+        {
+            $reference = $this->findComponent($name);
+            if($reference !== null)
+            {
+                return $reference;
+            }
+
+            $reference = $this->findResource($name);
+            if($reference !== null)
+            {
+                return $reference;
+            }
+
+            return $this->findExecutionUnit($name);
+        }
+
+        /**
          * @throws IOException
          */
-        public function __construct(string $file_path)
+        public function extract(string $outputDirectory): void
         {
-            if (!is_file($file_path))
+            // Create the directory if it doesn't exist
+            if(!IO::isDir($outputDirectory))
             {
-                throw new IOException(sprintf('File \'%s\' does not exist', $file_path));
+                IO::mkdir($outputDirectory);
             }
 
-            $this->packagePath = $file_path;
-            $this->packageFile = fopen($file_path, 'rb');
-
-            if($this->packageFile === false)
+            // Extract all the references from the package
+            foreach($this->getAllReferences() as $reference)
             {
-                throw new IOException(sprintf('Failed to open file \'%s\'', $file_path));
-            }
-
-            // Package begin: ncc_pkg
-            // Start of header: after ncc_pkg
-            // End of header: \x1F\x1F
-            // Start of data: after \x1F\x1F
-            // End of data: \xFF\xAA\x55\xF0
-
-            // First find the offset of the package by searching for the magic bytes "ncc_pkg"
-            $this->packageOffset = 0;
-            while(!feof($this->packageFile))
-            {
-                $buffer = fread($this->packageFile, 1024);
-                $buffer_length = strlen($buffer);
-                $this->packageOffset += $buffer_length;
-
-                if (($position = strpos($buffer, "ncc_pkg")) !== false)
+                // Execution Units are to be generated
+                if($reference instanceof ExecutionUnitReference)
                 {
-                    $this->packageOffset -= $buffer_length - $position;
-                    $this->packageLength = 7; // ncc_pkg
-                    $this->headerOffset = $this->packageOffset + 7;
+                    $this->createExecutionUnit($reference, $outputDirectory);
+                    continue;
+                }
+
+                // Everything is just written as-is
+                $outputPath = rtrim($outputDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $reference->getName();
+                if(!is_dir(dirname($outputPath)))
+                {
+                    IO::mkdir(dirname($outputPath));
+                }
+
+                IO::writeFile($outputPath, $this->read($reference));
+            }
+
+            // Generate the autoloader
+            IO::writeFile($outputDirectory . DIRECTORY_SEPARATOR . 'autoload.php', Autoloader::generateAutoloader($outputDirectory, [
+                'relative' => true
+            ]));
+        }
+
+        /**
+         * Creates a shell script to execute the given execution unit.
+         *
+         * @param ExecutionUnitReference $reference The execution unit reference.
+         * @param string $outputDirectory The directory where the script will be created.
+         * @return string The path to the created shell script.
+         * @throws IOException If there is an error writing the file.
+         */
+        public function createExecutionUnit(ExecutionUnitReference $reference, string $outputDirectory): string
+        {
+            $executionUnit = $this->readExecutionUnit($reference); // Find the execution unit
+            $outputFile = $outputDirectory . DIRECTORY_SEPARATOR . $executionUnit->getName() . '.sh'; // Declare the output file
+            $shell = (new ExecutableFinder())->find('sh'); // Find the system shell
+
+            if($shell === null)
+            {
+                // If we can't find the shell, we can't proceed because the generated script would not be executable
+                throw new OperationException('Unable to locate \'sh\', cannot generate shell script.');
+            }
+
+            // Shell script begins with the first line.
+            $shellScript = "#!{$shell}" . PHP_EOL;
+
+            // Define environment variables
+            if($executionUnit->getEnvironment() !== null && count($executionUnit->getEnvironment()) > 0)
+            {
+                // Define the section for the environment variables
+                $shellScript .= PHP_EOL . "# Environment Variables" . PHP_EOL;
+                foreach($executionUnit->getEnvironment() as $key => $value)
+                {
+                    $shellScript .= "{$key}=\"{$value}\"" . PHP_EOL;
+                }
+                $shellScript .= PHP_EOL;
+            }
+
+            // Change to working directory if specified
+            if($executionUnit->getWorkingDirectory() !== null && $executionUnit->getWorkingDirectory() !== MacroVariable::CURRENT_WORKING_DIRECTORY)
+            {
+                $shellScript .= "cd {$executionUnit->getWorkingDirectory()}". PHP_EOL;
+            }
+
+            // Execute the entry point based on the type
+            switch($executionUnit->getType())
+            {
+                case ExecutionUnitType::PHP:
+                    $bin = (new ExecutableFinder())->find('php');
+                    $shellScript .= "exec {$bin} {$outputDirectory}" . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint();
                     break;
-                }
-            }
 
-            // Check for sanity reasons
-            if($this->packageOffset === null || $this->packageLength === null)
-            {
-                throw new IOException(sprintf('File \'%s\' is not a valid package file (missing magic bytes)', $file_path));
-            }
-
-            // Seek the header until the end of headers byte sequence (1F 1F 1F 1F)
-            fseek($this->packageFile, $this->headerOffset);
-            while (!feof($this->packageFile))
-            {
-                $this->headers .= fread($this->packageFile, 1024);
-
-                // Search for the position of "1F 1F 1F 1F" within the buffer
-                if (($position = strpos($this->headers, "\x1F\x1F\x1F\x1F")) !== false)
-                {
-                    $this->headers = substr($this->headers, 0, $position);
-                    $this->headerLength = strlen($this->headers);
-                    $this->packageLength += $this->headerLength + 4;
-                    $this->dataOffset = $this->headerOffset + $this->headerLength + 4;
+                case ExecutionUnitType::SYSTEM:
+                    $bin = (new ExecutableFinder())->find($executionUnit->getEntryPoint());
+                    $shellScript .= "exec {$bin}";
                     break;
-                }
-
-                if (strlen($this->headers) >= 100000000)
-                {
-                    throw new IOException(sprintf('File \'%s\' is not a valid package file (header is too large)', $file_path));
-                }
             }
 
-            try
+            if($executionUnit->getArguments() !== null && count($executionUnit->getArguments()) > 0)
             {
-                $this->headers = ZiProto::decode($this->headers);
+                $shellScript .= ' ' . implode(' ', $executionUnit->getArguments()) . ' "$@"';
             }
-            catch(Exception $e)
+            else
             {
-                throw new IOException(sprintf('File \'%s\' is not a valid package file (corrupted header)', $file_path), $e);
+                $shellScript .= ' "$@"';
             }
 
-            if(!isset($this->headers[PackageStructure::FILE_VERSION->value]))
+            IO::writeFile($outputFile, $shellScript);
+            return $outputFile;
+        }
+
+        /**
+         * Finds the package start offset by scanning the file for the package signature.
+         *
+         * @return int The offset where the package starts.
+         */
+        private function findPackageStartOffset(): int
+        {
+            $searchSequence = PackageStructure::START_PACKAGE->value . PackageStructure::MAGIC_BYTES->value . PackageStructure::TERMINATE->value;
+            $searchLength = strlen($searchSequence);
+
+            $fileSize = IO::filesize($this->filePath);
+            if ($fileSize < $searchLength)
             {
-                throw new IOException(sprintf('File \'%s\' is not a valid package file (invalid header)', $file_path));
+                throw new InvalidArgumentException("File is too small to contain a valid package: " . $this->filePath);
             }
 
-            // Seek the data until the end of the package (FF AA 55 F0)
-            fseek($this->packageFile, $this->dataOffset);
+            $chunkSize = 126;
             $buffer = '';
-            while(!feof($this->packageFile))
-            {
-                $current_chunk = fread($this->packageFile, 1024);
-                $this->dataLength += strlen($current_chunk);
-                $buffer .= $current_chunk;
+            $bufferStartPosition = 0;
 
-                // If we detect the end-of-data byte sequence
-                if (($position = strpos($buffer, "\xFF\xAA\x55\xF0")) !== false)
+            while (ftell($this->fileHandle) < $fileSize)
+            {
+                $currentPosition = ftell($this->fileHandle);
+                $bytesToRead = min($chunkSize, $fileSize - $currentPosition);
+                $newData = fread($this->fileHandle, $bytesToRead);
+
+                if ($newData === false)
                 {
-                    $this->dataLength -= strlen($buffer) - $position;
-                    $this->packageLength += $this->dataLength + 4;
-                    break;
+                    throw new InvalidArgumentException("Error reading file: " . $this->filePath);
                 }
 
-                // Check if the buffer is 1MB or larger
-                if(strlen($buffer) > 1048576)
+                // If buffer is getting too large, trim from the left but keep overlap for boundary matches
+                if (strlen($buffer) > $searchLength)
                 {
-                    // Remove the first 512kb of the buffer
-                    $buffer = substr($buffer, 512000);
+                    $trimAmount = strlen($buffer) - $searchLength + 1;
+                    $buffer = substr($buffer, $trimAmount);
+                    $bufferStartPosition += $trimAmount;
                 }
 
-            }
+                $buffer .= $newData;
 
-            if($this->dataLength === null || $this->dataLength === 0)
-            {
-                throw new IOException(sprintf('File \'%s\' is not a valid package file (missing end of package)', $file_path));
-            }
-
-            $this->cache = [];
-        }
-
-        /**
-         * Returns the package headers
-         *
-         * @return array
-         */
-        public function getHeaders(): array
-        {
-            return $this->headers;
-        }
-
-        /**
-         * Returns the package file version
-         *
-         * @return string
-         */
-        public function getFileVersion(): string
-        {
-            return $this->headers[PackageStructure::FILE_VERSION->value];
-        }
-
-        /**
-         * Returns an array of flags from the package
-         *
-         * @return array
-         */
-        public function getFlags(): array
-        {
-            return $this->headers[PackageStructure::FLAGS->value];
-        }
-
-        /**
-         * Returns a flag from the package
-         *
-         * @param string $name
-         * @return bool
-         */
-        public function getFlag(string $name): bool
-        {
-            return in_array($name, $this->headers[PackageStructure::FLAGS->value], true);
-        }
-
-        /**
-         * Returns the directory of the package
-         *
-         * @return array
-         */
-        public function getDirectory(): array
-        {
-            return $this->headers[PackageStructure::DIRECTORY->value];
-        }
-
-        /**
-         * Returns a resource from the package by name
-         *
-         * @param string $name
-         * @return string
-         */
-        public function get(string $name): string
-        {
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
-            {
-                throw new RuntimeException(sprintf('File \'%s\' not found in package \'%s\'', $name, $this->packagePath));
-            }
-
-            $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
-            fseek($this->packageFile, ($this->dataOffset + (int)$location[0]));
-
-            if(in_array(PackageFlags::COMPRESSION->value, $this->headers[PackageStructure::FLAGS->value], true))
-            {
-                return gzuncompress(fread($this->packageFile, (int)$location[1]));
-            }
-
-            return fread($this->packageFile, (int)$location[1]);
-        }
-
-        /**
-         * Returns a resource pointer from the package by name
-         *
-         * @param string $name
-         * @return int[]
-         */
-        public function getPointer(string $name): array
-        {
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$name]))
-            {
-                throw new RuntimeException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->packagePath));
-            }
-
-            $location = explode(':', $this->headers[PackageStructure::DIRECTORY->value][$name]);
-            return [(int)$location[0], (int)$location[1]];
-        }
-
-        /**
-         * Returns True if the package contains a resource by name
-         *
-         * @param string $name
-         * @return bool
-         */
-        public function exists(string $name): bool
-        {
-            return isset($this->headers[PackageStructure::DIRECTORY->value][$name]);
-        }
-
-        /**
-         * Returns a resource from the package by pointer
-         *
-         * @param int $pointer
-         * @param int $length
-         * @return string
-         */
-        public function getByPointer(int $pointer, int $length): string
-        {
-            fseek($this->packageFile, ($this->headerLength + $pointer));
-            return fread($this->packageFile, $length);
-        }
-
-        /**
-         * Returns the package's assembly
-         *
-         * @return Assembly
-         * @throws ConfigurationException
-         * @throws IntegrityException
-         */
-        public function getAssembly(): Assembly
-        {
-            $directory = sprintf('@%s', PackageDirectory::ASSEMBLY->value);
-
-            if(isset($this->cache[$directory]))
-            {
-                return $this->cache[$directory];
-            }
-
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
-            {
-                throw new ConfigurationException(sprintf('Assembly object not found in package \'%s\'', $this->packagePath));
-            }
-
-            try
-            {
-                $assembly = Assembly::fromArray(ZiProto::decode($this->get($directory)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode assembly from package \'%s\' using ZiProto: %s', $this->packagePath, $e->getMessage()), $e);
-            }
-
-            $this->cache[$directory] = $assembly;
-            return $assembly;
-        }
-
-        /**
-         * Returns the package's metadata
-         *
-         * @return Metadata
-         * @throws ConfigurationException
-         * @throws IntegrityException
-         */
-        public function getMetadata(): Metadata
-        {
-            $directory = sprintf('@%s', PackageDirectory::METADATA->value);
-
-            if(isset($this->cache[$directory]))
-            {
-                return $this->cache[$directory];
-            }
-
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
-            {
-                throw new ConfigurationException(sprintf('Metadata object not found in package \'%s\'', $this->packagePath));
-            }
-
-            try
-            {
-                $metadata = Metadata::fromArray(ZiProto::decode($this->get($directory)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode metadata from package \'%s\' using ZiProto: %s', $this->packagePath, $e->getMessage()), $e);
-            }
-
-            foreach($this->getFlags() as $flag)
-            {
-                $metadata->setOption($flag, true);
-            }
-
-            $this->cache[$directory] = $metadata;
-            return $metadata;
-        }
-
-        /**
-         * Optional. Returns the package's installer
-         *
-         * @return Installer|null
-         * @throws IntegrityException
-         */
-        public function getInstaller(): ?Installer
-        {
-            $directory = sprintf('@%s', PackageDirectory::INSTALLER->value);
-
-            if(isset($this->cache[$directory]))
-            {
-                return $this->cache[$directory];
-            }
-
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$directory]))
-            {
-                return null;
-            }
-
-            try
-            {
-                $installer = Installer::fromArray(ZiProto::decode($this->get($directory)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode installer from package \'%s\' using ZiProto: %s', $this->packagePath, $e->getMessage()), $e);
-            }
-
-            $this->cache[$directory] = $installer;
-            return $installer;
-        }
-
-        /**
-         * Returns the package's dependencies
-         *
-         * @return array
-         */
-        public function getDependencies(): array
-        {
-            $dependencies = [];
-            $directory = sprintf('@%s:', PackageDirectory::DEPENDENCIES->value);
-
-            foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
-            {
-                if(str_starts_with($name, $directory))
+                $pos = strpos($buffer, $searchSequence);
+                if ($pos !== false)
                 {
-                    $dependencies[] = str_replace($directory, '', $name);
+                    // Calculate absolute position in file
+                    return $bufferStartPosition + $pos;
                 }
             }
 
-            return $dependencies;
+            throw new InvalidArgumentException("Package signature (START_PACKAGE + MAGIC_BYTES) not found in file: " . $this->filePath);
         }
 
         /**
-         * Returns a dependency from the package
+         * Reads the package version from the file.
          *
-         * @param string $name
-         * @return Dependency
-         * @throws ConfigurationException
-         * @throws IntegrityException
+         * @return string The package version.
          */
-        public function getDependency(string $name): Dependency
+        private function readPackageVersion(): string
         {
-            $dependency_name = sprintf('@%s:%s', PackageDirectory::DEPENDENCIES->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$dependency_name]))
+            $marker = fread($this->fileHandle, 1);
+            if($marker !== PackageStructure::PACKAGE_VERSION->value)
             {
-                throw new ConfigurationException(sprintf('Dependency \'%s\' not found in package \'%s\'', $name, $this->packagePath));
+                throw new RuntimeException("Expected PACKAGE_VERSION marker, got: " . bin2hex($marker));
             }
 
-            try
+            // Read 4 characters for version
+            $version = fread($this->fileHandle, 4);
+            if(strlen($version) !== 4)
             {
-                return Dependency::fromArray(ZiProto::decode($this->get($dependency_name)));
+                throw new RuntimeException("Invalid package version length");
             }
-            catch(Exception $e)
+
+            // Read TERMINATE
+            $terminate = fread($this->fileHandle, strlen(PackageStructure::TERMINATE->value));
+            if($terminate !== PackageStructure::TERMINATE->value)
             {
-                throw new IntegrityException(sprintf('Failed to decode dependency \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
+                throw new RuntimeException("Expected TERMINATE after package version");
             }
+
+            return $version;
         }
 
         /**
-         * Returns a dependency from the package by pointer
+         * Reads a size prefix (packed unsigned long long).
          *
-         * @param int $pointer
-         * @param int $length
-         * @return Dependency
-         * @throws IntegrityException
+         * @return int The size value.
          */
-        public function getDependencyByPointer(int $pointer, int $length): Dependency
+        private function readSizePrefix(): int
         {
-            try
+            $packed = fread($this->fileHandle, 8);
+            if(strlen($packed) !== 8)
             {
-                return Dependency::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
+                throw new RuntimeException("Failed to read size prefix");
             }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode dependency from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
-            }
+
+            $unpacked = unpack('Q', $packed);
+            return $unpacked[1];
         }
 
         /**
-         * Returns an array of execution units from the package
+         * Reads the header section.
          *
-         * @return array
+         * @return Header The header object.
          */
-        public function getExecutionUnits(): array
+        private function readHeader(): Header
         {
-            $execution_units = [];
-            $directory = sprintf('@%s:', PackageDirectory::EXECUTION_UNITS->value);
+            $size = $this->readSizePrefix();
 
-            foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
+            // Read SOFT_TERMINATE
+            $softTerminate = fread($this->fileHandle, strlen(PackageStructure::SOFT_TERMINATE->value));
+            if($softTerminate !== PackageStructure::SOFT_TERMINATE->value)
             {
-                if(str_starts_with($name, $directory))
-                {
-                    $execution_units[] = str_replace($directory, '', $name);
-                }
+                throw new RuntimeException("Expected SOFT_TERMINATE after header size");
             }
 
-            return $execution_units;
+            // Read data
+            $data = fread($this->fileHandle, $size);
+            if(strlen($data) !== $size)
+            {
+                throw new RuntimeException("Failed to read header data");
+            }
+
+            // Read TERMINATE
+            $terminate = fread($this->fileHandle, strlen(PackageStructure::TERMINATE->value));
+            if($terminate !== PackageStructure::TERMINATE->value)
+            {
+                throw new RuntimeException("Expected TERMINATE after header data");
+            }
+
+            return new Header(msgpack_unpack($data));
         }
 
         /**
-         * Returns an execution unit from the package
+         * Reads the assembly section.
          *
-         * @param string $name
-         * @return ExecutionUnit
-         * @throws ConfigurationException
-         * @throws IntegrityException
+         * @return Assembly The assembly object.
          */
-        public function getExecutionUnit(string $name): ExecutionUnit
+        private function readAssembly(): Assembly
         {
-            $execution_unit_name = sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$execution_unit_name]))
+            $size = $this->readSizePrefix();
+
+            // Read SOFT_TERMINATE
+            $softTerminate = fread($this->fileHandle, strlen(PackageStructure::SOFT_TERMINATE->value));
+            if($softTerminate !== PackageStructure::SOFT_TERMINATE->value)
             {
-                throw new ConfigurationException(sprintf('Execution unit \'%s\' not found in package \'%s\'', $name, $this->packagePath));
+                throw new RuntimeException("Expected SOFT_TERMINATE after assembly size");
             }
 
-            try
+            // Read data
+            $data = fread($this->fileHandle, $size);
+            if(strlen($data) !== $size)
             {
-                return ExecutionUnit::fromArray(ZiProto::decode($this->get($execution_unit_name)));
+                throw new RuntimeException("Failed to read assembly data");
             }
-            catch(Exception $e)
+
+            // Read TERMINATE
+            $terminate = fread($this->fileHandle, strlen(PackageStructure::TERMINATE->value));
+            if($terminate !== PackageStructure::TERMINATE->value)
             {
-                throw new IntegrityException(sprintf('Failed to decode execution unit \'%s\' from package file \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
+                throw new RuntimeException("Expected TERMINATE after assembly data");
             }
+
+            return Assembly::fromArray(msgpack_unpack($data));
         }
 
         /**
-         * Checks if an execution unit with the specified name exists in the package.
+         * Reads execution unit references from the file.
          *
-         * @param string $name The name of the execution unit to check.
-         * @return bool True if the execution unit exists, false otherwise.
+         * @return array<string, ExecutionUnitReference> Associative array of execution unit references.
          */
-        public function executionUnitExists(string $name): bool
+        private function readExecutionUnitReferences(): array
         {
-            return isset($this->headers[PackageStructure::DIRECTORY->value][sprintf('@%s:%s', PackageDirectory::EXECUTION_UNITS->value, $name)]);
-        }
+            $references = [];
+            $nextSectionMarkers = [
+                PackageStructure::COMPONENTS->value,
+                PackageStructure::RESOURCES->value
+            ];
 
-        /**
-         * Returns an execution unit from the package by pointer
-         *
-         * @param int $pointer
-         * @param int $length
-         * @return ExecutionUnit
-         * @throws IntegrityException
-         */
-        public function getExecutionUnitByPointer(int $pointer, int $length): ExecutionUnit
-        {
-            try
+            while(true)
             {
-                return ExecutionUnit::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode execution unit from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
-            }
-        }
-
-        /**
-         * Returns the package's component pointers
-         *
-         * @return array
-         */
-        public function getComponents(): array
-        {
-            $components = [];
-            $directory = sprintf('@%s:', PackageDirectory::COMPONENTS->value);
-
-            foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
-            {
-                if(str_starts_with($name, $directory))
-                {
-                    $components[] = str_replace($directory, '', $name);
-                }
-            }
-
-            return $components;
-        }
-
-        /**
-         * Returns the package's class map
-         *
-         * @return array
-         */
-        public function getClassMap(): array
-        {
-            $class_map = [];
-            $directory = sprintf('@%s:', PackageDirectory::CLASS_POINTER->value);
-
-            foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
-            {
-                if(str_starts_with($name, $directory))
-                {
-                    $class_map[] = str_replace($directory, '', $name);
-                }
-            }
-
-            return $class_map;
-        }
-
-        /**
-         * Returns a component from the package
-         *
-         * @param string $name
-         * @return Component
-         * @throws ConfigurationException
-         * @throws IntegrityException
-         */
-        public function getComponent(string $name): Component
-        {
-            $component_name = sprintf('@%s:%s', PackageDirectory::COMPONENTS->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$component_name]))
-            {
-                throw new ConfigurationException(sprintf('Component \'%s\' not found in package \'%s\'', $name, $this->packagePath));
-            }
-
-            try
-            {
-                return Component::fromArray(ZiProto::decode($this->get($component_name)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode component \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
-            }
-        }
-
-        /**
-         * Returns a component from the package by pointer
-         *
-         * @param int $pointer
-         * @param int $length
-         * @return Component
-         * @throws IntegrityException
-         */
-        public function getComponentByPointer(int $pointer, int $length): Component
-        {
-            try
-            {
-                return Component::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode component from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
-            }
-        }
-
-        /**
-         * Returns a component from the package by a class pointer
-         *
-         * @param string $class
-         * @return Component
-         * @throws ConfigurationException
-         * @throws IntegrityException
-         */
-        public function getComponentByClass(string $class): Component
-        {
-            $class_name = sprintf('@%s:%s', PackageDirectory::CLASS_POINTER->value, $class);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$class_name]))
-            {
-                throw new ConfigurationException(sprintf('Class map \'%s\' not found in package \'%s\'', $class, $this->packagePath));
-            }
-
-            try
-            {
-                return Component::fromArray(ZiProto::decode($this->get($class_name)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode component from class pointer \'%s\' from package \'%s\' using ZiProto: %s', $class, $this->packagePath, $e->getMessage()), $e);
-            }
-        }
-
-        /**
-         * Returns an array of resource pointers from the package
-         *
-         * @return array
-         */
-        public function getResources(): array
-        {
-            $resources = [];
-            $directory = sprintf('@%s:', PackageDirectory::RESOURCES->value);
-
-            foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
-            {
-                if(str_starts_with($name, $directory))
-                {
-                    $resources[] = str_replace($directory, '', $name);
-                }
-            }
-
-            return $resources;
-        }
-
-        /**
-         * Returns a resource from the package
-         *
-         * @param string $name
-         * @return Resource
-         * @throws ConfigurationException
-         * @throws IntegrityException
-         */
-        public function getResource(string $name): Resource
-        {
-            $resource_name = sprintf('@%s:%s', PackageDirectory::RESOURCES->value, $name);
-            if(!isset($this->headers[PackageStructure::DIRECTORY->value][$resource_name]))
-            {
-                throw new ConfigurationException(sprintf('Resource \'%s\' not found in package \'%s\'', $name, $this->packagePath));
-            }
-
-            try
-            {
-                return Resource::fromArray(ZiProto::decode($this->get($resource_name)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode resource \'%s\' from package \'%s\' using ZiProto: %s', $name, $this->packagePath, $e->getMessage()), $e);
-            }
-        }
-
-        /**
-         * Returns a resource from the package by pointer
-         *
-         * @param int $pointer
-         * @param int $length
-         * @return Resource
-         * @throws IntegrityException
-         */
-        public function getResourceByPointer(int $pointer, int $length): Resource
-        {
-            try
-            {
-                return Resource::fromArray(ZiProto::decode($this->getByPointer($pointer, $length)));
-            }
-            catch(Exception $e)
-            {
-                throw new IntegrityException(sprintf('Failed to decode resource from pointer \'%s\' with length \'%s\' from package \'%s\' using ZiProto: %s', $pointer, $length, $this->packagePath, $e->getMessage()), $e);
-            }
-        }
-
-        /**
-         * Searches the package's directory for a file that matches the given filename
-         *
-         * @param string $filename
-         * @return string|false
-         */
-        public function find(string $filename): string|false
-        {
-            foreach($this->headers[PackageStructure::DIRECTORY->value] as $name => $location)
-            {
-                if(str_ends_with($name, $filename))
-                {
-                    return $name;
-                }
-            }
-
-            return false;
-        }
-
-        /**
-         * Returns the offset of the package
-         *
-         * @return int
-         */
-        public function getPackageOffset(): int
-        {
-            return $this->packageOffset;
-        }
-
-        /**
-         * @return int
-         */
-        public function getPackageLength(): int
-        {
-            return $this->packageLength;
-        }
-
-        /**
-         * @return int
-         */
-        public function getHeaderOffset(): int
-        {
-            return $this->headerOffset;
-        }
-
-        /**
-         * @return int
-         */
-        public function getHeaderLength(): int
-        {
-            return $this->headerLength;
-        }
-
-        /**
-         * @return int
-         */
-        public function getDataOffset(): int
-        {
-            return $this->dataOffset;
-        }
-
-        /**
-         * @return int
-         */
-        public function getDataLength(): int
-        {
-            return $this->dataLength;
-        }
-
-        /**
-         * Returns the checksum of the package
-         *
-         * @param string $hash
-         * @param bool $binary
-         * @return string
-         */
-        public function getChecksum(string $hash='crc32b', bool $binary=false): string
-        {
-            $checksum = hash($hash, '', $binary);
-
-            fseek($this->packageFile, $this->packageOffset);
-            $bytes_left = $this->packageLength;
-
-            while ($bytes_left > 0)
-            {
-                $buffer = fread($this->packageFile, min(1024, $bytes_left));
-                $buffer_length = strlen($buffer);
-                $bytes_left -= $buffer_length;
-                $checksum = hash($hash, ($checksum . $buffer), $binary);
-
-                if ($buffer_length === 0)
+                $peek = fread($this->fileHandle, 1);
+                if($this->isEndOfSection($peek))
                 {
                     break;
                 }
+
+                if($this->isNextSection($peek, $nextSectionMarkers))
+                {
+                    fseek($this->fileHandle, ftell($this->fileHandle) - 1);
+                    break;
+                }
+
+                $name = $this->readNameUntilSoftTerminate($peek);
+                $size = $this->readSizePrefix();
+                $this->expectSoftTerminate('execution unit size');
+                $offset = ftell($this->fileHandle);
+                $this->skipData($size);
+                $this->expectTerminate('execution unit data');
+
+                $references[$name] = new ExecutionUnitReference($name, $offset, $size);
             }
 
-            return $checksum;
+            return $references;
         }
 
         /**
-         * @param string $path
+         * Reads component references from the file.
+         *
+         * @return array<string, ComponentReference> Associative array of component references.
+         */
+        private function readComponentReferences(): array
+        {
+            $references = [];
+            $nextSectionMarkers = [PackageStructure::RESOURCES->value];
+
+            while(true)
+            {
+                $peek = $this->peekNextByte();
+                if($this->isEndOfSection($peek))
+                {
+                    break;
+                }
+
+                if($this->isNextSection($peek, $nextSectionMarkers))
+                {
+                    fseek($this->fileHandle, ftell($this->fileHandle) - 1);
+                    break;
+                }
+
+                $componentName = $this->readNameUntilSoftTerminate($peek);
+                $size = $this->readSizePrefix();
+                $this->expectSoftTerminate('component size');
+                $offset = ftell($this->fileHandle);
+                $this->skipData($size);
+                $this->expectTerminate('component data');
+
+                $references[$componentName] = new ComponentReference($componentName, $offset, $size);
+            }
+
+            return $references;
+        }
+
+        /**
+         * Reads resource references from the file.
+         *
+         * @return array<string, ResourceReference> Associative array of resource references.
+         */
+        private function readResourceReferences(): array
+        {
+            $references = [];
+
+            while(true)
+            {
+                $peek = $this->peekNextByte();
+                if($this->isEndOfSection($peek))
+                {
+                    break;
+                }
+
+                $resourcePath = $this->readNameUntilSoftTerminate($peek);
+                $size = $this->readSizePrefix();
+                $this->expectSoftTerminate('resource size');
+                $offset = ftell($this->fileHandle);
+                $this->skipData($size);
+                $this->expectTerminate('resource data');
+
+                $references[$resourcePath] = new ResourceReference($resourcePath, $offset, $size);
+            }
+
+            return $references;
+        }
+
+        /**
+         * Peeks at the next byte in the file without consuming it permanently.
+         *
+         * @return string|false The peeked byte or false on error.
+         */
+        private function peekNextByte(): string|false
+        {
+            return fread($this->fileHandle, 1);
+        }
+
+        /**
+         * Checks if the peeked byte indicates end of section.
+         *
+         * @param string|false $peek The peeked byte.
+         * @return bool True if end of section.
+         */
+        private function isEndOfSection(string|false $peek): bool
+        {
+            return $peek === false || $peek === '' || $peek === PackageStructure::TERMINATE->value[0];
+        }
+
+        /**
+         * Checks if the peeked byte is a marker for the next section.
+         *
+         * @param string|false $peek The peeked byte.
+         * @param array $markers Array of section markers to check.
+         * @return bool True if it's a next section marker.
+         */
+        private function isNextSection(string|false $peek, array $markers): bool
+        {
+            return $peek !== false && in_array($peek, $markers, true);
+        }
+
+        /**
+         * Reads a name/path string until SOFT_TERMINATE is encountered.
+         *
+         * @param string $peek The first peeked byte.
+         * @return string The name/path string (may be empty).
+         */
+        private function readNameUntilSoftTerminate(string $peek): string
+        {
+            if($peek === PackageStructure::SOFT_TERMINATE->value)
+            {
+                // Empty name, already past SOFT_TERMINATE
+                return '';
+            }
+
+            // Rewind to read the name
+            fseek($this->fileHandle, ftell($this->fileHandle) - 1);
+
+            $name = '';
+            while(true)
+            {
+                $byte = fread($this->fileHandle, 1);
+                if($byte === PackageStructure::SOFT_TERMINATE->value)
+                {
+                    break;
+                }
+                $name .= $byte;
+            }
+
+            return $name;
+        }
+
+        /**
+         * Expects a SOFT_TERMINATE marker and throws exception if not found.
+         *
+         * @param string $context Context description for error message.
          * @return void
-         * @throws IOException
          */
-        public function saveCopy(string $path): void
+        private function expectSoftTerminate(string $context): void
         {
-            $destination = fopen($path, 'wb');
-
-            if ($destination === false)
+            if(fread($this->fileHandle, strlen(PackageStructure::SOFT_TERMINATE->value)) !== PackageStructure::SOFT_TERMINATE->value)
             {
-                throw new IOException(sprintf('Failed to open file \'%s\'', $path));
-            }
-
-            fseek($this->packageFile, $this->packageOffset);
-            $remaining_bytes = $this->packageLength;
-
-            while($remaining_bytes > 0)
-            {
-                $bytes_to_read = min($remaining_bytes, 4096);
-                $data = fread($this->packageFile, $bytes_to_read);
-
-                if ($data === false)
-                {
-                    throw new IOException('Failed to read from package file');
-                }
-
-                $written_bytes = fwrite($destination, $data, $bytes_to_read);
-
-                if ($written_bytes === false)
-                {
-                    throw new IOException(sprintf('Failed to write to file \'%s\'', $path));
-                }
-
-                $remaining_bytes -= $written_bytes;
-            }
-
-            fclose($destination);
-
-            if((new PackageReader($path))->getChecksum() !== $this->getChecksum())
-            {
-                throw new IOException(sprintf('Failed to save package copy to \'%s\', checksum mismatch', $path));
+                throw new RuntimeException("Expected SOFT_TERMINATE after {$context}");
             }
         }
 
         /**
-         * PackageReader destructor.
+         * Expects a TERMINATE marker and throws exception if not found.
+         *
+         * @param string $context Context description for error message.
+         * @return void
+         */
+        private function expectTerminate(string $context): void
+        {
+            if(fread($this->fileHandle, strlen(PackageStructure::TERMINATE->value)) !== PackageStructure::TERMINATE->value)
+            {
+                throw new RuntimeException("Expected TERMINATE after {$context}");
+            }
+        }
+
+        /**
+         * Skips a specified amount of data in the file.
+         *
+         * @param int $size Number of bytes to skip.
+         * @return void
+         */
+        private function skipData(int $size): void
+        {
+            fseek($this->fileHandle, ftell($this->fileHandle) + $size);
+        }
+
+        /**
+         * Exports the package to a new file, extracting it from any embedded context.
+         * This method reads the exact package data from the start offset to the end offset
+         * and writes it to the specified file path. This is useful when the package is embedded
+         * in another file (e.g., a compiled program or PHP script using __halt_compiler()).
+         *
+         * @param string $filePath The destination file path where the package should be exported.
+         * @return void
+         * @throws IOException If there is an error writing the file.
+         */
+        public function exportPackage(string $filePath): void
+        {
+            // Calculate the exact package size
+            $packageSize = $this->endOffset - $this->startOffset;
+
+            // Seek to the start of the package
+            if (fseek($this->fileHandle, $this->startOffset) !== 0)
+            {
+                throw new RuntimeException("Could not seek to package start position: " . $this->startOffset);
+            }
+
+            // Read the exact package data from startOffset to endOffset
+            $packageData = fread($this->fileHandle, $packageSize);
+            
+            if ($packageData === false || strlen($packageData) !== $packageSize)
+            {
+                throw new IOException("Failed to read complete package data from: " . $this->filePath . " (expected " . $packageSize . " bytes)");
+            }
+
+            // Write the package data to the specified file
+            IO::writeFile($filePath, $packageData);
+        }
+
+        /**
+         * Exports package metadata to a cache file for faster subsequent loading.
+         * The cache file contains all parsed references and metadata, allowing the
+         * PackageReader to be reconstructed without re-parsing the package file.
+         *
+         * @param string $cacheFilePath The path where the cache file should be saved
+         * @throws IOException If the cache file cannot be written
+         */
+        public function exportCache(string $cacheFilePath): void
+        {
+            $cacheData = [
+                'version' => 1, // Cache format version for future compatibility
+                'file_path' => $this->filePath,
+                'file_size' => filesize($this->filePath),
+                'file_mtime' => filemtime($this->filePath),
+                'start_offset' => $this->startOffset,
+                'end_offset' => $this->endOffset,
+                'package_version' => $this->packageVersion,
+                'header' => $this->header->toArray(),
+                'assembly' => $this->assembly->toArray(),
+                'execution_unit_references' => $this->executionUnitReferences,
+                'component_references' => $this->componentReferences,
+                'resource_references' => $this->resourceReferences,
+            ];
+
+            $serialized = serialize($cacheData);
+            IO::writeFile($cacheFilePath, $serialized);
+        }
+
+        /**
+         * Creates a PackageReader instance from a cache file.
+         * This method provides a static factory for creating PackageReader instances
+         * from previously exported cache files.
+         *
+         * @param string $cacheFilePath The path to the cache file
+         * @param string $packageFilePath The path to the original package file
+         * @return static A new PackageReader instance
+         * @throws InvalidArgumentException If the cache file is invalid or corrupted
+         * @throws IOException If the cache file cannot be read
+         */
+        public static function importFromCache(string $cacheFilePath, string $packageFilePath): self
+        {
+            if(!IO::exists($cacheFilePath))
+            {
+                throw new InvalidArgumentException("Cache file does not exist: " . $cacheFilePath);
+            }
+
+            if(!IO::exists($packageFilePath))
+            {
+                throw new InvalidArgumentException("Package file does not exist: " . $packageFilePath);
+            }
+
+            // Use reflection to create instance without calling constructor
+            $reflection = new ReflectionClass(self::class);
+            $instance = $reflection->newInstanceWithoutConstructor();
+            
+            $instance->filePath = $packageFilePath;
+            $instance->importFromCacheFile($cacheFilePath);
+            
+            return $instance;
+        }
+
+        /**
+         * Internal method to import cache data into the current instance.
+         *
+         * @param string $cacheFilePath The path to the cache file
+         * @throws InvalidArgumentException If the cache is invalid or corrupted
+         * @throws IOException If the cache file cannot be read
+         */
+        private function importFromCacheFile(string $cacheFilePath): void
+        {
+            $cacheContent = IO::readFile($cacheFilePath);
+            $cacheData = unserialize($cacheContent);
+
+            if(!is_array($cacheData) || !isset($cacheData['version']))
+            {
+                throw new InvalidArgumentException("Invalid cache file format");
+            }
+
+            // Validate cache against current package file
+            $currentSize = filesize($this->filePath);
+            $currentMtime = filemtime($this->filePath);
+
+            if($cacheData['file_size'] !== $currentSize || $cacheData['file_mtime'] !== $currentMtime)
+            {
+                throw new InvalidArgumentException("Cache file is outdated (package file has been modified)");
+            }
+
+            // Reconstruct all properties from cache
+            $this->startOffset = $cacheData['start_offset'];
+            $this->endOffset = $cacheData['end_offset'];
+            $this->packageVersion = $cacheData['package_version'];
+            $this->header = Header::fromArray($cacheData['header']);
+            $this->assembly = Assembly::fromArray($cacheData['assembly']);
+            $this->executionUnitReferences = $cacheData['execution_unit_references'];
+            $this->componentReferences = $cacheData['component_references'];
+            $this->resourceReferences = $cacheData['resource_references'];
+
+            // Open file handle for reading actual data when needed
+            $this->fileHandle = fopen($this->filePath, 'rb');
+            if(!$this->fileHandle)
+            {
+                throw new InvalidArgumentException("Could not open package file: " . $this->filePath);
+            }
+        }
+
+        /**
+         * Executes an execution unit from the package.
+         *
+         * @param string|null $executionUnit The name of the execution unit to execute. If null, uses the main entry point.
+         * @param array $arguments Arguments to pass to the execution unit (similar to $argv in PHP).
+         * @return mixed The return value from the executed script (for PHP/WEB) or exit code (for SYSTEM).
+         * @throws IOException If there's an I/O error during execution.
+         */
+        public function execute(?string $executionUnit = null, array $arguments = []): mixed
+        {
+            Logger::getLogger()->debug(sprintf('Execute called with executionUnit: %s', $executionUnit ?? 'null'));
+            
+            // Determine which execution unit to use
+            if($executionUnit === null)
+            {
+                // Use main entry point from header
+                $entryPoint = $this->header->getEntryPoint();
+                if($entryPoint === null)
+                {
+                    throw new OperationException('No execution unit specified and no main entry point defined in package');
+                }
+                
+                Logger::getLogger()->verbose(sprintf('Using main entry point: %s', $entryPoint));
+                $executionUnit = $entryPoint;
+            }
+            
+            // Find and read the execution unit
+            $executionUnitRef = $this->findExecutionUnit($executionUnit);
+            if($executionUnitRef === null)
+            {
+                throw new OperationException(sprintf('Execution unit not found: %s', $executionUnit));
+            }
+            
+            $unit = $this->readExecutionUnit($executionUnitRef);
+            Logger::getLogger()->verbose(sprintf('Executing unit: %s (type: %s)', $executionUnit, $unit->getType()->value));
+            
+            // Handle execution based on type
+            switch($unit->getType())
+            {
+                case ExecutionUnitType::PHP:
+                case ExecutionUnitType::WEB:
+                    return $this->executePhpUnit($unit, $arguments);
+                    
+                case ExecutionUnitType::SYSTEM:
+                    return $this->executeSystemUnit($unit, $arguments);
+                    
+                default:
+                    throw new OperationException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value));
+            }
+        }
+
+        /**
+         * Executes a PHP execution unit.
+         *
+         * @param ExecutionUnit $unit The execution unit to execute.
+         * @param array $arguments Arguments to pass to the script.
+         * @return mixed The return value from the executed script.
+         * @throws ExecutionUnitException If execution fails.
+         */
+        private function executePhpUnit(ExecutionUnit $unit, array $arguments): mixed
+        {
+            // Ensure the package is imported in the runtime
+            $packageName = $this->assembly->getPackage();
+            Logger::getLogger()->debug(sprintf('Importing package in runtime: %s', $packageName));
+            
+            // Import the package if not already imported
+            if(!Runtime::isImported($packageName))
+            {
+                Logger::getLogger()->verbose(sprintf('Package not yet imported, importing: %s', $packageName));
+                Runtime::import($this->filePath);
+            }
+            
+            // Build the ncc:// protocol path
+            $scriptPath = 'ncc://' . $packageName . '/' . ltrim($unit->getEntryPoint(), '/');
+            Logger::getLogger()->verbose(sprintf('Executing PHP script: %s', $scriptPath));
+
+            // Verify the script exists, if not try with .php extension
+            if(!file_exists($scriptPath))
+            {
+                // If the entry point doesn't have .php extension, try adding it
+                if(!str_ends_with($scriptPath, '.php'))
+                {
+                    $scriptPathWithExtension = $scriptPath . '.php';
+                    if(file_exists($scriptPathWithExtension))
+                    {
+                        Logger::getLogger()->verbose(sprintf('Script found with .php extension: %s', $scriptPathWithExtension));
+                        $scriptPath = $scriptPathWithExtension;
+                    }
+                    else
+                    {
+                        throw new OperationException(sprintf('Script not found in package: %s (also tried %s)', $scriptPath, $scriptPathWithExtension));
+                    }
+                }
+                else
+                {
+                    throw new OperationException(sprintf('Script not found in package: %s', $scriptPath));
+                }
+            }
+            
+            // Set up $argv for the script
+            $oldArgv = $_SERVER['argv'] ?? [];
+            $_SERVER['argv'] = array_merge([$scriptPath], $arguments);
+            $argc = count($_SERVER['argv']);
+            $_SERVER['argc'] = $argc;
+            
+            // Set working directory if specified
+            $oldCwd = getcwd();
+            if($unit->getWorkingDirectory() !== null)
+            {
+                // Resolve macros in working directory (e.g., ${CWD} -> current working directory)
+                $workingDirectory = $this->resolveMacros($unit->getWorkingDirectory());
+                Logger::getLogger()->debug(sprintf('Changing working directory to: %s', $workingDirectory));
+                chdir($workingDirectory);
+            }
+            
+            // Set environment variables if specified
+            $oldEnv = [];
+            if($unit->getEnvironment() !== null)
+            {
+                foreach($unit->getEnvironment() as $key => $value)
+                {
+                    $oldEnv[$key] = getenv($key);
+                    putenv("$key=$value");
+                }
+            }
+            
+            try
+            {
+                // Execute the script
+                $result = require $scriptPath;
+                Logger::getLogger()->verbose('PHP script execution completed');
+                return $result;
+            }
+            catch(Throwable $e)
+            {
+                throw new OperationException(sprintf('Failed to execute PHP script: %s', $e->getMessage()), 0, $e);
+            }
+            finally
+            {
+                // Restore environment
+                $_SERVER['argv'] = $oldArgv;
+                $_SERVER['argc'] = count($oldArgv);
+                
+                if($unit->getWorkingDirectory() !== null)
+                {
+                    chdir($oldCwd);
+                }
+                
+                // Restore environment variables
+                foreach($oldEnv as $key => $value)
+                {
+                    if($value === false)
+                    {
+                        putenv($key);
+                    }
+                    else
+                    {
+                        putenv("$key=$value");
+                    }
+                }
+            }
+        }
+
+        /**
+         * Executes a system execution unit.
+         *
+         * @param ExecutionUnit $unit The execution unit to execute.
+         * @param array $arguments Arguments to pass to the command.
+         * @return int The exit code from the executed process.
+         */
+        private function executeSystemUnit(ExecutionUnit $unit, array $arguments): int
+        {
+            $entryPoint = $unit->getEntryPoint();
+            Logger::getLogger()->debug(sprintf('Executing system command: %s', $entryPoint));
+            
+            // Try to resolve the executable path if it's not an absolute path
+            $executablePath = $entryPoint;
+            if(!file_exists($executablePath))
+            {
+                Logger::getLogger()->verbose(sprintf('Entry point not found as file, attempting to resolve: %s', $entryPoint));
+                $resolvedPath = (new ExecutableFinder())->find($entryPoint);
+                
+                if($resolvedPath !== null)
+                {
+                    $executablePath = $resolvedPath;
+                    Logger::getLogger()->verbose(sprintf('Resolved executable path: %s', $executablePath));
+                }
+                else
+                {
+                    Logger::getLogger()->verbose(sprintf('Could not resolve executable, using as-is: %s', $entryPoint));
+                }
+            }
+            
+            // Build the command with arguments
+            $commandParts = array_merge([$executablePath], $arguments);
+            
+            // Create and configure the process
+            $process = new Process($commandParts);
+            
+            // Set working directory if specified
+            if($unit->getWorkingDirectory() !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Setting working directory: %s', $unit->getWorkingDirectory()));
+                $process->setWorkingDirectory($unit->getWorkingDirectory());
+            }
+            
+            // Set environment variables if specified
+            if($unit->getEnvironment() !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Setting %d environment variables', count($unit->getEnvironment())));
+                $process->setEnv($unit->getEnvironment());
+            }
+            
+            // Set timeout if specified
+            if($unit->getTimeout() !== null)
+            {
+                Logger::getLogger()->debug(sprintf('Setting timeout: %d seconds', $unit->getTimeout()));
+                $process->setTimeout($unit->getTimeout());
+            }
+            
+            try
+            {
+                Logger::getLogger()->verbose(sprintf('Starting process: %s', $process->getCommandLine()));
+                $process->mustRun();
+                
+                $exitCode = $process->getExitCode();
+                Logger::getLogger()->verbose(sprintf('Process completed with exit code: %d', $exitCode));
+                
+                return $exitCode;
+            }
+            catch(Throwable $e)
+            {
+                throw new OperationException(sprintf('Failed to execute system command: %s', $e->getMessage()), 0, $e);
+            }
+        }
+
+        /**
+         * Resolves macro variables in a string.
+         *
+         * @param string $input The input string containing macros
+         * @return string The string with macros resolved
+         */
+        private function resolveMacros(string $input): string
+        {
+            // Handle ${CWD} - current working directory
+            if(str_contains($input, '${CWD}'))
+            {
+                $input = str_replace('${CWD}', getcwd(), $input);
+            }
+            
+            // Handle other common macros if needed in the future
+            // ${PACKAGE_PATH}, ${TEMP}, etc.
+            
+            return $input;
+        }
+
+        /**
+         * Closes the file handle and releases resources.
+         *
+         * @return void
          */
         public function __destruct()
         {
-            if(is_resource($this->packageFile))
+            if (is_resource($this->fileHandle))
             {
-                fclose($this->packageFile);
+                fclose($this->fileHandle);
             }
         }
     }

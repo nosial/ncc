@@ -1,164 +1,155 @@
 <?php
+/*
+ * Copyright (c) Nosial 2022-2026, all rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
+ *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
+ *  of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-    /** @noinspection PhpMissingFieldTypeInspection */
+    /** @noinspection PhpDefineCanBeReplacedWithConstInspection */
 
-    /*
-     * Copyright (c) Nosial 2022-2023, all rights reserved.
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-     *  associated documentation files (the "Software"), to deal in the Software without restriction, including without
-     *  limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-     *  Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-     *  conditions:
-     *
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions
-     *  of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-     *  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-     *  PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-     *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-     *  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     *  DEALINGS IN THE SOFTWARE.
-     *
-     */
-
-    namespace ncc;
-    
-    use ncc\Classes\Runtime;
-    use ncc\Exceptions\IOException;
-    use ncc\Exceptions\PathNotFoundException;
-    use ncc\Objects\NccVersionInformation;
-    use ncc\Utilities\Functions;
-    use RuntimeException;
-
-    /**
-     * @author Zi Xing Narrakas
-     * @copyright Copyright (C) 2022-2023. Nosial - All Rights Reserved.
-     */
-    class ncc
+    if(!defined('__NCC__'))
     {
-    
-        /**
-         * The cached version of the version information object.
-         *
-         * @var NccVersionInformation|null
-         */
-        private static $version_information;
-
-        /**
-         * Returns the version information object about the current build of ncc
-         *
-         * @param boolean $reload Indicates if the cached version is to be ignored and the version file to be reloaded and validated
-         * @return NccVersionInformation
-         * @throws PathNotFoundException
-         */
-        public static function getVersionInformation(bool $reload=False): NccVersionInformation
+        if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php'))
         {
-            if(self::$version_information !== null && !$reload)
-            {
-                return self::$version_information;
-            }
-
-            if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'version.json'))
-            {
-                throw new RuntimeException('The file \'version.json\' was not found in \'' . __DIR__ . '\'');
-            }
-
-            try
-            {
-                self::$version_information = NccVersionInformation::fromArray(Functions::loadJsonFile(__DIR__ . DIRECTORY_SEPARATOR . 'version.json', Functions::FORCE_ARRAY));
-            }
-            catch(IOException $e)
-            {
-                throw new RuntimeException('Unable to parse JSON contents of \'version.json\' in \'' . __DIR__ . '\'', $e);
-            }
-
-            if(self::$version_information->getVersion() === null)
-            {
-                throw new RuntimeException('The version number is not specified in the version information file');
-            }
-
-            if(self::$version_information->getBranch() === null)
-            {
-                throw new RuntimeException('The version branch is not specified in the version information file');
-            }
-
-            return self::$version_information;
+            throw new Exception('Autoloader.php not found, was ncc built correctly?');
         }
 
-        /**
-         * Initializes the ncc environment
-         *
-         * @return bool
-         * @throws PathNotFoundException
-         */
-        public static function initialize(): bool
+        // Include the autoloader
+        /** @noinspection PhpIncludeInspection */
+        require __DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php';
+
+        // Define NCC constants
+        define('__NCC__', true); // Flag to indicate that ncc is loaded
+        define('__NCC_DIR__', __DIR__); // The directory where ncc is located
+
+        // Register the shutdown handler
+        \ncc\Classes\ShutdownHandler::register();
+
+        // Register the ncc:// stream wrapper
+        \ncc\Classes\StreamWrapper::register();
+
+        if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION'))
         {
-            if(defined('NCC_INIT'))
-            {
-                return false;
-            }
-
-            // Set debugging/troubleshooting constants
-            define('NCC_EXEC_LOCATION', __DIR__); // The directory of where ncc.php is located
-            define('NCC_EXEC_IWD', getcwd()); // The initial working directory when ncc was first invoked
-
-            // Set version information about the current build
-            $version_information = self::getVersionInformation(true);
-            define('NCC_VERSION_NUMBER', $version_information->getVersion());
-            define('NCC_VERSION_BRANCH', $version_information->getBranch());
-            define('NCC_VERSION_UPDATE_SOURCE', $version_information->getUpdateSource());
-            define('NCC_VERSION_FLAGS', $version_information->getFlags());
-
-            // Register the autoloader
-            spl_autoload_register([Runtime::class, 'autoloadHandler'], true, true);
-
-            // Finish initialization
-            define('NCC_INIT', 1);
-            return true;
+            define('__NCC_VERSION__', trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION')));
+        }
+        else
+        {
+            define('__NCC_VERSION__', 'unknown');
         }
 
-        /**
-         * Determines if ncc is currently in CLI mode or not
-         *
-         * @return bool
-         */
-        public static function cliMode(): bool
+        if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD'))
         {
-            return defined('NCC_CLI_MODE') && NCC_CLI_MODE === 1;
+            define('__NCC_BUILD__', trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD')));
+        }
+        else
+        {
+            define('__NCC_BUILD__', 'unknown');
         }
 
-        /**
-         * Returns the constants set by ncc
-         *
-         * @return array
-         */
-        public static function getConstants(): array
+        // Define the core methods
+        if(!function_exists('import'))
         {
-            if(!defined('NCC_INIT'))
+            /**
+             * Imports a package into the runtime environment.
+             *
+             * @param string $packagePath The path to the package file. Can be a .ncc file or a file containing a package.
+             * @noinspection PhpUnused
+             */
+            function import(string $packagePath): void
             {
-                /** @noinspection ClassConstantCanBeUsedInspection */
-                throw new RuntimeException('ncc Must be initialized before executing ' . get_called_class() . '::getConstants()');
+                try
+                {
+                    \ncc\Runtime::import($packagePath);
+                }
+                catch (\ncc\Exceptions\OperationException $e)
+                {
+                    trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
+                }
             }
+        }
 
-            return [
-                // Init
-                'NCC_INIT' => constant('NCC_INIT'),
+        if(!function_exists('get_imported'))
+        {
+            /**
+             * Returns an array of imported package names in the runtime environment.
+             *
+             * @return array An array of imported package names.
+             * @noinspection PhpUnused
+             */
+            function get_imported(): array
+            {
+                return \ncc\Runtime::getImportedPackages();
+            }
+        }
 
-                // Debugging/Troubleshooting constants
-                'NCC_EXEC_LOCATION' => constant('NCC_EXEC_LOCATION'),
-                'NCC_EXEC_IWD' => constant('NCC_EXEC_IWD'),
+        if(!function_exists('is_imported'))
+        {
+            /**
+             * Checks if a package is imported in the runtime environment.
+             *
+             * @param string $packageName The name of the package to check.
+             * @return bool True if the package is imported, false otherwise.
+             * @noinspection PhpUnused
+             */
+            function is_imported(string $packageName): bool
+            {
+                return \ncc\Runtime::isImported($packageName);
+            }
+        }
 
-                // Version Information
-                'NCC_VERSION_NUMBER' => constant('NCC_VERSION_NUMBER'),
-                'NCC_VERSION_BRANCH' => constant('NCC_VERSION_BRANCH'),
-                'NCC_VERSION_UPDATE_SOURCE' => constant('NCC_VERSION_UPDATE_SOURCE'),
-                'NCC_VERSION_FLAGS' => constant('NCC_VERSION_FLAGS'),
+        \ncc\Classes\Logger::getLogger()->debug(sprintf('ncc v%s initialized', __NCC_VERSION__));
+        \ncc\Classes\Logger::getLogger()->debug(sprintf('ncc directory: %s', __NCC_DIR__));
 
-                // Runtime Information
-                'NCC_CLI_MODE' => (defined('NCC_CLI_MODE') ? NCC_CLI_MODE : 0) // May not be set during runtime initialization
-            ];
+        // Ensure that ncc's CLI mode only runs when executed from the command line
+        if(php_sapi_name() === 'cli')
+        {
+            // Check if $argv contains '--ncc-cli'
+            if(!isset($argv) || !is_array($argv) || !in_array('--ncc-cli', $argv, true))
+            {
+                define('__NCC_CLI__', false);
+            }
+            else
+            {
+                // Check if all the extensions are available
+                $required = [
+                    'curl',
+                    'json',
+                    'msgpack',
+                    'tokenizer',
+                    'phar',
+                    'ctype'
+                ];
+
+                foreach($required as $extension)
+                {
+                    if(!extension_loaded($extension))
+                    {
+                        fwrite(STDERR, "Required PHP extension '$extension' is not loaded. Please install/enable it to use ncc.\n");
+                        exit(1);
+                    }
+                }
+
+                define('__NCC_CLI__', true);
+                exit(\ncc\CLI\Main::main(array_slice($argv, array_search('--ncc-cli', $argv, true) + 1)));
+            }
+        }
+        else
+        {
+            define('__NCC_CLI__', false);
         }
     }
-    

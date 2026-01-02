@@ -8,31 +8,22 @@
 ARG PHP_VERSION=8.3
 ARG FPM_ENABLED=-fpm
 
-# Builder stage: downloads necessary files and serves them on a silver platter.
+# Builder stage: builds ncc phar from source
 FROM php:${PHP_VERSION}-fpm AS builder
-ENV GENERIC_BUILD_PATH=/tmp/ncc_build
 WORKDIR /tmp
 
-# Install some stuff the default image doesn't come with
+# Install build dependencies
 RUN apt-get update -yqq && \
-    apt-get install git libpq-dev libzip-dev zip make wget gnupg -yqq
-
-# Download phive and install phab
-RUN wget -O phive.phar https://phar.io/releases/phive.phar && \
-    wget -O phive.phar.asc https://phar.io/releases/phive.phar.asc && \
-    gpg --keyserver hkps://keys.openpgp.org --recv-keys 0x9D8A98B29B2D5D79 && \
-    gpg --verify phive.phar.asc phive.phar && \
-    rm phive.phar.asc && chmod +x phive.phar && \
-    ./phive.phar install phpab --global --trust-gpg-keys 0x2A8299CE842DD38C
+    apt-get install git libpq-dev libzip-dev zip make -yqq
 
 # Copy the local repository to the image
 COPY . /tmp/ncc
 
-# Build ncc
-RUN cd /tmp/ncc && make redist
+# Build ncc phar
+RUN cd /tmp/ncc && make target/ncc.phar
 
 
-# Main stage: Copies build files and installs all dependencies
+# Main stage: extends standard PHP image with ncc pre-installed
 FROM php:${PHP_VERSION}${FPM_ENABLED} AS production
 
 # OSI labels
@@ -41,19 +32,26 @@ LABEL description="ncc's official Docker image"
 
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Copy downloaded files
-COPY --from=builder /tmp/ncc_build/. .
+# Copy built ncc phar and installer from builder stage
+COPY --from=builder /tmp/ncc/target/ncc.phar /tmp/ncc.phar
+COPY --from=builder /tmp/ncc/target/install.sh /tmp/install.sh
 
-# Install some stuff the default image doesn't come with
+# Install runtime dependencies
 RUN apt-get update -yqq && \
-    apt-get install -yqq git libpq-dev libzip-dev zip make wget gnupg gcc -yqq
+    apt-get install -yqq git libpq-dev libzip-dev zip make wget -yqq
 
+# Install PHP extensions
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
-	install-php-extensions zip xsl
+	install-php-extensions zip xsl msgpack
 
-# Install ncc
-RUN php INSTALL --auto
+# Set PHP memory limit to 2GB
+RUN echo "memory_limit = 2048M" > /usr/local/etc/php/conf.d/memory-limit.ini
 
-# Finalize image
-RUN mkdir /app
+# Install ncc using the installer script
+RUN chmod +x /tmp/install.sh && \
+    /tmp/install.sh install && \
+    rm -f /tmp/ncc.phar /tmp/install.sh
+
+# Set up default working directory
+RUN mkdir -p /app
 WORKDIR /app
