@@ -91,7 +91,7 @@
 
             // Apply packagist repository configurations
             Logger::getLogger()->debug('Configuring Packagist repository');
-            $project->setRepository(new RepositoryConfiguration(
+            $project->setRepositories(new RepositoryConfiguration(
                 name: 'packagist',
                 type: RepositoryType::PACKAGIST,
                 host: 'packagist.org',
