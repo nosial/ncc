@@ -438,7 +438,7 @@
             $header->setPostInstall($this->getProjectConfiguration()->getPostInstall());
             $header->setPreInstall($this->getProjectConfiguration()->getPreInstall());
             $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
-            $header->setRepositories($this->getProjectConfiguration()->getRepository());
+            $header->setRepositories($this->getProjectConfiguration()->getRepositories());
             
             Logger::getLogger()->verbose(sprintf('Header: build=%s, compressed=%s, static=%s', $this->getBuildNumber(), $this->compressionEnabled ? 'yes' : 'no', $header->isStaticallyLinked() ? 'yes' : 'no'));
             
