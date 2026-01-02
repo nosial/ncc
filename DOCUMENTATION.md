@@ -257,8 +257,8 @@ scripts, or binaries that can be invoked by name. This section supports multiple
 **Execution Unit Contents:**
 Each execution unit contains:
 - **name**: Unique identifier for this execution unit
-- **type**: Type of executable (PHP, PYTHON, NODE, BINARY, SYSTEM)
-- **mode**: Execution mode (AUTO, CLI, WEB)
+- **type**: Type of executable (`php`, `web` or `system`)
+- **mode**: Execution mode (`auto`, `tty` or `pty`)
 - **entry**: Entry point path or command to execute
 - **working_directory**: Working directory for execution
 - **arguments**: Default arguments to pass
@@ -348,7 +348,7 @@ re-compiling the package, additionally the class provides a `extract(string $out
 contents of the package to be extracted to a local directory with an autoloader pre-generated so that the extracted
 package can immediately work out the box.
 
- > Reading compiled ncc packages is not natively supported by ncc, requiring ncc to read & access ncc packages.
+ > Reading compiled ncc packages is not natively supported by php, requiring ncc to read & access ncc packages.
 
 
 ### Filesystem Permissions
