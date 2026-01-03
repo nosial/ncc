@@ -6,6 +6,5 @@
     </testsuites>
     <php>
         <ini name="error_reporting" value="-1"/>
-        <server name="KERNEL_DIR" value="app/"/>
     </php>
 </phpunit>
