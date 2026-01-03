@@ -1,0 +1,7 @@
+all: ${BUILD_OUTPUTS}
+${BUILD_STEPS}
+${PHPUNIT_TARGET}
+${PHPDOC_TARGET}
+clean:
+${CLEAN_COMMANDS}
+.PHONY: all install clean${EXTRA_PHONY}
