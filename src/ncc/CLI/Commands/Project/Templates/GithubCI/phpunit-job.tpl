@@ -22,7 +22,7 @@
           apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
           curl -sSLf -o /usr/local/bin/install-php-extensions https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions
           chmod +x /usr/local/bin/install-php-extensions
-          install-php-extensions zip
+          install-php-extensions msgpack zip
 
       - name: Install latest version of ncc
         run: |
