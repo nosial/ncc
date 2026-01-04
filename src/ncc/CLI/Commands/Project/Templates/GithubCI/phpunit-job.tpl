@@ -28,6 +28,7 @@
         run: |
           git clone https://git.n64.cc/nosial/ncc.git
           cd ncc
+          git submodule update --init --recursive
           make target/ncc.phar
           chmod +x target/install.sh
           ./target/install.sh
