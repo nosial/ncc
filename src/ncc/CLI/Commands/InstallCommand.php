@@ -57,6 +57,10 @@
                 Console::error("No package specified for installation.");
                 return 1;
             }
+            else
+            {
+                $package = realpath($package);
+            }
 
             $autoConfirm = $argv['yes'] ?? $argv['y'] ?? false;
             $skipDependencies = $argv['skip-dependencies'] ?? $argv['skip-deps'] ?? $argv['sd'] ?? false;
