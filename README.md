@@ -7,7 +7,7 @@ and package manager for PHP projects, with a focus on simplicity and the ability
 trying to ensure (somewhat) compatibility with existing composer packages.
 
 Version 3.+ is a complete rewrite of ncc, with a new architecture and design aiming to have better code maintainability
-with a less-chaotic/hacky approach, allowing you to compiler your php projects into a ncc, phar or a single php file.
+with a less-chaotic/hacky approach, allowing you to compile your php projects into a ncc, phar or a single php file.
 
 ## Documentation
 
