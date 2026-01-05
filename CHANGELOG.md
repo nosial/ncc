@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - Made the parameter `$recusrive` in \ncc\Classes\IO::rm optional, by default it's set to true
 
+### Fixed
+ - Fixed project detection to not convert ncc project formats and instead just attempt to compile them
+
 
 ## [3.0.0] - 2026-01-02
 

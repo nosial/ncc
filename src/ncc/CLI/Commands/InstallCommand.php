@@ -435,40 +435,51 @@
 
                 Logger::getLogger()->debug(sprintf('Detected project type: %s at path: %s', $projectType->value, $projectPath));
 
-                // Stage: Converting project
-                Console::inlineProgress($calculateProgress('convert'), 100, sprintf("Converting %s project %s", $projectType->value, $source));
-
-                // Get the converter for the project type
-                $converter = $projectType->getConverter();
-                if($converter === null)
+                // Check if this is already an NCC project (project.yml)
+                if($projectType === ProjectType::NCC)
                 {
-                    Console::clearInlineProgress();
-                    Logger::getLogger()->error(sprintf('No converter available for project type %s', $projectType->value));
-                    throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
+                    // No conversion needed, project is already in NCC format
+                    Logger::getLogger()->debug(sprintf('Project is already in NCC format, skipping conversion'));
+                    Console::inlineProgress($calculateProgress('generate_config', 0.7), 100, sprintf("Loading compiler for %s", $source));
+                    $compiler = Project::compilerFromFile($projectPath);
                 }
+                else
+                {
+                    // Stage: Converting project
+                    Console::inlineProgress($calculateProgress('convert'), 100, sprintf("Converting %s project %s", $projectType->value, $source));
 
-                // Stage: Resolving dependencies
-                Console::inlineProgress($calculateProgress('resolve_deps'), 100, sprintf("Resolving dependencies for %s", $source));
+                    // Get the converter for the project type
+                    $converter = $projectType->getConverter();
+                    if($converter === null)
+                    {
+                        Console::clearInlineProgress();
+                        Logger::getLogger()->error(sprintf('No converter available for project type %s', $projectType->value));
+                        throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
+                    }
 
-                // Convert the project source to a ncc project configuration
-                // Pass the resolved version to the converter
-                // Track progress dynamically during dependency resolution
-                $depResolutionProgress = 0.0;
-                $depResolutionStep = 0.15; // Increment by 15% of the stage per callback
-                
-                $projectConfiguration = $converter->convert($projectPath, $resolvedVersion, function(string $message) use ($calculateProgress, &$depResolutionProgress, $depResolutionStep) {
-                    $depResolutionProgress = min(0.95, $depResolutionProgress + $depResolutionStep);
-                    Console::inlineProgress($calculateProgress('resolve_deps', $depResolutionProgress), 100, $message);
-                });
-                
-                // Stage: Generating project configuration
-                Console::inlineProgress($calculateProgress('generate_config'), 100, sprintf("Generating project configuration for %s", $source));
-                
-                $outputPath = dirname($projectPath) . DIRECTORY_SEPARATOR . 'project.yml';
-                $projectConfiguration->save($outputPath);
-                
-                Console::inlineProgress($calculateProgress('generate_config', 0.7), 100, sprintf("Loading compiler for %s", $source));
-                $compiler = Project::compilerFromFile($outputPath);
+                    // Stage: Resolving dependencies
+                    Console::inlineProgress($calculateProgress('resolve_deps'), 100, sprintf("Resolving dependencies for %s", $source));
+
+                    // Convert the project source to a ncc project configuration
+                    // Pass the resolved version to the converter
+                    // Track progress dynamically during dependency resolution
+                    $depResolutionProgress = 0.0;
+                    $depResolutionStep = 0.15; // Increment by 15% of the stage per callback
+                    
+                    $projectConfiguration = $converter->convert($projectPath, $resolvedVersion, function(string $message) use ($calculateProgress, &$depResolutionProgress, $depResolutionStep) {
+                        $depResolutionProgress = min(0.95, $depResolutionProgress + $depResolutionStep);
+                        Console::inlineProgress($calculateProgress('resolve_deps', $depResolutionProgress), 100, $message);
+                    });
+                    
+                    // Stage: Generating project configuration
+                    Console::inlineProgress($calculateProgress('generate_config'), 100, sprintf("Generating project configuration for %s", $source));
+                    
+                    $outputPath = dirname($projectPath) . DIRECTORY_SEPARATOR . 'project.yml';
+                    $projectConfiguration->save($outputPath);
+                    
+                    Console::inlineProgress($calculateProgress('generate_config', 0.7), 100, sprintf("Loading compiler for %s", $source));
+                    $compiler = Project::compilerFromFile($outputPath);
+                }
             }
             catch(Exception $e)
             {
