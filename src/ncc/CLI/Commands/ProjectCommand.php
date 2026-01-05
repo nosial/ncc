@@ -87,11 +87,11 @@
                 Console::out('Commands:');
                 Console::out('  create                    Create a new ncc project');
                 Console::out('  validate                  Validates a given ncc project and gives inspection results');
-                Console::out('  --template=<name>         Apply automatic templates to your existing project');
+                Console::out('  --generate=<name>         Apply automatic templates to your existing project');
                 Console::out('  convert                   Convert an existing project to an ncc project');
                 Console::out('  install                   Install all project dependencies');
                 Console::out(PHP_EOL . 'Use "ncc project [command] --help" for more information about a command.');
-                Console::out('Use "ncc project --template --help" for template options.');
+                Console::out('Use "ncc project generate --help" for template options.');
                 return;
             }
 
@@ -122,7 +122,7 @@
                     break;
 
                 case 'generate':
-                    Console::out('Usage: ncc project --template=<template_name> [--path=<path>]' . PHP_EOL);
+                    Console::out('Usage: ncc project --generate=<template_name> [--path=<path>]' . PHP_EOL);
                     Console::out('Applies an automatic template to your existing project.');
                     Console::out('Templates can generate build configurations, testing frameworks,');
                     Console::out('documentation, CI/CD pipelines, and other project scaffolding automatically.' . PHP_EOL);
