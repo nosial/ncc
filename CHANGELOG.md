@@ -14,6 +14,9 @@ This is an ongoing update
    skipped by using `--no-symlink`, if a symlink already exists it can be overwritten using `--force-symlink`, ncc keeps
    track of the symlinks it registers so it doesn't overwrite any existing symlinks unless `--force-symlink` is used.
 
+### Changed
+ - Updated `\ncc\Classes\IO::writeFile()` to create the parent directory if it does not exist when writing a file
+
 ### Fixed
  - Fixed issue in CI where dependencies are not installed before building the project, additionally fixed issue where
    the `-y` argument is missing causing dependencies to not be installed

@@ -127,6 +127,14 @@
         public static function writeFile(string $path, string $content): void
         {
             Logger::getLogger()->verbose(sprintf('Writing file %s', $path));
+            
+            // Ensure parent directory exists
+            $directory = dirname($path);
+            if(!is_dir($directory))
+            {
+                self::mkdir($directory, true);
+            }
+            
             if(@file_put_contents($path, $content) === false)
             {
                 throw new IOException(sprintf('Failed to write file %s', $path));
