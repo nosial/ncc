@@ -1,9 +1,15 @@
 <?PHP
         require 'ncc';
 
-        if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . '${DEFAULT_BUILD_OUTPUT}'))
+        $buildOutputPath = __DIR__ . DIRECTORY_SEPARATOR . '${DEFAULT_BUILD_OUTPUT}';
+        if(getenv('NCC_BUILD_OUTPUT_PATH'))
         {
-            throw new Exception('Build output not found: ' . __DIR__ . DIRECTORY_SEPARATOR . '${DEFAULT_BUILD_OUTPUT}');
+            $buildOutputPath = getenv('NCC_BUILD_OUTPUT_PATH');
+        }
+
+        if(!file_exists($buildOutputPath))
+        {
+            throw new Exception('Build output not found: ' . $buildOutputPath);
         }
 
         import(__DIR__ . DIRECTORY_SEPARATOR . '${DEFAULT_BUILD_OUTPUT}');
