@@ -63,6 +63,8 @@
             $skipRepositories = $argv['skip-repositories'] ?? $argv['skip-repos'] ?? $argv['sr'] ?? false;
             $reinstall = $argv['reinstall'] ?? $argv['r'] ?? false;
             $buildSource = $argv['build-source'] ?? $argv['bs'] ?? false;
+            $noSymlink = $argv['no-symlink'] ?? false;
+            $forceSymlink = $argv['force-symlink'] ?? false;
             
             // Build options array
             $options = [];
@@ -81,6 +83,14 @@
             if($buildSource)
             {
                 $options[] = 'build-source';
+            }
+            if($noSymlink)
+            {
+                $options[] = 'no-symlink';
+            }
+            if($forceSymlink)
+            {
+                $options[] = 'force-symlink';
             }
             
             // Parse dynamic repository authentication arguments (e.g., --github-auth=foo)
@@ -533,7 +543,9 @@
                 'skip-repositories' => false,
                 'skip-dependencies' => false,
                 'build-source' => false,
-                'reinstall' => false
+                'reinstall' => false,
+                'no-symlink' => false,
+                'force-symlink' => false
             ];
 
             foreach($options as $option)
@@ -560,6 +572,14 @@
                     case 'reinstall':
                     case 'r':
                         $results['reinstall'] = true;
+                        break;
+
+                    case 'no-symlink':
+                        $results['no-symlink'] = true;
+                        break;
+
+                    case 'c':
+                        $results['force-symlink'] = true;
                         break;
                 }
             }
@@ -652,6 +672,8 @@
             Console::out('                    Skip installing package dependencies');
             Console::out('  --skip-repositories, --skip-repos, --sr');
             Console::out('                    Skip adding package repositories');
+            Console::out('  --no-symlink      Do not create a symlink for the package');
+            Console::out('  --force-symlink   Force symlink creation even if one exists');
             Console::out('  --<repository>-auth=<entry>');
             Console::out('                    Authenticate using the specified vault entry for a repository');
             Console::out('                    Example: --github-auth=mytoken');

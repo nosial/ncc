@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Added
+ - Added support to register symlinks of executable packages if installing under a system scope, this step can be
+   skipped by using `--no-symlink`, if a symlink already exists it can be overwritten using `--force-symlink`, ncc keeps
+   track of the symlinks it registers so it doesn't overwrite any existing symlinks unless `--force-symlink` is used.
+
 
 ## [3.0.2] - 2026-01-05
 

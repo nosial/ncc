@@ -34,6 +34,7 @@
          * @var DependencyReference[]
          */
         private array $dependencies;
+        private bool $symlinkRegistered;
 
         /**
          * PackageLockEntry constructor.
@@ -47,6 +48,7 @@
             $this->dependencies = array_map(function($item) {if(!($item instanceof DependencyReference)) {
                 return DependencyReference::fromArray($item);} else {return $item;}}, $data['dependencies'] ?? []
             );
+            $this->symlinkRegistered = $data['symlink_registered'] ?? false;
         }
 
         /**
@@ -74,12 +76,33 @@
             return $this->dependencies;
         }
 
+        /**
+         * Returns whether a symlink was registered for this package
+         *
+         * @return bool True if a symlink was registered, false otherwise
+         */
+        public function isSymlinkRegistered(): bool
+        {
+            return $this->symlinkRegistered;
+        }
+
+        /**
+         * Sets whether a symlink is registered for this package
+         *
+         * @param bool $registered True if a symlink is registered, false otherwise
+         */
+        public function setSymlinkRegistered(bool $registered): void
+        {
+            $this->symlinkRegistered = $registered;
+        }
+
         public function toArray(): array
         {
             return [
                 'package' => $this->package,
                 'version' => $this->version,
-                'dependencies' => array_map(function($item) { return $item->toArray(); }, $this->dependencies)
+                'dependencies' => array_map(function($item) { return $item->toArray(); }, $this->dependencies),
+                'symlink_registered' => $this->symlinkRegistered
             ];
         }
 

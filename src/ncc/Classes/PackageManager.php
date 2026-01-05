@@ -515,6 +515,83 @@
             }
             
             $this->addEntry($packageReader); // Finally add the entry to the package manager
+            
+            // Handle symlink creation if this is a system installation
+            if (Runtime::isSystemUser() && !$options['no-symlink'])
+            {
+                try
+                {
+                    $projectName = $packageReader->getAssembly()->getName();
+                    $packageName = $packageReader->getAssembly()->getPackage();
+                    $forceSymlink = isset($options['force-symlink']) && $options['force-symlink'];
+                    
+                    // Check if symlink already exists
+                    $symlinkExists = SymlinkManager::symlinkExists($projectName);
+                    $isNccManaged = SymlinkManager::isNccManaged($projectName);
+                    
+                    // Determine if we should create/update the symlink
+                    $shouldCreateSymlink = false;
+                    
+                    if (!$symlinkExists)
+                    {
+                        // No symlink exists, create one
+                        $shouldCreateSymlink = true;
+                        Logger::getLogger()->verbose(sprintf('No symlink exists for %s, will create one', $projectName));
+                    }
+                    else if ($isNccManaged)
+                    {
+                        // Symlink exists and is managed by ncc, update it
+                        $shouldCreateSymlink = true;
+                        Logger::getLogger()->verbose(sprintf('Updating existing ncc-managed symlink for %s', $projectName));
+                    }
+                    else if ($forceSymlink)
+                    {
+                        // Symlink exists but is not managed by ncc, force overwrite
+                        $shouldCreateSymlink = true;
+                        Logger::getLogger()->verbose(sprintf('Force-overwriting existing symlink for %s', $projectName));
+                    }
+                    else
+                    {
+                        Logger::getLogger()->warning(sprintf('Symlink for %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $projectName));
+                    }
+                    
+                    if ($shouldCreateSymlink)
+                    {
+                        $symlinkPath = SymlinkManager::createSymlink($projectName, $packageName, $forceSymlink);
+                        
+                        if ($symlinkPath !== null)
+                        {
+                            Logger::getLogger()->verbose(sprintf('Symlink created at: %s', $symlinkPath));
+                            
+                            // Update the package entry to mark symlink as registered
+                            $entry = $this->getEntry($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+                            if ($entry !== null)
+                            {
+                                $entry->setSymlinkRegistered(true);
+                                $this->modified = true;
+                                if ($this->autoSave && !$this->readOnly)
+                                {
+                                    $this->save();
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception $e)
+                {
+                    // Symlink creation is not critical, log the error and continue
+                    Logger::getLogger()->warning(sprintf('Failed to create symlink: %s', $e->getMessage()));
+                }
+            }
+            else if (!Runtime::isSystemUser())
+            {
+                Logger::getLogger()->debug('Skipping symlink creation: not running as system user');
+            }
+            else
+            {
+                Logger::getLogger()->debug('Skipping symlink creation: --no-symlink option specified');
+            }
+            
             Logger::getLogger()->verbose('Package installation completed successfully');
         }
 
@@ -547,6 +624,28 @@
                 $packagePath = $this->getPackagePathFromEntry($entry);
                 if(IO::exists($packagePath))
                 {
+                    // Handle symlink removal if this is a system installation and symlink was registered
+                    if (Runtime::isSystemUser() && $entry->isSymlinkRegistered())
+                    {
+                        try
+                        {
+                            // Try to read the package to get the project name
+                            $packageReader = new PackageReader($packagePath);
+                            $projectName = $packageReader->getAssembly()->getName();
+                            
+                            // Remove the symlink
+                            if (SymlinkManager::removeSymlink($projectName))
+                            {
+                                Logger::getLogger()->verbose(sprintf('Removed symlink for project: %s', $projectName));
+                            }
+                        }
+                        catch (Exception $e)
+                        {
+                            // Symlink removal is not critical, log the error and continue
+                            Logger::getLogger()->warning(sprintf('Failed to remove symlink: %s', $e->getMessage()));
+                        }
+                    }
+                    
                     // Remove the package file
                     IO::rm($packagePath, false);
                 }
