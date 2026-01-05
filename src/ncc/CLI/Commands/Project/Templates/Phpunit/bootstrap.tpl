@@ -12,4 +12,4 @@
             throw new Exception('Build output not found: ' . $buildOutputPath);
         }
 
-        import(__DIR__ . DIRECTORY_SEPARATOR . '${DEFAULT_BUILD_OUTPUT}');
+        import($buildOutputPath);
