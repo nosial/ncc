@@ -10,12 +10,6 @@
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ${DEFAULT_BUILD_CONFIG}
-          path: ${DEFAULT_BUILD_CONFIG}
-
       - name: Install dependencies
         run: |
           apt update -yqq
@@ -36,12 +30,17 @@
 
       - name: Install ncc packages
         run: |
-          ncc install --package="${DEFAULT_BUILD_CONFIG}/${DEFAULT_BUILD_FILENAME}" -y --log-level debug
+          ncc project install
+          ncc build --config=${DEFAULT_BUILD_CONFIG} --log-level debug
+
+      - name: Download PHPUnit
+        run: wget https://phar.phpunit.de/phpunit-11.3.phar
 
       - name: Run PHPUnit tests
         run: |
-          wget https://phar.phpunit.de/phpunit-11.3.phar
-          php phpunit-11.3.phar --configuration phpunit.xml --log-junit reports/junit.xml --log-teamcity reports/teamcity --testdox-html reports/testdox.html --testdox-text reports/testdox.txt
+          mkdir -p "$PWD/reports"
+          chmod 777 "$PWD/reports"
+          php phpunit-11.3.phar --configuration phpunit.xml --log-junit "$PWD/reports/junit.xml" --log-teamcity "$PWD/reports/teamcity" --testdox-html "$PWD/reports/testdox.html" --testdox-text "$PWD/reports/testdox.txt"
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4
