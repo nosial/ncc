@@ -45,7 +45,7 @@
             {
                 return ValidateProject::handle($argv);
             }
-            elseif(isset($argv['template']))
+            elseif(isset($argv['generate']))
             {
                 return ApplyTemplate::handle($argv);
             }
@@ -85,12 +85,13 @@
             {
                 Console::out('Usage: ncc project [command] [options]' . PHP_EOL);
                 Console::out('Commands:');
-                Console::out('  create           Create a new ncc project');
-                Console::out('  validate         Validates a given ncc project and gives inspection results');
-                Console::out('  template         Apply automatic templates to your existing project');
-                Console::out('  convert          Convert an existing project to an ncc project');
-                Console::out('  install          Install all project dependencies');
+                Console::out('  create                    Create a new ncc project');
+                Console::out('  validate                  Validates a given ncc project and gives inspection results');
+                Console::out('  --template=<name>         Apply automatic templates to your existing project');
+                Console::out('  convert                   Convert an existing project to an ncc project');
+                Console::out('  install                   Install all project dependencies');
                 Console::out(PHP_EOL . 'Use "ncc project [command] --help" for more information about a command.');
+                Console::out('Use "ncc project --template --help" for template options.');
                 return;
             }
 
@@ -120,18 +121,24 @@
                     Console::out('  ncc project validate --path=/path/to/project');
                     break;
 
-                case 'template':
-                    Console::out('Usage: ncc project template --name=<template> [--path=<path>]' . PHP_EOL);
+                case 'generate':
+                    Console::out('Usage: ncc project --template=<template_name> [--path=<path>]' . PHP_EOL);
                     Console::out('Applies an automatic template to your existing project.');
-                    Console::out('Templates can generate build configurations, directory structures,');
-                    Console::out('and other project scaffolding automatically.' . PHP_EOL);
+                    Console::out('Templates can generate build configurations, testing frameworks,');
+                    Console::out('documentation, CI/CD pipelines, and other project scaffolding automatically.' . PHP_EOL);
                     Console::out('Options:');
-                    Console::out('  --name            (Required) The name of the template to apply');
-                    Console::out('  --path            (Optional) Path to the project directory');
-                    Console::out('                    Defaults to current working directory');
-                    Console::out(PHP_EOL . 'Example:');
-                    Console::out('  ncc project template --name=standard');
-                    Console::out('  ncc project template --name=library --path=/path/to/project');
+                    Console::out('  --generate, -g    (Required) The name of the template to apply');
+                    Console::out('  --path, -p        (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory' . PHP_EOL);
+                    Console::out('Available templates:');
+                    Console::out('  phpunit, test, tests     Generate PHPUnit test configuration');
+                    Console::out('  phpdoc, doc, docs        Generate PHPDoc documentation configuration');
+                    Console::out('  makefile, make           Generate Makefile for build automation');
+                    Console::out('  github-ci, github        Generate GitHub Actions CI/CD workflow');
+                    Console::out(PHP_EOL . 'Examples:');
+                    Console::out('  ncc project --generate=phpunit');
+                    Console::out('  ncc project --generate=makefile --path=/path/to/project');
+                    Console::out('  ncc project -g=github-ci');
                     break;
 
                 case 'convert':

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.1] - Ongoing
 
+### Added
+ - Added template support for projects
+ - Added `phpunit` template, generate it using `ncc project --template=phpunit`
+ - Added `phpdoc` template, generate it using `ncc project --template=phpdoc`
+ - Added `makefile` template, generate it using `ncc project --template=makefile`
+ - Added `github-ci` template, generate it using `ncc project --template=github-ci`
+
 ### Changed
  - Made the parameter `$recusrive` in \ncc\Classes\IO::rm optional, by default it's set to true
 

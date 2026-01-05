@@ -22,8 +22,16 @@
 
     namespace ncc\CLI\Commands\Project;
 
+    use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\CLI\Commands\Helper;
+    use ncc\CLI\Commands\Project\Templates\GithubCI\GithubCIGenerator;
+    use ncc\CLI\Commands\Project\Templates\Makefile\MakefileGenerator;
+    use ncc\CLI\Commands\Project\Templates\Phpdoc\PhpdocGenerator;
+    use ncc\CLI\Commands\Project\Templates\Phpunit\PhpunitGenerator;
+    use ncc\Exceptions\InvalidPropertyException;
+    use ncc\Objects\Project;
 
     class ApplyTemplate extends AbstractCommandHandler
     {
@@ -32,14 +40,80 @@
          */
         public static function handle(array $argv): int
         {
-            if(isset($argv['help']) || isset($argv['h']))
+            $projectPath = $argv['path'] ?? $argv['p'] ?? null;
+            $template = $argv['generate'] ?? $argv['g'] ?? null;
+
+            if($template === null || $template === '1')
             {
-                // Delegate to parent's help command
-                return 0;
+                Console::error("No template specified, use the --generate|-g option to specify a template");
+                return 1;
             }
 
-            // TODO: Implement template application functionality
-            Console::warning('Template application is not yet implemented.');
-            return 1;
+            if($projectPath === null)
+            {
+                $projectPath = getcwd();
+            }
+
+            // Resolve project configuration path
+            $projectPath = Helper::resolveProjectConfigurationPath($projectPath);
+            if($projectPath === null)
+            {
+                Console::error("No project configuration file found");
+                return 1;
+            }
+
+            // Load the project configuration
+            try
+            {
+                $projectConfiguration = Project::fromFile($projectPath, true);
+            }
+            catch(Exception $e)
+            {
+                Console::error("Failed to load project configuration: " . $e->getMessage());
+                return 1;
+            }
+
+            // Validate the project configuration
+            try
+            {
+                $projectConfiguration->validate();
+            }
+            catch(InvalidPropertyException $e)
+            {
+                Console::error("Project configuration is invalid: " . $e->getMessage());
+                return 1;
+            }
+
+            switch(strtolower($template))
+            {
+                case 'phpunit':
+                case 'tests':
+                case 'test':
+                    PhpunitGenerator::generate(dirname($projectPath), $projectConfiguration);
+                    break;
+
+                case 'phpdoc':
+                case 'docs':
+                case 'doc':
+                    PhpdocGenerator::generate(dirname($projectPath), $projectConfiguration);
+                    break;
+
+                case 'makefile':
+                case 'make':
+                    MakefileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                    break;
+
+                case 'github-ci':
+                case 'github':
+                    GithubCIGenerator::generate(dirname($projectPath), $projectConfiguration);
+                    break;
+
+                default:
+                    Console::error("Unknown template: " . $template);
+                    return 1;
+            }
+
+            Console::out("Template '" . $template . "' generated successfully.");
+            return 0;
         }
     }
