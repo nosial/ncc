@@ -36,7 +36,7 @@
 
       - name: Install ncc packages
         run: |
-          ncc install --package="${DEFAULT_BUILD_OUTPUT}" -y --log-level debug
+          ncc install --package="${DEFAULT_BUILD_CONFIG}/${DEFAULT_BUILD_FILENAME}" -y --log-level debug
 
       - name: Run PHPUnit tests
         run: |

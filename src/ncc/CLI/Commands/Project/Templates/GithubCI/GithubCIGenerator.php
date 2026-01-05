@@ -109,6 +109,7 @@ class GithubCIGenerator implements TemplateGeneratorInterface
             $phpunitJob = str_replace('${BUILD_NAMES}', implode(', ', $buildNames), $phpunitJobTemplate);
             $phpunitJob = str_replace('${DEFAULT_BUILD_CONFIG}', $defaultBuildConfig, $phpunitJob);
             $phpunitJob = str_replace('${DEFAULT_BUILD_OUTPUT}', $defaultBuildConfiguration->getOutput(), $phpunitJob);
+            $phpunitJob = str_replace('${DEFAULT_BUILD_FILENAME}', basename($defaultBuildConfiguration->getOutput()), $phpunitJob);
             $baseWorkflow = str_replace('${PHPUNIT_JOB}', $phpunitJob, $baseWorkflow);
         }
         else
