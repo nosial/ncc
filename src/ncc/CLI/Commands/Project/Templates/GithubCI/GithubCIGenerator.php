@@ -35,9 +35,14 @@ class GithubCIGenerator implements TemplateGeneratorInterface
     public static function generate(string $projectDirectory, Project $projectConfiguration): void
     {
         $targetFile = $projectDirectory . DIRECTORY_SEPARATOR . '.github' . DIRECTORY_SEPARATOR . 'workflows' . DIRECTORY_SEPARATOR . 'ci.yml';
+        $secondaryTargetFile = $projectDirectory . DIRECTORY_SEPARATOR . '.forgejo' . DIRECTORY_SEPARATOR . 'workflows' . DIRECTORY_SEPARATOR . 'ci.yml';
 
         // Create .github/workflows directory if it doesn't exist
         if(!IO::exists(dirname($targetFile)))
+        {
+            IO::mkdir(dirname($targetFile));
+        }
+        if(!IO::exists(dirname($secondaryTargetFile)))
         {
             IO::mkdir(dirname($targetFile));
         }
@@ -46,6 +51,10 @@ class GithubCIGenerator implements TemplateGeneratorInterface
         if(IO::exists($targetFile))
         {
             IO::rm($targetFile);
+        }
+        if(IO::exists($secondaryTargetFile))
+        {
+            IO::rm($secondaryTargetFile);
         }
 
         // Load templates
@@ -125,5 +134,7 @@ class GithubCIGenerator implements TemplateGeneratorInterface
         // Write the workflow file
         IO::writeFile($targetFile, $baseWorkflow);
         Console::out(sprintf("Generated File: %s", $targetFile));
+        IO::writeFile($secondaryTargetFile, $baseWorkflow);
+        Console::out(sprintf("Generated File: %s", $secondaryTargetFile));
     }
 }
