@@ -51,7 +51,7 @@
                 return 0;
             }
 
-            $package = $argv['package'] ?? null;
+            $package = $argv['package'] ?? $argv['install'] ?? null;
             if ($package === null)
             {
                 Console::error("No package specified for installation.");
@@ -61,6 +61,27 @@
             $autoConfirm = $argv['yes'] ?? $argv['y'] ?? false;
             $skipDependencies = $argv['skip-dependencies'] ?? $argv['skip-deps'] ?? $argv['sd'] ?? false;
             $skipRepositories = $argv['skip-repositories'] ?? $argv['skip-repos'] ?? $argv['sr'] ?? false;
+            $reinstall = $argv['reinstall'] ?? $argv['r'] ?? false;
+            $buildSource = $argv['build-source'] ?? $argv['bs'] ?? false;
+            
+            // Build options array
+            $options = [];
+            if($skipDependencies)
+            {
+                $options[] = 'skip-dependencies';
+            }
+            if($skipRepositories)
+            {
+                $options[] = 'skip-repositories';
+            }
+            if($reinstall)
+            {
+                $options[] = 'reinstall';
+            }
+            if($buildSource)
+            {
+                $options[] = 'build-source';
+            }
             
             // Parse dynamic repository authentication arguments (e.g., --github-auth=foo)
             $repositoryAuth = [];
@@ -137,7 +158,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromFile($packageReader, [], []);
+                $installedPackages = self::installFromFile($packageReader, $options, []);
             }
             else
             {
@@ -174,7 +195,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromRemote($packageSource, [], [], $repositoryAuth);
+                $installedPackages = self::installFromRemote($packageSource, $options, [], $repositoryAuth);
             }
 
             if(count($installedPackages) === 0)
@@ -626,6 +647,7 @@
             Console::out('  <package>         Package name or path to .ncc file' . PHP_EOL);
             Console::out('Options:');
             Console::out('  --yes, -y         Automatically confirm all prompts');
+            Console::out('  --reinstall, -r   Force reinstall package even if already installed');
             Console::out('  --skip-dependencies, --skip-deps, --sd');
             Console::out('                    Skip installing package dependencies');
             Console::out('  --skip-repositories, --skip-repos, --sr');
