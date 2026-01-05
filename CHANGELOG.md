@@ -14,6 +14,9 @@ This is an ongoing update
    skipped by using `--no-symlink`, if a symlink already exists it can be overwritten using `--force-symlink`, ncc keeps
    track of the symlinks it registers so it doesn't overwrite any existing symlinks unless `--force-symlink` is used.
 
+### Fixed
+ - Fixed issue in CI where dependencies are not installed before building the project, additionally fixed issue where
+   the `-y` argument is missing causing dependencies to not be installed
 
 ## [3.0.2] - 2026-01-05
 

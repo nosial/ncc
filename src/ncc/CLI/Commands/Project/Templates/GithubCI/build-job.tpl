@@ -27,6 +27,7 @@
 
       - name: Build project
         run: |
+          ncc project install --log-level debug -y
           ncc build --config ${BUILD_NAME} --log-level debug
 
       - name: Upload build artifact

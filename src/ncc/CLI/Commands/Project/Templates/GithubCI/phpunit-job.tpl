@@ -30,7 +30,7 @@
 
       - name: Install ncc packages
         run: |
-          ncc project install
+          ncc project install --log-level debug -y
           ncc build --config=${DEFAULT_BUILD_CONFIG} --log-level debug
 
       - name: Download PHPUnit
