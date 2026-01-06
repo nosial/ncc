@@ -120,7 +120,7 @@
             }
             catch(IOException $e)
             {
-                throw new OperationException(sprintf('Fatal error while reading the package %s: %s' . $package, $e->getMessage()), $e->getCode(), $e);
+                throw new OperationException(sprintf('Fatal error while reading the package %s: %s', $package, $e->getMessage()), $e->getCode(), $e);
             }
 
             // Check again with the actual package name (in case a file path was used)
