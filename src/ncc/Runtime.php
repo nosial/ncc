@@ -327,10 +327,9 @@
 
         /**
          * Gets the user-level PackageManager instance, initializing it if necessary.
-         * Returns null when running as root/system user.
+         * Returns null when running as root/system user or if user directory cannot be created.
          *
-         * @return PackageManager|null The user-level PackageManager instance, or null if running as system user.
-         * @throws IOException Thrown if there is an error creating the package manager directory.
+         * @return PackageManager|null The user-level PackageManager instance, or null if unavailable.
          */
         public static function getUserPackageManager(): ?PackageManager
         {
@@ -342,12 +341,21 @@
                     return null;
                 }
 
-                if(!IO::exists($userLocation))
+                try
                 {
-                    IO::mkdir($userLocation);
-                }
+                    if(!IO::exists($userLocation))
+                    {
+                        IO::mkdir($userLocation);
+                    }
 
-                self::$userPackageManager = new PackageManager($userLocation);
+                    self::$userPackageManager = new PackageManager($userLocation);
+                }
+                catch(IOException $e)
+                {
+                    // Silently fail and fall back to system-level package manager only
+                    Logger::getLogger()->debug(sprintf('User package manager unavailable: %s', $e->getMessage()));
+                    return null;
+                }
             }
 
             return self::$userPackageManager;
@@ -398,10 +406,9 @@
 
         /**
          * Gets the user-level RepositoryManager instance, initializing it if necessary.
-         * Returns null when running as root/system user.
+         * Returns null when running as root/system user or if user directory cannot be created.
          *
-         * @return RepositoryManager|null The user-level RepositoryManager instance, or null if running as system user.
-         * @throws IOException Thrown if there is an error creating the repository manager directory.
+         * @return RepositoryManager|null The user-level RepositoryManager instance, or null if unavailable.
          */
         public static function getUserRepositoryManager(): ?RepositoryManager
         {
@@ -413,12 +420,21 @@
                     return null;
                 }
 
-                if(!IO::exists($userLocation))
+                try
                 {
-                    IO::mkdir($userLocation);
-                }
+                    if(!IO::exists($userLocation))
+                    {
+                        IO::mkdir($userLocation);
+                    }
 
-                self::$userRepositoryManager = new RepositoryManager($userLocation);
+                    self::$userRepositoryManager = new RepositoryManager($userLocation);
+                }
+                catch(IOException $e)
+                {
+                    // Silently fail and fall back to system-level repository manager only
+                    Logger::getLogger()->debug(sprintf('User repository manager unavailable: %s', $e->getMessage()));
+                    return null;
+                }
             }
 
             return self::$userRepositoryManager;
@@ -469,10 +485,9 @@
 
         /**
          * Gets the user-level AuthenticationManager instance, initializing it if necessary.
-         * Returns null when running as root/system user.
+         * Returns null when running as root/system user or if user directory cannot be created.
          *
-         * @return AuthenticationManager|null The user-level AuthenticationManager instance, or null if running as system user.
-         * @throws IOException Thrown if there is an error creating the authentication manager directory.
+         * @return AuthenticationManager|null The user-level AuthenticationManager instance, or null if unavailable.
          */
         public static function getUserAuthenticationManager(): ?AuthenticationManager
         {
@@ -484,12 +499,21 @@
                     return null;
                 }
 
-                if(!IO::exists($userLocation))
+                try
                 {
-                    IO::mkdir($userLocation);
-                }
+                    if(!IO::exists($userLocation))
+                    {
+                        IO::mkdir($userLocation);
+                    }
 
-                self::$userAuthenticationManager = new AuthenticationManager($userLocation);
+                    self::$userAuthenticationManager = new AuthenticationManager($userLocation);
+                }
+                catch(IOException $e)
+                {
+                    // Silently fail and fall back to system-level authentication manager only
+                    Logger::getLogger()->debug(sprintf('User authentication manager unavailable: %s', $e->getMessage()));
+                    return null;
+                }
             }
 
             return self::$userAuthenticationManager;
