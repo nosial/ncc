@@ -13,9 +13,13 @@ This is an ongoing update
  - Added support to register symlinks of executable packages if installing under a system scope, this step can be
    skipped by using `--no-symlink`, if a symlink already exists it can be overwritten using `--force-symlink`, ncc keeps
    track of the symlinks it registers so it doesn't overwrite any existing symlinks unless `--force-symlink` is used.
+ - Added new command `ncc project stubs` which generates a `vendor` and `autoload.php` stubs for the project to allow
+   IDEs to index the dependencies of the project for better code completion and static analysis. This is designed to
+   work simiarly to how Composer generates its autoload files.
 
 ### Changed
  - Updated `\ncc\Classes\IO::writeFile()` to create the parent directory if it does not exist when writing a file
+ - Refactored CLI help menus
 
 ### Fixed
  - Fixed issue in CI where dependencies are not installed before building the project, additionally fixed issue where
