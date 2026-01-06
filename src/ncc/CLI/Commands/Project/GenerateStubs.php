@@ -294,11 +294,11 @@
 
                     $packageReader->extract($packageOutputPath);
                     $extractedCount++;
-                    Console::out(sprintf("  ✓ Extracted to %s", $packageOutputPath));
+                    Console::out(sprintf("Extracted to %s", $packageOutputPath));
                 }
                 catch(Exception $e)
                 {
-                    Console::error(sprintf("  ✗ Failed to extract %s: %s", $packageIdentifier, $e->getMessage()));
+                    Console::error(sprintf("Failed to extract %s: %s", $packageIdentifier, $e->getMessage()));
                     $failedPackages[] = $packageIdentifier;
                 }
             }
@@ -365,8 +365,6 @@
                     $content .= "}\n\n";
                 }
             }
-
-            $content .= "// All ncc package autoloaders have been loaded\n";
             
             return $content;
         }
