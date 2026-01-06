@@ -16,6 +16,7 @@ This is an ongoing update
  - Added new command `ncc project stubs` which generates a `vendor` and `autoload.php` stubs for the project to allow
    IDEs to index the dependencies of the project for better code completion and static analysis. This is designed to
    work simiarly to how Composer generates its autoload files.
+ - Added docker template, generate it using `ncc project --generate=docker`
 
 ### Changed
  - Updated `\ncc\Classes\IO::writeFile()` to create the parent directory if it does not exist when writing a file
@@ -24,6 +25,11 @@ This is an ongoing update
 ### Fixed
  - Fixed issue in CI where dependencies are not installed before building the project, additionally fixed issue where
    the `-y` argument is missing causing dependencies to not be installed
+ - Fixed issue where ncc's runtime would fail when it can't create the home user directory, in such cases for example
+   when running under `www-data`, ncc would instead fail silently and depend on the system's scope instead.
+
+### Removed
+ - Removed the shebang from the Makefile ncc.phar target
 
 ## [3.0.2] - 2026-01-05
 
