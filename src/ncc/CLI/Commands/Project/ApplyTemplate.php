@@ -26,6 +26,7 @@
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\CLI\Commands\Helper;
+    use ncc\CLI\Commands\Project\Templates\Dockerfile\DockerfileGenerator;
     use ncc\CLI\Commands\Project\Templates\GithubCI\GithubCIGenerator;
     use ncc\CLI\Commands\Project\Templates\Makefile\MakefileGenerator;
     use ncc\CLI\Commands\Project\Templates\Phpdoc\PhpdocGenerator;
@@ -106,6 +107,11 @@
                 case 'github-ci':
                 case 'github':
                     GithubCIGenerator::generate(dirname($projectPath), $projectConfiguration);
+                    break;
+
+                case 'dockerfile':
+                case 'docker':
+                    DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
                     break;
 
                 default:
