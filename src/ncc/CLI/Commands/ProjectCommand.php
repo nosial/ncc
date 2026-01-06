@@ -27,6 +27,7 @@
     use ncc\CLI\Commands\Project\ApplyTemplate;
     use ncc\CLI\Commands\Project\ConvertProject;
     use ncc\CLI\Commands\Project\CreateProject;
+    use ncc\CLI\Commands\Project\GenerateStubs;
     use ncc\CLI\Commands\Project\InstallDependencies;
     use ncc\CLI\Commands\Project\ValidateProject;
 
@@ -56,6 +57,10 @@
             elseif(isset($argv['install']))
             {
                 return InstallDependencies::handle($argv);
+            }
+            elseif(isset($argv['stubs']))
+            {
+                return GenerateStubs::handle($argv);
             }
             elseif(isset($argv['help']) || isset($argv['h']))
             {
@@ -90,6 +95,7 @@
                 Console::out('  --generate=<name>         Apply automatic templates to your existing project');
                 Console::out('  convert                   Convert an existing project to an ncc project');
                 Console::out('  install                   Install all project dependencies');
+                Console::out('  stubs                     Generate stubs for all project dependencies (like vendor/autoload.php)');
                 Console::out(PHP_EOL . 'Use "ncc project [command] --help" for more information about a command.');
                 Console::out('Use "ncc project generate --help" for template options.');
                 return;
@@ -168,6 +174,7 @@
                     Console::out('  --build, -b       (Optional) Install dependencies only for a specific build configuration');
                     Console::out('                    If not specified, installs dependencies from all build configurations');
                     Console::out('  --yes, -y         Automatically confirm all prompts');
+                    Console::out('  --reinstall, -r   Force reinstall packages even if they are already installed');
                     Console::out('  --skip-repositories, --skip-repos, --sr');
                     Console::out('                    Skip adding package repositories');
                     Console::out('  --<repository>-auth=<entry>');
@@ -177,7 +184,30 @@
                     Console::out('  ncc project install --path=/path/to/project');
                     Console::out('  ncc project install --build=debug');
                     Console::out('  ncc project install --yes');
+                    Console::out('  ncc project install --reinstall');
                     Console::out('  ncc project install --github-auth=mytoken');
+                    break;
+
+                case 'stubs':
+                    Console::out('Usage: ncc project stubs [options]' . PHP_EOL);
+                    Console::out('Extracts all project dependencies to create a vendor/autoload.php');
+                    Console::out('environment for development purposes. This allows IDEs and development tools to');
+                    Console::out('have access to package source code for autocompletion and navigation.' . PHP_EOL);
+                    Console::out('Options:');
+                    Console::out('  --path            (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out('  --output, -o      (Optional) Output directory for extracted stubs');
+                    Console::out('                    Defaults to ./vendor in the current directory');
+                    Console::out('  --build, -b       (Optional) Generate stubs only for a specific build configuration');
+                    Console::out('                    If not specified, generates stubs from all build configurations');
+                    Console::out(PHP_EOL . 'Examples:');
+                    Console::out('  ncc project stubs');
+                    Console::out('  ncc project stubs --path=/path/to/project');
+                    Console::out('  ncc project stubs --output=/custom/path');
+                    Console::out('  ncc project stubs --build=debug');
+                    Console::out(PHP_EOL . 'Note:');
+                    Console::out('  All dependencies must be installed before generating stubs.');
+                    Console::out('  If any packages are missing, run: ncc project install');
                     break;
 
                 default:

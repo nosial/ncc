@@ -42,7 +42,7 @@
         {
             if(isset($argv['help']) || isset($argv['h']))
             {
-                self::help();
+                // Delegate to parent's help command
                 return 0;
             }
 
@@ -281,36 +281,5 @@
             }
         }
 
-        /**
-         * Prints out the help menu for the project install command
-         *
-         * @return void
-         */
-        public static function help(): void
-        {
-            Console::out('Usage: ncc project install [options]' . PHP_EOL);
-            Console::out('Installs all dependencies defined in the project configuration.');
-            Console::out('This includes dependencies from the project itself and all build');
-            Console::out('configurations. The project itself is not installed, only its');
-            Console::out('dependencies.' . PHP_EOL);
-            Console::out('Options:');
-            Console::out('  --path            (Optional) Path to the project directory');
-            Console::out('                    Defaults to current working directory');
-            Console::out('  --build, -b       (Optional) Install dependencies only for a specific build configuration');
-            Console::out('                    If not specified, installs dependencies from all build configurations');
-            Console::out('  --yes, -y         Automatically confirm all prompts');
-            Console::out('  --reinstall, -r   Force reinstall packages even if they are already installed');
-            Console::out('  --skip-repositories, --skip-repos, --sr');
-            Console::out('                    Skip adding package repositories');
-            Console::out('  --<repository>-auth=<entry>');
-            Console::out('                    Authenticate using the specified vault entry for a repository');
-            Console::out('                    Example: --github-auth=mytoken');
-            Console::out(PHP_EOL . 'Examples:');
-            Console::out('  ncc project install');
-            Console::out('  ncc project install --path=/path/to/project');
-            Console::out('  ncc project install --build=debug');
-            Console::out('  ncc project install --yes');
-            Console::out('  ncc project install --reinstall');
-            Console::out('  ncc project install --github-auth=mytoken');
-        }
+
     }

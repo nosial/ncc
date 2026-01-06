@@ -41,7 +41,7 @@
         {
             if(isset($argv['help']) || isset($argv['h']))
             {
-                self::help();
+                // Delegate to parent's help command
                 return 0;
             }
 
@@ -371,31 +371,5 @@
             return $content;
         }
 
-        /**
-         * Prints out the help menu for the stubs command
-         *
-         * @return void
-         */
-        public static function help(): void
-        {
-            Console::out('Usage: ncc project stubs [options]' . PHP_EOL);
-            Console::out('Extracts all project dependencies to create a vendor/autoload.php');
-            Console::out('environment for development purposes. This allows IDEs and development tools to');
-            Console::out('have access to package source code for autocompletion and navigation.' . PHP_EOL);
-            Console::out('Options:');
-            Console::out('  --path            (Optional) Path to the project directory');
-            Console::out('                    Defaults to current working directory');
-            Console::out('  --output, -o      (Optional) Output directory for extracted stubs');
-            Console::out('                    Defaults to ./vendor in the current directory');
-            Console::out('  --build, -b       (Optional) Generate stubs only for a specific build configuration');
-            Console::out('                    If not specified, generates stubs from all build configurations');
-            Console::out(PHP_EOL . 'Examples:');
-            Console::out('  ncc project stubs');
-            Console::out('  ncc project stubs --path=/path/to/project');
-            Console::out('  ncc project stubs --output=/custom/path');
-            Console::out('  ncc project stubs --build=debug');
-            Console::out(PHP_EOL . 'Note:');
-            Console::out('  All dependencies must be installed before generating stubs.');
-            Console::out('  If any packages are missing, run: ncc project install');
-        }
+
     }
