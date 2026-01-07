@@ -31,6 +31,7 @@
     use ncc\CLI\Commands\Project\Templates\Makefile\MakefileGenerator;
     use ncc\CLI\Commands\Project\Templates\Phpdoc\PhpdocGenerator;
     use ncc\CLI\Commands\Project\Templates\Phpunit\PhpunitGenerator;
+    use ncc\CLI\Commands\Project\Templates\Web\WebTemplate;
     use ncc\Exceptions\InvalidPropertyException;
     use ncc\Objects\Project;
 
@@ -114,6 +115,10 @@
                     case 'dockerfile':
                     case 'docker':
                         DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
+
+                    case 'web':
+                        WebTemplate::generate(dirname($projectPath), $projectConfiguration);
                         break;
 
                     default:
