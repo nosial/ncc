@@ -44,18 +44,18 @@
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            Logger::getLogger()->verbose('PhpCompiler: Starting PHP executable package compilation');
+            Logger::getLogger()?->verbose('PhpCompiler: Starting PHP executable package compilation');
             
             // First, compile using the parent PackageCompiler to create the base package
             $packagePath = parent::compile($progressCallback, $overwrite);
             
-            Logger::getLogger()->verbose(sprintf('PhpCompiler: Base package compiled at: %s', $packagePath));
-            Logger::getLogger()->verbose('PhpCompiler: Adding PHP executable header');
+            Logger::getLogger()?->verbose(sprintf('PhpCompiler: Base package compiled at: %s', $packagePath));
+            Logger::getLogger()?->verbose('PhpCompiler: Adding PHP executable header');
             
             // Now modify the file to add the PHP executable header
             $this->addPhpHeader($packagePath);
             
-            Logger::getLogger()->verbose('PhpCompiler: PHP executable package compilation completed');
+            Logger::getLogger()?->verbose('PhpCompiler: PHP executable package compilation completed');
             return $packagePath;
         }
 
@@ -72,12 +72,12 @@
         {
             try
             {
-                Logger::getLogger()->debug(sprintf('Reading original package data from: %s', $packagePath));
+                Logger::getLogger()?->debug(sprintf('Reading original package data from: %s', $packagePath));
                 
                 // Read the original package data
                 $packageData = IO::readFile($packagePath);
                 
-                Logger::getLogger()->debug('Generating PHP executable header');
+                Logger::getLogger()?->debug('Generating PHP executable header');
                 
                 // Create the PHP header
                 $header = $this->generatePhpHeader();
@@ -85,7 +85,7 @@
                 // Combine header and package data
                 $newContent = $header . $packageData;
                 
-                Logger::getLogger()->debug('Writing combined content back to file');
+                Logger::getLogger()?->debug('Writing combined content back to file');
                 
                 // Write back to file
                 IO::writeFile($packagePath, $newContent);
@@ -93,11 +93,11 @@
                 // Make the file executable (Unix/Linux only)
                 if(DIRECTORY_SEPARATOR === '/')
                 {
-                    Logger::getLogger()->debug('Setting executable permissions');
+                    Logger::getLogger()?->debug('Setting executable permissions');
                     chmod($packagePath, 0755);
                 }
                 
-                Logger::getLogger()->verbose(sprintf('PHP header added successfully. Final size: %d bytes', strlen($newContent)));
+                Logger::getLogger()?->verbose(sprintf('PHP header added successfully. Final size: %d bytes', strlen($newContent)));
             }
             catch(IOException $e)
             {

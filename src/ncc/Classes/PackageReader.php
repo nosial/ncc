@@ -70,7 +70,7 @@
          */
         public function __construct(string $filePath, bool $tryCache = false)
         {
-            Logger::getLogger()->debug(sprintf('Initializing PackageReader for: %s', $filePath));
+            Logger::getLogger()?->debug(sprintf('Initializing PackageReader for: %s', $filePath));
             $this->filePath = $filePath;
             if(!IO::exists($this->filePath))
             {
@@ -88,23 +88,23 @@
                 $cacheFile = $this->filePath . '.cache';
                 if(IO::exists($cacheFile))
                 {
-                    Logger::getLogger()->verbose('Attempting to load from cache file');
+                    Logger::getLogger()?->verbose('Attempting to load from cache file');
                     try
                     {
                         $this->importFromCacheFile($cacheFile);
-                        Logger::getLogger()->verbose('Successfully loaded from cache');
+                        Logger::getLogger()?->verbose('Successfully loaded from cache');
                         return;
                     }
                     catch(Exception $e)
                     {
-                        Logger::getLogger()->debug(sprintf('Cache loading failed: %s, falling back to normal parsing', $e->getMessage()));
+                        Logger::getLogger()?->debug(sprintf('Cache loading failed: %s, falling back to normal parsing', $e->getMessage()));
                         // If cache loading fails, fall back to normal parsing
                         // Silently continue to normal parsing
                     }
                 }
             }
             
-            Logger::getLogger()->verbose('Parsing package file');
+            Logger::getLogger()?->verbose('Parsing package file');
 
             $this->fileHandle = fopen($this->filePath, 'rb');
             if(!$this->fileHandle)
@@ -126,10 +126,10 @@
 
             // Read package version
             $this->packageVersion = $this->readPackageVersion();
-            Logger::getLogger()->debug(sprintf('Package version: %s', $this->packageVersion));
+            Logger::getLogger()?->debug(sprintf('Package version: %s', $this->packageVersion));
 
             // Read all sections
-            Logger::getLogger()->verbose('Reading package sections');
+            Logger::getLogger()?->verbose('Reading package sections');
             while(!feof($this->fileHandle))
             {
                 $marker = fread($this->fileHandle, 1);
@@ -141,31 +141,31 @@
                 switch($marker)
                 {
                     case PackageStructure::HEADER->value:
-                        Logger::getLogger()->debug('Reading HEADER section');
+                        Logger::getLogger()?->debug('Reading HEADER section');
                         $this->header = $this->readHeader();
                         break;
 
                     case PackageStructure::ASSEMBLY->value:
-                        Logger::getLogger()->debug('Reading ASSEMBLY section');
+                        Logger::getLogger()?->debug('Reading ASSEMBLY section');
                         $this->assembly = $this->readAssembly();
                         break;
 
                     case PackageStructure::EXECUTION_UNITS->value:
-                        Logger::getLogger()->debug('Reading EXECUTION_UNITS section');
+                        Logger::getLogger()?->debug('Reading EXECUTION_UNITS section');
                         $this->executionUnitReferences = $this->readExecutionUnitReferences();
-                        Logger::getLogger()->verbose(sprintf('Loaded %d execution units', count($this->executionUnitReferences)));
+                        Logger::getLogger()?->verbose(sprintf('Loaded %d execution units', count($this->executionUnitReferences)));
                         break;
 
                     case PackageStructure::COMPONENTS->value:
-                        Logger::getLogger()->debug('Reading COMPONENTS section');
+                        Logger::getLogger()?->debug('Reading COMPONENTS section');
                         $this->componentReferences = $this->readComponentReferences();
-                        Logger::getLogger()->verbose(sprintf('Loaded %d components', count($this->componentReferences)));
+                        Logger::getLogger()?->verbose(sprintf('Loaded %d components', count($this->componentReferences)));
                         break;
 
                     case PackageStructure::RESOURCES->value:
-                        Logger::getLogger()->debug('Reading RESOURCES section');
+                        Logger::getLogger()?->debug('Reading RESOURCES section');
                         $this->resourceReferences = $this->readResourceReferences();
-                        Logger::getLogger()->verbose(sprintf('Loaded %d resources', count($this->resourceReferences)));
+                        Logger::getLogger()?->verbose(sprintf('Loaded %d resources', count($this->resourceReferences)));
                         break;
 
                     default:
@@ -1075,7 +1075,7 @@
          */
         public function execute(?string $executionUnit = null, array $arguments = []): mixed
         {
-            Logger::getLogger()->debug(sprintf('Execute called with executionUnit: %s', $executionUnit ?? 'null'));
+            Logger::getLogger()?->debug(sprintf('Execute called with executionUnit: %s', $executionUnit ?? 'null'));
             
             // Determine which execution unit to use
             if($executionUnit === null)
@@ -1087,7 +1087,7 @@
                     throw new OperationException('No execution unit specified and no main entry point defined in package');
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Using main entry point: %s', $entryPoint));
+                Logger::getLogger()?->verbose(sprintf('Using main entry point: %s', $entryPoint));
                 $executionUnit = $entryPoint;
             }
             
@@ -1099,7 +1099,7 @@
             }
             
             $unit = $this->readExecutionUnit($executionUnitRef);
-            Logger::getLogger()->verbose(sprintf('Executing unit: %s (type: %s)', $executionUnit, $unit->getType()->value));
+            Logger::getLogger()?->verbose(sprintf('Executing unit: %s (type: %s)', $executionUnit, $unit->getType()->value));
             
             // Handle execution based on type
             switch($unit->getType())
@@ -1128,18 +1128,18 @@
         {
             // Ensure the package is imported in the runtime
             $packageName = $this->assembly->getPackage();
-            Logger::getLogger()->debug(sprintf('Importing package in runtime: %s', $packageName));
+            Logger::getLogger()?->debug(sprintf('Importing package in runtime: %s', $packageName));
             
             // Import the package if not already imported
             if(!Runtime::isImported($packageName))
             {
-                Logger::getLogger()->verbose(sprintf('Package not yet imported, importing: %s', $packageName));
+                Logger::getLogger()?->verbose(sprintf('Package not yet imported, importing: %s', $packageName));
                 Runtime::import($this->filePath);
             }
             
             // Build the ncc:// protocol path
             $scriptPath = 'ncc://' . $packageName . '/' . ltrim($unit->getEntryPoint(), '/');
-            Logger::getLogger()->verbose(sprintf('Executing PHP script: %s', $scriptPath));
+            Logger::getLogger()?->verbose(sprintf('Executing PHP script: %s', $scriptPath));
 
             // Verify the script exists, if not try with .php extension
             if(!file_exists($scriptPath))
@@ -1150,7 +1150,7 @@
                     $scriptPathWithExtension = $scriptPath . '.php';
                     if(file_exists($scriptPathWithExtension))
                     {
-                        Logger::getLogger()->verbose(sprintf('Script found with .php extension: %s', $scriptPathWithExtension));
+                        Logger::getLogger()?->verbose(sprintf('Script found with .php extension: %s', $scriptPathWithExtension));
                         $scriptPath = $scriptPathWithExtension;
                     }
                     else
@@ -1176,7 +1176,7 @@
             {
                 // Resolve macros in working directory (e.g., ${CWD} -> current working directory)
                 $workingDirectory = $this->resolveMacros($unit->getWorkingDirectory());
-                Logger::getLogger()->debug(sprintf('Changing working directory to: %s', $workingDirectory));
+                Logger::getLogger()?->debug(sprintf('Changing working directory to: %s', $workingDirectory));
                 chdir($workingDirectory);
             }
             
@@ -1195,7 +1195,7 @@
             {
                 // Execute the script
                 $result = require $scriptPath;
-                Logger::getLogger()->verbose('PHP script execution completed');
+                Logger::getLogger()?->verbose('PHP script execution completed');
                 return $result;
             }
             catch(Throwable $e)
@@ -1238,23 +1238,23 @@
         private function executeSystemUnit(ExecutionUnit $unit, array $arguments): int
         {
             $entryPoint = $unit->getEntryPoint();
-            Logger::getLogger()->debug(sprintf('Executing system command: %s', $entryPoint));
+            Logger::getLogger()?->debug(sprintf('Executing system command: %s', $entryPoint));
             
             // Try to resolve the executable path if it's not an absolute path
             $executablePath = $entryPoint;
             if(!file_exists($executablePath))
             {
-                Logger::getLogger()->verbose(sprintf('Entry point not found as file, attempting to resolve: %s', $entryPoint));
+                Logger::getLogger()?->verbose(sprintf('Entry point not found as file, attempting to resolve: %s', $entryPoint));
                 $resolvedPath = (new ExecutableFinder())->find($entryPoint);
                 
                 if($resolvedPath !== null)
                 {
                     $executablePath = $resolvedPath;
-                    Logger::getLogger()->verbose(sprintf('Resolved executable path: %s', $executablePath));
+                    Logger::getLogger()?->verbose(sprintf('Resolved executable path: %s', $executablePath));
                 }
                 else
                 {
-                    Logger::getLogger()->verbose(sprintf('Could not resolve executable, using as-is: %s', $entryPoint));
+                    Logger::getLogger()?->verbose(sprintf('Could not resolve executable, using as-is: %s', $entryPoint));
                 }
             }
             
@@ -1267,31 +1267,31 @@
             // Set working directory if specified
             if($unit->getWorkingDirectory() !== null)
             {
-                Logger::getLogger()->debug(sprintf('Setting working directory: %s', $unit->getWorkingDirectory()));
+                Logger::getLogger()?->debug(sprintf('Setting working directory: %s', $unit->getWorkingDirectory()));
                 $process->setWorkingDirectory($unit->getWorkingDirectory());
             }
             
             // Set environment variables if specified
             if($unit->getEnvironment() !== null)
             {
-                Logger::getLogger()->debug(sprintf('Setting %d environment variables', count($unit->getEnvironment())));
+                Logger::getLogger()?->debug(sprintf('Setting %d environment variables', count($unit->getEnvironment())));
                 $process->setEnv($unit->getEnvironment());
             }
             
             // Set timeout if specified
             if($unit->getTimeout() !== null)
             {
-                Logger::getLogger()->debug(sprintf('Setting timeout: %d seconds', $unit->getTimeout()));
+                Logger::getLogger()?->debug(sprintf('Setting timeout: %d seconds', $unit->getTimeout()));
                 $process->setTimeout($unit->getTimeout());
             }
             
             try
             {
-                Logger::getLogger()->verbose(sprintf('Starting process: %s', $process->getCommandLine()));
+                Logger::getLogger()?->verbose(sprintf('Starting process: %s', $process->getCommandLine()));
                 $process->mustRun();
                 
                 $exitCode = $process->getExitCode();
-                Logger::getLogger()->verbose(sprintf('Process completed with exit code: %d', $exitCode));
+                Logger::getLogger()?->verbose(sprintf('Process completed with exit code: %d', $exitCode));
                 
                 return $exitCode;
             }

@@ -53,7 +53,7 @@
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
-            Logger::getLogger()->debug('Initializing PharCompiler');
+            Logger::getLogger()?->debug('Initializing PharCompiler');
             
             parent::__construct($projectFilePath, $buildConfiguration);
 
@@ -61,12 +61,12 @@
             if(isset($this->getBuildConfiguration()->getOptions()['compression']) && is_bool($this->getBuildConfiguration()->getOptions()['compression']))
             {
                 $this->compressionEnabled = (bool)$this->getBuildConfiguration()->getOptions()['compression'];
-                Logger::getLogger()->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'));
+                Logger::getLogger()?->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'));
             }
             else
             {
                 $this->compressionEnabled = true;
-                Logger::getLogger()->verbose('Compression: enabled (default)');
+                Logger::getLogger()?->verbose('Compression: enabled (default)');
             }
 
             // Phar-specific compression level attributes
@@ -75,21 +75,21 @@
                 $this->compressionLevel = (int)$this->getBuildConfiguration()->getOptions()['compression_level'];
                 if($this->compressionLevel > 9)
                 {
-                    Logger::getLogger()->warning(sprintf('Compression level %d exceeds maximum, using 9', $this->compressionLevel));
+                    Logger::getLogger()?->warning(sprintf('Compression level %d exceeds maximum, using 9', $this->compressionLevel));
                     $this->compressionLevel = 9;
                 }
                 elseif($this->compressionLevel < 1)
                 {
-                    Logger::getLogger()->warning(sprintf('Compression level %d below minimum, using 1', $this->compressionLevel));
+                    Logger::getLogger()?->warning(sprintf('Compression level %d below minimum, using 1', $this->compressionLevel));
                     $this->compressionLevel = 1;
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Compression level: %d', $this->compressionLevel));
+                Logger::getLogger()?->verbose(sprintf('Compression level: %d', $this->compressionLevel));
             }
             else
             {
                 $this->compressionLevel = 9;
-                Logger::getLogger()->verbose('Compression level: 9 (default)');
+                Logger::getLogger()?->verbose('Compression level: 9 (default)');
             }
 
             // Determine compression type (GZ by default)
@@ -100,11 +100,11 @@
                 if($type === 'bz2' && extension_loaded('bz2'))
                 {
                     $this->compressionType = Phar::BZ2;
-                    Logger::getLogger()->verbose('Compression type: BZ2');
+                    Logger::getLogger()?->verbose('Compression type: BZ2');
                 }
                 else
                 {
-                    Logger::getLogger()->verbose('Compression type: GZ (default)');
+                    Logger::getLogger()?->verbose('Compression type: GZ (default)');
                 }
             }
 
@@ -112,12 +112,12 @@
             if(isset($this->getBuildConfiguration()->getOptions()['skip_execution']) && is_bool($this->getBuildConfiguration()->getOptions()['skip_execution']))
             {
                 $this->skipExecution = (bool)$this->getBuildConfiguration()->getOptions()['skip_execution'];
-                Logger::getLogger()->verbose(sprintf('Skip execution: %s', $this->skipExecution ? 'enabled' : 'disabled'));
+                Logger::getLogger()?->verbose(sprintf('Skip execution: %s', $this->skipExecution ? 'enabled' : 'disabled'));
             }
             else
             {
                 $this->skipExecution = false;
-                Logger::getLogger()->verbose('Skip execution: disabled (default)');
+                Logger::getLogger()?->verbose('Skip execution: disabled (default)');
             }
         }
 
@@ -126,8 +126,8 @@
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            Logger::getLogger()->verbose(sprintf('Starting Phar compilation to: %s', $this->getOutputPath()));
-            Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'));
+            Logger::getLogger()?->verbose(sprintf('Starting Phar compilation to: %s', $this->getOutputPath()));
+            Logger::getLogger()?->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'));
             
             // Check if phar creation is allowed
             if(ini_get('phar.readonly'))
@@ -142,7 +142,7 @@
             {
                 if($overwrite)
                 {
-                    Logger::getLogger()->verbose('Removing existing Phar file');
+                    Logger::getLogger()?->verbose('Removing existing Phar file');
                     unlink($outputPath);
                 }
                 else
@@ -153,7 +153,7 @@
 
             try
             {
-                Logger::getLogger()->debug('Creating Phar archive');
+                Logger::getLogger()?->debug('Creating Phar archive');
                 $phar = new Phar($outputPath);
                 $phar->setAlias(basename($outputPath));
                 $phar->startBuffering();
@@ -161,9 +161,9 @@
                 $dependencyReaders = null;
                 if($this->isStaticallyLinked())
                 {
-                    Logger::getLogger()->verbose('Resolving dependency readers for static linking');
+                    Logger::getLogger()?->verbose('Resolving dependency readers for static linking');
                     $dependencyReaders = $this->getDependencyReaders();
-                    Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
+                    Logger::getLogger()?->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
                 }
 
                 // Calculate total stages for progress tracking
@@ -219,9 +219,9 @@
                 {
                     call_user_func($progressCallback, $currentStage, $totalStages, 'Generating autoloader');
                 }
-                Logger::getLogger()->verbose('Generating autoloader mapping');
+                Logger::getLogger()?->verbose('Generating autoloader mapping');
                 $autoloaderMapping = $this->generateAutoloaderMapping($dependencyReaders);
-                Logger::getLogger()->verbose(sprintf('Generated autoloader with %d class mappings', count($autoloaderMapping)));
+                Logger::getLogger()?->verbose(sprintf('Generated autoloader with %d class mappings', count($autoloaderMapping)));
                 $phar->addFromString('.autoloader.php', $this->generateAutoloaderCode($autoloaderMapping));
 
                 // Add metadata
@@ -230,10 +230,10 @@
                 {
                     call_user_func($progressCallback, $currentStage, $totalStages, 'Adding metadata');
                 }
-                Logger::getLogger()->verbose('Setting Phar metadata');
+                Logger::getLogger()?->verbose('Setting Phar metadata');
                 $metadata = $this->createMetadata($dependencyReaders);
                 $phar->setMetadata($metadata);
-                Logger::getLogger()->debug(sprintf('Metadata set with %d dependencies', count($metadata['dependencies'])));
+                Logger::getLogger()?->debug(sprintf('Metadata set with %d dependencies', count($metadata['dependencies'])));
 
                 // Generate and set stub
                 $currentStage++;
@@ -241,23 +241,23 @@
                 {
                     call_user_func($progressCallback, $currentStage, $totalStages, 'Generating stub');
                 }
-                Logger::getLogger()->verbose('Generating Phar stub');
+                Logger::getLogger()?->verbose('Generating Phar stub');
                 $stub = $this->generateStub();
                 $phar->setStub($stub);
-                Logger::getLogger()->debug('Phar stub set');
+                Logger::getLogger()?->debug('Phar stub set');
 
                 // Apply compression if enabled
                 if($this->compressionEnabled)
                 {
-                    Logger::getLogger()->verbose('Applying compression to Phar files');
+                    Logger::getLogger()?->verbose('Applying compression to Phar files');
                     try
                     {
                         $phar->compressFiles($this->compressionType);
-                        Logger::getLogger()->debug('Compression applied successfully');
+                        Logger::getLogger()?->debug('Compression applied successfully');
                     }
                     catch(Exception $e)
                     {
-                        Logger::getLogger()->warning(sprintf('Failed to apply compression: %s', $e->getMessage()));
+                        Logger::getLogger()?->warning(sprintf('Failed to apply compression: %s', $e->getMessage()));
                     }
                 }
 
@@ -267,10 +267,10 @@
                 if(DIRECTORY_SEPARATOR === '/')
                 {
                     chmod($outputPath, 0755);
-                    Logger::getLogger()->debug('Set executable permissions');
+                    Logger::getLogger()?->debug('Set executable permissions');
                 }
 
-                Logger::getLogger()->verbose(sprintf('Phar compilation completed: %s', $outputPath));
+                Logger::getLogger()?->verbose(sprintf('Phar compilation completed: %s', $outputPath));
                 return $outputPath;
             }
             catch(Exception $e)
@@ -290,7 +290,7 @@
          */
         private function addSourceComponents(Phar $phar, ?array $dependencyReaders, ?callable $progressCallback, int $currentStage, int $totalStages): void
         {
-            Logger::getLogger()->verbose(sprintf('Adding %d source components', count($this->getSourceComponents())));
+            Logger::getLogger()?->verbose(sprintf('Adding %d source components', count($this->getSourceComponents())));
             
             $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
             $sourcePath = $this->getSourcePath();
@@ -309,11 +309,11 @@
                 // Store with assembly name prefix to avoid conflicts
                 $pharPath = $assemblyName . '/' . $relativePath;
                 
-                Logger::getLogger()->debug(sprintf('Adding component: %s -> %s', $componentPath, $pharPath));
+                Logger::getLogger()?->debug(sprintf('Adding component: %s -> %s', $componentPath, $pharPath));
                 $phar->addFile($componentPath, $pharPath);
             }
 
-            Logger::getLogger()->verbose(sprintf('Added %d source components', count($this->getSourceComponents())));
+            Logger::getLogger()?->verbose(sprintf('Added %d source components', count($this->getSourceComponents())));
         }
 
         /**
@@ -326,7 +326,7 @@
          */
         private function addExecutionUnits(Phar $phar, ?callable $progressCallback, int $currentStage, int $totalStages): void
         {
-            Logger::getLogger()->verbose(sprintf('Adding %d execution units', count($this->getRequiredExecutionUnits())));
+            Logger::getLogger()?->verbose(sprintf('Adding %d execution units', count($this->getRequiredExecutionUnits())));
             
             $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
 
@@ -340,7 +340,7 @@
                 $executionUnit = $this->getProjectConfiguration()->getExecutionUnit($executionUnitName);
                 if($executionUnit === null)
                 {
-                    Logger::getLogger()->warning(sprintf('Execution unit not found: %s', $executionUnitName));
+                    Logger::getLogger()?->warning(sprintf('Execution unit not found: %s', $executionUnitName));
                     continue;
                 }
 
@@ -361,14 +361,14 @@
                             $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
                             $resolvedEntryPoint = $assemblyName . '/' . $relativePath;
                             $executionUnitData['entry'] = $resolvedEntryPoint;
-                            Logger::getLogger()->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
+                            Logger::getLogger()?->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
                         }
                         else
                         {
                             // File is outside source path - place at root with assembly prefix
                             $resolvedEntryPoint = $assemblyName . '/' . basename($realPath);
                             $executionUnitData['entry'] = $resolvedEntryPoint;
-                            Logger::getLogger()->debug(sprintf('Resolved entry point for %s (outside source): %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
+                            Logger::getLogger()?->debug(sprintf('Resolved entry point for %s (outside source): %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
                         }
                     }
                 }
@@ -379,11 +379,11 @@
                 // Store execution units with .units/ prefix and assembly name
                 $pharPath = '.units/' . $assemblyName . '/' . $executionUnitName;
                 
-                Logger::getLogger()->debug(sprintf('Adding execution unit: %s (type: %s)', $executionUnitName, $executionUnit->getType()->value));
+                Logger::getLogger()?->debug(sprintf('Adding execution unit: %s (type: %s)', $executionUnitName, $executionUnit->getType()->value));
                 $phar->addFromString($pharPath, $data);
             }
 
-            Logger::getLogger()->verbose(sprintf('Added %d execution units', count($this->getRequiredExecutionUnits())));
+            Logger::getLogger()?->verbose(sprintf('Added %d execution units', count($this->getRequiredExecutionUnits())));
         }
 
         /**
@@ -397,7 +397,7 @@
         private function addResources(Phar $phar, ?callable $progressCallback, int $currentStage, int $totalStages): void
         {
             $resourcePaths = $this->getSourceResources();
-            Logger::getLogger()->verbose(sprintf('Adding %d resources', count($resourcePaths)));
+            Logger::getLogger()?->verbose(sprintf('Adding %d resources', count($resourcePaths)));
             
             $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
 
@@ -410,7 +410,7 @@
 
                 if(!file_exists($resourcePath))
                 {
-                    Logger::getLogger()->warning(sprintf('Resource file not found: %s', $resourcePath));
+                    Logger::getLogger()?->warning(sprintf('Resource file not found: %s', $resourcePath));
                     continue;
                 }
 
@@ -428,7 +428,7 @@
 
                 if(empty($relativePath) || $relativePath === false)
                 {
-                    Logger::getLogger()->warning(sprintf('Invalid resource path: %s', $resourcePath));
+                    Logger::getLogger()?->warning(sprintf('Invalid resource path: %s', $resourcePath));
                     continue;
                 }
                 
@@ -437,7 +437,7 @@
                 // Store resources maintaining original directory structure (assembly_name/path)
                 $pharPath = $assemblyName . '/' . $relativePath;
                 
-                Logger::getLogger()->debug(sprintf('Adding resource: %s -> %s', $resourcePath, $pharPath));
+                Logger::getLogger()?->debug(sprintf('Adding resource: %s -> %s', $resourcePath, $pharPath));
                 
                 if(is_dir($resourcePath))
                 {
@@ -449,7 +449,7 @@
                 }
             }
 
-            Logger::getLogger()->verbose(sprintf('Added %d resources', count($resourcePaths)));
+            Logger::getLogger()?->verbose(sprintf('Added %d resources', count($resourcePaths)));
         }
 
         /**
@@ -463,7 +463,7 @@
          */
         private function addStaticDependencies(Phar $phar, array $dependencyReaders, ?callable $progressCallback, int $currentStage, int $totalStages): void
         {
-            Logger::getLogger()->verbose(sprintf('Adding %d static dependencies', count($dependencyReaders)));
+            Logger::getLogger()?->verbose(sprintf('Adding %d static dependencies', count($dependencyReaders)));
 
             /** @var ResolvedDependency $resolvedDependency */
             foreach($dependencyReaders as $depIndex => $resolvedDependency)
@@ -476,14 +476,14 @@
                 $packageReader = $resolvedDependency->getPackageReader();
                 if($packageReader === null)
                 {
-                    Logger::getLogger()->warning('Skipping dependency with null package reader');
+                    Logger::getLogger()?->warning('Skipping dependency with null package reader');
                     continue;
                 }
 
                 $depPackageName = $packageReader->getAssembly()->getPackage();
                 $depAssemblyName = $packageReader->getAssembly()->getName();
                 
-                Logger::getLogger()->debug(sprintf('Processing dependency: %s (assembly: %s)', $depPackageName, $depAssemblyName));
+                Logger::getLogger()?->debug(sprintf('Processing dependency: %s (assembly: %s)', $depPackageName, $depAssemblyName));
 
                 // Add dependency components
                 foreach($packageReader->getComponentReferences() as $componentRef)
@@ -494,12 +494,12 @@
                         // Store dependency components with their assembly name to avoid conflicts
                         $pharPath = $depAssemblyName . '/' . $componentRef->getName();
                         
-                        Logger::getLogger()->debug(sprintf('Adding dependency component: %s', $pharPath));
+                        Logger::getLogger()?->debug(sprintf('Adding dependency component: %s', $pharPath));
                         $phar->addFromString($pharPath, $componentData);
                     }
                     catch(Exception $e)
                     {
-                        Logger::getLogger()->warning(sprintf('Failed to add dependency component %s: %s', $componentRef->getName(), $e->getMessage()));
+                        Logger::getLogger()?->warning(sprintf('Failed to add dependency component %s: %s', $componentRef->getName(), $e->getMessage()));
                     }
                 }
 
@@ -515,12 +515,12 @@
                             $unitData = msgpack_pack($unit->toArray());
                             $pharPath = '.units/' . $depAssemblyName . '/' . $unitRef->getName();
                             
-                            Logger::getLogger()->debug(sprintf('Adding dependency execution unit: %s', $pharPath));
+                            Logger::getLogger()?->debug(sprintf('Adding dependency execution unit: %s', $pharPath));
                             $phar->addFromString($pharPath, $unitData);
                         }
                         catch(Exception $e)
                         {
-                            Logger::getLogger()->warning(sprintf('Failed to add dependency execution unit %s: %s', $unitRef->getName(), $e->getMessage()));
+                            Logger::getLogger()?->warning(sprintf('Failed to add dependency execution unit %s: %s', $unitRef->getName(), $e->getMessage()));
                         }
                     }
                 }
@@ -537,18 +537,18 @@
                             // Maintain directory structure without .resources prefix
                             $pharPath = $depAssemblyName . '/' . $resourceRef->getName();
                             
-                            Logger::getLogger()->debug(sprintf('Adding dependency resource: %s', $pharPath));
+                            Logger::getLogger()?->debug(sprintf('Adding dependency resource: %s', $pharPath));
                             $phar->addFromString($pharPath, $resourceData);
                         }
                         catch(Exception $e)
                         {
-                            Logger::getLogger()->warning(sprintf('Failed to add dependency resource %s: %s', $resourceRef->getName(), $e->getMessage()));
+                            Logger::getLogger()?->warning(sprintf('Failed to add dependency resource %s: %s', $resourceRef->getName(), $e->getMessage()));
                         }
                     }
                 }
             }
 
-            Logger::getLogger()->verbose(sprintf('Added %d static dependencies', count($dependencyReaders)));
+            Logger::getLogger()?->verbose(sprintf('Added %d static dependencies', count($dependencyReaders)));
         }
 
         /**
@@ -562,7 +562,7 @@
          */
         private function generateAutoloaderMapping(?array $dependencyReaders=null): array
         {
-            Logger::getLogger()->debug('Generating autoloader mapping');
+            Logger::getLogger()?->debug('Generating autoloader mapping');
             
             $pharAlias = basename($this->getOutputPath());
             $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
@@ -573,7 +573,7 @@
             // Generate mapping for source components
             if(count($this->getSourceComponents()) > 0)
             {
-                Logger::getLogger()->verbose(sprintf('Generating autoloader mapping for %d source components', count($this->getSourceComponents())));
+                Logger::getLogger()?->verbose(sprintf('Generating autoloader mapping for %d source components', count($this->getSourceComponents())));
                 
                 // Use pal to generate autoloader array from source directory
                 $sourceMapping = Autoloader::generateAutoloaderArray($this->getSourcePath(), [
@@ -594,12 +594,12 @@
                     }
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Generated %d source class mappings via PAL', count($mapping)));
+                Logger::getLogger()?->verbose(sprintf('Generated %d source class mappings via PAL', count($mapping)));
                 
                 // Fallback: parse component files directly if PAL returned empty
                 if(empty($mapping))
                 {
-                    Logger::getLogger()->verbose('PAL autoloader generation returned empty, parsing component files directly');
+                    Logger::getLogger()?->verbose('PAL autoloader generation returned empty, parsing component files directly');
                     
                     foreach($this->getSourceComponents() as $componentFilePath)
                     {
@@ -616,14 +616,14 @@
                         }
                     }
                     
-                    Logger::getLogger()->verbose(sprintf('Generated %d source class mappings via fallback parser', count($mapping)));
+                    Logger::getLogger()?->verbose(sprintf('Generated %d source class mappings via fallback parser', count($mapping)));
                 }
             }
             
             // If statically linking, add mappings for embedded dependencies
             if($this->isStaticallyLinked() && $dependencyReaders !== null && count($dependencyReaders) > 0)
             {
-                Logger::getLogger()->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
+                Logger::getLogger()?->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
                 
                 /** @var ResolvedDependency $resolvedDependency */
                 foreach($dependencyReaders as $resolvedDependency)
@@ -637,16 +637,16 @@
                     $depAssemblyName = $packageReader->getAssembly()->getName();
                     $depBaseDirectory = 'phar://' . $pharAlias . '/' . $depAssemblyName . '/';
                     
-                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s', $depAssemblyName));
+                    Logger::getLogger()?->debug(sprintf('Parsing components from dependency: %s', $depAssemblyName));
                     
                     $depMapping = $this->parsePackageComponents($packageReader, $depBaseDirectory);
                     $mapping = array_merge($mapping, $depMapping);
                     
-                    Logger::getLogger()->verbose(sprintf('Added %d class mappings from %s', count($depMapping), $depAssemblyName));
+                    Logger::getLogger()?->verbose(sprintf('Added %d class mappings from %s', count($depMapping), $depAssemblyName));
                 }
             }
             
-            Logger::getLogger()->verbose(sprintf('Total autoloader mappings: %d classes', count($mapping)));
+            Logger::getLogger()?->verbose(sprintf('Total autoloader mappings: %d classes', count($mapping)));
             return $mapping;
         }
 
@@ -677,7 +677,7 @@
                 }
                 catch(Exception $e)
                 {
-                    Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
+                    Logger::getLogger()?->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
                 }
             }
             

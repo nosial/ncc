@@ -57,18 +57,18 @@
             // Cleanup temporary files from the system.
             if(count(self::$temporaryFiles) > 0)
             {
-                Logger::getLogger()->verbose(sprintf("Cleaning up %d temporary file(s)", count(self::$temporaryFiles)));
+                Logger::getLogger()?->verbose(sprintf("Cleaning up %d temporary file(s)", count(self::$temporaryFiles)));
                 foreach(self::$temporaryFiles as $temporaryFile)
                 {
                     $temporaryFile = realpath($temporaryFile);
 
                     if(!IO::exists($temporaryFile))
                     {
-                        Logger::getLogger()->debug(sprintf("Temporary file '%s' does not exist, skipping", $temporaryFile));
+                        Logger::getLogger()?->debug(sprintf("Temporary file '%s' does not exist, skipping", $temporaryFile));
                         continue;
                     }
 
-                    Logger::getLogger()->debug(sprintf("Deleting temporary file '%s'", $temporaryFile));
+                    Logger::getLogger()?->debug(sprintf("Deleting temporary file '%s'", $temporaryFile));
 
                     try
                     {
@@ -76,7 +76,7 @@
                     }
                     catch(IOException $e)
                     {
-                        Logger::getLogger()->warning(sprintf("Cannot delete temporary file '%s' due to insufficient permissions", $temporaryFile));
+                        Logger::getLogger()?->warning(sprintf("Cannot delete temporary file '%s' due to insufficient permissions", $temporaryFile));
                     }
                 }
             }

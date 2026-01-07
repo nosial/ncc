@@ -38,7 +38,7 @@
          */
         public static function createSymlink(string $projectName, string $packageName, bool $force = false): ?string
         {
-            Logger::getLogger()->verbose(sprintf('Creating symlink for package %s (project: %s)', $packageName, $projectName));
+            Logger::getLogger()?->verbose(sprintf('Creating symlink for package %s (project: %s)', $packageName, $projectName));
 
             // Convert project name to lowercase for the symlink name
             $symlinkName = strtolower($projectName);
@@ -47,12 +47,12 @@
             $binDir = self::findBinDirectory();
             if ($binDir === null)
             {
-                Logger::getLogger()->warning('No suitable bin directory found in PATH for symlink creation');
+                Logger::getLogger()?->warning('No suitable bin directory found in PATH for symlink creation');
                 return null;
             }
             
             $symlinkPath = $binDir . DIRECTORY_SEPARATOR . $symlinkName;
-            Logger::getLogger()->debug(sprintf('Symlink path: %s', $symlinkPath));
+            Logger::getLogger()?->debug(sprintf('Symlink path: %s', $symlinkPath));
             
             // Check if symlink already exists
             if (file_exists($symlinkPath))
@@ -65,24 +65,24 @@
                     
                     if (!$isNccManaged && !$force)
                     {
-                        Logger::getLogger()->warning(sprintf('Symlink %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $symlinkPath));
+                        Logger::getLogger()?->warning(sprintf('Symlink %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $symlinkPath));
                         return null;
                     }
                     
                     if (!$force)
                     {
-                        Logger::getLogger()->verbose(sprintf('Symlink %s already exists and is managed by ncc', $symlinkPath));
+                        Logger::getLogger()?->verbose(sprintf('Symlink %s already exists and is managed by ncc', $symlinkPath));
                         return $symlinkPath;
                     }
                 }
                 else if (!$force)
                 {
-                    Logger::getLogger()->warning(sprintf('Path %s already exists but is not a regular file. Use --force-symlink to overwrite.', $symlinkPath));
+                    Logger::getLogger()?->warning(sprintf('Path %s already exists but is not a regular file. Use --force-symlink to overwrite.', $symlinkPath));
                     return null;
                 }
                 
                 // Remove existing file/symlink
-                Logger::getLogger()->debug(sprintf('Removing existing symlink: %s', $symlinkPath));
+                Logger::getLogger()?->debug(sprintf('Removing existing symlink: %s', $symlinkPath));
                 if (!@unlink($symlinkPath))
                 {
                     throw new OperationException(sprintf('Failed to remove existing symlink: %s', $symlinkPath));
@@ -104,7 +104,7 @@
                 throw new OperationException(sprintf('Failed to make symlink executable: %s', $symlinkPath));
             }
             
-            Logger::getLogger()->verbose(sprintf('Successfully created symlink: %s', $symlinkPath));
+            Logger::getLogger()?->verbose(sprintf('Successfully created symlink: %s', $symlinkPath));
             return $symlinkPath;
         }
 
@@ -142,7 +142,7 @@
                     $content = file_get_contents($symlinkPath);
                     if (strpos($content, '# NCC_MANAGED_SYMLINK') !== false)
                     {
-                        Logger::getLogger()->verbose(sprintf('Removing ncc-managed symlink: %s', $symlinkPath));
+                        Logger::getLogger()?->verbose(sprintf('Removing ncc-managed symlink: %s', $symlinkPath));
                         if (!@unlink($symlinkPath))
                         {
                             throw new OperationException(sprintf('Failed to remove symlink: %s', $symlinkPath));
@@ -152,7 +152,7 @@
                 }
             }
             
-            Logger::getLogger()->debug(sprintf('No ncc-managed symlink found for project: %s', $projectName));
+            Logger::getLogger()?->debug(sprintf('No ncc-managed symlink found for project: %s', $projectName));
             return false;
         }
 
@@ -187,12 +187,12 @@ BASH;
             {
                 if (is_dir($dir) && is_writable($dir))
                 {
-                    Logger::getLogger()->debug(sprintf('Found writable bin directory: %s', $dir));
+                    Logger::getLogger()?->debug(sprintf('Found writable bin directory: %s', $dir));
                     return $dir;
                 }
             }
             
-            Logger::getLogger()->debug('No writable bin directory found');
+            Logger::getLogger()?->debug('No writable bin directory found');
             return null;
         }
 

@@ -108,7 +108,7 @@
        {
            if (!IO::exists($path))
            {
-               Logger::getLogger()->debug(sprintf('File %s does not exist', $path));
+               Logger::getLogger()?->debug(sprintf('File %s does not exist', $path));
                return null;
            }
 
@@ -116,14 +116,14 @@
            if (IO::isDir($path))
            {
                $ymlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yml';
-               Logger::getLogger()->debug(sprintf('Checking path %s', $ymlPath));
+               Logger::getLogger()?->debug(sprintf('Checking path %s', $ymlPath));
                if (IO::isFile($ymlPath))
                {
                    return realpath($ymlPath);
                }
 
                $yamlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yaml';
-               Logger::getLogger()->debug(sprintf('Checking path %s', $yamlPath));
+               Logger::getLogger()?->debug(sprintf('Checking path %s', $yamlPath));
                if (IO::isFile($yamlPath))
                {
                    return realpath($yamlPath);
@@ -134,7 +134,7 @@
 
            // If $path is a file and is named 'project.yml' or 'project.yaml'
            $filename = basename($path);
-           Logger::getLogger()->debug(sprintf('Checking path %s', $filename));
+           Logger::getLogger()?->debug(sprintf('Checking path %s', $filename));
            if (IO::isFile($path) && ($filename === 'project.yml' || $filename === 'project.yaml'))
            {
                return realpath($path);

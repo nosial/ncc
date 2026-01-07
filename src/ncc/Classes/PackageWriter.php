@@ -55,7 +55,7 @@
          */
         public function __construct(string $filePath, bool $overwrite=true)
         {
-            Logger::getLogger()->debug(sprintf('Initializing PackageWriter for: %s', $filePath));
+            Logger::getLogger()?->debug(sprintf('Initializing PackageWriter for: %s', $filePath));
             
             // Delete the file if it already exists, prevent overwriting if not allowed
             if(IO::exists($filePath))
@@ -64,12 +64,12 @@
                 {
                     throw new OperationException("File already exists: " . $filePath);
                 }
-                Logger::getLogger()->verbose('Overwriting existing file');
+                Logger::getLogger()?->verbose('Overwriting existing file');
                 IO::rm($filePath, false);
             }
 
             // Create the file
-            Logger::getLogger()->verbose('Creating package file');
+            Logger::getLogger()?->verbose('Creating package file');
             IO::mkdir(dirname($filePath));
             IO::touch($filePath);
             $this->fileHandler = fopen($filePath, 'a+b');

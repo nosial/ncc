@@ -93,51 +93,51 @@
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
-            Logger::getLogger()->debug(sprintf('Initializing compiler with project file: %s, build configuration: %s', $projectFilePath, $buildConfiguration));
+            Logger::getLogger()?->debug(sprintf('Initializing compiler with project file: %s, build configuration: %s', $projectFilePath, $buildConfiguration));
             
             $projectFilePath = Helper::resolveProjectConfigurationPath($projectFilePath);
             if($projectFilePath === null)
             {
-                Logger::getLogger()->error('No project configuration file found');
+                Logger::getLogger()?->error('No project configuration file found');
                 throw new OperationException("No project configuration file found");
             }
 
             $this->projectPath = dirname($projectFilePath);
-            Logger::getLogger()->verbose(sprintf('Project path resolved to: %s', $this->projectPath));
+            Logger::getLogger()?->verbose(sprintf('Project path resolved to: %s', $this->projectPath));
             
             $this->projectConfiguration = Project::fromFile($projectFilePath, true);
-            Logger::getLogger()->verbose(sprintf('Loaded project configuration from: %s', $projectFilePath));
+            Logger::getLogger()?->verbose(sprintf('Loaded project configuration from: %s', $projectFilePath));
 
             try
             {
                 $this->projectConfiguration->validate();
-                Logger::getLogger()->debug('Project configuration validated successfully');
+                Logger::getLogger()?->debug('Project configuration validated successfully');
             }
             catch(InvalidPropertyException $e)
             {
-                Logger::getLogger()->error(sprintf('Project configuration validation failed: %s', $e->getMessage()));
+                Logger::getLogger()?->error(sprintf('Project configuration validation failed: %s', $e->getMessage()));
                 throw new OperationException("Project configuration is invalid: " . $e->getMessage(), $e->getCode(), $e);
             }
 
             if(!$this->projectConfiguration->buildConfigurationExists($buildConfiguration))
             {
-                Logger::getLogger()->error(sprintf('Build configuration "%s" not found in project', $buildConfiguration));
+                Logger::getLogger()?->error(sprintf('Build configuration "%s" not found in project', $buildConfiguration));
                 throw new OperationException("Build configuration '$buildConfiguration' does not exist in project configuration");
             }
 
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
-            Logger::getLogger()->verbose(sprintf('Using build configuration: %s', $buildConfiguration));
+            Logger::getLogger()?->verbose(sprintf('Using build configuration: %s', $buildConfiguration));
             $this->sourcePath = $this->projectPath . DIRECTORY_SEPARATOR . $this->projectConfiguration->getSourcePath();
             $this->outputPath = $this->projectPath . DIRECTORY_SEPARATOR . $this->buildConfiguration->getOutput();
-            Logger::getLogger()->verbose(sprintf('Source path: %s', $this->sourcePath));
-            Logger::getLogger()->verbose(sprintf('Output path: %s', $this->outputPath));
+            Logger::getLogger()?->verbose(sprintf('Source path: %s', $this->sourcePath));
+            Logger::getLogger()?->verbose(sprintf('Output path: %s', $this->outputPath));
             
             $this->includeComponents = array_merge(['*.php'], $this->buildConfiguration->getIncludedComponents());
             $this->excludeComponents = $this->buildConfiguration->getExcludedComponents();
             $this->includeResources = $this->buildConfiguration->getIncludedResources();
             $this->excludeResources = array_merge(['*.php'], $this->buildConfiguration->getExcludedResources());
-            Logger::getLogger()->debug(sprintf('Component patterns - Include: %d, Exclude: %d', count($this->includeComponents), count($this->excludeComponents)));
-            Logger::getLogger()->debug(sprintf('Resource patterns - Include: %d, Exclude: %d', count($this->includeResources), count($this->excludeResources)));
+            Logger::getLogger()?->debug(sprintf('Component patterns - Include: %d, Exclude: %d', count($this->includeComponents), count($this->excludeComponents)));
+            Logger::getLogger()?->debug(sprintf('Resource patterns - Include: %d, Exclude: %d', count($this->includeResources), count($this->excludeResources)));
             $this->requiredExecutionUnits = [];
             $this->sourceComponents = [];
             $this->sourceResources = [];
@@ -146,46 +146,46 @@
             if($this->projectConfiguration->getEntryPoint() !== null)
             {
                 $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getEntryPoint();
-                Logger::getLogger()->verbose(sprintf('Entry point unit: %s', $this->getProjectConfiguration()->getEntryPoint()));
+                Logger::getLogger()?->verbose(sprintf('Entry point unit: %s', $this->getProjectConfiguration()->getEntryPoint()));
             }
 
             if($this->projectConfiguration->getPreInstall() !== null)
             {
                 $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getPreInstall();
-                Logger::getLogger()->verbose(sprintf('Pre-install unit: %s', $this->getProjectConfiguration()->getPreInstall()));
+                Logger::getLogger()?->verbose(sprintf('Pre-install unit: %s', $this->getProjectConfiguration()->getPreInstall()));
             }
 
             if($this->projectConfiguration->getPostInstall() !== null)
             {
                 $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getPostInstall();
-                Logger::getLogger()->verbose(sprintf('Post-install unit: %s', $this->getProjectConfiguration()->getPostInstall()));
+                Logger::getLogger()?->verbose(sprintf('Post-install unit: %s', $this->getProjectConfiguration()->getPostInstall()));
             }
 
             if($this->projectConfiguration->getPreCompile() !== null)
             {
                 $this->temporaryExecutionUnits[] = $this->getProjectConfiguration()->getPreCompile();
-                Logger::getLogger()->verbose(sprintf('Pre-compile unit: %s', $this->getProjectConfiguration()->getPreCompile()));
+                Logger::getLogger()?->verbose(sprintf('Pre-compile unit: %s', $this->getProjectConfiguration()->getPreCompile()));
             }
 
             if($this->projectConfiguration->getPostCompile() !== null)
             {
                 $this->temporaryExecutionUnits[] = $this->getProjectConfiguration()->getPostCompile();
-                Logger::getLogger()->verbose(sprintf('Post-compile unit: %s', $this->getProjectConfiguration()->getPostCompile()));
+                Logger::getLogger()?->verbose(sprintf('Post-compile unit: %s', $this->getProjectConfiguration()->getPostCompile()));
             }
 
             if(isset($this->buildConfiguration->getOptions()['static']))
             {
                 $this->staticallyLinked = (bool) $this->buildConfiguration->getOptions()['static'];
-                Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->staticallyLinked ? 'enabled' : 'disabled'));
+                Logger::getLogger()?->verbose(sprintf('Static linking: %s', $this->staticallyLinked ? 'enabled' : 'disabled'));
             }
             else
             {
                 $this->staticallyLinked = false;
-                Logger::getLogger()->verbose('Static linking: disabled (default)');
+                Logger::getLogger()?->verbose('Static linking: disabled (default)');
             }
 
             $this->packageDependencies = array_merge($this->packageDependencies, $this->buildConfiguration->getDependencies() ?? [], $this->projectConfiguration->getDependencies() ?? []);
-            Logger::getLogger()->verbose(sprintf('Total package dependencies: %d', count($this->packageDependencies)));
+            Logger::getLogger()?->verbose(sprintf('Total package dependencies: %d', count($this->packageDependencies)));
             
             $this->refreshFiles();
         }
@@ -423,29 +423,29 @@
          */
         protected function refreshFiles(): void
         {
-            Logger::getLogger()->debug('Refreshing source files collection');
+            Logger::getLogger()?->debug('Refreshing source files collection');
             
             // Find all the required components/resources in the source path based on the include/exclude patterns.
             $this->sourceComponents = FileCollector::collectFiles($this->sourcePath, $this->includeComponents, $this->excludeComponents);
-            Logger::getLogger()->verbose(sprintf('Collected %d source components', count($this->sourceComponents)));
+            Logger::getLogger()?->verbose(sprintf('Collected %d source components', count($this->sourceComponents)));
             
             $this->sourceResources = FileCollector::collectFiles($this->sourcePath, $this->includeResources, $this->excludeResources);
-            Logger::getLogger()->verbose(sprintf('Collected %d source resources', count($this->sourceResources)));
+            Logger::getLogger()?->verbose(sprintf('Collected %d source resources', count($this->sourceResources)));
 
             // Verify if all the execution units are correctly configured and that all the required files
             // are available to compile with, temporary units are not included since they are only used during compilation.
-            Logger::getLogger()->debug(sprintf('Verifying %d required execution units', count($this->requiredExecutionUnits)));
+            Logger::getLogger()?->debug(sprintf('Verifying %d required execution units', count($this->requiredExecutionUnits)));
             
             foreach($this->requiredExecutionUnits as $executionUnitName)
             {
                 $executionUnit = $this->projectConfiguration->getExecutionUnit($executionUnitName);
                 if($executionUnit === null)
                 {
-                    Logger::getLogger()->error(sprintf('Required execution unit not found: %s', $executionUnitName));
+                    Logger::getLogger()?->error(sprintf('Required execution unit not found: %s', $executionUnitName));
                     throw new OperationException(sprintf('The required execution unit %s was not found in the project configuration', $executionUnitName));
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Verifying execution unit: %s (type: %s)', $executionUnitName, $executionUnit->getType()->value));
+                Logger::getLogger()?->verbose(sprintf('Verifying execution unit: %s (type: %s)', $executionUnitName, $executionUnit->getType()->value));
 
                 // Only handle PHP execution units for entry points, since system commands are not part of the project files.
                 if($executionUnit->getType() === ExecutionUnitType::PHP || $executionUnit->getType() === ExecutionUnitType::WEB)
@@ -461,26 +461,26 @@
                         
                         if(!IO::exists($entryPointPath))
                         {
-                            Logger::getLogger()->error(sprintf('Entry point not found: %s (tried project path and source path) for unit %s', $executionUnit->getEntryPoint(), $executionUnitName));
+                            Logger::getLogger()?->error(sprintf('Entry point not found: %s (tried project path and source path) for unit %s', $executionUnit->getEntryPoint(), $executionUnitName));
                             throw new OperationException(sprintf('The entrypoint %s was not found in the project path %s for the execution unit %s', $executionUnit->getEntryPoint(), $this->projectPath, $executionUnitName));
                         }
                     }
 
                     $this->sourceResources[] = realpath($entryPointPath);
-                    Logger::getLogger()->debug(sprintf('Added entry point to resources: %s', $executionUnit->getEntryPoint()));
+                    Logger::getLogger()?->debug(sprintf('Added entry point to resources: %s', $executionUnit->getEntryPoint()));
                 }
 
                 // Include all required files for the execution unit.
                 if($executionUnit->getRequiredFiles() !== null)
                 {
-                    Logger::getLogger()->debug(sprintf('Processing %d required files for unit: %s', count($executionUnit->getRequiredFiles()), $executionUnitName));
+                    Logger::getLogger()?->debug(sprintf('Processing %d required files for unit: %s', count($executionUnit->getRequiredFiles()), $executionUnitName));
                     
                     foreach($executionUnit->getRequiredFiles() as $requiredFile)
                     {
                         $requiredFilePath = $this->projectPath . DIRECTORY_SEPARATOR . $requiredFile;
                         if(!IO::exists($requiredFilePath))
                         {
-                            Logger::getLogger()->error(sprintf('Required file not found: %s for unit %s', $requiredFilePath, $executionUnitName));
+                            Logger::getLogger()?->error(sprintf('Required file not found: %s for unit %s', $requiredFilePath, $executionUnitName));
                             throw new OperationException(sprintf('The required file %s was not found in the project path %s for the execution unit %s', $requiredFile, $this->projectPath, $executionUnitName));
                         }
 
@@ -491,7 +491,7 @@
 
             // Finally, we calculate the build number based on the collected files.
             $this->buildNumber = $this->calculateBuildNumber();
-            Logger::getLogger()->verbose(sprintf('Build number calculated: %s', $this->buildNumber));
+            Logger::getLogger()?->verbose(sprintf('Build number calculated: %s', $this->buildNumber));
         }
 
         /**
@@ -502,7 +502,7 @@
          */
         protected function getDependencyReaders(): array
         {
-            Logger::getLogger()->debug(sprintf('Resolving dependency readers for %d packages', count($this->packageDependencies)));
+            Logger::getLogger()?->debug(sprintf('Resolving dependency readers for %d packages', count($this->packageDependencies)));
             
             $results = [];
             $visited = [];
@@ -512,7 +512,7 @@
                 $results = array_merge($results, $this->resolveDependencyReaders($packageName, $packageSource, $visited));
             }
 
-            Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers total', count($results)));
+            Logger::getLogger()?->verbose(sprintf('Resolved %d dependency readers total', count($results)));
             return $results;
         }
 
@@ -530,11 +530,11 @@
             // Check if this package has already been visited to prevent circular dependencies
             if(isset($visited[$package]))
             {
-                Logger::getLogger()->debug(sprintf('Skipping already visited package: %s (circular dependency detected)', $package));
+                Logger::getLogger()?->debug(sprintf('Skipping already visited package: %s (circular dependency detected)', $package));
                 return [];
             }
             
-            Logger::getLogger()->verbose(sprintf('Resolving dependency: %s', $package));
+            Logger::getLogger()?->verbose(sprintf('Resolving dependency: %s', $package));
             
             // Mark this package as visited
             $visited[$package] = true;
@@ -542,7 +542,7 @@
             $resolvedDependency = new ResolvedDependency($package, $source);
             if($resolvedDependency->getPackageReader() === null)
             {
-                Logger::getLogger()->error(sprintf('Package not installed: %s', $package));
+                Logger::getLogger()?->error(sprintf('Package not installed: %s', $package));
                 throw new OperationException(sprintf('Cannot resolve %s because the package is not installed', $package));
             }
 
@@ -551,7 +551,7 @@
             
             if($transitiveDeps > 0)
             {
-                Logger::getLogger()->debug(sprintf('Package %s has %d transitive dependencies', $package, $transitiveDeps));
+                Logger::getLogger()?->debug(sprintf('Package %s has %d transitive dependencies', $package, $transitiveDeps));
                 
                 foreach($resolvedDependency->getPackageReader()->getHeader()->getDependencyReferences() as $dependencyReference)
                 {
@@ -592,7 +592,7 @@
         private function calculateBuildNumber(): string
         {
             $totalFiles = count(array_merge($this->sourceComponents, $this->sourceResources));
-            Logger::getLogger()->debug(sprintf('Calculating build number from %d files', $totalFiles));
+            Logger::getLogger()?->debug(sprintf('Calculating build number from %d files', $totalFiles));
             
             $hashes = [];
             foreach(array_merge($this->sourceComponents, $this->sourceResources) as $filePath)
@@ -613,19 +613,19 @@
         {
             if($this->getProjectConfiguration()->getPreCompile() === null)
             {
-                Logger::getLogger()->debug('No pre-compile execution units defined');
+                Logger::getLogger()?->debug('No pre-compile execution units defined');
                 return;
             }
 
-            Logger::getLogger()->verbose(sprintf('Running %d pre-compile execution units', count($this->getProjectConfiguration()->getPreCompile())));
+            Logger::getLogger()?->verbose(sprintf('Running %d pre-compile execution units', count($this->getProjectConfiguration()->getPreCompile())));
             
             foreach($this->getProjectConfiguration()->getPreCompile() as $unitName)
             {
-                Logger::getLogger()->verbose(sprintf('Executing pre-compile unit: %s', $unitName));
+                Logger::getLogger()?->verbose(sprintf('Executing pre-compile unit: %s', $unitName));
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
             }
             
-            Logger::getLogger()->verbose('Pre-compile execution units completed');
+            Logger::getLogger()?->verbose('Pre-compile execution units completed');
         }
 
         /**
@@ -635,19 +635,19 @@
         {
             if($this->getProjectConfiguration()->getPostInstall() === null)
             {
-                Logger::getLogger()->debug('No post-compile execution units defined');
+                Logger::getLogger()?->debug('No post-compile execution units defined');
                 return;
             }
 
-            Logger::getLogger()->verbose(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostInstall())));
+            Logger::getLogger()?->verbose(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostInstall())));
             
             foreach($this->getProjectConfiguration()->getPostInstall() as $unitName)
             {
-                Logger::getLogger()->verbose(sprintf('Executing post-compile unit: %s', $unitName));
+                Logger::getLogger()?->verbose(sprintf('Executing post-compile unit: %s', $unitName));
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
             }
             
-            Logger::getLogger()->verbose('Post-compile execution units completed');
+            Logger::getLogger()?->verbose('Post-compile execution units completed');
         }
 
         /**
@@ -679,16 +679,16 @@
          */
         public function build(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            Logger::getLogger()->verbose('Starting build process');
-            Logger::getLogger()->verbose(sprintf('Build options - Overwrite: %s', $overwrite ? 'true' : 'false'));
+            Logger::getLogger()?->verbose('Starting build process');
+            Logger::getLogger()?->verbose(sprintf('Build options - Overwrite: %s', $overwrite ? 'true' : 'false'));
             $this->preCompile();
             
-            Logger::getLogger()->verbose('Starting compilation phase');
+            Logger::getLogger()?->verbose('Starting compilation phase');
             $buildPath = $this->compile(null, $overwrite);
-            Logger::getLogger()->verbose(sprintf('Compilation completed: %s', $buildPath));
+            Logger::getLogger()?->verbose(sprintf('Compilation completed: %s', $buildPath));
             $this->postCompile();
             
-            Logger::getLogger()->verbose(sprintf('Build process completed successfully: %s', $buildPath));
+            Logger::getLogger()?->verbose(sprintf('Build process completed successfully: %s', $buildPath));
             return $buildPath;
         }
     }

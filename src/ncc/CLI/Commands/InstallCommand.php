@@ -443,14 +443,14 @@
                 $resolvedVersion = $selectedPackage->getVersion();
                 if($resolvedVersion !== null)
                 {
-                    Logger::getLogger()->debug(sprintf('Using version from repository: " %s. The downloaded source may not contain a recognized project configuration file (composer.json, package.json, etc.)', $source));
+                    Logger::getLogger()?->debug(sprintf('Using version from repository: " %s. The downloaded source may not contain a recognized project configuration file (composer.json, package.json, etc.)', $source));
                 }
 
                 $projectPath = ProjectType::detectProjectPath($downloadedPackage);
                 if($projectPath === null)
                 {
                     Console::clearInlineProgress();
-                    Logger::getLogger()->error(sprintf('Unable to detect project path for %s', $source));
+                    Logger::getLogger()?->error(sprintf('Unable to detect project path for %s', $source));
                     throw new OperationException(sprintf('Unable to detect project configuration file path for %s', $source));
                 }
 
@@ -460,17 +460,17 @@
                 if($projectType === null)
                 {
                     Console::clearInlineProgress();
-                    Logger::getLogger()->error(sprintf('Unable to detect project type for %s', $source));
+                    Logger::getLogger()?->error(sprintf('Unable to detect project type for %s', $source));
                     throw new OperationException(sprintf('Unable to detect project type for %s', $source));
                 }
 
-                Logger::getLogger()->debug(sprintf('Detected project type: %s at path: %s', $projectType->value, $projectPath));
+                Logger::getLogger()?->debug(sprintf('Detected project type: %s at path: %s', $projectType->value, $projectPath));
 
                 // Check if this is already an NCC project (project.yml)
                 if($projectType === ProjectType::NCC)
                 {
                     // No conversion needed, project is already in NCC format
-                    Logger::getLogger()->debug(sprintf('Project is already in NCC format, skipping conversion'));
+                    Logger::getLogger()?->debug(sprintf('Project is already in NCC format, skipping conversion'));
                     Console::inlineProgress($calculateProgress('generate_config', 0.7), 100, sprintf("Loading compiler for %s", $source));
                     $compiler = Project::compilerFromFile($projectPath);
                 }
@@ -484,7 +484,7 @@
                     if($converter === null)
                     {
                         Console::clearInlineProgress();
-                        Logger::getLogger()->error(sprintf('No converter available for project type %s', $projectType->value));
+                        Logger::getLogger()?->error(sprintf('No converter available for project type %s', $projectType->value));
                         throw new OperationException(sprintf('Cannot convert project type %s to ncc format. No converter is available for this project type.', $projectType->value));
                     }
 

@@ -296,7 +296,7 @@
             catch(IOException $e)
             {
                 // Failed to write file, skip silently
-                Logger::getLogger()->warning('Failed to write vault file: ' . $e->getMessage(), $e);
+                Logger::getLogger()?->warning('Failed to write vault file: ' . $e->getMessage(), $e);
                 return;
             }
             catch(EnvironmentIsBrokenException $e)
@@ -318,7 +318,7 @@
                 }
                 catch (OperationException $e)
                 {
-                    Logger::getLogger()->error('Failed to save vault on destruction: ' . $e->getMessage(), $e);
+                    Logger::getLogger()?->error('Failed to save vault on destruction: ' . $e->getMessage(), $e);
                 }
             }
         }

@@ -48,7 +48,7 @@
          */
         public function __construct(string $projectFilePath, string $buildConfiguration)
         {
-            Logger::getLogger()->debug('Initializing PackageCompiler');
+            Logger::getLogger()?->debug('Initializing PackageCompiler');
             parent::__construct($projectFilePath, $buildConfiguration);
 
             // Package-specific compression attributes
@@ -56,13 +56,13 @@
             {
                 // Enable/Disable compression
                 $this->compressionEnabled = (bool)$this->getBuildConfiguration()->getOptions()['compression'];
-                Logger::getLogger()->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'));
+                Logger::getLogger()?->verbose(sprintf('Compression: %s', $this->compressionEnabled ? 'enabled' : 'disabled'));
             }
             else
             {
                 // By default, compression is always enabled.
                 $this->compressionEnabled = true;
-                Logger::getLogger()->verbose('Compression: enabled (default)');
+                Logger::getLogger()?->verbose('Compression: enabled (default)');
             }
 
             // Package-specific compression level attributes
@@ -72,23 +72,23 @@
                 if($this->compressionLevel > 9)
                 {
                     // Fallback to 9 if the value is greater than 9
-                    Logger::getLogger()->warning(sprintf('Compression level %d exceeds maximum, using 9', $this->compressionLevel));
+                    Logger::getLogger()?->warning(sprintf('Compression level %d exceeds maximum, using 9', $this->compressionLevel));
                     $this->compressionLevel = 9;
                 }
                 elseif($this->compressionLevel < 1)
                 {
                     // Fallback to 1 if the value is less than 1
-                    Logger::getLogger()->warning(sprintf('Compression level %d below minimum, using 1', $this->compressionLevel));
+                    Logger::getLogger()?->warning(sprintf('Compression level %d below minimum, using 1', $this->compressionLevel));
                     $this->compressionLevel = 1;
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Compression level: %d', $this->compressionLevel));
+                Logger::getLogger()?->verbose(sprintf('Compression level: %d', $this->compressionLevel));
             }
             else
             {
                 // All other cases; default value is 9.
                 $this->compressionLevel = 9;
-                Logger::getLogger()->verbose('Compression level: 9 (default)');
+                Logger::getLogger()?->verbose('Compression level: 9 (default)');
             }
         }
 
@@ -97,8 +97,8 @@
          */
         public function compile(?callable $progressCallback=null, bool $overwrite=true): string
         {
-            Logger::getLogger()->verbose(sprintf('Starting package compilation to: %s', $this->getOutputPath()));
-            Logger::getLogger()->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'));
+            Logger::getLogger()?->verbose(sprintf('Starting package compilation to: %s', $this->getOutputPath()));
+            Logger::getLogger()?->verbose(sprintf('Static linking: %s', $this->isStaticallyLinked() ? 'enabled' : 'disabled'));
             
             // Initialize package writer
             $packageWriter = new PackageWriter($this->getOutputPath(), $overwrite);
@@ -106,15 +106,15 @@
 
             if($this->isStaticallyLinked())
             {
-                Logger::getLogger()->verbose('Resolving dependency readers for static linking');
+                Logger::getLogger()?->verbose('Resolving dependency readers for static linking');
                 $dependencyReaders = $this->getDependencyReaders();
-                Logger::getLogger()->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
+                Logger::getLogger()?->verbose(sprintf('Resolved %d dependency readers', count($dependencyReaders)));
             }
 
             // Generate autoloader mapping before writing package
-            Logger::getLogger()->verbose('Generating autoloader mapping');
+            Logger::getLogger()?->verbose('Generating autoloader mapping');
             $autoloaderMapping = $this->generateAutoloaderMapping($dependencyReaders);
-            Logger::getLogger()->verbose(sprintf('Generated autoloader with %d class mappings', count($autoloaderMapping)));
+            Logger::getLogger()?->verbose(sprintf('Generated autoloader with %d class mappings', count($autoloaderMapping)));
 
             // Calculate total stages dynamically based on content
             $componentCount = count($this->getSourceComponents());
@@ -135,16 +135,16 @@
                         {
                             $progressCallback($currentStage, $totalStages, 'Writing package header');
                         }
-                        Logger::getLogger()->verbose('Writing package header');
+                        Logger::getLogger()?->verbose('Writing package header');
                         
                         // Create header and set autoloader
                         $header = $this->createPackageHeader($dependencyReaders);
                         $header->setAutoloader($autoloaderMapping);
-                        Logger::getLogger()->debug(sprintf('Set autoloader with %d mappings in header', count($autoloaderMapping)));
+                        Logger::getLogger()?->debug(sprintf('Set autoloader with %d mappings in header', count($autoloaderMapping)));
                         
                         // Write the header as a data entry only, section gets closed automatically
                         $packageWriter->writeData(msgpack_pack($header->toArray()));
-                        Logger::getLogger()->debug('Package header written successfully');
+                        Logger::getLogger()?->debug('Package header written successfully');
                         break;
 
                     case WritingMode::ASSEMBLY:
@@ -153,10 +153,10 @@
                         {
                             $progressCallback($currentStage, $totalStages, 'Writing assembly information');
                         }
-                        Logger::getLogger()->verbose('Writing package assembly');
+                        Logger::getLogger()?->verbose('Writing package assembly');
                         // Write the assembly as a data entry only, section gets closed automatically
                         $packageWriter->writeData(msgpack_pack($this->getProjectConfiguration()->getAssembly()->toArray()));
-                        Logger::getLogger()->debug('Package assembly written successfully');
+                        Logger::getLogger()?->debug('Package assembly written successfully');
                         break;
 
                     case WritingMode::EXECUTION_UNITS:
@@ -165,7 +165,7 @@
                         {
                             $progressCallback($currentStage, $totalStages, sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
                         }
-                        Logger::getLogger()->verbose(sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
+                        Logger::getLogger()?->verbose(sprintf('Writing %d execution units', count($this->getRequiredExecutionUnits())));
                         
                         // Get the main package assembly name to match resource namespacing
                         $mainPackageName = $this->getProjectConfiguration()->getAssembly()->getName();
@@ -196,29 +196,29 @@
                                         // File is inside source path - use relative path with assembly prefix
                                         $resolvedEntryPoint = $mainPackageName . '/' . substr($realPath, strlen($this->getSourcePath()) + 1);
                                         $executionUnitData['entry'] = $resolvedEntryPoint;
-                                        Logger::getLogger()->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
+                                        Logger::getLogger()?->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
                                     }
                                     else
                                     {
                                         // File is outside source path - use basename with assembly prefix
                                         $resolvedEntryPoint = $mainPackageName . '/' . basename($realPath);
                                         $executionUnitData['entry'] = $resolvedEntryPoint;
-                                        Logger::getLogger()->debug(sprintf('Resolved entry point for %s (outside source): %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
+                                        Logger::getLogger()?->debug(sprintf('Resolved entry point for %s (outside source): %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
                                     }
                                 }
                                 else
                                 {
-                                    Logger::getLogger()->debug(sprintf('Entry point for %s kept as-is (not in resources or not found): %s', $executionUnitName, $executionUnit->getEntryPoint()));
+                                    Logger::getLogger()?->debug(sprintf('Entry point for %s kept as-is (not in resources or not found): %s', $executionUnitName, $executionUnit->getEntryPoint()));
                                 }
                             }
                             
                             $packageWriter->writeData(msgpack_pack($executionUnitData), $executionUnit->getName());
-                            Logger::getLogger()->debug(sprintf('Written execution unit: %s', $executionUnitName));
+                            Logger::getLogger()?->debug(sprintf('Written execution unit: %s', $executionUnitName));
                         }
 
                         // Close the section
                         $packageWriter->endSection();
-                        Logger::getLogger()->debug('Execution units section closed');
+                        Logger::getLogger()?->debug('Execution units section closed');
                         break;
 
                     case WritingMode::COMPONENTS:
@@ -227,7 +227,7 @@
                         {
                             $progressCallback($currentStage, $totalStages, sprintf('Writing %d package components', $componentCount));
                         }
-                        Logger::getLogger()->verbose(sprintf('Writing %d source components', $componentCount));
+                        Logger::getLogger()?->verbose(sprintf('Writing %d source components', $componentCount));
                         
                         // Get the main package assembly name to namespace its components
                         $mainPackageName = $this->getProjectConfiguration()->getAssembly()->getName();
@@ -251,7 +251,7 @@
 
                             if(empty($componentName) || $componentName === false)
                             {
-                                Logger::getLogger()->error(sprintf('Invalid component path: %s', $componentFilePath));
+                                Logger::getLogger()?->error(sprintf('Invalid component path: %s', $componentFilePath));
                                 throw new OperationException(sprintf('Invalid component path: %s (source path: %s)', $componentFilePath, $this->getSourcePath()));
                             }
 
@@ -267,7 +267,7 @@
                             {
                                 $componentData = gzdeflate($componentData, $this->compressionLevel);
                                 $compressedSize = strlen($componentData);
-                                Logger::getLogger()->debug(sprintf('Compressed component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
+                                Logger::getLogger()?->debug(sprintf('Compressed component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
                             }
 
                             // Namespace the component under the main package's assembly name
@@ -278,7 +278,7 @@
                         // If dependency linking is statically linked, we embed the package contents into our compiled package
                         if($this->isStaticallyLinked())
                         {
-                            Logger::getLogger()->verbose(sprintf('Embedding %d dependency components for static linking', count($dependencyReaders)));
+                            Logger::getLogger()?->verbose(sprintf('Embedding %d dependency components for static linking', count($dependencyReaders)));
                             
                             // For each dependency, if we cannot resolve one of these dependencies the build fails
                             foreach($dependencyReaders as $resolvedDependency)
@@ -311,24 +311,24 @@
                                     {
                                         $componentData = gzdeflate($componentData, $this->compressionLevel);
                                         $compressedSize = strlen($componentData);
-                                        Logger::getLogger()->debug(sprintf('Compressed embedded component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
+                                        Logger::getLogger()?->debug(sprintf('Compressed embedded component %s: %d -> %d bytes (%.1f%%)', $componentName, $originalSize, $compressedSize, ($compressedSize / $originalSize) * 100));
                                     }
                                     
                                     // Component name already includes assembly prefix from original package, use as-is
                                     $packageWriter->writeData($componentData, $componentName);
-                                    Logger::getLogger()->debug(sprintf('Embedded dependency component: %s', $componentName));
+                                    Logger::getLogger()?->debug(sprintf('Embedded dependency component: %s', $componentName));
                                 }
                             }
                         }
 
                         // Close the section
                         $packageWriter->endSection();
-                        Logger::getLogger()->verbose(sprintf('Components section completed (%d components)', $componentCount));
+                        Logger::getLogger()?->verbose(sprintf('Components section completed (%d components)', $componentCount));
                         break;
 
                     case WritingMode::RESOURCES:
                         $resourceCount = count($this->getSourceResources());
-                        Logger::getLogger()->verbose(sprintf('Writing %d source resources', $resourceCount));
+                        Logger::getLogger()?->verbose(sprintf('Writing %d source resources', $resourceCount));
                         
                         // Get the main package assembly name to namespace its resources
                         $mainPackageName = $this->getProjectConfiguration()->getAssembly()->getName();
@@ -350,7 +350,7 @@
 
                             if(empty($resourceName) || $resourceName === false)
                             {
-                                Logger::getLogger()->error(sprintf('Invalid resource path: %s', $resourceFilePath));
+                                Logger::getLogger()?->error(sprintf('Invalid resource path: %s', $resourceFilePath));
                                 throw new OperationException(sprintf('Invalid resource path: %s (source path: %s)', $resourceFilePath, $this->getSourcePath()));
                             }
 
@@ -362,7 +362,7 @@
                                 $resourceData = gzdeflate($resourceData, $this->compressionLevel);
                                 $compressedSize = strlen($resourceData);
                                 $compressionRatio = $originalSize > 0 ? ($compressedSize / $originalSize) * 100 : 0;
-                                Logger::getLogger()->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
+                                Logger::getLogger()?->debug(sprintf('Compressed resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
                             }
 
                             // Namespace the resource under the main package's assembly name
@@ -372,7 +372,7 @@
 
                         if($this->isStaticallyLinked())
                         {
-                            Logger::getLogger()->verbose(sprintf('Embedding %d dependency resources for static linking', count($dependencyReaders)));
+                            Logger::getLogger()?->verbose(sprintf('Embedding %d dependency resources for static linking', count($dependencyReaders)));
                             
                             foreach($dependencyReaders as $resolvedDependency)
                             {
@@ -398,23 +398,23 @@
                                         $resourceData = gzdeflate($resourceData, $this->compressionLevel);
                                         $compressedSize = strlen($resourceData);
                                         $compressionRatio = $originalSize > 0 ? ($compressedSize / $originalSize) * 100 : 0;
-                                        Logger::getLogger()->debug(sprintf('Compressed embedded resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
+                                        Logger::getLogger()?->debug(sprintf('Compressed embedded resource %s: %d -> %d bytes (%.1f%%)', $resourceName, $originalSize, $compressedSize, $compressionRatio));
                                     }
                                     
                                     // Resource name already includes assembly prefix from original package, use as-is
                                     $packageWriter->writeData($resourceData, $resourceName);
-                                    Logger::getLogger()->debug(sprintf('Embedded dependency resource: %s', $resourceName));
+                                    Logger::getLogger()?->debug(sprintf('Embedded dependency resource: %s', $resourceName));
                                 }
                             }
                         }
 
                         $packageWriter->endSection();
-                        Logger::getLogger()->verbose(sprintf('Resources section completed (%d resources)', $resourceCount));
+                        Logger::getLogger()?->verbose(sprintf('Resources section completed (%d resources)', $resourceCount));
                         break;
                 }
             }
 
-            Logger::getLogger()->verbose(sprintf('Package compilation completed: %s', $this->getOutputPath()));
+            Logger::getLogger()?->verbose(sprintf('Package compilation completed: %s', $this->getOutputPath()));
             return $this->getOutputPath();
         }
 
@@ -425,7 +425,7 @@
          */
         private function createPackageHeader(?array $dependencyReaders=null): Header
         {
-            Logger::getLogger()->debug('Creating package header');
+            Logger::getLogger()?->debug('Creating package header');
             
             $header = new Header();
 
@@ -440,19 +440,19 @@
             $header->setUpdateSource($this->getProjectConfiguration()->getUpdateSource());
             $header->setRepositories($this->getProjectConfiguration()->getRepositories());
             
-            Logger::getLogger()->verbose(sprintf('Header: build=%s, compressed=%s, static=%s', $this->getBuildNumber(), $this->compressionEnabled ? 'yes' : 'no', $header->isStaticallyLinked() ? 'yes' : 'no'));
+            Logger::getLogger()?->verbose(sprintf('Header: build=%s, compressed=%s, static=%s', $this->getBuildNumber(), $this->compressionEnabled ? 'yes' : 'no', $header->isStaticallyLinked() ? 'yes' : 'no'));
             
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
-                Logger::getLogger()->verbose(sprintf('Added %d defined constants to header', count($this->getBuildConfiguration()->getDefinitions())));
+                Logger::getLogger()?->verbose(sprintf('Added %d defined constants to header', count($this->getBuildConfiguration()->getDefinitions())));
             }
 
             // If dependency readers are provided, we need to match them against the required dependencies because this
             // result contains all resolved dependencies that a package may have (transitive dependencies).
             if($dependencyReaders !== null)
             {
-                Logger::getLogger()->debug(sprintf('Processing %d resolved dependency readers for header', count($dependencyReaders)));
+                Logger::getLogger()?->debug(sprintf('Processing %d resolved dependency readers for header', count($dependencyReaders)));
                 
                 $addedDependencies = [];
                 
@@ -471,26 +471,26 @@
                     // Skip if already added (prevent duplicates)
                     if(isset($addedDependencies[$packageName]))
                     {
-                        Logger::getLogger()->debug(sprintf('Skipping duplicate dependency: %s', $packageName));
+                        Logger::getLogger()?->debug(sprintf('Skipping duplicate dependency: %s', $packageName));
                         continue;
                     }
 
                     // Ensure that there are no 'latest' versions when statically linking
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
                     {
-                        Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
+                        Logger::getLogger()?->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
                         throw new OperationException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
                     $header->addDependencyReference($packageName, $packageVersion, $resolvedDependency->getPackageSource());
                     $addedDependencies[$packageName] = true;
-                    Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
+                    Logger::getLogger()?->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
                 }
             }
             // Otherwise, just add the dependencies as-is, during installation time they will be resolved regardless.
             else
             {
-                Logger::getLogger()->debug(sprintf('Processing %d package dependencies for header', count($this->getPackageDependencies())));
+                Logger::getLogger()?->debug(sprintf('Processing %d package dependencies for header', count($this->getPackageDependencies())));
                 
                 foreach($this->getPackageDependencies() as $packageName => $packageSource)
                 {
@@ -511,16 +511,16 @@
                     // Ensure that there are no 'latest' versions when statically linking
                     if($this->isStaticallyLinked() && $packageVersion === 'latest')
                     {
-                        Logger::getLogger()->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
+                        Logger::getLogger()?->error(sprintf('Cannot statically link dependency "%s" with version "latest"', $packageName));
                         throw new OperationException(sprintf('Cannot statically link dependency "%s", the package is missing and a version could not be resolved', $packageName));
                     }
 
                     $header->addDependencyReference($packageName, $packageVersion, $packageSource);
-                    Logger::getLogger()->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
+                    Logger::getLogger()?->debug(sprintf('Added dependency reference: %s@%s', $packageName, $packageVersion));
                 }
             }
 
-            Logger::getLogger()->verbose(sprintf('Package header created with %d dependency references', count($header->getDependencyReferences())));
+            Logger::getLogger()?->verbose(sprintf('Package header created with %d dependency references', count($header->getDependencyReferences())));
             return $header;
         }
 
@@ -536,20 +536,20 @@
          */
         private function generateAutoloaderMapping(?array $dependencyReaders=null): array
         {
-            Logger::getLogger()->debug('Generating autoloader mapping');
+            Logger::getLogger()?->debug('Generating autoloader mapping');
             
             $packageName = $this->getProjectConfiguration()->getAssembly()->getPackage();
             $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
             $baseDirectory = 'ncc://' . $packageName . '/' . $assemblyName . '/';
             
-            Logger::getLogger()->debug(sprintf('Main package: %s, assembly: %s, baseDirectory: %s', $packageName, $assemblyName, $baseDirectory));
+            Logger::getLogger()?->debug(sprintf('Main package: %s, assembly: %s, baseDirectory: %s', $packageName, $assemblyName, $baseDirectory));
             
             // Generate mapping for source components using pal
             $mapping = [];
             
             if(count($this->getSourceComponents()) > 0)
             {
-                Logger::getLogger()->verbose(sprintf('Generating autoloader mapping for %d source components', count($this->getSourceComponents())));
+                Logger::getLogger()?->verbose(sprintf('Generating autoloader mapping for %d source components', count($this->getSourceComponents())));
                 
                 // Use pal to generate autoloader array from source directory
                 $sourceMapping = Autoloader::generateAutoloaderArray($this->getSourcePath(), [
@@ -569,18 +569,18 @@
                         {
                             $relativePath = substr($filePath, strlen($this->getSourcePath()) + 1);
                             $mapping[$className] = $baseDirectory . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
-                            Logger::getLogger()->debug(sprintf('Mapped class: %s => %s', $className, $mapping[$className]));
+                            Logger::getLogger()?->debug(sprintf('Mapped class: %s => %s', $className, $mapping[$className]));
                         }
                     }
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Generated %d source class mappings via PAL', count($mapping)));
+                Logger::getLogger()?->verbose(sprintf('Generated %d source class mappings via PAL', count($mapping)));
                 
                 // Fallback: If PAL didn't find any classes, parse component files directly
                 // This handles cases where files are not organized in PAL-compatible structure
                 if(empty($mapping))
                 {
-                    Logger::getLogger()->verbose('PAL autoloader generation returned empty, parsing component files directly');
+                    Logger::getLogger()?->verbose('PAL autoloader generation returned empty, parsing component files directly');
                     
                     foreach($this->getSourceComponents() as $componentFilePath)
                     {
@@ -607,23 +607,23 @@
                             foreach($classes as $className)
                             {
                                 $mapping[$className] = $componentPath;
-                                Logger::getLogger()->debug(sprintf('Mapped class (fallback): %s => %s', $className, $componentPath));
+                                Logger::getLogger()?->debug(sprintf('Mapped class (fallback): %s => %s', $className, $componentPath));
                             }
                         }
                         catch(Exception $e)
                         {
-                            Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentFilePath, $e->getMessage()));
+                            Logger::getLogger()?->warning(sprintf('Failed to parse component %s: %s', $componentFilePath, $e->getMessage()));
                         }
                     }
                     
-                    Logger::getLogger()->verbose(sprintf('Generated %d source class mappings via fallback parser', count($mapping)));
+                    Logger::getLogger()?->verbose(sprintf('Generated %d source class mappings via fallback parser', count($mapping)));
                 }
             }
             
             // If statically linking, add mappings for embedded dependencies
             if($this->isStaticallyLinked() && $dependencyReaders !== null && count($dependencyReaders) > 0)
             {
-                Logger::getLogger()->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
+                Logger::getLogger()?->verbose(sprintf('Processing %d dependency packages for autoloader', count($dependencyReaders)));
                 
                 /** @var ResolvedDependency $resolvedDependency */
                 foreach($dependencyReaders as $resolvedDependency)
@@ -639,7 +639,7 @@
                     // in their component names, so use the package root as base directory
                     $depAssemblyName = $packageReader->getAssembly()->getName();
                     
-                    Logger::getLogger()->debug(sprintf('Parsing components from dependency: %s', $depPackageName));
+                    Logger::getLogger()?->debug(sprintf('Parsing components from dependency: %s', $depPackageName));
                     
                     // For static linking, components from dependencies are stored with assembly name prefixed
                     // (e.g., "laravel/collections/Collection.php"), so we only need the package root
@@ -647,11 +647,11 @@
                     $depMapping = $this->parsePackageComponents($packageReader, $depBaseDirectory);
                     $mapping = array_merge($mapping, $depMapping);
                     
-                    Logger::getLogger()->verbose(sprintf('Added %d class mappings from %s', count($depMapping), $depPackageName));
+                    Logger::getLogger()?->verbose(sprintf('Added %d class mappings from %s', count($depMapping), $depPackageName));
                 }
             }
             
-            Logger::getLogger()->verbose(sprintf('Total autoloader mappings: %d classes', count($mapping)));
+            Logger::getLogger()?->verbose(sprintf('Total autoloader mappings: %d classes', count($mapping)));
             return $mapping;
         }
 
@@ -676,7 +676,7 @@
                     // Read the component data
                     $componentData = $packageReader->readComponent($componentRef);
                     $componentName = $componentRef->getName();
-                    Logger::getLogger()->debug(sprintf('Component name from reader: %s, baseDirectory: %s', $componentName, $baseDirectory));
+                    Logger::getLogger()?->debug(sprintf('Component name from reader: %s, baseDirectory: %s', $componentName, $baseDirectory));
                     $componentPath = $baseDirectory . $componentName;
                     
                     // Parse the PHP code to extract class names
@@ -685,12 +685,12 @@
                     foreach($classes as $className)
                     {
                         $mapping[$className] = $componentPath;
-                        Logger::getLogger()->debug(sprintf('Mapped dependency class: %s => %s', $className, $componentPath));
+                        Logger::getLogger()?->debug(sprintf('Mapped dependency class: %s => %s', $className, $componentPath));
                     }
                 }
                 catch(Exception $e)
                 {
-                    Logger::getLogger()->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
+                    Logger::getLogger()?->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
                 }
             }
             

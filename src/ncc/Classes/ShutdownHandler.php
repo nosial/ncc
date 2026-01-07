@@ -40,7 +40,7 @@
                     }
                     catch (IOException $e)
                     {
-                        Logger::getLogger()->warning(sprintf('Failed to delete temporary file %s on shutdown: %s', $file, $e->getMessage()), $e);
+                        Logger::getLogger()?->warning(sprintf('Failed to delete temporary file %s on shutdown: %s', $file, $e->getMessage()), $e);
                     }
                 }
             }

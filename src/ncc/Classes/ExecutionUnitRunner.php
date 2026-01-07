@@ -43,12 +43,12 @@
          */
         public static function fromSource(string $projectPath, ExecutionUnit $unit): int
         {
-            Logger::getLogger()->debug(sprintf('Executing unit from source: %s (type: %s)', $unit->getName(), $unit->getType()->value));
+            Logger::getLogger()?->debug(sprintf('Executing unit from source: %s (type: %s)', $unit->getName(), $unit->getType()->value));
             
             // Check if all the required files are available
             foreach($unit->getRequiredFiles() as $requiredFile)
             {
-                Logger::getLogger()->verbose(sprintf('Checking required file: %s', $requiredFile));
+                Logger::getLogger()?->verbose(sprintf('Checking required file: %s', $requiredFile));
                 if(!IO::exists($projectPath . DIRECTORY_SEPARATOR . $requiredFile))
                 {
                     throw new OperationException(sprintf('The execution unit %s is missing the required file %s', $unit->getName(), $projectPath . DIRECTORY_SEPARATOR . $requiredFile));
@@ -59,7 +59,7 @@
             if($unit->getType() === ExecutionUnitType::PHP)
             {
                 $entryPointPath = $projectPath . DIRECTORY_SEPARATOR . $unit->getEntryPoint();
-                Logger::getLogger()->debug(sprintf('PHP execution unit entry point: %s', $entryPointPath));
+                Logger::getLogger()?->debug(sprintf('PHP execution unit entry point: %s', $entryPointPath));
                 
                 if(!IO::exists($entryPointPath))
                 {
@@ -68,13 +68,13 @@
 
                 // We're going to execute the PHP file using the current PHP binary.
                 $phpPath = self::findBin('php'); // We assume 'php' is in the system PATH since we're running this script. (Wow, such confidence!)
-                Logger::getLogger()->verbose(sprintf('Using PHP binary: %s', $phpPath));
+                Logger::getLogger()?->verbose(sprintf('Using PHP binary: %s', $phpPath));
                 $process = new Process(array_merge([$phpPath, $entryPointPath], $unit->getArguments() ?? []));
             }
             // Otherwise, if it's a system unit, we look for the binary in the system PATH.
             elseif($unit->getType() === ExecutionUnitType::SYSTEM)
             {
-                Logger::getLogger()->debug(sprintf('Looking for system binary: %s', $unit->getEntryPoint()));
+                Logger::getLogger()?->debug(sprintf('Looking for system binary: %s', $unit->getEntryPoint()));
                 // Find the binary in the system PATH.
                 $entryPointPath = self::findBin($unit->getEntryPoint());
                 if($entryPointPath === null)
@@ -83,7 +83,7 @@
                     throw new OperationException(sprintf('The execution unit %s entrypoint %s could not be found in system PATH', $unit->getName(), $unit->getEntryPoint()));
                 }
                 
-                Logger::getLogger()->verbose(sprintf('Found system binary at: %s', $entryPointPath));
+                Logger::getLogger()?->verbose(sprintf('Found system binary at: %s', $entryPointPath));
 
                 // Create the process with the found binary and arguments.
                 $process = new Process(array_merge([$entryPointPath], $unit->getArguments() ?? []));
@@ -95,21 +95,21 @@
             }
 
             // If all goes well, we apply the configuration from the unit to the process.
-            Logger::getLogger()->debug('Applying process configuration');
+            Logger::getLogger()?->debug('Applying process configuration');
             $process = self::applyProcessConfig($process, $unit);
 
             try
             {
-                Logger::getLogger()->verbose(sprintf('Executing unit %s...', $unit->getName()));
+                Logger::getLogger()?->verbose(sprintf('Executing unit %s...', $unit->getName()));
                 $process->run();
             }
             catch(RuntimeException $e)
             {
-                Logger::getLogger()->error(sprintf('Execution unit %s failed to execute: %s', $unit->getName(), $e->getMessage()));
+                Logger::getLogger()?->error(sprintf('Execution unit %s failed to execute: %s', $unit->getName(), $e->getMessage()));
             }
             finally
             {
-                Logger::getLogger()->verbose(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
+                Logger::getLogger()?->verbose(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
                 return $process->getExitCode();
             }
         }
@@ -129,13 +129,13 @@
          */
         private static function applyProcessConfig(Process $process, ExecutionUnit $unit): Process
         {
-            Logger::getLogger()->debug(sprintf('Configuring process for unit: %s (mode: %s)', $unit->getName(), $unit->getMode()->value));
+            Logger::getLogger()?->debug(sprintf('Configuring process for unit: %s (mode: %s)', $unit->getName(), $unit->getMode()->value));
             
             // Set environment variables
             $env = $unit->getEnvironment();
             if($env !== null)
             {
-                Logger::getLogger()->verbose(sprintf('Setting %d environment variables', count($env)));
+                Logger::getLogger()?->verbose(sprintf('Setting %d environment variables', count($env)));
                 $process->setEnv($env);
             }
 
@@ -143,7 +143,7 @@
             $workingDirectory = MacroVariable::fromInput($unit->getWorkingDirectory());
             if(!empty($workingDirectory))
             {
-                Logger::getLogger()->verbose(sprintf('Setting working directory: %s', $workingDirectory));
+                Logger::getLogger()?->verbose(sprintf('Setting working directory: %s', $workingDirectory));
                 $process->setWorkingDirectory($workingDirectory);
             }
 
@@ -152,7 +152,7 @@
                 case ExecutionMode::TTY:
                     if(!Process::isTtySupported())
                     {
-                        Logger::getLogger()->warning(sprintf('The execution unit %s requested TTY mode, but it is not supported on this platform. Falling back to PIPE mode.', $unit->getName()));
+                        Logger::getLogger()?->warning(sprintf('The execution unit %s requested TTY mode, but it is not supported on this platform. Falling back to PIPE mode.', $unit->getName()));
                         $process->setTty(false);
                     }
                     else
@@ -164,7 +164,7 @@
                 case ExecutionMode::PTY:
                     if(!Process::isPtySupported())
                     {
-                        Logger::getLogger()->warning(sprintf('The execution unit %s requested PTY mode, but it is not supported on this platform. Falling back to PIPE mode.', $unit->getName()));
+                        Logger::getLogger()?->warning(sprintf('The execution unit %s requested PTY mode, but it is not supported on this platform. Falling back to PIPE mode.', $unit->getName()));
                         $process->setPty(false);
                     }
                     else

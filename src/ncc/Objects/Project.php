@@ -821,7 +821,7 @@
             // If macros are enabled, process them
             if($macros)
             {
-                Logger::getLogger()->debug(sprintf('Applying macros to %s', $filePath));
+                Logger::getLogger()?->debug(sprintf('Applying macros to %s', $filePath));
                 $results = MacroVariable::fromArray($results, handle: function($input) use ($results, $filePath){
                     return match($input)
                     {
@@ -861,13 +861,13 @@
          */
         public static function compilerFromFile(string $filePath, ?string $buildConfigurationName=null): AbstractCompiler
         {
-            Logger::getLogger()->debug('Creating compiler from project configuration file: ' . $filePath);
+            Logger::getLogger()?->debug('Creating compiler from project configuration file: ' . $filePath);
             $projectConfiguration = self::fromFile($filePath, true);
 
             if($buildConfigurationName === null)
             {
                 $buildConfigurationName = $projectConfiguration->getDefaultBuild();
-                Logger::getLogger()->debug(sprintf('No build configuration name provided, using default build configuration: %s', $buildConfigurationName));
+                Logger::getLogger()?->debug(sprintf('No build configuration name provided, using default build configuration: %s', $buildConfigurationName));
             }
 
             $buildConfiguration = $projectConfiguration->getBuildConfiguration($buildConfigurationName);

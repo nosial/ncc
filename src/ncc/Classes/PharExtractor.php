@@ -54,13 +54,13 @@
          */
         public static function extractPharFiles(string $pharPath, string $baseDir): array
         {
-            Logger::getLogger()->debug(sprintf('Extracting phar file: %s', $pharPath));
+            Logger::getLogger()?->debug(sprintf('Extracting phar file: %s', $pharPath));
 
             // Check cache first
             $cacheKey = realpath($pharPath);
             if ($cacheKey && isset(self::$extractionCache[$cacheKey]))
             {
-                Logger::getLogger()->verbose(sprintf('Using cached extraction for: %s', $pharPath));
+                Logger::getLogger()?->verbose(sprintf('Using cached extraction for: %s', $pharPath));
                 return self::$extractionCache[$cacheKey];
             }
 
@@ -75,7 +75,7 @@
                 $tempDir = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . 'phar_extraction_' . uniqid();
                 IO::mkdir($tempDir, true);
 
-                Logger::getLogger()->verbose(sprintf('Extracting phar to temporary directory: %s', $tempDir));
+                Logger::getLogger()?->verbose(sprintf('Extracting phar to temporary directory: %s', $tempDir));
 
                 // Try to open as Phar first, fall back to PharData for non-executable archives
                 $phar = null;
@@ -85,7 +85,7 @@
                 }
                 catch (Exception $e)
                 {
-                    Logger::getLogger()->debug(sprintf('Could not open as Phar, trying PharData: %s', $e->getMessage()));
+                    Logger::getLogger()?->debug(sprintf('Could not open as Phar, trying PharData: %s', $e->getMessage()));
                     try
                     {
                         $phar = new PharData($pharPath);
@@ -98,7 +98,7 @@
 
                 // Extract the phar to the temporary directory
                 $phar->extractTo($tempDir, null, true);
-                Logger::getLogger()->verbose(sprintf('Successfully extracted phar to: %s', $tempDir));
+                Logger::getLogger()?->verbose(sprintf('Successfully extracted phar to: %s', $tempDir));
 
                 // Collect all extracted files
                 $extractedFiles = [];
@@ -119,7 +119,7 @@
                     }
                 }
 
-                Logger::getLogger()->verbose(sprintf('Collected %d files from phar: %s', count($extractedFiles), $pharPath));
+                Logger::getLogger()?->verbose(sprintf('Collected %d files from phar: %s', count($extractedFiles), $pharPath));
 
                 // Cache the result
                 if ($cacheKey)
@@ -232,11 +232,11 @@
          */
         public static function resolvePharEntryPoint(string $pharPath): ?string
         {
-            Logger::getLogger()->debug(sprintf('Resolving entry point for phar: %s', $pharPath));
+            Logger::getLogger()?->debug(sprintf('Resolving entry point for phar: %s', $pharPath));
 
             if (!IO::exists($pharPath))
             {
-                Logger::getLogger()->warning(sprintf('Phar file does not exist: %s', $pharPath));
+                Logger::getLogger()?->warning(sprintf('Phar file does not exist: %s', $pharPath));
                 return null;
             }
 
@@ -250,14 +250,14 @@
                 }
                 catch (Exception $e)
                 {
-                    Logger::getLogger()->debug(sprintf('Could not open as Phar, trying PharData: %s', $e->getMessage()));
+                    Logger::getLogger()?->debug(sprintf('Could not open as Phar, trying PharData: %s', $e->getMessage()));
                     try
                     {
                         $phar = new PharData($pharPath);
                     }
                     catch (Exception $e2)
                     {
-                        Logger::getLogger()->warning(sprintf('Failed to open phar file %s: %s', $pharPath, $e2->getMessage()));
+                        Logger::getLogger()?->warning(sprintf('Failed to open phar file %s: %s', $pharPath, $e2->getMessage()));
                         return null;
                     }
                 }
@@ -274,14 +274,14 @@
                 // Pattern 1: Phar::webPhar or Phar::mungServer with file argument
                 if (preg_match('/Phar::(?:webPhar|mungServer)\s*\([^,]*,\s*[\'"]([^\'"]+)[\'"]/', $stub, $matches))
                 {
-                    Logger::getLogger()->verbose(sprintf('Found entry point via Phar::webPhar/mungServer: %s', $matches[1]));
+                    Logger::getLogger()?->verbose(sprintf('Found entry point via Phar::webPhar/mungServer: %s', $matches[1]));
                     return $matches[1];
                 }
 
                 // Pattern 2: require/include with phar:// protocol
                 if (preg_match('/(?:require|include)(?:_once)?\s+[\'"]phar:\/\/[^\'"]*\/([^\'"]+)[\'"]/', $stub, $matches))
                 {
-                    Logger::getLogger()->verbose(sprintf('Found entry point via phar:// require: %s', $matches[1]));
+                    Logger::getLogger()?->verbose(sprintf('Found entry point via phar:// require: %s', $matches[1]));
                     return $matches[1];
                 }
 
@@ -292,7 +292,7 @@
                     // Try to find any .php file mentioned in the stub before __HALT_COMPILER
                     if (preg_match('/[\'"]([^\/\'"]+\.php)[\'"]/', $stub, $matches))
                     {
-                        Logger::getLogger()->verbose(sprintf('Found entry point from stub: %s', $matches[1]));
+                        Logger::getLogger()?->verbose(sprintf('Found entry point from stub: %s', $matches[1]));
                         return $matches[1];
                     }
                 }
@@ -303,17 +303,17 @@
                 {
                     if (isset($phar[$entryPoint]))
                     {
-                        Logger::getLogger()->verbose(sprintf('Using common entry point: %s', $entryPoint));
+                        Logger::getLogger()?->verbose(sprintf('Using common entry point: %s', $entryPoint));
                         return $entryPoint;
                     }
                 }
 
-                Logger::getLogger()->warning(sprintf('Could not determine entry point for phar: %s', $pharPath));
+                Logger::getLogger()?->warning(sprintf('Could not determine entry point for phar: %s', $pharPath));
                 return null;
             }
             catch (Exception $e)
             {
-                Logger::getLogger()->warning(sprintf('Error resolving phar entry point %s: %s', $pharPath, $e->getMessage()));
+                Logger::getLogger()?->warning(sprintf('Error resolving phar entry point %s: %s', $pharPath, $e->getMessage()));
                 return null;
             }
         }

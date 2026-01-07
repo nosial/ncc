@@ -65,7 +65,7 @@
          */
         public static function import(string|PackageReader $package, string $version='latest'): void
         {
-            Logger::getLogger()->debug(sprintf('Import requested: %s@%s', $package, $version));
+            Logger::getLogger()?->debug(sprintf('Import requested: %s@%s', $package, $version));
             self::initializeStreamWrapper();
 
             if($package instanceof PackageReader)
@@ -75,23 +75,23 @@
                 // Check if package is already imported before attempting to import
                 if(isset(self::$importedPackages[$packageName]))
                 {
-                    Logger::getLogger()->debug(sprintf('Package already imported: %s', $packageName));
+                    Logger::getLogger()?->debug(sprintf('Package already imported: %s', $packageName));
                     return; // Package already imported, skip
                 }
 
-                Logger::getLogger()->verbose(sprintf('Importing from PackageReader instance: %s', $packageName));
+                Logger::getLogger()?->verbose(sprintf('Importing from PackageReader instance: %s', $packageName));
                 $packageReader = $package;
 
                 // Import the package as a reference
                 $referenceId = uniqid();
-                Logger::getLogger()->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
+                Logger::getLogger()?->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
                 self::$packageReaderReferences[$referenceId] = $packageReader;
                 self::$importedPackages[$packageName] = $referenceId;
                 // Register the autoloader for this package
 
-                Logger::getLogger()->debug(sprintf('Registering autoloader for: %s', $packageName));
+                Logger::getLogger()?->debug(sprintf('Registering autoloader for: %s', $packageName));
                 self::registerAutoloader($packageReader);
-                Logger::getLogger()->verbose(sprintf('Package import completed: %s', $packageName));
+                Logger::getLogger()?->verbose(sprintf('Package import completed: %s', $packageName));
 
                 return;
             }
@@ -100,7 +100,7 @@
             {
                 if(IO::isFile($package))
                 {
-                    Logger::getLogger()->verbose(sprintf('Importing from file: %s', $package));
+                    Logger::getLogger()?->verbose(sprintf('Importing from file: %s', $package));
                     $packageReader = self::importFromFile($package);
                 }
                 else
@@ -108,11 +108,11 @@
                     // Check if package is already imported before attempting to import
                     if(isset(self::$importedPackages[$package]))
                     {
-                        Logger::getLogger()->debug(sprintf('Package already imported: %s', $package));
+                        Logger::getLogger()?->debug(sprintf('Package already imported: %s', $package));
                         return; // Package already imported, skip
                     }
                     
-                    Logger::getLogger()->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
+                    Logger::getLogger()?->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
                     $packageReader = self::importFromPackageManager($package, $version);
                 }
 
@@ -126,11 +126,11 @@
             // Check again with the actual package name (in case a file path was used)
             if(isset(self::$importedPackages[$packageName]))
             {
-                Logger::getLogger()->debug(sprintf('Package already imported (by actual name): %s', $packageName));
+                Logger::getLogger()?->debug(sprintf('Package already imported (by actual name): %s', $packageName));
                 return; // Package already imported, skip
             }
             
-            Logger::getLogger()->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
+            Logger::getLogger()?->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
 
             // Import the package as a reference
             $referenceId = uniqid();
@@ -141,16 +141,16 @@
             // This prevents the autoloader from trying to import dependencies that are already embedded
             if($packageReader->getHeader()->isStaticallyLinked())
             {
-                Logger::getLogger()->debug(sprintf('Package is statically linked, marking %d dependencies as imported', count($packageReader->getHeader()->getDependencyReferences())));
+                Logger::getLogger()?->debug(sprintf('Package is statically linked, marking %d dependencies as imported', count($packageReader->getHeader()->getDependencyReferences())));
                 foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
                 {
                     self::$importedPackages[$reference->getPackage()] = $referenceId;
-                    Logger::getLogger()->verbose(sprintf('Marked dependency as imported: %s', $reference->getPackage()));
+                    Logger::getLogger()?->verbose(sprintf('Marked dependency as imported: %s', $reference->getPackage()));
                 }
             }
 
             // Register the autoloader for this package
-            Logger::getLogger()->debug(sprintf('Registering autoloader for: %s', $packageName));
+            Logger::getLogger()?->debug(sprintf('Registering autoloader for: %s', $packageName));
             self::registerAutoloader($packageReader);
 
             // Register the definitions if there are any
@@ -164,7 +164,7 @@
                     }
                     else
                     {
-                        Logger::getLogger()->warning(sprintf('Cannot define %s from %s because it\'s already been defined', $key, $packageReader->getAssembly()->getPackage()));
+                        Logger::getLogger()?->warning(sprintf('Cannot define %s from %s because it\'s already been defined', $key, $packageReader->getAssembly()->getPackage()));
                     }
                 }
             }
@@ -172,15 +172,15 @@
             // For non-statically linked packages, import dependencies separately
             if(!$packageReader->getHeader()->isStaticallyLinked() && count($packageReader->getHeader()->getDependencyReferences()) > 0)
             {
-                Logger::getLogger()->verbose(sprintf('Importing %d dependencies for: %s', count($packageReader->getHeader()->getDependencyReferences()), $packageName));
+                Logger::getLogger()?->verbose(sprintf('Importing %d dependencies for: %s', count($packageReader->getHeader()->getDependencyReferences()), $packageName));
                 foreach($packageReader->getHeader()->getDependencyReferences() as $reference)
                 {
-                    Logger::getLogger()->debug(sprintf('Importing dependency: %s@%s', $reference->getPackage(), $reference->getVersion()));
+                    Logger::getLogger()?->debug(sprintf('Importing dependency: %s@%s', $reference->getPackage(), $reference->getVersion()));
                     self::import($reference->getPackage(), $reference->getVersion());
                 }
             }
             
-            Logger::getLogger()->verbose(sprintf('Package import completed: %s', $packageName));
+            Logger::getLogger()?->verbose(sprintf('Package import completed: %s', $packageName));
         }
 
         /**
@@ -353,7 +353,7 @@
                 catch(IOException $e)
                 {
                     // Silently fail and fall back to system-level package manager only
-                    Logger::getLogger()->debug(sprintf('User package manager unavailable: %s', $e->getMessage()));
+                    Logger::getLogger()?->debug(sprintf('User package manager unavailable: %s', $e->getMessage()));
                     return null;
                 }
             }
@@ -432,7 +432,7 @@
                 catch(IOException $e)
                 {
                     // Silently fail and fall back to system-level repository manager only
-                    Logger::getLogger()->debug(sprintf('User repository manager unavailable: %s', $e->getMessage()));
+                    Logger::getLogger()?->debug(sprintf('User repository manager unavailable: %s', $e->getMessage()));
                     return null;
                 }
             }
@@ -511,7 +511,7 @@
                 catch(IOException $e)
                 {
                     // Silently fail and fall back to system-level authentication manager only
-                    Logger::getLogger()->debug(sprintf('User authentication manager unavailable: %s', $e->getMessage()));
+                    Logger::getLogger()?->debug(sprintf('User authentication manager unavailable: %s', $e->getMessage()));
                     return null;
                 }
             }
@@ -617,7 +617,7 @@
          */
         public static function execute(string $package, string $version='latest', ?string $executionUnit=null, array $arguments=[]): mixed
         {
-            Logger::getLogger()->debug(sprintf('Execute requested: %s@%s, unit=%s', $package, $version, $executionUnit ?? 'default'));
+            Logger::getLogger()?->debug(sprintf('Execute requested: %s@%s, unit=%s', $package, $version, $executionUnit ?? 'default'));
             self::initializeStreamWrapper();
 
             // Determine if package is a file path or package name
@@ -629,7 +629,7 @@
                     throw new IOException('The specified package file does not exist.');
                 }
 
-                Logger::getLogger()->verbose(sprintf('Executing package from file: %s', $packagePath));
+                Logger::getLogger()?->verbose(sprintf('Executing package from file: %s', $packagePath));
             }
             else
             {
@@ -640,12 +640,12 @@
                     throw new OperationException(sprintf('Package "%s" version "%s" not found in package managers', $package, $version));
                 }
 
-                Logger::getLogger()->verbose(sprintf('Executing package from package manager: %s@%s', $package, $version));
+                Logger::getLogger()?->verbose(sprintf('Executing package from package manager: %s@%s', $package, $version));
             }
 
             // Create package reader with cache for faster loading
             $packageReader = new PackageReader($packagePath, true);
-            Logger::getLogger()->verbose(sprintf('Executing package: %s, unit=%s, args=%d', $packageReader->getAssembly()->getPackage(), $executionUnit ?? 'default', count($arguments)));
+            Logger::getLogger()?->verbose(sprintf('Executing package: %s, unit=%s, args=%d', $packageReader->getAssembly()->getPackage(), $executionUnit ?? 'default', count($arguments)));
 
             // Execute the package
             return $packageReader->execute($executionUnit, $arguments);
@@ -688,13 +688,13 @@
          */
         private static function importFromPackageManager(string $package, string $version='latest'): PackageReader
         {
-            Logger::getLogger()->debug(sprintf('Looking up package in package managers: %s@%s', $package, $version));
+            Logger::getLogger()?->debug(sprintf('Looking up package in package managers: %s@%s', $package, $version));
 
             // Try user package manager first
             $userManager = self::getUserPackageManager();
             if($userManager !== null && $userManager->entryExists($package, $version))
             {
-                Logger::getLogger()->verbose(sprintf('Package found in user manager: %s@%s', $package, $version));
+                Logger::getLogger()?->verbose(sprintf('Package found in user manager: %s@%s', $package, $version));
                 $packagePath = $userManager->getPackagePath($package, $version);
                 return self::importFromFileWithCache($packagePath);
             }
@@ -703,7 +703,7 @@
             $systemManager = self::getSystemPackageManager();
             if($systemManager->entryExists($package, $version))
             {
-                Logger::getLogger()->verbose(sprintf('Package found in system manager: %s@%s', $package, $version));
+                Logger::getLogger()?->verbose(sprintf('Package found in system manager: %s@%s', $package, $version));
                 $packagePath = $systemManager->getPackagePath($package, $version);
                 return self::importFromFileWithCache($packagePath);
             }
@@ -711,11 +711,11 @@
             // If exact version not found and not 'latest', try semver matching
             if($version !== 'latest')
             {
-                Logger::getLogger()->debug(sprintf('Exact version not found, trying semver matching for: %s@%s', $package, $version));
+                Logger::getLogger()?->debug(sprintf('Exact version not found, trying semver matching for: %s@%s', $package, $version));
                 $satisfyingVersion = self::findSatisfyingVersion($package, $version, $userManager, $systemManager);
                 if($satisfyingVersion !== null)
                 {
-                    Logger::getLogger()->verbose(sprintf('Found satisfying version: %s@%s', $package, $satisfyingVersion));
+                    Logger::getLogger()?->verbose(sprintf('Found satisfying version: %s@%s', $package, $satisfyingVersion));
                     // Check user manager first
                     if($userManager !== null && $userManager->entryExists($package, $satisfyingVersion))
                     {
@@ -732,7 +732,7 @@
                 }
                 else
                 {
-                    Logger::getLogger()->debug(sprintf('No satisfying version found for: %s@%s', $package, $version));
+                    Logger::getLogger()?->debug(sprintf('No satisfying version found for: %s@%s', $package, $version));
                 }
             }
 

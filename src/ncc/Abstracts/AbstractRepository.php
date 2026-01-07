@@ -109,7 +109,7 @@
             }
             catch(Exception $e)
             {
-                Logger::getLogger()->warning(sprintf('Could not get release archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                Logger::getLogger()?->warning(sprintf('Could not get release archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
             }
 
             // Find possible tag archives
@@ -126,7 +126,7 @@
                 // Don't log warnings for Packagist repositories about tags not being supported (it's expected behavior)
                 if(!($this instanceof PackagistRepository && $e instanceof OperationException && str_contains($e->getMessage(), 'does not support tags')))
                 {
-                    Logger::getLogger()->warning(sprintf('Could not get tag archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                    Logger::getLogger()?->warning(sprintf('Could not get tag archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
                 }
             }
 
@@ -141,7 +141,7 @@
             }
             catch(Exception $e)
             {
-                Logger::getLogger()->warning(sprintf('Could not get the git repo for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                Logger::getLogger()?->warning(sprintf('Could not get the git repo for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
             }
 
             // Find possible release packages
@@ -155,7 +155,7 @@
             }
             catch(Exception $e)
             {
-                Logger::getLogger()->warning(sprintf('Could not get release package for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                Logger::getLogger()?->warning(sprintf('Could not get release package for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
             }
 
             return $results;

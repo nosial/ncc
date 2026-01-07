@@ -275,7 +275,7 @@
             {
                 $percentage = $total > 0 ? round(($current / $total) * 100) : 0;
                 $logMessage = sprintf('[%d/%d] (%d%%) %s', $current, $total, $percentage, $message);
-                Logger::getLogger()->info($logMessage);
+                Logger::getLogger()?->info($logMessage);
                 return;
             }
             
@@ -341,7 +341,7 @@
             {
                 if ($finalMessage !== null)
                 {
-                    Logger::getLogger()->info($finalMessage);
+                    Logger::getLogger()?->info($finalMessage);
                 }
                 return;
             }

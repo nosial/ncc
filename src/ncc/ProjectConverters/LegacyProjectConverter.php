@@ -51,54 +51,54 @@
          */
         public function convert(string $filePath, ?string $version = null, ?callable $progressCallback = null): Project
         {
-            Logger::getLogger()->verbose(sprintf('Converting legacy project from %s', $filePath));
+            Logger::getLogger()?->verbose(sprintf('Converting legacy project from %s', $filePath));
             $content = IO::readFile($filePath);
             $data = json_decode($content, true);
 
             if (json_last_error() !== JSON_ERROR_NONE)
             {
-                Logger::getLogger()->error(sprintf('Failed to parse legacy project.json: %s', json_last_error_msg()));
+                Logger::getLogger()?->error(sprintf('Failed to parse legacy project.json: %s', json_last_error_msg()));
                 throw new IOException('Failed to parse JSON: ' . json_last_error_msg());
             }
 
-            Logger::getLogger()->debug('Successfully parsed legacy project.json');
+            Logger::getLogger()?->debug('Successfully parsed legacy project.json');
             $project = new Project();
 
             if(isset($data['project']['update_source']))
             {
-                Logger::getLogger()->debug('Processing update source configuration');
+                Logger::getLogger()?->debug('Processing update source configuration');
                 $project = $this->applyUpdateSource($project, $data['project']['update_source']);
             }
 
             if(isset($data['build']['source_path']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting source path: %s', $data['build']['source_path']));
+                Logger::getLogger()?->verbose(sprintf('Setting source path: %s', $data['build']['source_path']));
                 $project->setSourcePath($data['build']['source_path']);
             }
             else
             {
-                Logger::getLogger()->warning(sprintf('project.build.source_path is not set, using default source path: %s', $project->getSourcePath()));
+                Logger::getLogger()?->warning(sprintf('project.build.source_path is not set, using default source path: %s', $project->getSourcePath()));
             }
 
 
             if(isset($data['assembly']))
             {
-                Logger::getLogger()->debug('Processing assembly configuration');
+                Logger::getLogger()?->debug('Processing assembly configuration');
                 $project = $this->applyAssemblyConfiguration($project, $data['assembly']);
             }
 
             if(isset($data['execution_policies']))
             {
-                Logger::getLogger()->debug(sprintf('Converting %d execution policies', count($data['execution_policies'])));
+                Logger::getLogger()?->debug(sprintf('Converting %d execution policies', count($data['execution_policies'])));
                 $convertedResults = $this->convertExecutionPolicies($data['execution_policies']);
                 foreach($convertedResults as $name => $policy)
                 {
-                    Logger::getLogger()->verbose(sprintf('Adding execution unit: %s', $name));
+                    Logger::getLogger()?->verbose(sprintf('Adding execution unit: %s', $name));
                     $project->addExecutionUnit($policy);
 
                     if(isset($data['build']['main']) && $data['build']['main'] === $name)
                     {
-                        Logger::getLogger()->verbose(sprintf('Setting entry point to: %s', $name));
+                        Logger::getLogger()?->verbose(sprintf('Setting entry point to: %s', $name));
                         $project->setEntryPoint($name);
                     }
                 }
@@ -106,17 +106,17 @@
 
             if(isset($data['build']))
             {
-                Logger::getLogger()->debug('Processing build configuration');
+                Logger::getLogger()?->debug('Processing build configuration');
                 $project = $this->applyBuildConfiguration($project, $data['build']);
             }
 
             if(isset($data['build']['dependencies']))
             {
-                Logger::getLogger()->debug(sprintf('Processing %d dependencies', count($data['build']['dependencies'])));
+                Logger::getLogger()?->debug(sprintf('Processing %d dependencies', count($data['build']['dependencies'])));
                 $project = $this->applyDependencies($project, $data['build']['dependencies']);
             }
 
-            Logger::getLogger()->verbose('Successfully converted legacy project');
+            Logger::getLogger()?->verbose('Successfully converted legacy project');
             return $project;
         }
 
@@ -131,7 +131,7 @@
         {
             if(isset($data['source']))
             {
-                Logger::getLogger()->verbose(sprintf('Configuring project update source: %s', $data['source']));
+                Logger::getLogger()?->verbose(sprintf('Configuring project update source: %s', $data['source']));
                 $project->setUpdateSource(new PackageSource($data['source']));
             }
 
@@ -139,19 +139,19 @@
             {
                 if(!isset($data['repository']['name']))
                 {
-                    Logger::getLogger()->warning('project.update_source.repository.name is not set, skipping repository configuration');
+                    Logger::getLogger()?->warning('project.update_source.repository.name is not set, skipping repository configuration');
                 }
                 elseif(!isset($data['repository']['type']))
                 {
-                    Logger::getLogger()->warning('project.update_source.repository.type is not set, skipping repository configuration');
+                    Logger::getLogger()?->warning('project.update_source.repository.type is not set, skipping repository configuration');
                 }
                 elseif(!isset($data['repository']['host']))
                 {
-                    Logger::getLogger()->warning('project.update_source.repository.host is not set, skipping repository configuration');
+                    Logger::getLogger()?->warning('project.update_source.repository.host is not set, skipping repository configuration');
                 }
                 elseif(!isset($data['repository']['ssl']))
                 {
-                    Logger::getLogger()->warning('project.update_source.repository.ssl is not set, skipping repository configuration');
+                    Logger::getLogger()?->warning('project.update_source.repository.ssl is not set, skipping repository configuration');
                 }
                 else
                 {
@@ -169,11 +169,11 @@
 
                     if($type === null)
                     {
-                        Logger::getLogger()->warning(sprintf('project.update_source.repository.type "%s" is not a valid repository type, skipping repository configuration', $data['repository']['type']));
+                        Logger::getLogger()?->warning(sprintf('project.update_source.repository.type "%s" is not a valid repository type, skipping repository configuration', $data['repository']['type']));
                     }
                     else
                     {
-                        Logger::getLogger()->verbose(sprintf('Configuring project update source repository: %s (%s)', $name, $type->value));
+                        Logger::getLogger()?->verbose(sprintf('Configuring project update source repository: %s (%s)', $name, $type->value));
                         $project->setRepositories(new RepositoryConfiguration($name, $type, $host, $ssl));
                     }
                 }
@@ -193,55 +193,55 @@
         {
             if(isset($assembly['name']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting assembly name: %s', $assembly['name']));
+                Logger::getLogger()?->verbose(sprintf('Setting assembly name: %s', $assembly['name']));
                 $project->getAssembly()->setName($this->convertMacros($assembly['name']));
             }
             else
             {
-                Logger::getLogger()->warning(sprintf('project.assembly.name is not set, using default assembly name: %s', $project->getAssembly()->getName()));
+                Logger::getLogger()?->warning(sprintf('project.assembly.name is not set, using default assembly name: %s', $project->getAssembly()->getName()));
             }
 
             if(isset($assembly['package']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting assembly package: %s', $assembly['package']));
+                Logger::getLogger()?->verbose(sprintf('Setting assembly package: %s', $assembly['package']));
                 $project->getAssembly()->setPackage($this->convertMacros($assembly['package']));
             }
             else
             {
-                Logger::getLogger()->warning(sprintf('project.assembly.package is not set, using default package name, using: %s', $project->getAssembly()->getPackage()));
+                Logger::getLogger()?->warning(sprintf('project.assembly.package is not set, using default package name, using: %s', $project->getAssembly()->getPackage()));
             }
 
             if(isset($assembly['version']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting assembly version: %s', $assembly['version']));
+                Logger::getLogger()?->verbose(sprintf('Setting assembly version: %s', $assembly['version']));
                 $project->getAssembly()->setVersion($assembly['version']);
             }
             else
             {
-                Logger::getLogger()->warning('project.assembly.version is not set, using default version');
+                Logger::getLogger()?->warning('project.assembly.version is not set, using default version');
             }
 
             if(isset($assembly['description']))
             {
-                Logger::getLogger()->verbose('Setting assembly description');
+                Logger::getLogger()?->verbose('Setting assembly description');
                 $project->getAssembly()->setDescription($assembly['description']);
             }
 
             if(isset($assembly['product']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting assembly product: %s', $assembly['product']));
+                Logger::getLogger()?->verbose(sprintf('Setting assembly product: %s', $assembly['product']));
                 $project->getAssembly()->setProduct($assembly['product']);
             }
 
             if(isset($assembly['copyright']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting assembly copyright: %s', $assembly['copyright']));
+                Logger::getLogger()?->verbose(sprintf('Setting assembly copyright: %s', $assembly['copyright']));
                 $project->getAssembly()->setCopyright($assembly['copyright']);
             }
 
             if(isset($assembly['trademark']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting assembly trademark: %s', $assembly['trademark']));
+                Logger::getLogger()?->verbose(sprintf('Setting assembly trademark: %s', $assembly['trademark']));
                 $project->getAssembly()->setTrademark($assembly['trademark']);
             }
 
@@ -259,23 +259,23 @@
         {
             if(isset($build['source_path']))
             {
-                Logger::getLogger()->verbose(sprintf('Setting build source path: %s', $build['source_path']));
+                Logger::getLogger()?->verbose(sprintf('Setting build source path: %s', $build['source_path']));
                 $project->setSourcePath($this->convertMacros($build['source_path']));
             }
 
             if(isset($build['configurations']))
             {
-                Logger::getLogger()->debug(sprintf('Converting %d build configurations', count($build['configurations'])));
+                Logger::getLogger()?->debug(sprintf('Converting %d build configurations', count($build['configurations'])));
                 $buildConfigurations = $this->convertBuildConfigurations($build['configurations']);
                 foreach($buildConfigurations as $buildName => $buildConfig)
                 {
-                    Logger::getLogger()->verbose(sprintf('Adding build configuration: %s', $buildName));
+                    Logger::getLogger()?->verbose(sprintf('Adding build configuration: %s', $buildName));
                     $project->addBuildConfiguration($buildConfig);
 
                     // This ensures we actually have a default configuration defined in the configuration
                     if(isset($build['default_configuration']) && $build['default_configuration'] === $buildName)
                     {
-                        Logger::getLogger()->verbose(sprintf('Setting default build configuration: %s', $buildName));
+                        Logger::getLogger()?->verbose(sprintf('Setting default build configuration: %s', $buildName));
                         $project->setDefaultBuild($buildName);
                     }
 
@@ -299,13 +299,13 @@
             {
                 if(!isset($legacyConfiguration['name']))
                 {
-                    Logger::getLogger()->warning('Skipping build configuration without name');
+                    Logger::getLogger()?->warning('Skipping build configuration without name');
                     // We skip this since there's no defined name for the build configuration
                     // Shouldn't even be valid anyway.
                     continue;
                 }
 
-                Logger::getLogger()->debug(sprintf('Converting build configuration: %s', $legacyConfiguration['name']));
+                Logger::getLogger()?->debug(sprintf('Converting build configuration: %s', $legacyConfiguration['name']));
                 $convertedArray = [];
                 $convertedArray['name'] = $legacyConfiguration['name'];
 
@@ -316,7 +316,7 @@
 
                 if(isset($legacyConfiguration['build_type']))
                 {
-                    Logger::getLogger()->verbose(sprintf('Converting build type: %s', $legacyConfiguration['build_type']));
+                    Logger::getLogger()?->verbose(sprintf('Converting build type: %s', $legacyConfiguration['build_type']));
                     switch($legacyConfiguration['build_type'])
                     {
                         default:
@@ -326,14 +326,14 @@
 
                         case 'executable':
                             $convertedArray['type'] = 'native';
-                            Logger::getLogger()->debug('Converted executable build type to native');
+                            Logger::getLogger()?->debug('Converted executable build type to native');
                             break;
                     }
                 }
 
                 if(isset($legacyConfiguration['define_constants']) && is_array($legacyConfiguration['define_constants']))
                 {
-                    Logger::getLogger()->verbose(sprintf('Converting %d defined constants', count($legacyConfiguration['define_constants'])));
+                    Logger::getLogger()?->verbose(sprintf('Converting %d defined constants', count($legacyConfiguration['define_constants'])));
                     $convertedArray['definitions'] = array_map(function ($constantValue)
                     {
                         return $this->convertMacros($constantValue);
@@ -343,7 +343,7 @@
                 // Note: Build configuration dependency configurations are no longer supported.
 
                 $results[$convertedArray['name']] = new BuildConfiguration($convertedArray);
-                Logger::getLogger()->debug(sprintf('Successfully converted build configuration: %s', $convertedArray['name']));
+                Logger::getLogger()?->debug(sprintf('Successfully converted build configuration: %s', $convertedArray['name']));
             }
 
             return $results;
@@ -362,7 +362,7 @@
 
             foreach($executionPolicies as $policy)
             {
-                Logger::getLogger()->debug(sprintf('Converting execution policy: %s', $policy['name'] ?? 'unnamed'));
+                Logger::getLogger()?->debug(sprintf('Converting execution policy: %s', $policy['name'] ?? 'unnamed'));
                 $convertedResult = [];
                 if(isset($policy['name']))
                 {
@@ -371,7 +371,7 @@
 
                 if(isset($policy['runner']))
                 {
-                    Logger::getLogger()->verbose(sprintf('Converting runner type: %s', $policy['runner']));
+                    Logger::getLogger()?->verbose(sprintf('Converting runner type: %s', $policy['runner']));
                     if($policy['runner'] === 'php')
                     {
                         $convertedResult['type'] = 'php';
@@ -391,7 +391,7 @@
                 // Otherwise, we need to assume for auto-mode
                 if(isset($policy['execute']['tty']) && $policy['execute']['tty'] === true)
                 {
-                    Logger::getLogger()->verbose('Setting execution mode to TTY');
+                    Logger::getLogger()?->verbose('Setting execution mode to TTY');
                     $convertedResult['mode'] = 'tty';
                 }
                 else
@@ -402,24 +402,24 @@
                 // 'options' are arguments.
                 if(isset($policy['execute']['options']) && is_array($policy['execute']['options']))
                 {
-                    Logger::getLogger()->verbose(sprintf('Setting %d execution arguments', count($policy['execute']['options'])));
+                    Logger::getLogger()?->verbose(sprintf('Setting %d execution arguments', count($policy['execute']['options'])));
                     $convertedResult['arguments'] = $policy['execute']['options'];
                 }
 
                 if(isset($policy['execute']['environment_variables']) && is_array($policy['execute']['environment_variables']))
                 {
-                    Logger::getLogger()->verbose(sprintf('Setting %d environment variables', count($policy['execute']['environment_variables'])));
+                    Logger::getLogger()?->verbose(sprintf('Setting %d environment variables', count($policy['execute']['environment_variables'])));
                     $convertedResult['environment'] = $policy['execute']['environment_variables'];
                 }
 
                 if(isset($policy['execute']['target']))
                 {
-                    Logger::getLogger()->verbose(sprintf('Setting execution target: %s', $policy['execute']['target']));
+                    Logger::getLogger()?->verbose(sprintf('Setting execution target: %s', $policy['execute']['target']));
                     $convertedResult['entry'] = $this->convertMacros($policy['execute']['target']);
                 }
 
                 $results[$convertedResult['name']] = new Project\ExecutionUnit($convertedResult);
-                Logger::getLogger()->debug(sprintf('Successfully converted execution policy: %s', $convertedResult['name']));
+                Logger::getLogger()?->debug(sprintf('Successfully converted execution policy: %s', $convertedResult['name']));
             }
 
             return $results;
@@ -438,24 +438,24 @@
             {
                 if(!isset($legacyDependency['source']))
                 {
-                    Logger::getLogger()->warning('Skipping dependency without source');
+                    Logger::getLogger()?->warning('Skipping dependency without source');
                     // We skip dependencies where no source is defined.
                     continue;
                 }
 
-                Logger::getLogger()->verbose(sprintf('Processing dependency: %s from %s', $legacyDependency['name'] ?? 'unnamed', $legacyDependency['source']));
+                Logger::getLogger()?->verbose(sprintf('Processing dependency: %s from %s', $legacyDependency['name'] ?? 'unnamed', $legacyDependency['source']));
                 // Construct the package source from the original source, should be compatible.
                 $packageSource = new PackageSource($legacyDependency['source']);
 
                 // Set te version if one is set.
                 if(isset($legacyDependency['version']))
                 {
-                    Logger::getLogger()->debug(sprintf('Setting dependency version: %s', $legacyDependency['version']));
+                    Logger::getLogger()?->debug(sprintf('Setting dependency version: %s', $legacyDependency['version']));
                     $packageSource->setVersion($legacyDependency['version']);
                 }
 
                 $project->addDependency($legacyDependency['name'], $packageSource);
-                Logger::getLogger()->debug(sprintf('Added dependency: %s', $legacyDependency['name']));
+                Logger::getLogger()?->debug(sprintf('Added dependency: %s', $legacyDependency['name']));
             }
 
             return $project;
@@ -469,7 +469,7 @@
          */
         private function convertMacros(string $input): string
         {
-            Logger::getLogger()->debug(sprintf('Converting macros in: %s', substr($input, 0, 50) . (strlen($input) > 50 ? '...' : '')));
+            Logger::getLogger()?->debug(sprintf('Converting macros in: %s', substr($input, 0, 50) . (strlen($input) > 50 ? '...' : '')));
             return Utilities::replaceString($input, [
                 '%ASSEMBLY.NAME%' => MacroVariable::ASSEMBLY_NAME->value,
                 '%ASSEMBLY.PACKAGE%' => MacroVariable::ASSEMBLY_PACKAGE->value,

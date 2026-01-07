@@ -38,7 +38,7 @@
          */
         public static function mkdir(string $path, bool $recursive=true): void
         {
-            Logger::getLogger()->verbose(sprintf('Creating directory %s', $path));
+            Logger::getLogger()?->verbose(sprintf('Creating directory %s', $path));
             if(@mkdir($path, recursive: $recursive) === false && !is_dir($path))
             {
                 throw new IOException(sprintf('Failed to create directory %s', $path));
@@ -54,7 +54,7 @@
          */
         public static function rm(string $path, bool $recursive=true): void
         {
-            Logger::getLogger()->verbose(sprintf('Deleting %s', $path));
+            Logger::getLogger()?->verbose(sprintf('Deleting %s', $path));
 
             if(is_dir($path))
             {
@@ -110,7 +110,7 @@
          */
         public static function touch(string $path): void
         {
-            Logger::getLogger()->verbose(sprintf('Touching file %s', $path));
+            Logger::getLogger()?->verbose(sprintf('Touching file %s', $path));
             if(@touch($path) === false)
             {
                 throw new IOException(sprintf('Failed to touch file %s', $path));
@@ -126,7 +126,7 @@
          */
         public static function writeFile(string $path, string $content): void
         {
-            Logger::getLogger()->verbose(sprintf('Writing file %s', $path));
+            Logger::getLogger()?->verbose(sprintf('Writing file %s', $path));
             
             // Ensure parent directory exists
             $directory = dirname($path);
@@ -150,7 +150,7 @@
          */
         public static function readFile(string $path): string
         {
-            Logger::getLogger()->verbose(sprintf('Reading file %s', $path));
+            Logger::getLogger()?->verbose(sprintf('Reading file %s', $path));
             $content = @file_get_contents($path);
             if($content === false)
             {
@@ -168,7 +168,7 @@
          */
         public static function copy(string $source, string $destination): void
         {
-            Logger::getLogger()->verbose(sprintf('Copying file from %s to %s', $source, $destination));
+            Logger::getLogger()?->verbose(sprintf('Copying file from %s to %s', $source, $destination));
             if(!@copy($source, $destination))
             {
                 throw new IOException(sprintf('Failed to copy file from %s to %s', $source, $destination));
@@ -184,7 +184,7 @@
          */
         public static function rename(string $oldName, string $newName): void
         {
-            Logger::getLogger()->verbose(sprintf('Renaming %s to %s', $oldName, $newName));
+            Logger::getLogger()?->verbose(sprintf('Renaming %s to %s', $oldName, $newName));
             if(!@rename($oldName, $newName))
             {
                 throw new IOException(sprintf('Failed to rename %s to %s', $oldName, $newName));
@@ -200,7 +200,7 @@
          */
         public static function chmod(string $path, int $mode): void
         {
-            Logger::getLogger()->verbose(sprintf('Changing permissions of %s to %o', $path, $mode));
+            Logger::getLogger()?->verbose(sprintf('Changing permissions of %s to %o', $path, $mode));
             if(!@chmod($path, $mode))
             {
                 throw new IOException(sprintf('Failed to change permissions of %s', $path));
@@ -215,7 +215,7 @@
          */
         public static function exists(string $path): bool
         {
-            Logger::getLogger()->verbose(sprintf('Checking if %s exists', $path));
+            Logger::getLogger()?->verbose(sprintf('Checking if %s exists', $path));
             return file_exists($path);
         }
 
@@ -227,7 +227,7 @@
          */
         public static function isDir(string $path): bool
         {
-            Logger::getLogger()->verbose(sprintf('Checking if %s is a directory', $path));
+            Logger::getLogger()?->verbose(sprintf('Checking if %s is a directory', $path));
             return is_dir($path);
         }
 
@@ -239,7 +239,7 @@
          */
         public static function isFile(string $path): bool
         {
-            Logger::getLogger()->verbose(sprintf('Checking if %s is a file', $path));
+            Logger::getLogger()?->verbose(sprintf('Checking if %s is a file', $path));
             return is_file($path);
         }
 
@@ -251,7 +251,7 @@
          */
         public static function isReadable(string $path): bool
         {
-            Logger::getLogger()->verbose(sprintf('Checking if %s is readable', $path));
+            Logger::getLogger()?->verbose(sprintf('Checking if %s is readable', $path));
             return is_readable($path);
         }
 
@@ -263,7 +263,7 @@
          */
         public static function isWritable(string $path): bool
         {
-            Logger::getLogger()->verbose(sprintf('Checking if %s is writable', $path));
+            Logger::getLogger()?->verbose(sprintf('Checking if %s is writable', $path));
             return is_writable($path);
         }
 
@@ -276,7 +276,7 @@
          */
         public static function filesize(string $path): int
         {
-            Logger::getLogger()->verbose(sprintf('Getting size of file %s', $path));
+            Logger::getLogger()?->verbose(sprintf('Getting size of file %s', $path));
             $size = @filesize($path);
             if($size === false)
             {
@@ -294,7 +294,7 @@
          */
         public static function symlink(string $target, string $link): void
         {
-            Logger::getLogger()->verbose(sprintf('Creating symbolic link from %s to %s', $link, $target));
+            Logger::getLogger()?->verbose(sprintf('Creating symbolic link from %s to %s', $link, $target));
             if(!@symlink($target, $link))
             {
                 throw new IOException(sprintf('Failed to create symbolic link from %s to %s', $link, $target));
@@ -310,7 +310,7 @@
          */
         public static function link(string $target, string $link): void
         {
-            Logger::getLogger()->verbose(sprintf('Creating hard link from %s to %s', $link, $target));
+            Logger::getLogger()?->verbose(sprintf('Creating hard link from %s to %s', $link, $target));
             if(!@link($target, $link))
             {
                 throw new IOException(sprintf('Failed to create hard link from %s to %s', $link, $target));

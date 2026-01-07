@@ -24,15 +24,28 @@
 
     class Logger
     {
+        private static bool $loggingDisabled = false;
         private static ?\ncc\Libraries\LogLib2\Logger $logger = null;
 
         /**
          * Returns the shared logger instance for the CLI interface
          *
-         * @return \ncc\Libraries\LogLib2\Logger The CLI interface logging instance
+         * @return \ncc\Libraries\LogLib2\Logger|null The CLI interface logging instance, or null if logging is disabled
          */
-        public static function getLogger(): \ncc\Libraries\LogLib2\Logger
+        public static function getLogger(): ?\ncc\Libraries\LogLib2\Logger
         {
+            // Since this is a frequently called method, we cache the logging disabled state
+            if(self::$loggingDisabled)
+            {
+                return null;
+            }
+
+            if(defined('NCC_DISABLE_LOGGING') || getenv('NCC_DISABLE_LOGGING') === '1')
+            {
+                self::$loggingDisabled = true;
+                return null;
+            }
+
             if(self::$logger === null)
             {
                 self::$logger = new \ncc\Libraries\LogLib2\Logger('ncc');

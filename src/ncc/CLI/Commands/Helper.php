@@ -38,7 +38,7 @@
         {
             if($projectPath === null)
             {
-                Logger::getLogger()->debug('No path provided, defaulting to cwd');
+                Logger::getLogger()?->debug('No path provided, defaulting to cwd');
                 $projectPath = getcwd();
             }
             else
@@ -50,25 +50,25 @@
                 }
                 else
                 {
-                    Logger::getLogger()->debug('Failed to resolve the real path of ' . $projectPath);
+                    Logger::getLogger()?->debug('Failed to resolve the real path of ' . $projectPath);
                 }
             }
 
-            Logger::getLogger()->debug("Resolving project configuration path: $projectPath");
+            Logger::getLogger()?->debug("Resolving project configuration path: $projectPath");
             if(!IO::exists($projectPath))
             {
-                Logger::getLogger()->debug('Resolution failed, path does not exist');
+                Logger::getLogger()?->debug('Resolution failed, path does not exist');
                 return null;
             }
 
             $projectConfigurationPath = Utilities::getProjectConfiguration($projectPath);
             if($projectConfigurationPath === null)
             {
-                Logger::getLogger()->debug("Resolution failed, project configuration not found");
+                Logger::getLogger()?->debug("Resolution failed, project configuration not found");
                 return null;
             }
 
-            Logger::getLogger()->debug("Resolution Success: $projectConfigurationPath");
+            Logger::getLogger()?->debug("Resolution Success: $projectConfigurationPath");
             return $projectConfigurationPath;
         }
     }

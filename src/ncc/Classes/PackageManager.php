@@ -53,7 +53,7 @@
          */
         public function __construct(string $dataDirectoryPath, bool $autoSave=true)
         {
-            Logger::getLogger()->debug(sprintf('Initializing PackageManager for directory: %s', $dataDirectoryPath));
+            Logger::getLogger()?->debug(sprintf('Initializing PackageManager for directory: %s', $dataDirectoryPath));
             
             if(empty($dataDirectoryPath))
             {
@@ -84,12 +84,12 @@
 
             if(IO::exists($this->packageLockPath))
             {
-                Logger::getLogger()->verbose(sprintf('Loading existing lock file: %s', $this->packageLockPath));
+                Logger::getLogger()?->verbose(sprintf('Loading existing lock file: %s', $this->packageLockPath));
                 $this->loadLockFile();
             }
             else
             {
-                Logger::getLogger()->verbose('No existing lock file found, starting fresh');
+                Logger::getLogger()?->verbose('No existing lock file found, starting fresh');
             }
         }
 
@@ -100,12 +100,12 @@
          */
         private function loadLockFile(): void
         {
-            Logger::getLogger()->debug('Parsing package lock file');
+            Logger::getLogger()?->debug('Parsing package lock file');
             $content = IO::readFile($this->packageLockPath);
 
             if(empty($content))
             {
-                Logger::getLogger()->verbose('Lock file is empty');
+                Logger::getLogger()?->verbose('Lock file is empty');
                 return; // Empty file is valid (no packages)
             }
 
@@ -134,7 +134,7 @@
                 {
                     $entry = PackageLockEntry::fromArray($entryData);
                     $this->entries[(string)$entry] = $entry;
-                    Logger::getLogger()->debug(sprintf('Loaded package entry: %s', (string)$entry));
+                    Logger::getLogger()?->debug(sprintf('Loaded package entry: %s', (string)$entry));
                 }
                 catch(InvalidArgumentException $e)
                 {
@@ -142,7 +142,7 @@
                 }
             }
             
-            Logger::getLogger()->verbose(sprintf('Loaded %d package entries from lock file', count($this->entries)));
+            Logger::getLogger()?->verbose(sprintf('Loaded %d package entries from lock file', count($this->entries)));
         }
 
         /**
@@ -186,7 +186,7 @@
          */
         public function getLatestVersion(string $packageName): ?PackageLockEntry
         {
-            Logger::getLogger()->debug(sprintf('Looking for latest version of package: %s', $packageName));
+            Logger::getLogger()?->debug(sprintf('Looking for latest version of package: %s', $packageName));
             
             if(empty($packageName))
             {
@@ -208,11 +208,11 @@
 
             if($latestEntry !== null)
             {
-                Logger::getLogger()->verbose(sprintf('Latest version of %s is %s', $packageName, $latestEntry->getVersion()));
+                Logger::getLogger()?->verbose(sprintf('Latest version of %s is %s', $packageName, $latestEntry->getVersion()));
             }
             else
             {
-                Logger::getLogger()->verbose(sprintf('No version found for package: %s', $packageName));
+                Logger::getLogger()?->verbose(sprintf('No version found for package: %s', $packageName));
             }
             
             return $latestEntry;
@@ -386,7 +386,7 @@
          */
         private function addEntry(PackageReader $reader): void
         {
-            Logger::getLogger()->debug(sprintf('Adding package entry: %s=%s', $reader->getAssembly()->getPackage(), $reader->getAssembly()->getVersion()));
+            Logger::getLogger()?->debug(sprintf('Adding package entry: %s=%s', $reader->getAssembly()->getPackage(), $reader->getAssembly()->getVersion()));
             
             $entry = new PackageLockEntry([
                 'package' => $reader->getAssembly()->getPackage(),
@@ -397,7 +397,7 @@
             $this->entries[(string)$entry] = $entry;
             $this->modified = true;
             
-            Logger::getLogger()->verbose(sprintf('Package entry added: %s', (string)$entry));
+            Logger::getLogger()?->verbose(sprintf('Package entry added: %s', (string)$entry));
 
             if($this->autoSave && $this->modified && !$this->readOnly)
             {
@@ -469,34 +469,34 @@
          */
         public function install(PackageReader $packageReader, array $options=[]): void
         {
-            Logger::getLogger()->verbose(sprintf('Installing package: %s=%s', $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()));
+            Logger::getLogger()?->verbose(sprintf('Installing package: %s=%s', $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()));
             
             // If the 'reinstall' option isn't set, we check if the pcakage is already installed
             if(!isset($options['reinstall']) && Runtime::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
             {
-                Logger::getLogger()->debug('Package already installed and reinstall not requested');
+                Logger::getLogger()?->debug('Package already installed and reinstall not requested');
                 throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
             }
 
             if(!IO::exists($this->getPackagePathFromEntry()))
             {
-                Logger::getLogger()->debug('Creating packages directory');
+                Logger::getLogger()?->debug('Creating packages directory');
                 IO::mkdir($this->getPackagePathFromEntry());
             }
 
             $packageInstallationPath = $this->getPackagePathFromEntry() . DIRECTORY_SEPARATOR .
                 sprintf("%s=%s", $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
             
-            Logger::getLogger()->verbose(sprintf('Installation path: %s', $packageInstallationPath));
+            Logger::getLogger()?->verbose(sprintf('Installation path: %s', $packageInstallationPath));
 
             // Remove the orphaned package if it already exists
             if(IO::exists($packageInstallationPath))
             {
-                Logger::getLogger()->debug('Removing existing package installation');
+                Logger::getLogger()?->debug('Removing existing package installation');
                 IO::rm($packageInstallationPath, false);
             }
 
-            Logger::getLogger()->verbose('Exporting package to installation path');
+            Logger::getLogger()?->verbose('Exporting package to installation path');
             $packageReader->exportPackage($packageInstallationPath); // Export (ONLY) the package to a file
             // The reason we don't copy the file directly is because the package could be embedded into another file,
             // and we need to extract just the package data.
@@ -504,12 +504,12 @@
             // Export cache file for faster subsequent imports
             try
             {
-                Logger::getLogger()->debug('Creating cache file for faster imports');
+                Logger::getLogger()?->debug('Creating cache file for faster imports');
                 $packageReader->exportCache($packageInstallationPath . '.cache');
             }
             catch(Exception $e)
             {
-                Logger::getLogger()->debug(sprintf('Failed to create cache file: %s', $e->getMessage()));
+                Logger::getLogger()?->debug(sprintf('Failed to create cache file: %s', $e->getMessage()));
                 // Cache creation is not critical, so we just log and continue
                 // The package will still work, just without cache optimization
             }
@@ -536,23 +536,23 @@
                     {
                         // No symlink exists, create one
                         $shouldCreateSymlink = true;
-                        Logger::getLogger()->verbose(sprintf('No symlink exists for %s, will create one', $projectName));
+                        Logger::getLogger()?->verbose(sprintf('No symlink exists for %s, will create one', $projectName));
                     }
                     else if ($isNccManaged)
                     {
                         // Symlink exists and is managed by ncc, update it
                         $shouldCreateSymlink = true;
-                        Logger::getLogger()->verbose(sprintf('Updating existing ncc-managed symlink for %s', $projectName));
+                        Logger::getLogger()?->verbose(sprintf('Updating existing ncc-managed symlink for %s', $projectName));
                     }
                     else if ($forceSymlink)
                     {
                         // Symlink exists but is not managed by ncc, force overwrite
                         $shouldCreateSymlink = true;
-                        Logger::getLogger()->verbose(sprintf('Force-overwriting existing symlink for %s', $projectName));
+                        Logger::getLogger()?->verbose(sprintf('Force-overwriting existing symlink for %s', $projectName));
                     }
                     else
                     {
-                        Logger::getLogger()->warning(sprintf('Symlink for %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $projectName));
+                        Logger::getLogger()?->warning(sprintf('Symlink for %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $projectName));
                     }
                     
                     if ($shouldCreateSymlink)
@@ -561,7 +561,7 @@
                         
                         if ($symlinkPath !== null)
                         {
-                            Logger::getLogger()->verbose(sprintf('Symlink created at: %s', $symlinkPath));
+                            Logger::getLogger()?->verbose(sprintf('Symlink created at: %s', $symlinkPath));
                             
                             // Update the package entry to mark symlink as registered
                             $entry = $this->getEntry($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
@@ -580,19 +580,19 @@
                 catch (Exception $e)
                 {
                     // Symlink creation is not critical, log the error and continue
-                    Logger::getLogger()->warning(sprintf('Failed to create symlink: %s', $e->getMessage()));
+                    Logger::getLogger()?->warning(sprintf('Failed to create symlink: %s', $e->getMessage()));
                 }
             }
             else if (!Runtime::isSystemUser())
             {
-                Logger::getLogger()->debug('Skipping symlink creation: not running as system user');
+                Logger::getLogger()?->debug('Skipping symlink creation: not running as system user');
             }
             else
             {
-                Logger::getLogger()->debug('Skipping symlink creation: --no-symlink option specified');
+                Logger::getLogger()?->debug('Skipping symlink creation: --no-symlink option specified');
             }
             
-            Logger::getLogger()->verbose('Package installation completed successfully');
+            Logger::getLogger()?->verbose('Package installation completed successfully');
         }
 
         /**
@@ -636,13 +636,13 @@
                             // Remove the symlink
                             if (SymlinkManager::removeSymlink($projectName))
                             {
-                                Logger::getLogger()->verbose(sprintf('Removed symlink for project: %s', $projectName));
+                                Logger::getLogger()?->verbose(sprintf('Removed symlink for project: %s', $projectName));
                             }
                         }
                         catch (Exception $e)
                         {
                             // Symlink removal is not critical, log the error and continue
-                            Logger::getLogger()->warning(sprintf('Failed to remove symlink: %s', $e->getMessage()));
+                            Logger::getLogger()?->warning(sprintf('Failed to remove symlink: %s', $e->getMessage()));
                         }
                     }
                     
