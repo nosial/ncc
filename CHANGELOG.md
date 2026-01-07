@@ -17,6 +17,8 @@ This is an ongoing update
    IDEs to index the dependencies of the project for better code completion and static analysis. This is designed to
    work simiarly to how Composer generates its autoload files.
  - Added docker template, generate it using `ncc project --generate=docker`
+ - Added optional `NCC_DISABLE_LOGGING` for php's defined constants or as a environment variable to disable all logging
+   in ncc, this is useful for production/debuging environments where ncc logging events are not desired.
 
 ### Changed
  - Updated `\ncc\Classes\IO::writeFile()` to create the parent directory if it does not exist when writing a file
