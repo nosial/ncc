@@ -85,38 +85,46 @@
                 return 1;
             }
 
-            switch(strtolower($template))
+            try
             {
-                case 'phpunit':
-                case 'tests':
-                case 'test':
-                    PhpunitGenerator::generate(dirname($projectPath), $projectConfiguration);
-                    break;
+                switch(strtolower($template))
+                {
+                    case 'phpunit':
+                    case 'tests':
+                    case 'test':
+                        PhpunitGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
 
-                case 'phpdoc':
-                case 'docs':
-                case 'doc':
-                    PhpdocGenerator::generate(dirname($projectPath), $projectConfiguration);
-                    break;
+                    case 'phpdoc':
+                    case 'docs':
+                    case 'doc':
+                        PhpdocGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
 
-                case 'makefile':
-                case 'make':
-                    MakefileGenerator::generate(dirname($projectPath), $projectConfiguration);
-                    break;
+                    case 'makefile':
+                    case 'make':
+                        MakefileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
 
-                case 'github-ci':
-                case 'github':
-                    GithubCIGenerator::generate(dirname($projectPath), $projectConfiguration);
-                    break;
+                    case 'github-ci':
+                    case 'github':
+                        GithubCIGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
 
-                case 'dockerfile':
-                case 'docker':
-                    DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
-                    break;
+                    case 'dockerfile':
+                    case 'docker':
+                        DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
 
-                default:
-                    Console::error("Unknown template: " . $template);
-                    return 1;
+                    default:
+                        Console::error("Unknown template: " . $template);
+                        return 1;
+                }
+            }
+            catch(Exception $e)
+            {
+                Console::error("Failed to generate template '" . $template . "': " . $e->getMessage());
+                return 1;
             }
 
             Console::out("Template '" . $template . "' generated successfully.");

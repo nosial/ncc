@@ -22,6 +22,8 @@
 
     namespace ncc\Interfaces;
 
+    use ncc\Exceptions\IOException;
+    use ncc\Exceptions\OperationException;
     use ncc\Objects\Project;
 
     interface TemplateGeneratorInterface
@@ -31,6 +33,8 @@
          *
          * @param string $projectDirectory The directory of the project where the template files will be generated.
          * @param Project $projectConfiguration The project configuration object containing project details.
+         * @throws OperationException If an error occurs during the generation process.
+         * @throws IOException If there is an I/O error while writing files.
          * @return void
          */
         public static function generate(string $projectDirectory, Project $projectConfiguration): void;
