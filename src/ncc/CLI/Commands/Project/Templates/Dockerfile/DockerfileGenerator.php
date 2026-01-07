@@ -45,8 +45,16 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         $webEntryPoint = $projectConfiguration->getWebEntryPoint();
         $assembly = $projectConfiguration->getAssembly();
         $packageName = $assembly->getPackage();
-        $defaultBuildConfig = $projectConfiguration->getDefaultBuild();
-        $buildConfiguration = $projectConfiguration->getBuildConfiguration($defaultBuildConfig);
+        
+        // Check if 'web_release' build configuration exists, use it if available
+        $buildConfigName = $projectConfiguration->getDefaultBuild();
+        $webBuildConfiguration = $projectConfiguration->getBuildConfiguration('web_release');
+        if($webBuildConfiguration !== null)
+        {
+            $buildConfigName = 'web_release';
+        }
+        
+        $buildConfiguration = $projectConfiguration->getBuildConfiguration($buildConfigName);
         $buildOutput = $buildConfiguration->getOutput();
 
         // Find the execution unit and get its entry point file
@@ -127,6 +135,7 @@ class DockerfileGenerator implements TemplateGeneratorInterface
 
         // Replace placeholders in Dockerfile
         $dockerfileContent = str_replace('${BUILD_OUTPUT}', $buildOutput, $dockerfileTemplate);
+        $dockerfileContent = str_replace('${BUILD_CONFIGURATION}', $buildConfigName, $dockerfileContent);
         $dockerfileContent = str_replace('${PACKAGE_NAME}', $packageName, $dockerfileContent);
         $dockerfileContent = str_replace('${WEB_ENTRY_POINT}', $webEntryPoint, $dockerfileContent);
         $dockerfileContent = str_replace('${WEB_ENTRY_POINT_FILE}', $webEntryPointFile, $dockerfileContent);

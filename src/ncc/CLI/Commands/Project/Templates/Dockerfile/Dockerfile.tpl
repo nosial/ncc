@@ -39,7 +39,7 @@ RUN echo "Installing ncc package manager..." \
 COPY . /app
 
 # 5. Install Project Dependencies and Build the NCC Package
-RUN ncc project install -y && ncc build --configuration=release
+RUN ncc project install -y && ncc build --configuration=${BUILD_CONFIGURATION}
 
 
 # --- STAGE 2: PRODUCTION (Final Runtime Image) ---
