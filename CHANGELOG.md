@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Changed
+ - Dockerfiles now checks for the build configuration `web_release`, otherwise it falls back to the default build
+   configuration.
+ - Refactored the ApplyTemplate command to handle exceptions in a better way.
 
 
 ## [3.0.3] - 2025-01-07
