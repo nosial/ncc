@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.3] - 2025-01-07
 
-This is an ongoing update
+This update introduces new fixes and changes
 
 ### Added
  - Added support to register symlinks of executable packages if installing under a system scope, this step can be
