@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Added
+ - Added web template, generate it using `ncc project --generate=web`
+ - Added command-line template, generate it using `ncc project --generate=cli`
+
 ### Changed
  - Dockerfiles now checks for the build configuration `web_release`, otherwise it falls back to the default build
    configuration.
  - Refactored the ApplyTemplate command to handle exceptions in a better way.
+
 
 
 ## [3.0.3] - 2025-01-07
@@ -43,6 +48,8 @@ This update introduces new fixes and changes
 ### Removed
  - Removed the shebang from the Makefile ncc.phar target
 
+
+
 ## [3.0.2] - 2026-01-05
 
 This update introduces minor bug fixes and improvements
@@ -53,6 +60,7 @@ This update introduces minor bug fixes and improvements
 
 ### Fixed
  - Fixed issue where `--reinstall` is not respected when installing local packages using `ncc install --local=<path-to-package>`
+
 
 
 ## [3.0.1] - 2026-01-05
@@ -69,6 +77,7 @@ This update introduces minor bug fixes and improvements
 
 ### Fixed
  - Fixed project detection to not convert ncc project formats and instead just attempt to compile them
+
 
 
 ## [3.0.0] - 2026-01-02
@@ -113,6 +122,7 @@ This update introduces a temporary fix
 
 ### Fixed
  - (Temporary) removed the ability to delete cache files because it's deleting important files that are needed.
+
 
 
 ## [2.1.7] - 2025-03-17
@@ -291,6 +301,8 @@ This update introduces a refactored code-base, code quality improvements, and be
  - Remove ComponentFileExtensions enum
  - Remove unused import and redundant scope validation method
 
+
+
 ## [2.0.3] - 2023-10-17
 
 This update includes enhanced support for PHP statements in AST traversal, a friendly CLI Progress Bar, and fixes
@@ -311,6 +323,7 @@ The changes improve the system's efficiency, error resilience, and user experien
   appears to be incorrect, added a optional parameter to the `registerExtension` method to allow the installer to pass
   the correct installation path.
  - Add error handling for unspecified package in PackageManagerMenu
+
 
 
 ## [2.0.2] - 2023-10-13
