@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.4] - 2025-01-08
 
-This is an ongoing update
+This update introduces new templates and improvements
 
 ### Added
  - Added web template, generate it using `ncc project --generate=web`
