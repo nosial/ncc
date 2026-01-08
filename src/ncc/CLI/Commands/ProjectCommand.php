@@ -141,6 +141,9 @@
                     Console::out('  phpdoc, doc, docs        Generate PHPDoc documentation configuration');
                     Console::out('  makefile, make           Generate Makefile for build automation');
                     Console::out('  github-ci, github        Generate GitHub Actions CI/CD workflow');
+                    Console::out('  dockerfile, docker       Generate Dockerfile for containerization for the project\'s web entry point');
+                    Console::out('  web                      Generate web project template with web entry point and build configuration');
+                    Console::out('  commandline, cli         Generate command-line project template with main execution unit');
                     Console::out(PHP_EOL . 'Examples:');
                     Console::out('  ncc project --generate=phpunit');
                     Console::out('  ncc project --generate=makefile --path=/path/to/project');

@@ -26,6 +26,7 @@
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\CLI\Commands\Helper;
+    use ncc\CLI\Commands\Project\Templates\Commandline\CommandlineTemplate;
     use ncc\CLI\Commands\Project\Templates\Dockerfile\DockerfileGenerator;
     use ncc\CLI\Commands\Project\Templates\GithubCI\GithubCIGenerator;
     use ncc\CLI\Commands\Project\Templates\Makefile\MakefileGenerator;
@@ -115,6 +116,11 @@
                     case 'dockerfile':
                     case 'docker':
                         DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                        break;
+
+                    case 'commandline':
+                    case 'cli':
+                        CommandlineTemplate::generate(dirname($projectPath), $projectConfiguration);
                         break;
 
                     case 'web':
