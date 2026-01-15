@@ -31,3 +31,6 @@
 [submodule "dependencies/php-encryption"]
 	path = dependencies/php-encryption
 	url = https://github.com/defuse/php-encryption
+[submodule "dependencies/fslib"]
+	path = dependencies/fslib
+	url = https://github.com/nosial/fslib
