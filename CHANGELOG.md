@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Added
+ - Added new command `ncc project docker-update` which updates a running Docker container with the latest compiled
+   package, useful for live-testing changes without rebuilding or restarting the container. (Experimental)
+
+### Changed
+ - Updated `\ncc\Classes\IO::mkdir()` to check parent directory writability before attempting to create directories,
+   providing better error messages when directory creation fails due to permission issues.
 
 
 ## [3.0.4] - 2025-01-08

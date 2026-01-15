@@ -27,6 +27,7 @@
     use ncc\CLI\Commands\Project\ApplyTemplate;
     use ncc\CLI\Commands\Project\ConvertProject;
     use ncc\CLI\Commands\Project\CreateProject;
+    use ncc\CLI\Commands\Project\DockerUpdate;
     use ncc\CLI\Commands\Project\GenerateStubs;
     use ncc\CLI\Commands\Project\InstallDependencies;
     use ncc\CLI\Commands\Project\ValidateProject;
@@ -62,6 +63,10 @@
             {
                 return GenerateStubs::handle($argv);
             }
+            elseif(isset($argv['docker-update']))
+            {
+                return DockerUpdate::handle($argv);
+            }
             elseif(isset($argv['help']) || isset($argv['h']))
             {
                 $helpCommand = $argv['help'] ?? $argv['h'] ?? null;
@@ -96,6 +101,7 @@
                 Console::out('  convert                   Convert an existing project to an ncc project');
                 Console::out('  install                   Install all project dependencies');
                 Console::out('  stubs                     Generate stubs for all project dependencies (like vendor/autoload.php)');
+                Console::out('  docker-update             Update a running Docker container with the latest compiled package');
                 Console::out(PHP_EOL . 'Use "ncc project [command] --help" for more information about a command.');
                 Console::out('Use "ncc project generate --help" for template options.');
                 return;
@@ -211,6 +217,33 @@
                     Console::out(PHP_EOL . 'Note:');
                     Console::out('  All dependencies must be installed before generating stubs.');
                     Console::out('  If any packages are missing, run: ncc project install');
+                    break;
+
+                case 'docker-update':
+                    Console::out('Usage: ncc project docker-update [options]' . PHP_EOL);
+                    Console::out('Updates a running Docker container with the latest compiled package.');
+                    Console::out('This is useful for live-testing changes without rebuilding or restarting');
+                    Console::out('the container. The command:');
+                    Console::out('  1. Parses docker-compose.yml to detect the container name');
+                    Console::out('  2. Compiles the package locally based on your source code changes');
+                    Console::out('  3. Transfers the compiled .ncc file to the Docker container');
+                    Console::out('  4. Uninstalls the old package version from the container');
+                    Console::out('  5. Installs the new package version in the container');
+                    Console::out('Changes take effect immediately.' . PHP_EOL);
+                    Console::out('Options:');
+                    Console::out('  --path            (Optional) Path to the project directory');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out('  --configuration   (Optional) Build configuration to use');
+                    Console::out('  --config          Alias for --configuration');
+                    Console::out(PHP_EOL . 'Examples:');
+                    Console::out('  ncc project docker-update');
+                    Console::out('  ncc project docker-update --path=/path/to/project');
+                    Console::out('  ncc project docker-update --config=debug');
+                    Console::out(PHP_EOL . 'Requirements:');
+                    Console::out('  - docker-compose.yml must exist (generate with: ncc project --generate=docker)');
+                    Console::out('  - Docker must be installed and running');
+                    Console::out('  - The container specified in docker-compose.yml must be running');
+                    Console::out('  - ncc must be installed in the container');
                     break;
 
                 default:

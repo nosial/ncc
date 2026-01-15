@@ -39,6 +39,21 @@
         public static function mkdir(string $path, bool $recursive=true): void
         {
             Logger::getLogger()?->verbose(sprintf('Creating directory %s', $path));
+
+            $parentDir = dirname($path);
+            
+            // Only check parent writability if parent exists OR if we're not creating recursively
+            if(!$recursive && !self::isWritable($parentDir))
+            {
+                throw new IOException(sprintf('Cannot create directory %s: Parent directory is not writable', $path));
+            }
+            
+            // In recursive mode, check writability only if parent exists
+            if($recursive && file_exists($parentDir) && !self::isWritable($parentDir))
+            {
+                throw new IOException(sprintf('Cannot create directory %s: Parent directory is not writable', $path));
+            }
+
             if(@mkdir($path, recursive: $recursive) === false && !is_dir($path))
             {
                 throw new IOException(sprintf('Failed to create directory %s', $path));
