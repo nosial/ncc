@@ -22,10 +22,10 @@
 
     namespace ncc\Compilers;
 
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IOException;
 
     /**
      * PhpCompiler extends PackageCompiler to create self-executable PHP packages.

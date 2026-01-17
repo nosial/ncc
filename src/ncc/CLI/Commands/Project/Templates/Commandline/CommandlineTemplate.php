@@ -23,7 +23,7 @@
     namespace ncc\CLI\Commands\Project\Templates\Commandline;
 
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Interfaces\TemplateGeneratorInterface;
     use ncc\Objects\Project;
 
@@ -39,7 +39,7 @@
 
             if(IO::exists($targetEntryPath))
             {
-                IO::rm($targetEntryPath);
+                IO::delete($targetEntryPath);
             }
 
             $targetEntry = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'main.tpl');

@@ -22,10 +22,10 @@
 
     namespace ncc\ArchiveExtractors;
 
-    use ncc\Classes\IO;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IO;
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\ArchiveInterface;
+    use ncc\Libraries\fslib\IOException;
 
     class TarArchive implements ArchiveInterface
     {
@@ -48,9 +48,9 @@
             }
 
             // Create destination directory if it doesn't exist
-            if (!IO::isDir($destinationPath))
+            if (!IO::isDirectory($destinationPath))
             {
-                IO::mkdir($destinationPath);
+                IO::createDirectory($destinationPath);
             }
 
             // Detect compression type and open the file accordingly
@@ -152,18 +152,18 @@
                 if ($fileInfo['type'] === '5' || $fileInfo['type'] === 'dir')
                 {
                     // Directory
-                    if (!IO::isDir($fullPath))
+                    if (!IO::isDirectory($fullPath))
                     {
-                        IO::mkdir($fullPath);
+                        IO::createDirectory($fullPath);
                     }
                 }
                 elseif ($fileInfo['type'] === '0' || $fileInfo['type'] === '' || $fileInfo['type'] === 'file')
                 {
                     // Regular file
                     $dirPath = dirname($fullPath);
-                    if (!IO::isDir($dirPath))
+                    if (!IO::isDirectory($dirPath))
                     {
-                        IO::mkdir($dirPath);
+                        IO::createDirectory($dirPath);
                     }
 
                     // Extract file content
@@ -196,7 +196,7 @@
                         {
                             IO::chmod($fullPath, $fileInfo['mode']);
                         }
-                        catch(IOException $e)
+                        catch(IOException)
                         {
                             // Ignore permission errors, continue extraction
                         }

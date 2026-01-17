@@ -23,7 +23,7 @@
     namespace ncc\CLI\Commands\Project\Templates\Phpdoc;
 
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Interfaces\TemplateGeneratorInterface;
     use ncc\Objects\Project;
 
@@ -40,7 +40,7 @@
             // Remove the Makefile if it exists
             if(IO::exists($targetFile))
             {
-                IO::rm($targetFile);
+                IO::delete($targetFile);
             }
 
             // Create a basic Makefile

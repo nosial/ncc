@@ -24,6 +24,7 @@
 
     use Exception;
     use ncc\Interfaces\ReferenceInterface;
+    use ncc\Libraries\fslib\IO;
     use ncc\Runtime;
 
     /**
@@ -445,7 +446,7 @@
         public function url_stat(string $path, int $flags): array|false
         {
             // Check if this is a cached phar file
-            if (isset(self::$pharCache[$path]) && file_exists(self::$pharCache[$path]))
+            if (isset(self::$pharCache[$path]) && IO::exists(self::$pharCache[$path]))
             {
                 return stat(self::$pharCache[$path]);
             }
@@ -812,7 +813,7 @@
             // Check if already extracted
             if (isset(self::$pharCache[$nccPath]))
             {
-                if (file_exists(self::$pharCache[$nccPath]))
+                if (IO::exists(self::$pharCache[$nccPath]))
                 {
                     return self::$pharCache[$nccPath];
                 }
@@ -831,19 +832,16 @@
 
                 // Create temp directory if it doesn't exist
                 $tempDir = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . 'phars';
-                if (!IO::isDir($tempDir))
+                if (!IO::isDirectory($tempDir))
                 {
-                    IO::mkdir($tempDir, true);
+                    IO::createDirectory($tempDir, true);
                 }
 
                 // Generate unique temp file path
                 $tempPath = $tempDir . DIRECTORY_SEPARATOR . basename($resourcePath) . '.' . uniqid();
 
                 // Write the phar data to the temp file
-                if (file_put_contents($tempPath, $pharData) === false)
-                {
-                    return null;
-                }
+                IO::writeFile($tempPath, $pharData);
 
                 // Register for cleanup on shutdown
                 ShutdownHandler::flagTemporary($tempPath);

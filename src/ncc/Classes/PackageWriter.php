@@ -25,8 +25,9 @@
     use InvalidArgumentException;
     use ncc\Enums\PackageStructure;
     use ncc\Enums\WritingMode;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
 
     class PackageWriter
     {
@@ -50,8 +51,8 @@
          *
          * @param string $filePath The path to the package file to create or overwrite.
          * @param bool $overwrite Whether to overwrite the file if it already exists. Default is true.
-         * @throws PackageException if the file cannot be created or opened.
-         * @throws IOException Thrown if there was an IO error
+         * @throws OperationException Thrown if the file already exists and overwrite is false
+         * @throws IOException Thrown if there are issues creating or writing to the file.
          */
         public function __construct(string $filePath, bool $overwrite=true)
         {
@@ -65,12 +66,12 @@
                     throw new OperationException("File already exists: " . $filePath);
                 }
                 Logger::getLogger()?->verbose('Overwriting existing file');
-                IO::rm($filePath, false);
+                IO::delete($filePath, false);
             }
 
             // Create the file
             Logger::getLogger()?->verbose('Creating package file');
-            IO::mkdir(dirname($filePath));
+            IO::createDirectory(dirname($filePath));
             IO::touch($filePath);
             $this->fileHandler = fopen($filePath, 'a+b');
             if($this->fileHandler === false)

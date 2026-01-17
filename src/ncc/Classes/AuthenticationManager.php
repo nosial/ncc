@@ -24,8 +24,9 @@
 
     use Exception;
     use ncc\Abstracts\AbstractAuthentication;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\PhpEncryption\Crypto;
     use ncc\Libraries\PhpEncryption\Exception\EnvironmentIsBrokenException;
 
@@ -215,12 +216,12 @@
             }
 
             // Ensure the directory exists
-            if(!IO::isDir($this->dataDirectoryPath))
+            if(!IO::isDirectory($this->dataDirectoryPath))
             {
                 // Check if we can create the directory
                 try
                 {
-                    IO::mkdir($this->dataDirectoryPath);
+                    IO::createDirectory($this->dataDirectoryPath);
                 }
                 catch(IOException $e)
                 {
@@ -262,12 +263,12 @@
             }
 
             // Ensure the directory exists
-            if(!IO::isDir($this->dataDirectoryPath))
+            if(!IO::isDirectory($this->dataDirectoryPath))
             {
                 // Check if we can create the directory
                 try
                 {
-                    IO::mkdir($this->dataDirectoryPath);
+                    IO::createDirectory($this->dataDirectoryPath);
                 }
                 catch(IOException $e)
                 {

@@ -22,7 +22,7 @@
 
     namespace ncc\CLI\Commands;
 
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\Utilities;
 

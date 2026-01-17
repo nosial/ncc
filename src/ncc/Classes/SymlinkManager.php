@@ -22,8 +22,9 @@
 
     namespace ncc\Classes;
 
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
 
     class SymlinkManager
     {
@@ -55,12 +56,12 @@
             Logger::getLogger()?->debug(sprintf('Symlink path: %s', $symlinkPath));
             
             // Check if symlink already exists
-            if (file_exists($symlinkPath))
+            if (IO::exists($symlinkPath))
             {
                 // Check if it's managed by ncc (contains our marker)
-                if (is_file($symlinkPath) && is_readable($symlinkPath))
+                if (IO::isFile($symlinkPath) && IO::isReadable($symlinkPath))
                 {
-                    $content = file_get_contents($symlinkPath);
+                    $content = IO::readFile($symlinkPath);
                     $isNccManaged = strpos($content, '# NCC_MANAGED_SYMLINK') !== false;
                     
                     if (!$isNccManaged && !$force)
@@ -83,24 +84,23 @@
                 
                 // Remove existing file/symlink
                 Logger::getLogger()?->debug(sprintf('Removing existing symlink: %s', $symlinkPath));
-                if (!@unlink($symlinkPath))
-                {
-                    throw new OperationException(sprintf('Failed to remove existing symlink: %s', $symlinkPath));
-                }
+                IO::delete($symlinkPath);
             }
             
             // Create the shell script
             $scriptContent = self::generateSymlinkScript($packageName);
             
             // Write the script
-            if (file_put_contents($symlinkPath, $scriptContent) === false)
-            {
+            try {
+                IO::writeFile($symlinkPath, $scriptContent);
+            } catch (IOException $e) {
                 throw new OperationException(sprintf('Failed to create symlink script at: %s', $symlinkPath));
             }
             
             // Make it executable
-            if (!chmod($symlinkPath, 0755))
-            {
+            try {
+                IO::chmod($symlinkPath, 0755);
+            } catch (IOException $e) {
                 throw new OperationException(sprintf('Failed to make symlink executable: %s', $symlinkPath));
             }
             
@@ -124,27 +124,28 @@
             
             foreach ($binDirectories as $binDir)
             {
-                if (!is_dir($binDir))
+                if (!IO::isDirectory($binDir))
                 {
                     continue;
                 }
                 
                 $symlinkPath = $binDir . DIRECTORY_SEPARATOR . $symlinkName;
                 
-                if (!file_exists($symlinkPath))
+                if (!IO::exists($symlinkPath))
                 {
                     continue;
                 }
                 
                 // Check if it's managed by ncc
-                if (is_file($symlinkPath) && is_readable($symlinkPath))
+                if (IO::isFile($symlinkPath) && IO::isReadable($symlinkPath))
                 {
-                    $content = file_get_contents($symlinkPath);
+                    $content = IO::readFile($symlinkPath);
                     if (strpos($content, '# NCC_MANAGED_SYMLINK') !== false)
                     {
                         Logger::getLogger()?->verbose(sprintf('Removing ncc-managed symlink: %s', $symlinkPath));
-                        if (!@unlink($symlinkPath))
-                        {
+                        try {
+                            IO::delete($symlinkPath);
+                        } catch (IOException $e) {
                             throw new OperationException(sprintf('Failed to remove symlink: %s', $symlinkPath));
                         }
                         return true;
@@ -185,7 +186,7 @@ BASH;
             
             foreach ($binDirectories as $dir)
             {
-                if (is_dir($dir) && is_writable($dir))
+                if (IO::isDirectory($dir) && IO::isWritable($dir))
                 {
                     Logger::getLogger()?->debug(sprintf('Found writable bin directory: %s', $dir));
                     return $dir;
@@ -232,13 +233,13 @@ BASH;
             
             foreach ($binDirectories as $binDir)
             {
-                if (!is_dir($binDir))
+                if (!IO::isDirectory($binDir))
                 {
                     continue;
                 }
                 
                 $symlinkPath = $binDir . DIRECTORY_SEPARATOR . $symlinkName;
-                if (file_exists($symlinkPath))
+                if (IO::exists($symlinkPath))
                 {
                     return true;
                 }
@@ -260,16 +261,16 @@ BASH;
             
             foreach ($binDirectories as $binDir)
             {
-                if (!is_dir($binDir))
+                if (!IO::isDirectory($binDir))
                 {
                     continue;
                 }
                 
                 $symlinkPath = $binDir . DIRECTORY_SEPARATOR . $symlinkName;
                 
-                if (file_exists($symlinkPath) && is_file($symlinkPath) && is_readable($symlinkPath))
+                if (IO::exists($symlinkPath) && IO::isFile($symlinkPath) && IO::isReadable($symlinkPath))
                 {
-                    $content = file_get_contents($symlinkPath);
+                    $content = IO::readFile($symlinkPath);
                     if (strpos($content, '# NCC_MANAGED_SYMLINK') !== false)
                     {
                         return true;

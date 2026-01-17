@@ -24,7 +24,7 @@
 
     use ncc\Classes\Cache;
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\CLI\Commands\AuthenticationCommand;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecuteCommand;

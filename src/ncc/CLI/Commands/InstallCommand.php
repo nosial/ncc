@@ -25,7 +25,7 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
     use ncc\Enums\ProjectType;

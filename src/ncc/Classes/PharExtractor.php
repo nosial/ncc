@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use Exception;
+    use ncc\Libraries\fslib\IO;
     use Phar;
     use PharData;
     use RecursiveDirectoryIterator;
@@ -73,7 +74,7 @@
             {
                 // Create a temporary directory for extraction
                 $tempDir = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . 'phar_extraction_' . uniqid();
-                IO::mkdir($tempDir, true);
+                IO::createDirectory($tempDir, true);
 
                 Logger::getLogger()?->verbose(sprintf('Extracting phar to temporary directory: %s', $tempDir));
 

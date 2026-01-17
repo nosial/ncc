@@ -24,8 +24,8 @@
 
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Objects\Project;
 
     class CreateProject extends AbstractCommandHandler
@@ -71,7 +71,7 @@
             // If the project path does not exist, and it failed to create it, throw an error.
             try
             {
-                IO::mkdir($projectPath);
+                IO::createDirectory($projectPath);
             }
             catch (IOException $e)
             {
@@ -86,7 +86,7 @@
             {
                 if(!IO::exists($sourcePath))
                 {
-                    IO::mkdir($sourcePath);
+                    IO::createDirectory($sourcePath);
                 }
             }
             catch(IOException $e)

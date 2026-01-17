@@ -23,6 +23,7 @@
     namespace ncc\Enums;
 
     use ncc\Abstracts\AbstractProjectConverter;
+    use ncc\Libraries\fslib\IO;
     use ncc\ProjectConverters\ComposerProjectConverter;
     use ncc\ProjectConverters\LegacyProjectConverter;
 
@@ -45,7 +46,7 @@
             
             // First, check if the file exists in the current directory
             $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->value;
-            if (file_exists($directFilePath) && is_file($directFilePath))
+            if (IO::exists($directFilePath) && IO::isFile($directFilePath))
             {
                 return $directFilePath;
             }
@@ -68,10 +69,10 @@
                     }
                     
                     $subPath = $path . DIRECTORY_SEPARATOR . $item;
-                    if (is_dir($subPath))
+                    if (IO::isDirectory($subPath))
                     {
                         $subFilePath = $subPath . DIRECTORY_SEPARATOR . $this->value;
-                        if (file_exists($subFilePath) && is_file($subFilePath))
+                        if (IO::exists($subFilePath) && IO::isFile($subFilePath))
                         {
                             return $subFilePath;
                         }
@@ -117,7 +118,7 @@
             foreach ($projectFiles as $filename)
             {
                 $directFilePath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
-                if (file_exists($directFilePath) && is_file($directFilePath))
+                if (IO::exists($directFilePath) && IO::isFile($directFilePath))
                 {
                     return $directFilePath;
                 }
@@ -136,12 +137,12 @@
                     }
                     
                     $subPath = $path . DIRECTORY_SEPARATOR . $item;
-                    if (is_dir($subPath))
+                    if (IO::isDirectory($subPath))
                     {
                         foreach ($projectFiles as $filename)
                         {
                             $subFilePath = $subPath . DIRECTORY_SEPARATOR . $filename;
-                            if (file_exists($subFilePath) && is_file($subFilePath))
+                            if (IO::exists($subFilePath) && IO::isFile($subFilePath))
                             {
                                 return $subFilePath;
                             }

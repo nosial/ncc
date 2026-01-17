@@ -23,12 +23,12 @@
     namespace ncc\ProjectConverters;
 
     use ncc\Abstracts\AbstractProjectConverter;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\Utilities;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;

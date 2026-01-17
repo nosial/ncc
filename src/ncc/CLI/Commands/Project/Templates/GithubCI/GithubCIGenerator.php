@@ -23,7 +23,7 @@
 namespace ncc\CLI\Commands\Project\Templates\GithubCI;
 
 use ncc\Classes\Console;
-use ncc\Classes\IO;
+use ncc\Libraries\fslib\IO;
 use ncc\Interfaces\TemplateGeneratorInterface;
 use ncc\Objects\Project;
 
@@ -40,21 +40,21 @@ class GithubCIGenerator implements TemplateGeneratorInterface
         // Create .github/workflows directory if it doesn't exist
         if(!IO::exists(dirname($targetFile)))
         {
-            IO::mkdir(dirname($targetFile));
+            IO::createDirectory(dirname($targetFile));
         }
         if(!IO::exists(dirname($secondaryTargetFile)))
         {
-            IO::mkdir(dirname($targetFile));
+            IO::createDirectory(dirname($targetFile));
         }
 
         // Remove the workflow file if it exists
         if(IO::exists($targetFile))
         {
-            IO::rm($targetFile);
+            IO::delete($targetFile);
         }
         if(IO::exists($secondaryTargetFile))
         {
-            IO::rm($secondaryTargetFile);
+            IO::delete($secondaryTargetFile);
         }
 
         // Load templates

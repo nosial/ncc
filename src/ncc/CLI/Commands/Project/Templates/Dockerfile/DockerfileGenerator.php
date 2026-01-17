@@ -23,7 +23,7 @@
 namespace ncc\CLI\Commands\Project\Templates\Dockerfile;
 
 use ncc\Classes\Console;
-use ncc\Classes\IO;
+use ncc\Libraries\fslib\IO;
 use ncc\Interfaces\TemplateGeneratorInterface;
 use ncc\Objects\Project;
 
@@ -218,7 +218,7 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         $dockerfilePath = $projectDirectory . DIRECTORY_SEPARATOR . 'Dockerfile';
         if(IO::exists($dockerfilePath))
         {
-            IO::rm($dockerfilePath);
+            IO::delete($dockerfilePath);
         }
         IO::writeFile($dockerfilePath, $dockerfileContent);
         Console::out(sprintf("Generated File: %s", $dockerfilePath));
@@ -227,7 +227,7 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         $nginxPath = $projectDirectory . DIRECTORY_SEPARATOR . 'nginx.conf';
         if(IO::exists($nginxPath))
         {
-            IO::rm($nginxPath);
+            IO::delete($nginxPath);
         }
         IO::writeFile($nginxPath, $nginxContent);
 
@@ -235,7 +235,7 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         $supervisordPath = $projectDirectory . DIRECTORY_SEPARATOR . 'supervisord.conf';
         if(IO::exists($supervisordPath))
         {
-            IO::rm($supervisordPath);
+            IO::delete($supervisordPath);
         }
         IO::writeFile($supervisordPath, $supervisordContent);
         Console::out(sprintf("Generated File: %s", $supervisordPath));
@@ -252,11 +252,11 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         $dockerComposePath = $projectDirectory . DIRECTORY_SEPARATOR . 'docker-compose.yml';
         if(IO::exists($dockerComposePath))
         {
-            IO::rm($dockerComposePath);
+            IO::delete($dockerComposePath);
         }
         IO::writeFile($dockerComposePath, $dockerComposeContent);
         Console::out(sprintf("Generated File: %s", $dockerComposePath));
-            IO::rm($entrypointPath);
+            IO::delete($entrypointPath);
         }
         IO::writeFile($entrypointPath, $entrypointContent);
         Console::out(sprintf("Generated File: %s", $entrypointPath));

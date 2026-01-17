@@ -22,9 +22,9 @@
 
     namespace ncc\CLI;
 
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IOException;
 
     class ShutdownHandler
     {
@@ -72,9 +72,9 @@
 
                     try
                     {
-                        IO::rm($temporaryFile, false);
+                        IO::delete($temporaryFile);
                     }
-                    catch(IOException $e)
+                    catch(IOException)
                     {
                         Logger::getLogger()?->warning(sprintf("Cannot delete temporary file '%s' due to insufficient permissions", $temporaryFile));
                     }

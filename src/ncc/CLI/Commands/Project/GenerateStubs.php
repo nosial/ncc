@@ -25,7 +25,7 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\PackageReader;
     use ncc\CLI\Commands\Helper;
     use ncc\Exceptions\InvalidPropertyException;
@@ -247,8 +247,8 @@
             }
             else
             {
-                $outputPath = realpath($outputPath);
-                if($outputPath === false)
+                $outputPath = IO::getRealPath($outputPath);
+                if($outputPath === null)
                 {
                     Console::error("The specified output path does not exist");
                     return 1;
@@ -260,7 +260,7 @@
             {
                 try
                 {
-                    IO::mkdir($outputPath);
+                    IO::createDirectory($outputPath);
                 }
                 catch(Exception $e)
                 {
@@ -289,7 +289,7 @@
                     // Remove existing directory if it exists
                     if(IO::exists($packageOutputPath))
                     {
-                        IO::rm($packageOutputPath, true);
+                        IO::delete($packageOutputPath, true);
                     }
 
                     $packageReader->extract($packageOutputPath);

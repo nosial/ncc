@@ -15,6 +15,7 @@ DEPENDENCY_PROCESS = dependencies/Process
 DEPENDENCY_SEMVER = dependencies/semver/src/*
 DEPENDENCY_RANDOM_COMPAT = dependencies/random_compat/lib
 DEPENDENCY_PHP_ENCRYPTION = dependencies/php-encryption/src
+DEPENDENCY_FSLIB = dependencies/fslib/src/fslib
 
 .PHONY: build clean dependencies install
 
@@ -30,7 +31,8 @@ dependencies: src/ncc/Libraries/pal \
 	src/ncc/Libraries/Process \
 	src/ncc/Libraries/semver \
 	src/ncc/Libraries/random_compat \
-	src/ncc/Libraries/PhpEncryption
+	src/ncc/Libraries/PhpEncryption \
+	src/ncc/Libraries/fslib
 
 clean:
 	rm -rf $(TARGET_DIR)
@@ -196,4 +198,17 @@ src/ncc/Libraries/PhpEncryption:
 		-e 's/\\Defuse\\Crypto\\/\\ncc\\Libraries\\PhpEncryption\\/g' \
 		-e "s/'Defuse\\\\\\\\Crypto\\\\\\\\/'ncc\\\\\\\\Libraries\\\\\\\\PhpEncryption\\\\\\\\/g" \
 		-e 's/"Defuse\\\\Crypto\\\\/"ncc\\\\Libraries\\\\PhpEncryption\\\\/g' \
+		{} \;
+
+src/ncc/Libraries/fslib:
+	mkdir -p src/ncc/Libraries/fslib/Objects
+	cp -r $(DEPENDENCY_FSLIB)/Objects/* src/ncc/Libraries/fslib/Objects/
+	cp $(DEPENDENCY_FSLIB)/*.php src/ncc/Libraries/fslib/
+	[ -f dependencies/fslib/LICENSE ] && cp dependencies/fslib/LICENSE src/ncc/Libraries/fslib/ || true
+	[ -f dependencies/fslib/README.md ] && cp dependencies/fslib/README.md src/ncc/Libraries/fslib/ || true
+	find src/ncc/Libraries/fslib -name "*.php" -exec sed -i \
+		-e 's/namespace fslib;/namespace ncc\\Libraries\\fslib;/g' \
+		-e 's/namespace fslib\\/namespace ncc\\Libraries\\fslib\\/g' \
+		-e 's/use fslib\\/use ncc\\Libraries\\fslib\\/g' \
+		-e 's/use LogLib2\\/use ncc\\Libraries\\LogLib2\\/g' \
 		{} \;

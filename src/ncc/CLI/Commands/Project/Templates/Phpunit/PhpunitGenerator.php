@@ -23,7 +23,7 @@
     namespace ncc\CLI\Commands\Project\Templates\Phpunit;
 
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Interfaces\TemplateGeneratorInterface;
     use ncc\Objects\Project;
 
@@ -39,17 +39,17 @@
 
             if(IO::exists($targetFile))
             {
-                IO::rm($targetFile);
+                IO::delete($targetFile);
             }
 
             if(IO::exists($targetBootstrapFile))
             {
-                IO::rm($targetBootstrapFile);
+                IO::delete($targetBootstrapFile);
             }
 
             if(!IO::exists(dirname($targetBootstrapFile)))
             {
-                IO::mkdir(dirname($targetBootstrapFile));
+                IO::createDirectory(dirname($targetBootstrapFile));
             }
 
             $basePhpunit = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'phpunit.tpl');

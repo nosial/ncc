@@ -27,6 +27,7 @@
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IO;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
     use ncc\Objects\Project\ExecutionUnit;

@@ -27,9 +27,10 @@
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\PackageStructure;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\ReferenceInterface;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\pal\Autoloader;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
@@ -452,9 +453,9 @@
         public function extract(string $outputDirectory): void
         {
             // Create the directory if it doesn't exist
-            if(!IO::isDir($outputDirectory))
+            if(!IO::isDirectory($outputDirectory))
             {
-                IO::mkdir($outputDirectory);
+                IO::createDirectory($outputDirectory);
             }
 
             // Extract all the references from the package
@@ -469,9 +470,9 @@
 
                 // Everything is just written as-is
                 $outputPath = rtrim($outputDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $reference->getName();
-                if(!is_dir(dirname($outputPath)))
+                if(!IO::isDirectory(dirname($outputPath)))
                 {
-                    IO::mkdir(dirname($outputPath));
+                    IO::createDirectory(dirname($outputPath));
                 }
 
                 IO::writeFile($outputPath, $this->read($reference));
@@ -561,7 +562,7 @@
             $searchSequence = PackageStructure::START_PACKAGE->value . PackageStructure::MAGIC_BYTES->value . PackageStructure::TERMINATE->value;
             $searchLength = strlen($searchSequence);
 
-            $fileSize = IO::filesize($this->filePath);
+            $fileSize = IO::getFileSize($this->filePath);
             if ($fileSize < $searchLength)
             {
                 throw new InvalidArgumentException("File is too small to contain a valid package: " . $this->filePath);
@@ -972,7 +973,7 @@
             $cacheData = [
                 'version' => 1, // Cache format version for future compatibility
                 'file_path' => $this->filePath,
-                'file_size' => filesize($this->filePath),
+                'file_size' => IO::getFileSize($this->filePath),
                 'file_mtime' => filemtime($this->filePath),
                 'start_offset' => $this->startOffset,
                 'end_offset' => $this->endOffset,
@@ -1039,7 +1040,7 @@
             }
 
             // Validate cache against current package file
-            $currentSize = filesize($this->filePath);
+            $currentSize = IO::getFileSize($this->filePath);
             $currentMtime = filemtime($this->filePath);
 
             if($cacheData['file_size'] !== $currentSize || $cacheData['file_mtime'] !== $currentMtime)
@@ -1142,13 +1143,13 @@
             Logger::getLogger()?->verbose(sprintf('Executing PHP script: %s', $scriptPath));
 
             // Verify the script exists, if not try with .php extension
-            if(!file_exists($scriptPath))
+            if(!IO::exists($scriptPath))
             {
                 // If the entry point doesn't have .php extension, try adding it
                 if(!str_ends_with($scriptPath, '.php'))
                 {
                     $scriptPathWithExtension = $scriptPath . '.php';
-                    if(file_exists($scriptPathWithExtension))
+                    if(IO::exists($scriptPathWithExtension))
                     {
                         Logger::getLogger()?->verbose(sprintf('Script found with .php extension: %s', $scriptPathWithExtension));
                         $scriptPath = $scriptPathWithExtension;
@@ -1242,7 +1243,7 @@
             
             // Try to resolve the executable path if it's not an absolute path
             $executablePath = $entryPoint;
-            if(!file_exists($executablePath))
+            if(!IO::exists($executablePath))
             {
                 Logger::getLogger()?->verbose(sprintf('Entry point not found as file, attempting to resolve: %s', $entryPoint));
                 $resolvedPath = (new ExecutableFinder())->find($entryPoint);

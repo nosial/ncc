@@ -24,7 +24,7 @@
 
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Objects\Project;
 
     class BuildCommand extends AbstractCommandHandler

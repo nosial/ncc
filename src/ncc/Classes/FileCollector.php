@@ -25,6 +25,7 @@
     use Exception;
     use FilesystemIterator;
     use InvalidArgumentException;
+    use ncc\Libraries\fslib\IO;
     use RecursiveDirectoryIterator;
     use RecursiveIteratorIterator;
     use RuntimeException;
@@ -52,7 +53,7 @@
             Logger::getLogger()?->verbose(sprintf('Include patterns: %d, Exclude patterns: %d', count($include), count($exclude)));
             
             // Validate the directory
-            if (!IO::isDir($directory))
+            if (!IO::isDirectory($directory))
             {
                 throw new InvalidArgumentException(sprintf('The provided path \'%s\' is not a valid directory.', $directory));
             }

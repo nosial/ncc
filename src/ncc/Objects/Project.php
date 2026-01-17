@@ -24,7 +24,7 @@
 
     use InvalidArgumentException;
     use ncc\Abstracts\AbstractCompiler;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\Utilities;
     use ncc\Compilers\PackageCompiler;
@@ -33,10 +33,10 @@
     use ncc\Enums\BuildType;
     use ncc\Enums\MacroVariable;
     use ncc\Exceptions\InvalidPropertyException;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Interfaces\SerializableInterface;
     use ncc\Interfaces\ValidatorInterface;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\Yaml\Yaml;
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\BuildConfiguration;

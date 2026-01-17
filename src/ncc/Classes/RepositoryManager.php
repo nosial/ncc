@@ -24,7 +24,8 @@
 
     use InvalidArgumentException;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Objects\RepositoryConfiguration;
 
     class RepositoryManager
@@ -201,14 +202,14 @@
             }
 
             // Ensure the directory exists
-            if(!IO::isDir($this->dataDirectoryPath))
+            if(!IO::isDirectory($this->dataDirectoryPath))
             {
                 // Check if we can create the directory
                 try
                 {
-                    IO::mkdir($this->dataDirectoryPath);
+                    IO::createDirectory($this->dataDirectoryPath);
                 }
-                catch(IOException $e)
+                catch(IOException)
                 {
                     // Cannot create directory, skip saving (likely a read-only system directory)
                     return;

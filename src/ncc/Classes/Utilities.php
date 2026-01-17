@@ -22,6 +22,8 @@
 
     namespace ncc\Classes;
 
+    use ncc\Libraries\fslib\IO;
+
     class Utilities
     {
         /**
@@ -113,7 +115,7 @@
            }
 
            // If $path is a directory, look for project.yml or project.yaml inside it
-           if (IO::isDir($path))
+           if (IO::isDirectory($path))
            {
                $ymlPath = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'project.yml';
                Logger::getLogger()?->debug(sprintf('Checking path %s', $ymlPath));

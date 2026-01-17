@@ -25,8 +25,9 @@
     use Exception;
     use InvalidArgumentException;
     use JsonException;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
@@ -481,7 +482,7 @@
             if(!IO::exists($this->getPackagePathFromEntry()))
             {
                 Logger::getLogger()?->debug('Creating packages directory');
-                IO::mkdir($this->getPackagePathFromEntry());
+                IO::createDirectory($this->getPackagePathFromEntry());
             }
 
             $packageInstallationPath = $this->getPackagePathFromEntry() . DIRECTORY_SEPARATOR .
@@ -493,7 +494,7 @@
             if(IO::exists($packageInstallationPath))
             {
                 Logger::getLogger()?->debug('Removing existing package installation');
-                IO::rm($packageInstallationPath, false);
+                IO::delete($packageInstallationPath, false);
             }
 
             Logger::getLogger()?->verbose('Exporting package to installation path');
@@ -647,7 +648,7 @@
                     }
                     
                     // Remove the package file
-                    IO::rm($packagePath, false);
+                    IO::delete($packagePath, false);
                 }
 
                 // Remove the entry from the lock file
@@ -678,9 +679,9 @@
             }
 
             $directory = dirname($this->packageLockPath);
-            if(!IO::isDir($directory))
+            if(!IO::isDirectory($directory))
             {
-                IO::mkdir($directory);
+                IO::createDirectory($directory);
             }
 
             $data = array_map(fn(PackageLockEntry $entry) => $entry->toArray(), array_values($this->entries));
@@ -700,13 +701,13 @@
 
             try
             {
-                IO::rename($tempFile, $this->packageLockPath);
+                IO::move($tempFile, $this->packageLockPath);
             }
             catch(IOException $e)
             {
                 if(IO::exists($tempFile))
                 {
-                    IO::rm($tempFile, false);
+                    IO::delete($tempFile, false);
                 }
                 throw new IOException(sprintf('Failed to save lock file: %s', $this->packageLockPath), 0, $e);
             }

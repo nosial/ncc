@@ -23,15 +23,15 @@
 
     use Exception;
     use ncc\Classes\AuthenticationManager;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageManager;
     use ncc\Classes\PackageReader;
     use ncc\Classes\PathResolver;
     use ncc\Classes\RepositoryManager;
     use ncc\Classes\StreamWrapper;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\semver\Semver;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
@@ -345,7 +345,7 @@
                 {
                     if(!IO::exists($userLocation))
                     {
-                        IO::mkdir($userLocation);
+                        IO::createDirectory($userLocation);
                     }
 
                     self::$userPackageManager = new PackageManager($userLocation);
@@ -376,7 +376,7 @@
                 $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
                 if($hasWriteAccess && !IO::exists($systemLocation))
                 {
-                    IO::mkdir($systemLocation);
+                    IO::createDirectory($systemLocation);
                 }
 
                 self::$systemPackageManager = new PackageManager($systemLocation);
@@ -424,7 +424,7 @@
                 {
                     if(!IO::exists($userLocation))
                     {
-                        IO::mkdir($userLocation);
+                        IO::createDirectory($userLocation);
                     }
 
                     self::$userRepositoryManager = new RepositoryManager($userLocation);
@@ -455,7 +455,7 @@
                 $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
                 if($hasWriteAccess && !IO::exists($systemLocation))
                 {
-                    IO::mkdir($systemLocation);
+                    IO::createDirectory($systemLocation);
                 }
 
                 self::$systemRepositoryManager = new RepositoryManager($systemLocation);
@@ -503,7 +503,7 @@
                 {
                     if(!IO::exists($userLocation))
                     {
-                        IO::mkdir($userLocation);
+                        IO::createDirectory($userLocation);
                     }
 
                     self::$userAuthenticationManager = new AuthenticationManager($userLocation);
@@ -534,7 +534,7 @@
                 $hasWriteAccess = IO::isWritable(dirname($systemLocation) || (IO::exists($systemLocation) && IO::isWritable($systemLocation)));
                 if($hasWriteAccess && !IO::exists($systemLocation))
                 {
-                    IO::mkdir($systemLocation);
+                    IO::createDirectory($systemLocation);
                 }
 
                 self::$systemAuthenticationManager = new AuthenticationManager($systemLocation);
@@ -621,10 +621,10 @@
             self::initializeStreamWrapper();
 
             // Determine if package is a file path or package name
-            if(is_file($package))
+            if(IO::isFile($package))
             {
-                $packagePath = realpath($package);
-                if($packagePath === false)
+                $packagePath = IO::getRealPath($package);
+                if($packagePath === null)
                 {
                     throw new IOException('The specified package file does not exist.');
                 }
@@ -749,8 +749,8 @@
         private static function importFromFile(string $packagePath): PackageReader
         {
             // Initialize the StreamWrapper on first import
-            $packagePath = realpath($packagePath);
-            if(!IO::exists($packagePath))
+            $packagePath = IO::getRealPath($packagePath);
+            if($packagePath === null)
             {
                 throw new IOException('Package not found: ' . $packagePath);
             }
@@ -778,8 +778,8 @@
         private static function importFromFileWithCache(string $packagePath): PackageReader
         {
             // Initialize the StreamWrapper on first import
-            $packagePath = realpath($packagePath);
-            if(!IO::exists($packagePath))
+            $packagePath = IO::getRealPath($packagePath);
+            if($packagePath === null)
             {
                 throw new IOException('Package not found: ' . $packagePath);
             }

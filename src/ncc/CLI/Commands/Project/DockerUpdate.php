@@ -25,9 +25,9 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\CLI\Commands\Helper;
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\Process\Process;
     use ncc\Libraries\Yaml\Yaml;
     use ncc\Objects\Project;

@@ -23,7 +23,7 @@
     namespace ncc\CLI\Commands\Project\Templates\Web;
 
     use ncc\Classes\Console;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Interfaces\TemplateGeneratorInterface;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;
@@ -39,7 +39,7 @@
 
             if(IO::exists($targetWebEntry))
             {
-                IO::rm($targetWebEntry);
+                IO::delete($targetWebEntry);
             }
 
             $targetEntry = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'web_entry.tpl');

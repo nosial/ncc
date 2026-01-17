@@ -22,8 +22,8 @@
 
     namespace ncc\Interfaces;
 
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Objects\Project;
 
     interface TemplateGeneratorInterface

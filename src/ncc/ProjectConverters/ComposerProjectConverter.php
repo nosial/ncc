@@ -24,11 +24,10 @@
 
     use Exception;
     use ncc\Abstracts\AbstractProjectConverter;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Enums\MacroVariable;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\semver\Constraint\Constraint;
     use ncc\Libraries\semver\VersionParser;
@@ -55,7 +54,7 @@
             if (json_last_error() !== JSON_ERROR_NONE)
             {
                 Logger::getLogger()?->error(sprintf('Failed to parse composer.json: %s', json_last_error_msg()));
-                throw new IOException('Failed to parse JSON: ' . json_last_error_msg());
+                throw new OperationException('Failed to parse JSON: ' . json_last_error_msg());
             }
 
             Logger::getLogger()?->debug('Successfully parsed composer.json');
@@ -421,7 +420,7 @@
             
             // Set the assembly name from the composer package name (without vendor prefix)
             // Assembly names must not contain slashes to avoid path conflicts
-            list($vendor, $name) = explode('/', $composerData['name'], 2);
+            list($name) = explode('/', $composerData['name'], 2);
             $assembly->setName($name);
 
             // Extract and normalize version
@@ -463,7 +462,6 @@
                 Logger::getLogger()?->verbose('Attempting to extract version from branch-alias');
                 try
                 {
-                    $versionParser = new VersionParser();
                     // Get the first branch alias (typically dev-main or dev-master)
                     $branchAliases = $composerData['extra']['branch-alias'];
                     if(is_array($branchAliases) && count($branchAliases) > 0)
@@ -631,7 +629,7 @@
             
             // Check if the path exists
             $fullPath = $baseDir . DIRECTORY_SEPARATOR . $normalizedPath;
-            if(IO::isDir($fullPath) || IO::isFile($fullPath))
+            if(IO::isDirectory($fullPath) || IO::isFile($fullPath))
             {
                 Logger::getLogger()?->debug(sprintf('Validated source path: %s', $normalizedPath));
                 return $normalizedPath;
@@ -687,11 +685,11 @@ PHP;
                 $directory = dirname($fullPath);
                 
                 // Create directory if needed
-                if (!IO::isDir($directory))
+                if (!IO::isDirectory($directory))
                 {
                     try
                     {
-                        IO::mkdir($directory, true);
+                        IO::createDirectory($directory, true);
                         Logger::getLogger()?->verbose(sprintf('Created directory: %s', $directory));
                     }
                     catch (Exception $e)
@@ -708,7 +706,7 @@ PHP;
                     Logger::getLogger()?->verbose(sprintf('Created Composer compatibility stub: %s', $location));
                     
                     // Add the stub file as an included component so it gets packaged
-                    if (file_exists($fullPath))
+                    if (IO::exists($fullPath))
                     {
                         $releaseConfig->addIncludedComponent($location);
                         $debugConfig->addIncludedComponent($location);
@@ -736,7 +734,7 @@ PHP;
             
             foreach($commonSourceDirs as $dir)
             {
-                if(IO::isDir($baseDir . DIRECTORY_SEPARATOR . $dir))
+                if(IO::isDirectory($baseDir . DIRECTORY_SEPARATOR . $dir))
                 {
                     Logger::getLogger()?->verbose(sprintf('Detected source directory: %s', $dir));
                     return $dir;

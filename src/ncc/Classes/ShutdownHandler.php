@@ -22,7 +22,7 @@
 
     namespace ncc\Classes;
 
-    use ncc\Exceptions\IOException;
+    use ncc\Libraries\fslib\IO;
 
     class ShutdownHandler
     {
@@ -34,14 +34,7 @@
             {
                 if(IO::exists($file))
                 {
-                    try
-                    {
-                        IO::rm($file, true);
-                    }
-                    catch (IOException $e)
-                    {
-                        Logger::getLogger()?->warning(sprintf('Failed to delete temporary file %s on shutdown: %s', $file, $e->getMessage()), $e);
-                    }
+                    IO::delete($file, true);
                 }
             }
         }

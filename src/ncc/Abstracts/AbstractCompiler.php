@@ -25,13 +25,13 @@
     use InvalidArgumentException;
     use ncc\Classes\ExecutionUnitRunner;
     use ncc\Classes\FileCollector;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\CLI\Commands\Helper;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Exceptions\InvalidPropertyException;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;

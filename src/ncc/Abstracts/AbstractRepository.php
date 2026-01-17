@@ -25,14 +25,14 @@
     use Exception;
     use ncc\ArchiveExtractors\TarArchive;
     use ncc\ArchiveExtractors\ZipArchive;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PathResolver;
     use ncc\Classes\ShutdownHandler;
     use ncc\Enums\RemotePackageType;
     use ncc\Enums\RepositoryType;
-    use ncc\Exceptions\IOException;
     use ncc\Exceptions\OperationException;
+    use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
     use ncc\Objects\RemotePackage;
@@ -255,13 +255,13 @@
          */
         public function download(RemotePackage $remotePackage, ?callable $progress=null): string
         {
-            if(!IO::isDir(PathResolver::getTmpLocation()))
+            if(!IO::isDirectory(PathResolver::getTmpLocation()))
             {
-                IO::mkdir(PathResolver::getTmpLocation());
+                IO::createDirectory(PathResolver::getTmpLocation());
             }
             elseif(!IO::isWritable(PathResolver::getTmpLocation()))
             {
-                throw new IOException(sprintf('No write permissions for the temporary path %s', PathResolver::getTmpLocation()));
+                throw new OperationException(sprintf('No write permissions for the temporary path %s', PathResolver::getTmpLocation()));
             }
 
             switch($remotePackage->getType())
@@ -367,9 +367,9 @@
             }
 
             // Ensure the directory exists before attempting to write the file
-            if(!IO::isDir($path))
+            if(!IO::isDirectory($path))
             {
-                IO::mkdir($path);
+                IO::createDirectory($path);
             }
 
             $filePath = $path . DIRECTORY_SEPARATOR . $filePath;

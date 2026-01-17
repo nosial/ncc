@@ -26,7 +26,7 @@
     use ncc\Exceptions\OperationException;
     use Phar;
     use ncc\Abstracts\AbstractCompiler;
-    use ncc\Classes\IO;
+    use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
     use ncc\Enums\ExecutionUnitType;
@@ -138,12 +138,12 @@
             $outputPath = $this->getOutputPath();
             
             // Remove existing file if overwrite is enabled
-            if(file_exists($outputPath))
+            if(IO::exists($outputPath))
             {
                 if($overwrite)
                 {
                     Logger::getLogger()?->verbose('Removing existing Phar file');
-                    unlink($outputPath);
+                    IO::delete($outputPath);
                 }
                 else
                 {
@@ -266,7 +266,7 @@
                 // Make executable on Unix systems
                 if(DIRECTORY_SEPARATOR === '/')
                 {
-                    chmod($outputPath, 0755);
+                    IO::chmod($outputPath, 0755);
                     Logger::getLogger()?->debug('Set executable permissions');
                 }
 
@@ -350,9 +350,9 @@
                 if($executionUnit->getType() === ExecutionUnitType::PHP)
                 {
                     // Resolve the entry point to match where it ends up in the Phar
-                    $realPath = realpath($this->getProjectPath() . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint());
+                    $realPath = IO::getRealPath($this->getProjectPath() . DIRECTORY_SEPARATOR . $executionUnit->getEntryPoint());
                     
-                    if($realPath !== false && in_array($realPath, $this->getSourceResources(), true))
+                    if($realPath !== null && in_array($realPath, $this->getSourceResources(), true))
                     {
                         if(str_starts_with($realPath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
                         {
@@ -408,7 +408,7 @@
                     call_user_func($progressCallback, $currentStage + $index + 1, $totalStages, sprintf('Adding resource %d/%d', $index + 1, count($resourcePaths)));
                 }
 
-                if(!file_exists($resourcePath))
+                if(!IO::exists($resourcePath))
                 {
                     Logger::getLogger()?->warning(sprintf('Resource file not found: %s', $resourcePath));
                     continue;
@@ -439,7 +439,7 @@
                 
                 Logger::getLogger()?->debug(sprintf('Adding resource: %s -> %s', $resourcePath, $pharPath));
                 
-                if(is_dir($resourcePath))
+                if(IO::isDirectory($resourcePath))
                 {
                     $phar->buildFromDirectory($resourcePath, '/^.+$/');
                 }
