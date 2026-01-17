@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.5] - Ongoing
+## [3.0.5] - 2026-01-17
 
-This is an ongoing update
+This update introduces regular bug fixes, a new command and some major changes related to IO operations for better
+safety.
 
 ### Added
  - Added new command `ncc project docker-update` which updates a running Docker container with the latest compiled
@@ -43,7 +44,7 @@ This update introduces new templates and improvements
 
 
 
-## [3.0.3] - 2025-01-07
+## [3.0.3] - 2026-01-07
 
 This update introduces new fixes and changes
 
