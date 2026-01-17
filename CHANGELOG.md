@@ -12,10 +12,20 @@ This is an ongoing update
 ### Added
  - Added new command `ncc project docker-update` which updates a running Docker container with the latest compiled
    package, useful for live-testing changes without rebuilding or restarting the container. (Experimental)
+ - Added dependency `fslib`
 
 ### Changed
- - Updated `\ncc\Classes\IO::mkdir()` to check parent directory writability before attempting to create directories,
-   providing better error messages when directory creation fails due to permission issues.
+ - Replaced builtin IO operations to use `fslib` instead
+ - Updated dependency `depreaction-contracts`
+ - Updated dependency `loglib2`
+ - Updated dependency `optslib`
+ - Updated dependency `Process`
+
+### Removed
+ - Removed builtin `IO` class in favor for `fslib` to handle filesystem operations.
+ - Removed builtin `IOException`
+ - Removed unused dependency `PHP-Parser`
+
 
 
 ## [3.0.4] - 2025-01-08
