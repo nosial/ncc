@@ -4,9 +4,6 @@
 [submodule "dependencies/LogLib2"]
 	path = dependencies/LogLib2
 	url = https://github.com/nosial/LogLib2
-[submodule "dependencies/PHP-Parser"]
-	path = dependencies/PHP-Parser
-	url = https://github.com/nikic/PHP-Parser.git
 [submodule "dependencies/deprecation-contracts"]
 	path = dependencies/deprecation-contracts
 	url = https://github.com/symfony/deprecation-contracts

@@ -9,7 +9,6 @@ TARGET_PHAR = $(TARGET_DIR)/ncc.phar
 DEPENDENCY_PAL = dependencies/pal/src/pal/Autoloader.php
 DEPENDENCY_LOGLIB2 = dependencies/LogLib2/src/LogLib2/*
 DEPENDENCY_OPTSLIB = dependencies/optslib/src/OptsLib/*
-DEPENDENCY_PHP_PARSER = dependencies/PHP-Parser/lib/PhpParser/*
 DEPENDENCY_YAML = dependencies/yaml
 DEPENDENCY_PROCESS = dependencies/Process
 DEPENDENCY_SEMVER = dependencies/semver/src/*
@@ -24,7 +23,6 @@ all: target
 dependencies: src/ncc/Libraries/pal \
 	src/ncc/Libraries/OptsLib \
 	src/ncc/Libraries/LogLib2 \
-	src/ncc/Libraries/PhpParser \
 	src/ncc/Libraries/ctype \
 	src/ncc/Libraries/deprecation-contracts \
 	src/ncc/Libraries/Yaml \
@@ -99,25 +97,6 @@ src/ncc/Libraries/OptsLib:
 		-e 's/namespace OptsLib\\/namespace ncc\\Libraries\\OptsLib\\/g' \
 		-e 's/use OptsLib\\/use ncc\\Libraries\\OptsLib\\/g' \
 		{} \;
-
-src/ncc/Libraries/PhpParser:
-	mkdir -p src/ncc/Libraries/PhpParser
-	cp -r $(DEPENDENCY_PHP_PARSER) src/ncc/Libraries/PhpParser/
-	[ -f dependencies/PHP-Parser/LICENSE ] && cp dependencies/PHP-Parser/LICENSE src/ncc/Libraries/PhpParser/ || true
-	[ -f dependencies/PHP-Parser/README.md ] && cp dependencies/PHP-Parser/README.md src/ncc/Libraries/PhpParser/ || true
-	# Transform namespaces and references for PHP-Parser
-	find src/ncc/Libraries/PhpParser -name "*.php" -exec sed -i \
-		-e 's/namespace PhpParser;/namespace ncc\\Libraries\\PhpParser;/g' \
-		-e 's/namespace PhpParser\\/namespace ncc\\Libraries\\PhpParser\\/g' \
-		-e 's/use PhpParser\\/use ncc\\Libraries\\PhpParser\\/g' \
-		{} \;
-	# Transform hardcoded string references to PhpParser namespace
-	# TODO: Bug: `src/ncc/Libraries/PhpParser/compatibility_tokens.php` is not correctly transformed,
-	#		the original `PhpParser\defineCompatibilityTokens` function call remains.
-	find src/ncc/Libraries/PhpParser -name "*.php" -exec sed -i \
-		-e "s|'PhpParser\\\\Node\\\\|'ncc\\\\Libraries\\\\PhpParser\\\\Node\\\\|g" \
-		-e 's|PhpParser\\\\defineCompatibilityTokens|ncc\\\\Libraries\\\\PhpParser\\\\defineCompatibilityTokens|g' \
-	  	{} \;
 
 src/ncc/Libraries/ctype:
 	mkdir -p src/ncc/Libraries/ctype
