@@ -41,6 +41,8 @@
         private array $excludeResources;
         private ?array $dependencies;
         private ?array $options;
+        /** @var string[]|null */
+        private ?array $extensions;
 
         /**
          * BuildConfiguration constructor.
@@ -59,6 +61,7 @@
             $this->excludeResources = $data['exclude_resources'] ?? [];
             $this->dependencies = isset($data['dependencies']) ? array_map(function($item) { return is_string($item) ? new PackageSource($item) : $item; }, $data['dependencies']) : null;
             $this->options = $data['options'] ?? null;
+            $this->extensions = $data['extensions'] ?? null;
         }
 
         /**
@@ -187,6 +190,68 @@
         public function setOptions(?array $options): void
         {
             $this->options = $options;
+        }
+
+        /**
+         * Returns the required PHP extensions for this build configuration
+         *
+         * @return string[]|null An array of extension names or null if no extensions are required
+         */
+        public function getExtensions(): ?array
+        {
+            return $this->extensions;
+        }
+
+        /**
+         * Sets the required PHP extensions for this build configuration
+         *
+         * @param string[]|null $extensions An array of extension names or null
+         */
+        public function setExtensions(?array $extensions): void
+        {
+            $this->extensions = $extensions;
+        }
+
+        /**
+         * Adds a required PHP extension to the build configuration
+         *
+         * @param string $extension The name of the PHP extension
+         */
+        public function addExtension(string $extension): void
+        {
+            if($this->extensions === null)
+            {
+                $this->extensions = [];
+            }
+
+            $extension = strtolower(trim($extension));
+            if(!in_array($extension, $this->extensions, true))
+            {
+                $this->extensions[] = $extension;
+            }
+        }
+
+        /**
+         * Removes a required PHP extension from the build configuration
+         *
+         * @param string $extension The name of the PHP extension to remove
+         */
+        public function removeExtension(string $extension): void
+        {
+            if($this->extensions === null)
+            {
+                return;
+            }
+
+            $extension = strtolower(trim($extension));
+            $this->extensions = array_filter($this->extensions, function($ext) use ($extension) {
+                return $ext !== $extension;
+            });
+
+            if(empty($this->extensions))
+            {
+                $this->extensions = null;
+            }
         }
 
         /**
@@ -505,7 +570,8 @@
                 'include_resources' => $this->includeResources,
                 'exclude_resources' => $this->excludeResources,
                 'dependencies' => $dependenciesArray,
-                'options' => $this->options
+                'options' => $this->options,
+                'extensions' => $this->extensions
             ];
         }
 
