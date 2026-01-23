@@ -834,7 +834,7 @@
                 $tempDir = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . 'phars';
                 if (!IO::isDirectory($tempDir))
                 {
-                    IO::createDirectory($tempDir, true);
+                    IO::createDirectory($tempDir, true, 0755);
                 }
 
                 // Generate unique temp file path
