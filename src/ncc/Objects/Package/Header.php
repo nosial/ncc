@@ -52,6 +52,8 @@
          * @var array<string, string>|null Class-to-file mapping for autoloading
          */
         private ?array $autoloader;
+        /** @var string[]|null */
+        private ?array $extensions;
 
         /**
          * Public constructor for the package header
@@ -93,6 +95,7 @@
             $this->updateSource = isset($data['package_source']) ? new PackageSource($data['package_source']) : null;
             $this->repositories = isset($data['repositories']) ? array_map(function($item){ return  RepositoryConfiguration::fromArray($item); }, $data['repositories']) : [];
             $this->autoloader = $data['autoloader'] ?? null;
+            $this->extensions = $data['extensions'] ?? null;
         }
 
         /**
@@ -461,6 +464,26 @@
         }
 
         /**
+         * Returns the required PHP extensions
+         *
+         * @return string[]|null An array of extension names or null if no extensions are required
+         */
+        public function getExtensions(): ?array
+        {
+            return $this->extensions;
+        }
+
+        /**
+         * Sets the required PHP extensions
+         *
+         * @param string[]|null $extensions An array of extension names or null
+         */
+        public function setExtensions(?array $extensions): void
+        {
+            $this->extensions = $extensions;
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(): array
@@ -478,7 +501,8 @@
                 'defined_constants' => $this->definedConstants,
                 'package_source' => $this->updateSource ? (string)$this->updateSource : null,
                 'repositories' => array_map(function($item){ return $item->toArray(); }, $this->repositories),
-                'autoloader' => $this->autoloader
+                'autoloader' => $this->autoloader,
+                'extensions' => $this->extensions
             ];
         }
 
