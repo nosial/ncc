@@ -626,7 +626,7 @@
                 $packagePath = IO::getRealPath($package);
                 if($packagePath === null)
                 {
-                    throw new IOException('The specified package file does not exist.');
+                    throw new IOException($package, 'The specified package file does not exist');
                 }
 
                 Logger::getLogger()?->verbose(sprintf('Executing package from file: %s', $packagePath));
@@ -749,23 +749,23 @@
         private static function importFromFile(string $packagePath): PackageReader
         {
             // Initialize the StreamWrapper on first import
-            $packagePath = IO::getRealPath($packagePath);
-            if($packagePath === null)
+            $realPath = IO::getRealPath($packagePath);
+            if($realPath === null)
             {
-                throw new IOException('Package not found: ' . $packagePath);
+                throw new IOException($packagePath, 'Package not found');
             }
 
-            if(!IO::isFile($packagePath))
+            if(!IO::isFile($realPath))
             {
-                throw new IOException('Package path is not a file: ' . $packagePath);
+                throw new IOException($realPath, 'Package path is not a file');
             }
 
-            if(!IO::isReadable($packagePath))
+            if(!IO::isReadable($realPath))
             {
-                throw new IOException('Package file is not readable: ' . $packagePath);
+                throw new IOException($realPath, 'Package file is not readable');
             }
 
-            return new PackageReader($packagePath);
+            return new PackageReader($realPath);
         }
 
         /**
@@ -778,24 +778,24 @@
         private static function importFromFileWithCache(string $packagePath): PackageReader
         {
             // Initialize the StreamWrapper on first import
-            $packagePath = IO::getRealPath($packagePath);
-            if($packagePath === null)
+            $realPath = IO::getRealPath($packagePath);
+            if($realPath === null)
             {
-                throw new IOException('Package not found: ' . $packagePath);
+                throw new IOException($packagePath, 'Package not found');
             }
 
-            if(!IO::isFile($packagePath))
+            if(!IO::isFile($realPath))
             {
-                throw new IOException('Package path is not a file: ' . $packagePath);
+                throw new IOException($realPath, 'Package path is not a file');
             }
 
-            if(!IO::isReadable($packagePath))
+            if(!IO::isReadable($realPath))
             {
-                throw new IOException('Package file is not readable: ' . $packagePath);
+                throw new IOException($realPath, 'Package file is not readable');
             }
 
             // Try to use cache for faster loading
-            return new PackageReader($packagePath, true);
+            return new PackageReader($realPath, true);
         }
 
         /**
