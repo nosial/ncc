@@ -33,6 +33,8 @@
         private static ?string $currentProgressMessage = null;
         private static int $lastProgressLength = 0;
         private static ?bool $isVerboseOrDebugMode = null;
+        private static bool $simplifiedMode = false;
+        private static ?string $currentSimplifiedOperation = null;
 
         public static function enableAnsiColors(): void
         {
@@ -42,6 +44,36 @@
         public static function disableAnsiColors(): void
         {
             self::$ansiColorsEnabled = false;
+        }
+
+        /**
+         * Enables simplified output mode - reduces output frequency, hides progress bars
+         *
+         * @return void
+         */
+        public static function enableSimplifiedMode(): void
+        {
+            self::$simplifiedMode = true;
+        }
+
+        /**
+         * Disables simplified output mode
+         *
+         * @return void
+         */
+        public static function disableSimplifiedMode(): void
+        {
+            self::$simplifiedMode = false;
+        }
+
+        /**
+         * Checks if simplified mode is enabled
+         *
+         * @return bool True if simplified mode is enabled
+         */
+        public static function isSimplifiedMode(): bool
+        {
+            return self::$simplifiedMode;
         }
 
         /**
@@ -262,6 +294,7 @@
          * Displays an inline progress indicator with a message.
          * This will overwrite the current line each time it's called.
          * If Logger is in Verbose or Debug mode, uses Logger info statements instead.
+         * If simplified mode is enabled, only shows the message once when operation starts.
          *
          * @param int $current The current progress value (e.g., current stage)
          * @param int $total The total number of steps
@@ -270,6 +303,17 @@
          */
         public static function inlineProgress(int $current, int $total, string $message): void
         {
+            // In simplified mode, only show the message when it changes (operation starts)
+            if (self::$simplifiedMode)
+            {
+                if (self::$currentSimplifiedOperation !== $message)
+                {
+                    self::$currentSimplifiedOperation = $message;
+                    self::out($message);
+                }
+                return;
+            }
+
             // If in verbose or debug mode, use logger info statements instead of animated progress
             if (self::isVerboseOrDebugMode())
             {
@@ -306,14 +350,14 @@
 
         /**
          * Clears the current inline progress indicator and moves to a new line.
-         * Does nothing if in verbose or debug mode (since we use logger instead).
+         * Does nothing if in verbose, debug, or simplified mode.
          *
          * @return void
          */
         public static function clearInlineProgress(): void
         {
-            // No need to clear if we're using logger mode
-            if (self::isVerboseOrDebugMode())
+            // No need to clear if we're using logger mode or simplified mode
+            if (self::isVerboseOrDebugMode() || self::$simplifiedMode)
             {
                 return;
             }
@@ -330,12 +374,24 @@
         /**
          * Completes the progress display and moves to a new line.
          * If in verbose or debug mode, uses Logger info for final message.
+         * If in simplified mode, shows a completion message.
          *
          * @param string|null $finalMessage Optional message to display when complete
          * @return void
          */
         public static function completeProgress(?string $finalMessage = null): void
         {
+            // In simplified mode, show completion message and reset operation tracking
+            if (self::$simplifiedMode)
+            {
+                if ($finalMessage !== null)
+                {
+                    self::out($finalMessage);
+                }
+                self::$currentSimplifiedOperation = null;
+                return;
+            }
+
             // If in verbose or debug mode, use logger for final message
             if (self::isVerboseOrDebugMode())
             {
