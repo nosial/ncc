@@ -455,7 +455,9 @@
             // Create the directory if it doesn't exist
             if(!IO::isDirectory($outputDirectory))
             {
-                IO::createDirectory($outputDirectory);
+                IO::createDirectory($outputDirectory, 0755, true);
+                // Ensure directory has correct permissions (mkdir can be affected by umask)
+                @chmod($outputDirectory, 0755);
             }
 
             // Extract all the references from the package
@@ -470,9 +472,22 @@
 
                 // Everything is just written as-is
                 $outputPath = rtrim($outputDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $reference->getName();
-                if(!IO::isDirectory(dirname($outputPath)))
+                $parentDir = dirname($outputPath);
+                
+                if(!IO::isDirectory($parentDir))
                 {
-                    IO::createDirectory(dirname($outputPath));
+                    IO::createDirectory($parentDir, 0755, true);
+                    // Ensure all parent directories have correct permissions
+                    // Walk up and fix permissions on newly created directories
+                    $current = $parentDir;
+                    while($current !== $outputDirectory && $current !== dirname($current))
+                    {
+                        if(IO::exists($current))
+                        {
+                            @chmod($current, 0755);
+                        }
+                        $current = dirname($current);
+                    }
                 }
 
                 IO::writeFile($outputPath, $this->read($reference));
@@ -953,7 +968,7 @@
             
             if ($packageData === false || strlen($packageData) !== $packageSize)
             {
-                throw new IOException("Failed to read complete package data from: " . $this->filePath . " (expected " . $packageSize . " bytes)");
+                throw new IOException($this->filePath, "Failed to read complete package data (expected " . $packageSize . " bytes)");
             }
 
             // Write the package data to the specified file
