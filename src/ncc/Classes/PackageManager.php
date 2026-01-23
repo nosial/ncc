@@ -675,7 +675,7 @@
 
             if($this->readOnly)
             {
-                throw new IOException(sprintf('Cannot save lock file in read-only mode: %s', $this->packageLockPath));
+                throw new IOException($this->packageLockPath, 'Cannot save lock file in read-only mode');
             }
 
             $directory = dirname($this->packageLockPath);
@@ -692,7 +692,7 @@
             }
             catch(JsonException $e)
             {
-                throw new IOException(sprintf('Failed to encode lock file data: %s', $e->getMessage()), 0, $e);
+                throw new IOException($this->packageLockPath, sprintf('Failed to encode lock file data: %s', $e->getMessage()), 0, $e);
             }
 
             // Atomic write using temporary file
@@ -701,6 +701,11 @@
 
             try
             {
+                // Remove existing lock file if present before moving
+                if(IO::exists($this->packageLockPath))
+                {
+                    IO::delete($this->packageLockPath, false);
+                }
                 IO::move($tempFile, $this->packageLockPath);
             }
             catch(IOException $e)
@@ -709,7 +714,7 @@
                 {
                     IO::delete($tempFile, false);
                 }
-                throw new IOException(sprintf('Failed to save lock file: %s', $this->packageLockPath), 0, $e);
+                throw new IOException($this->packageLockPath, 'Failed to save lock file', 0, $e);
             }
 
             $this->modified = false;
