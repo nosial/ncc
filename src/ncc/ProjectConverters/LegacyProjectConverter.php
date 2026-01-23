@@ -58,7 +58,7 @@
             if (json_last_error() !== JSON_ERROR_NONE)
             {
                 Logger::getLogger()?->error(sprintf('Failed to parse legacy project.json: %s', json_last_error_msg()));
-                throw new IOException('Failed to parse JSON: ' . json_last_error_msg());
+                throw new IOException($filePath, 'Failed to parse JSON: ' . json_last_error_msg());
             }
 
             Logger::getLogger()?->debug('Successfully parsed legacy project.json');
