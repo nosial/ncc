@@ -74,7 +74,7 @@
             {
                 // Create a temporary directory for extraction
                 $tempDir = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . 'phar_extraction_' . uniqid();
-                IO::createDirectory($tempDir, true);
+                IO::createDirectory($tempDir, true, 0755);
 
                 Logger::getLogger()?->verbose(sprintf('Extracting phar to temporary directory: %s', $tempDir));
 
