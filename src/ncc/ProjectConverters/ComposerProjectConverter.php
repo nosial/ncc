@@ -66,6 +66,10 @@
 
             // Apply release configuration
             $releaseConfiguration = Project\BuildConfiguration::defaultRelease();
+            // Exclude vendor directory from compilation to avoid permission/scanning issues
+            $releaseConfiguration->addExcludedComponent('vendor' . DIRECTORY_SEPARATOR . '*');
+            $releaseConfiguration->addExcludedComponent('vendor');
+            
             if(isset($composerData['require']))
             {
                 Logger::getLogger()?->debug(sprintf('Processing %d production dependencies', count($composerData['require'])));
@@ -74,10 +78,27 @@
                     $project->addDependency($dependencyName, $dependencySource);
                 }
                 Logger::getLogger()?->verbose(sprintf('Added %d production dependencies', count($this->generateDependencies($composerData))));
+
+                // Extract PHP extensions from require
+                $extensions = $this->extractExtensions($composerData['require']);
+                if(!empty($extensions))
+                {
+                    Logger::getLogger()?->verbose(sprintf('Found %d required PHP extensions', count($extensions)));
+                    foreach($extensions as $extension)
+                    {
+                        $project->addExtension($extension);
+                        $releaseConfiguration->addExtension($extension);
+                        Logger::getLogger()?->debug(sprintf('Added required extension: %s', $extension));
+                    }
+                }
             }
 
             // Apply debug configuration
             $debugConfiguration = Project\BuildConfiguration::defaultDebug();
+            // Exclude vendor directory from compilation to avoid permission/scanning issues
+            $debugConfiguration->addExcludedComponent('vendor' . DIRECTORY_SEPARATOR . '*');
+            $debugConfiguration->addExcludedComponent('vendor');
+            
             if(isset($composerData['require-dev']))
             {
                 Logger::getLogger()?->debug(sprintf('Processing %d development dependencies', count($composerData['require-dev'])));
@@ -86,6 +107,28 @@
                     $debugConfiguration->addDependency($dependencyName, $dependencySource);
                 }
                 Logger::getLogger()?->verbose(sprintf('Added %d development dependencies', count($this->generateDebugDependencies($composerData))));
+
+                // Extract PHP extensions from require-dev
+                $devExtensions = $this->extractExtensions($composerData['require-dev']);
+                if(!empty($devExtensions))
+                {
+                    Logger::getLogger()?->verbose(sprintf('Found %d development PHP extensions', count($devExtensions)));
+                    foreach($devExtensions as $extension)
+                    {
+                        $debugConfiguration->addExtension($extension);
+                        Logger::getLogger()?->debug(sprintf('Added development extension: %s', $extension));
+                    }
+                }
+            }
+
+            // Copy production extensions to debug configuration
+            if(isset($composerData['require']))
+            {
+                $extensions = $this->extractExtensions($composerData['require']);
+                foreach($extensions as $extension)
+                {
+                    $debugConfiguration->addExtension($extension);
+                }
             }
 
             // Apply packagist repository configurations
@@ -684,12 +727,12 @@ PHP;
                 $fullPath = $baseDir . DIRECTORY_SEPARATOR . $location;
                 $directory = dirname($fullPath);
                 
-                // Create directory if needed
+                // Create directory if needed, or fix permissions if it exists
                 if (!IO::isDirectory($directory))
                 {
                     try
                     {
-                        IO::createDirectory($directory, true);
+                        IO::createDirectory($directory, 0755, true);
                         Logger::getLogger()?->verbose(sprintf('Created directory: %s', $directory));
                     }
                     catch (Exception $e)
@@ -697,6 +740,28 @@ PHP;
                         Logger::getLogger()?->warning(sprintf('Failed to create directory %s: %s', $directory, $e->getMessage()));
                         continue;
                     }
+                }
+                
+                // Ensure directory is writable - fix permissions if needed
+                if (IO::exists($directory) && !IO::isWritable($directory))
+                {
+                    try
+                    {
+                        @chmod($directory, 0755);
+                        Logger::getLogger()?->debug(sprintf('Fixed permissions for directory: %s', $directory));
+                    }
+                    catch (Exception $e)
+                    {
+                        Logger::getLogger()?->warning(sprintf('Could not fix permissions for %s: %s', $directory, $e->getMessage()));
+                        continue;
+                    }
+                }
+                
+                // Skip if directory still not writable
+                if (!IO::isWritable($directory))
+                {
+                    Logger::getLogger()?->warning(sprintf('Directory not writable, skipping stub creation: %s', $directory));
+                    continue;
                 }
                 
                 // Write the stub file
@@ -837,5 +902,27 @@ PHP;
                 Logger::getLogger()?->error(sprintf('Exception during version normalization: %s', $e->getMessage()));
                 throw new OperationException(sprintf('Failed to normalize version "%s": %s', $version, $e->getMessage()));
             }
+        }
+
+        /**
+         * Extract PHP extensions from composer require section.
+         *
+         * @param array $requirements The require or require-dev section from composer.json
+         * @return string[] An array of PHP extension names (without 'ext-' prefix)
+         */
+        private function extractExtensions(array $requirements): array
+        {
+            $extensions = [];
+            
+            foreach($requirements as $dependency => $version)
+            {
+                if(str_starts_with($dependency, 'ext-'))
+                {
+                    $extensionName = substr($dependency, 4);
+                    $extensions[] = $extensionName;
+                }
+            }
+            
+            return $extensions;
         }
     }
