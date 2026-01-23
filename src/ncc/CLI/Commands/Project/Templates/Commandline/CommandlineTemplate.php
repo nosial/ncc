@@ -42,7 +42,7 @@
                 IO::delete($targetEntryPath);
             }
 
-            $targetEntry = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'main.tpl');
+            $targetEntry = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'main.tpl');
             $targetEntry = str_replace('${PACKAGE_NAME}', $projectConfiguration->getAssembly()->getPackage(), $targetEntry);
             $targetEntry = str_replace('${PROJECT_NAME}', $projectConfiguration->getAssembly()->getName(), $targetEntry);
 

@@ -43,8 +43,8 @@
             }
 
             // Create a basic Makefile
-            $baseMakefile = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile.tpl');
-            $buildStep = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile-BuildStep.tpl');
+            $baseMakefile = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile.tpl');
+            $buildStep = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'Makefile-BuildStep.tpl');
 
             // Apply configurations
             $baseMakefile = str_replace('${BUILD_OUTPUTS}', implode(' ', array_map(function($buildConfiguration) {

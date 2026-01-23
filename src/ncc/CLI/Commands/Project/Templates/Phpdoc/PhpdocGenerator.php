@@ -44,7 +44,7 @@
             }
 
             // Create a basic Makefile
-            $baseConfigurationFile = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'phpdoc.tpl');
+            $baseConfigurationFile = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'phpdoc.tpl');
             $baseConfigurationFile = str_replace('${ASSEMBLY.NAME}', $projectConfiguration->getAssembly()->getName(), $baseConfigurationFile);
             $baseConfigurationFile = str_replace('${SOURCE_PATH}', $projectConfiguration->getSourcePath(), $baseConfigurationFile);
 

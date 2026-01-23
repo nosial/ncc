@@ -42,7 +42,7 @@
                 IO::delete($targetWebEntry);
             }
 
-            $targetEntry = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'web_entry.tpl');
+            $targetEntry = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'web_entry.tpl');
             $targetEntry = str_replace('${PACKAGE_NAME}', $projectConfiguration->getAssembly()->getPackage(), $targetEntry);
 
             IO::writeFile($targetWebEntry, $targetEntry);

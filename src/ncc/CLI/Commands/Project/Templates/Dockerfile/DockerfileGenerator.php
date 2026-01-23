@@ -127,11 +127,11 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         $webEntryPointFile = $entryPointPath;
 
         // Load templates
-        $dockerfileTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'Dockerfile.tpl');
-        $nginxTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'nginx.conf.tpl');
-        $supervisordTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'supervisord.conf.tpl');
-        $entrypointTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'docker-entrypoint.sh.tpl');
-        $dockerComposeTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'docker-compose.yml.tpl');
+        $dockerfileTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'Dockerfile.tpl');
+        $nginxTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'nginx.conf.tpl');
+        $supervisordTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'supervisord.conf.tpl');
+        $entrypointTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'docker-entrypoint.sh.tpl');
+        $dockerComposeTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'docker-compose.yml.tpl');
 
         // Replace placeholders in Dockerfile
         $dockerfileContent = str_replace('${BUILD_OUTPUT}', $buildOutput, $dockerfileTemplate);

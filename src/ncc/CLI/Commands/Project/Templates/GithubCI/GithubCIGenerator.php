@@ -40,11 +40,11 @@ class GithubCIGenerator implements TemplateGeneratorInterface
         // Create .github/workflows directory if it doesn't exist
         if(!IO::exists(dirname($targetFile)))
         {
-            IO::createDirectory(dirname($targetFile));
+            IO::createDirectory(dirname($targetFile), true);
         }
         if(!IO::exists(dirname($secondaryTargetFile)))
         {
-            IO::createDirectory(dirname($targetFile));
+            IO::createDirectory(dirname($secondaryTargetFile), true);
         }
 
         // Remove the workflow file if it exists
@@ -58,13 +58,13 @@ class GithubCIGenerator implements TemplateGeneratorInterface
         }
 
         // Load templates
-        $baseWorkflow = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'workflow.tpl');
-        $buildJobTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'build-job.tpl');
-        $downloadArtifactTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'download-artifact.tpl');
-        $phpdocJobTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'phpdoc-job.tpl');
-        $phpunitJobTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'phpunit-job.tpl');
-        $releaseDocumentationJobTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'release-documentation-job.tpl');
-        $releaseArtifactsJobTemplate = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'release-artifacts-job.tpl');
+        $baseWorkflow = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'workflow.tpl');
+        $buildJobTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'build-job.tpl');
+        $downloadArtifactTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'download-artifact.tpl');
+        $phpdocJobTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'phpdoc-job.tpl');
+        $phpunitJobTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'phpunit-job.tpl');
+        $releaseDocumentationJobTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'release-documentation-job.tpl');
+        $releaseArtifactsJobTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'release-artifacts-job.tpl');
 
         // Get build configurations
         $buildConfigurations = $projectConfiguration->getBuildConfigurations();

@@ -49,11 +49,11 @@
 
             if(!IO::exists(dirname($targetBootstrapFile)))
             {
-                IO::createDirectory(dirname($targetBootstrapFile));
+                IO::createDirectory(dirname($targetBootstrapFile), true);
             }
 
-            $basePhpunit = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'phpunit.tpl');
-            $baseBootstrap = IO::readFile(__DIR__ . DIRECTORY_SEPARATOR . 'bootstrap.tpl');
+            $basePhpunit = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'phpunit.tpl');
+            $baseBootstrap = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'bootstrap.tpl');
 
             $defaultOutputPath = '../' .  $projectConfiguration->getBuildConfiguration($projectConfiguration->getDefaultBuild())->getOutput();
             $baseBootstrap = str_replace('${DEFAULT_BUILD_OUTPUT}', $defaultOutputPath, $baseBootstrap);
