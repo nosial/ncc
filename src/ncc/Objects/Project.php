@@ -64,6 +64,8 @@
         private ?array $executionUnits;
         /** @var BuildConfiguration[] */
         private array $buildConfigurations;
+        /** @var string[]|null */
+        private ?array $extensions;
 
         /**
          * Public Constructor for the Project configuration
@@ -85,6 +87,7 @@
             $this->dependencies = isset($data['dependencies']) ? array_map(function($item) { return new PackageSource($item); }, $data['dependencies']) : null;
             $this->executionUnits = isset($data['execution_units']) ? array_map(function($item) { return ExecutionUnit::fromArray($item); }, $data['execution_units']) : null;
             $this->buildConfigurations = isset($data['build_configurations']) ? array_map(function($item) { return BuildConfiguration::fromArray($item); }, $data['build_configurations']) : [];
+            $this->extensions = $data['extensions'] ?? null;
 
             if(isset($data['repository']))
             {
@@ -594,6 +597,68 @@
         }
 
         /**
+         * Returns the required PHP extensions for this project
+         *
+         * @return string[]|null An array of extension names or null if no extensions are required
+         */
+        public function getExtensions(): ?array
+        {
+            return $this->extensions;
+        }
+
+        /**
+         * Sets the required PHP extensions for this project
+         *
+         * @param string[]|null $extensions An array of extension names or null
+         */
+        public function setExtensions(?array $extensions): void
+        {
+            $this->extensions = $extensions;
+        }
+
+        /**
+         * Adds a required PHP extension to the project
+         *
+         * @param string $extension The name of the PHP extension
+         */
+        public function addExtension(string $extension): void
+        {
+            if($this->extensions === null)
+            {
+                $this->extensions = [];
+            }
+
+            $extension = strtolower(trim($extension));
+            if(!in_array($extension, $this->extensions, true))
+            {
+                $this->extensions[] = $extension;
+            }
+        }
+
+        /**
+         * Removes a required PHP extension from the project
+         *
+         * @param string $extension The name of the PHP extension to remove
+         */
+        public function removeExtension(string $extension): void
+        {
+            if($this->extensions === null)
+            {
+                return;
+            }
+
+            $extension = strtolower(trim($extension));
+            $this->extensions = array_filter($this->extensions, function($ext) use ($extension) {
+                return $ext !== $extension;
+            });
+
+            if(empty($this->extensions))
+            {
+                $this->extensions = null;
+            }
+        }
+
+        /**
          * Returns the execution units defined in the project
          *
          * @return ExecutionUnit[]|null An array of ExecutionUnit objects or null if no execution units are defined
@@ -795,6 +860,7 @@
                 'repository' => $this->repositories?->toArray(),
                 'assembly' => $this->assembly->toArray(),
                 'dependencies' => $dependenciesArray,
+                'extensions' => $this->extensions,
                 'execution_units' => $this->executionUnits ? array_map(function($item) { return $item->toArray(); }, $this->executionUnits) : null,
                 'build_configurations' => array_map(function($item) { return $item->toArray(); }, $this->buildConfigurations)
             ];
