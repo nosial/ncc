@@ -61,6 +61,7 @@
             $autoConfirm = $argv['yes'] ?? $argv['y'] ?? false;
             $skipDependencies = $argv['skip-dependencies'] ?? $argv['skip-deps'] ?? $argv['sd'] ?? false;
             $skipRepositories = $argv['skip-repositories'] ?? $argv['skip-repos'] ?? $argv['sr'] ?? false;
+            $skipExtensions = $argv['skip-extensions'] ?? $argv['skip-exts'] ?? $argv['se'] ?? false;
             $reinstall = $argv['reinstall'] ?? $argv['r'] ?? false;
             $buildSource = $argv['build-source'] ?? $argv['bs'] ?? false;
             $noSymlink = $argv['no-symlink'] ?? false;
@@ -75,6 +76,10 @@
             if($skipRepositories)
             {
                 $options[] = 'skip-repositories';
+            }
+            if($skipExtensions)
+            {
+                $options[] = 'skip-extensions';
             }
             if($reinstall)
             {
@@ -260,6 +265,33 @@
 
             // Mark package as being installed to prevent circular dependency loops
             $installed[] = $packageIdentifier;
+
+            // Validate required PHP extensions
+            if(!$options['skip-extensions'])
+            {
+                $requiredExtensions = $packageReader->getHeader()->getExtensions();
+                if($requiredExtensions !== null && count($requiredExtensions) > 0)
+                {
+                    $missingExtensions = [];
+                    foreach($requiredExtensions as $extension)
+                    {
+                        if(!extension_loaded($extension))
+                        {
+                            $missingExtensions[] = $extension;
+                        }
+                    }
+
+                    if(count($missingExtensions) > 0)
+                    {
+                        Console::error(sprintf("Cannot install %s: Missing required PHP extensions: %s", 
+                            $packageIdentifier, implode(', ', $missingExtensions)));
+                        Console::out("Use --skip-extensions to bypass this check.");
+                        throw new OperationException(sprintf('Missing required PHP extensions: %s', implode(', ', $missingExtensions)));
+                    }
+
+                    Logger::getLogger()?->debug(sprintf('Validated %d required extensions for %s', count($requiredExtensions), $packageIdentifier));
+                }
+            }
 
             // Add the repositories if required
             if(!$options['skip-repositories'] && count($packageReader->getHeader()->getRepositories() ?? []) > 0)
@@ -542,6 +574,7 @@
             $results = [
                 'skip-repositories' => false,
                 'skip-dependencies' => false,
+                'skip-extensions' => false,
                 'build-source' => false,
                 'reinstall' => false,
                 'no-symlink' => false,
@@ -562,6 +595,12 @@
                     case 'skip-deps':
                     case 'sd':
                         $results['skip-dependencies'] = true;
+                        break;
+
+                    case 'skip-extensions':
+                    case 'skip-exts':
+                    case 'se':
+                        $results['skip-extensions'] = true;
                         break;
 
                     case 'build-source':
@@ -672,6 +711,8 @@
             Console::out('                    Skip installing package dependencies');
             Console::out('  --skip-repositories, --skip-repos, --sr');
             Console::out('                    Skip adding package repositories');
+            Console::out('  --skip-extensions, --skip-exts, --se');
+            Console::out('                    Skip validation of required PHP extensions');
             Console::out('  --no-symlink      Do not create a symlink for the package');
             Console::out('  --force-symlink   Force symlink creation even if one exists');
             Console::out('  --<repository>-auth=<entry>');

@@ -72,6 +72,12 @@
                 Cache::disable();
             }
 
+            // Check for global --simplified flag
+            if(isset($argv['simplified']) || isset($argv['s']))
+            {
+                Console::enableSimplifiedMode();
+            }
+
             if(isset($argv['project']))
             {
                 return ProjectCommand::handle($argv);
@@ -163,6 +169,7 @@
                 Console::out(PHP_EOL . 'Options:');
                 Console::out('  --version, -v     Display version information');
                 Console::out('  --help, -h        Display this help message');
+                Console::out('  --simplified, -s  Use simplified output mode (reduces console output frequency)');
                 Console::out('  --no-cache        Disable caching for this execution');
                 Console::out(PHP_EOL . 'Use "ncc [command] --help" for more information about a command.');
                 return;
