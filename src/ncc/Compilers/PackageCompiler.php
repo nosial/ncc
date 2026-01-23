@@ -442,6 +442,14 @@
             
             Logger::getLogger()?->verbose(sprintf('Header: build=%s, compressed=%s, static=%s', $this->getBuildNumber(), $this->compressionEnabled ? 'yes' : 'no', $header->isStaticallyLinked() ? 'yes' : 'no'));
             
+            // Set required PHP extensions - build configuration overrides project extensions
+            $extensions = $this->getBuildConfiguration()->getExtensions() ?? $this->getProjectConfiguration()->getExtensions();
+            if($extensions !== null && count($extensions) > 0)
+            {
+                $header->setExtensions($extensions);
+                Logger::getLogger()?->verbose(sprintf('Added %d required PHP extensions to header', count($extensions)));
+            }
+            
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
