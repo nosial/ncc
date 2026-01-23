@@ -71,7 +71,7 @@
 
             // Create the file
             Logger::getLogger()?->verbose('Creating package file');
-            IO::createDirectory(dirname($filePath));
+            IO::createDirectory(dirname($filePath), 0755, true);
             IO::touch($filePath);
             $this->fileHandler = fopen($filePath, 'a+b');
             if($this->fileHandler === false)
