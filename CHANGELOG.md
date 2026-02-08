@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Fixed
+ - Fixed path resolving issue where when pointing to paths without the real path existing, ncc would fail to resolve the path.
+
 
 ## [3.0.6] - 2026-01-23
 

@@ -98,10 +98,13 @@
 
             try
             {
-                if(IO::isFile($package))
+                // Resolve relative paths to absolute paths before checking if file exists
+                $resolvedPackage = IO::isAbsolutePath($package) ? $package : IO::resolvePath($package);
+                
+                if(IO::isFile($resolvedPackage))
                 {
-                    Logger::getLogger()?->verbose(sprintf('Importing from file: %s', $package));
-                    $packageReader = self::importFromFile($package);
+                    Logger::getLogger()?->verbose(sprintf('Importing from file: %s', $resolvedPackage));
+                    $packageReader = self::importFromFile($resolvedPackage);
                 }
                 else
                 {
@@ -621,9 +624,12 @@
             self::initializeStreamWrapper();
 
             // Determine if package is a file path or package name
-            if(IO::isFile($package))
+            // Resolve relative paths to absolute paths before checking if file exists
+            $resolvedPackage = IO::isAbsolutePath($package) ? $package : IO::resolvePath($package);
+            
+            if(IO::isFile($resolvedPackage))
             {
-                $packagePath = IO::getRealPath($package);
+                $packagePath = IO::getRealPath($resolvedPackage);
                 if($packagePath === null)
                 {
                     throw new IOException($package, 'The specified package file does not exist');

@@ -925,7 +925,51 @@
 
             // If resource path is empty, this is a package-only reference (valid for require/include)
             $isPackageOnly = empty($resourcePath);
+            
+            // Normalize the resource path to resolve relative segments (.. and .)
+            if (!$isPackageOnly)
+            {
+                $resourcePath = $this->normalizePath($resourcePath);
+            }
 
             return [$packageName, $resourcePath, $isPackageOnly];
+        }
+
+        /**
+         * Normalizes a path by resolving relative segments (.. and .).
+         *
+         * @param string $path The path to normalize
+         * @return string The normalized path
+         */
+        private function normalizePath(string $path): string
+        {
+            // Split the path into segments
+            $segments = explode('/', $path);
+            $normalized = [];
+
+            foreach ($segments as $segment)
+            {
+                // Skip empty segments and current directory references
+                if ($segment === '' || $segment === '.')
+                {
+                    continue;
+                }
+
+                // Handle parent directory references
+                if ($segment === '..')
+                {
+                    // Remove the last segment if it exists
+                    if (count($normalized) > 0)
+                    {
+                        array_pop($normalized);
+                    }
+                    continue;
+                }
+
+                // Add normal segments
+                $normalized[] = $segment;
+            }
+
+            return implode('/', $normalized);
         }
     }
