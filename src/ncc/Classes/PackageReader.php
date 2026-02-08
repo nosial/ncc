@@ -1158,13 +1158,14 @@
             Logger::getLogger()?->verbose(sprintf('Executing PHP script: %s', $scriptPath));
 
             // Verify the script exists, if not try with .php extension
-            if(!IO::exists($scriptPath))
+            // Note: Pass false for normalizePath to prevent URL scheme corruption (ncc:// becoming ncc:/)
+            if(!IO::exists($scriptPath, false))
             {
                 // If the entry point doesn't have .php extension, try adding it
                 if(!str_ends_with($scriptPath, '.php'))
                 {
                     $scriptPathWithExtension = $scriptPath . '.php';
-                    if(IO::exists($scriptPathWithExtension))
+                    if(IO::exists($scriptPathWithExtension, false))
                     {
                         Logger::getLogger()?->verbose(sprintf('Script found with .php extension: %s', $scriptPathWithExtension));
                         $scriptPath = $scriptPathWithExtension;
