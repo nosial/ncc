@@ -51,7 +51,7 @@
                 return 0;
             }
 
-            $package = $argv['package'] ?? $argv['install'] ?? null;
+            $package = $argv['package'] ?? $argv['p'] ?? $argv['install'] ?? null;
             if ($package === null)
             {
                 Console::error("No package specified for installation.");
