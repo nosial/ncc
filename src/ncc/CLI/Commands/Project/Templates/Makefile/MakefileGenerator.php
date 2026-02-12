@@ -61,7 +61,7 @@
                 $buildStepConfiguration = str_replace('${BUILD_NAME}', $buildConfiguration->getName(), $buildStepConfiguration);
 
                 $buildSteps[] = $buildStepConfiguration;
-                $cleanCommands[] = sprintf("\trm %s\n", $buildConfiguration->getOutput());
+                $cleanCommands[] = sprintf("\trm -f %s\n", $buildConfiguration->getOutput());
             }
 
             $baseMakefile = str_replace('${BUILD_STEPS}', implode("\n", $buildSteps), $baseMakefile);
@@ -80,8 +80,8 @@
             {
                 $baseMakefile = str_replace('${PHPDOC_TARGET}', "\ndocs:\n\tphpdoc --config phpdoc.dist.xml\n", $baseMakefile);
                 $extraPhony[] = 'docs';
-                $cleanCommands[] = "\trm target/docs\n";
-                $cleanCommands[] = "\trm target/cache\n";
+                $cleanCommands[] = "\trm -rf target/docs\n";
+                $cleanCommands[] = "\trm -rf target/cache\n";
             }
             else
             {
