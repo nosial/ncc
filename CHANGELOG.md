@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Fixed
+ - Fixed issue where `ncc install -p=<package>` would not work because the `-p` flag wasn't being checked.
+ - Fixed MakefileGenerator to use the correct flags when using `rm` for the cleanup step
+
 
 
 ## [3.0.7] - 2026-02-08
