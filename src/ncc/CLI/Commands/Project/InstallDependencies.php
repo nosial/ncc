@@ -48,6 +48,7 @@
 
             $projectPath = $argv['path'] ?? null;
             $autoConfirm = $argv['yes'] ?? $argv['y'] ?? false;
+            $skipDependencies = $argv['skip-dependencies'] ?? $argv['skip-deps'] ?? $argv['sd'] ?? false;
             $skipRepositories = $argv['skip-repositories'] ?? $argv['skip-repos'] ?? $argv['sr'] ?? false;
             $skipExtensions = $argv['skip-extensions'] ?? $argv['skip-exts'] ?? $argv['se'] ?? false;
             $reinstall = $argv['reinstall'] ?? $argv['r'] ?? false;
@@ -181,6 +182,7 @@
             $installedCount = 0;
             $failedDependencies = [];
             $options = [
+                'skip-dependencies' => $skipDependencies,
                 'skip-repositories' => $skipRepositories,
                 'skip-extensions' => $skipExtensions,
                 'reinstall' => $reinstall

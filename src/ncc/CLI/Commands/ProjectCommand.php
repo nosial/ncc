@@ -184,8 +184,12 @@
                     Console::out('                    If not specified, installs dependencies from all build configurations');
                     Console::out('  --yes, -y         Automatically confirm all prompts');
                     Console::out('  --reinstall, -r   Force reinstall packages even if they are already installed');
+                    Console::out('  --skip-dependencies, --skip-deps, --sd');
+                    Console::out('                    Skip installing package dependencies');
                     Console::out('  --skip-repositories, --skip-repos, --sr');
                     Console::out('                    Skip adding package repositories');
+                    Console::out('  --skip-extensions, --skip-exts, --se');
+                    Console::out('                    Skip installing PHP extensions');
                     Console::out('  --<repository>-auth=<entry>');
                     Console::out('                    Authenticate using the specified vault entry for a repository');
                     Console::out(PHP_EOL . 'Examples:');
