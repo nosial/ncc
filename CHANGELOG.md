@@ -5,13 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.8] - Ongoing
+## [3.0.8] - 2026-02-13
 
-This is an ongoing update
+This Update introduces general bug fixes and improvements
 
 ### Fixed
  - Fixed issue where `ncc install -p=<package>` would not work because the `-p` flag wasn't being checked.
  - Fixed MakefileGenerator to use the correct flags when using `rm` for the cleanup step
+ - Fixed usage of --skip-dependencies in `ncc install` command, this flag is now properly checked and will skip
+   installing dependencies when used.
 
 
 
