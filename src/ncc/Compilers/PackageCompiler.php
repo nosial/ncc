@@ -456,7 +456,7 @@
                 Logger::getLogger()?->verbose(sprintf('Added %d defined constants to header', count($this->getBuildConfiguration()->getDefinitions())));
             }
 
-            if(count($this->getBuildConfiguration()->getOptions()) > 0)
+            if($this->getBuildConfiguration()->getOptions() !== null && count($this->getBuildConfiguration()->getOptions()) > 0)
             {
                 if(isset($this->getBuildConfiguration()->getOptions()['include_options']) && $this->getBuildConfiguration()->getOptions()['include_options'] === false)
                 {
