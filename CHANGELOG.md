@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.9] - Ongoing
+
+This update introduces new build features and runtime API methods
+
+### Changed
+ - The package Header now includes a new `options` property which contains the options defined in the build
+   configuration for the package, this can be omitted by using `include_options` with `false` as an option
+   for the target build configuration.
+
+### Added
+ - Added method `getImportedPackage(string $packageName): ?PackageReader` to `\ncc\Runtime` class to allow for
+   retrieving imported packages during runtime, this only works if the package is already imported.
+ - Added method `getImportedPackageOptions(string $packageName): array` to `\ncc\Runtime` class to retreive the options
+   that was defined in the build configuration during compilation for the imported package.
+
+
+
 ## [3.0.8] - 2026-02-13
 
 This Update introduces general bug fixes and improvements

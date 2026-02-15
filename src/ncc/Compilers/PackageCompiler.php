@@ -456,6 +456,19 @@
                 Logger::getLogger()?->verbose(sprintf('Added %d defined constants to header', count($this->getBuildConfiguration()->getDefinitions())));
             }
 
+            if(count($this->getBuildConfiguration()->getOptions()) > 0)
+            {
+                if(isset($this->getBuildConfiguration()->getOptions()['include_options']) && $this->getBuildConfiguration()->getOptions()['include_options'] === false)
+                {
+                    Logger::getLogger()?->debug('Skipping inclusion of build options in header due to "include_options" flag');
+                }
+                else
+                {
+                    $header->setOptions($this->getBuildConfiguration()->getOptions());
+                    Logger::getLogger()?->verbose(sprintf('Added %d options to header', count($this->getBuildConfiguration()->getOptions())));
+                }
+            }
+
             // If dependency readers are provided, we need to match them against the required dependencies because this
             // result contains all resolved dependencies that a package may have (transitive dependencies).
             if($dependencyReaders !== null)

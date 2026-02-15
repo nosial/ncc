@@ -39,6 +39,7 @@
     class Runtime
     {
         private static array $importedPackages = [];
+        private static array $importedPackageOptions = [];
         private static array $packageReaderReferences = [];
         private static array $registeredAutoloaders = [];
         private static bool $streamWrapperInitialized = false;
@@ -86,9 +87,10 @@
                 $referenceId = uniqid();
                 Logger::getLogger()?->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
                 self::$packageReaderReferences[$referenceId] = $packageReader;
+                self::$importedPackageOptions[$referenceId] = $packageReader->getHeader()->getOptions() ?? [];
                 self::$importedPackages[$packageName] = $referenceId;
-                // Register the autoloader for this package
 
+                // Register the autoloader for this package
                 Logger::getLogger()?->debug(sprintf('Registering autoloader for: %s', $packageName));
                 self::registerAutoloader($packageReader);
                 Logger::getLogger()?->verbose(sprintf('Package import completed: %s', $packageName));
@@ -139,6 +141,7 @@
             $referenceId = uniqid();
             self::$packageReaderReferences[$referenceId] = $packageReader;
             self::$importedPackages[$packageName] = $referenceId;
+            self::$importedPackageOptions[$referenceId] = $packageReader->getHeader()->getOptions() ?? [];
 
             // If the package is statically linked, mark dependencies as imported BEFORE registering autoloader
             // This prevents the autoloader from trying to import dependencies that are already embedded
@@ -200,6 +203,22 @@
         }
 
         /**
+         * Gets the imported package by name.
+         *
+         * @param string $packageName The name of the package.
+         * @return PackageReader|null The PackageReader instance if the package is imported, null otherwise.
+         */
+        public static function getImportedPackage(string $packageName): ?PackageReader
+        {
+            if(!isset(self::$importedPackages[$packageName]))
+            {
+                return null;
+            }
+
+            return self::$packageReaderReferences[self::$importedPackages[$packageName]] ?? null;
+        }
+
+        /**
          * Checks if a package is imported.
          *
          * @param string $packageName The name of the package.
@@ -208,6 +227,22 @@
         public static function isImported(string $packageName): bool
         {
             return isset(self::$importedPackages[$packageName]);
+        }
+
+        /**
+         * Gets the options of an imported package by name.
+         *
+         * @param string $packageName The name of the package.
+         * @return array An array of options for the imported package, or an empty array if the package is not imported or has no options.
+         */
+        public static function getImportedPackageOptions(string $packageName): array
+        {
+            if(!isset(self::$importedPackages[$packageName]))
+            {
+                return [];
+            }
+
+            return self::$importedPackageOptions[self::$importedPackages[$packageName]] ?? [];
         }
 
         /**

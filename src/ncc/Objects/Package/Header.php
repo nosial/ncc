@@ -41,6 +41,7 @@
         private string|array|null $preInstall;
         /** @var string|string[]|null  */
         private string|array|null $postInstall;
+        private ?array $options;
         private ?array $definedConstants;
         /**
          * @var DependencyReference[]|null
@@ -79,6 +80,7 @@
             $this->preInstall = $data['pre_install'] ?? null;
             $this->compressed = $data['compressed'] ?? false;
             $this->postInstall = $data['post_install'] ?? null;
+            $this->options = $data['options'] ?? null;
             $this->definedConstants = $data['defined_constants'] ?? null;
             if(isset($data['dependencies']) && is_array($data['dependencies']) && !empty($data['dependencies']))
             {
@@ -284,6 +286,27 @@
         public function setPostInstall(string|array|null $postInstall): void
         {
             $this->postInstall = $postInstall;
+        }
+
+        /**
+         * Gets the options of the package
+         *
+         * @return array|null The options of the package, or null if not set
+         */
+        public function getOptions(): ?array
+        {
+            return $this->options;
+        }
+
+        /**
+         * Sets the options of the package
+         *
+         * @param array|null $options The options to set for the package, or null to unset
+         * @return void
+         */
+        public function setOptions(?array $options): void
+        {
+            $this->options = $options;
         }
 
         /**
@@ -497,6 +520,7 @@
                 'web_entry_point' => $this->webEntryPoint,
                 'pre_install' => $this->preInstall,
                 'post_install' => $this->postInstall,
+                'options' => $this->options,
                 'dependencies' => $this->dependencyReferences ? array_map(function($item){ return $item->toArray(); }, $this->dependencyReferences) : null,
                 'defined_constants' => $this->definedConstants,
                 'package_source' => $this->updateSource ? (string)$this->updateSource : null,
