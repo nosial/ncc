@@ -199,6 +199,14 @@
         /**
          * @inheritDoc
          */
+        public function getGit(string $group, string $project): ?RemotePackage
+        {
+            return null;
+        }
+
+        /**
+         * @inheritDoc
+         */
         protected function fetchGit(string $group, string $project): ?RemotePackage
         {
             return null;
@@ -297,6 +305,7 @@
             {
                 Logger::getLogger()?->debug(sprintf('Parsing JSON response for %s/%s', $vendor, $project));
                 $decoded = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+
                 
                 // Cache the successful response
                 Cache::set($cache_key, $decoded);
