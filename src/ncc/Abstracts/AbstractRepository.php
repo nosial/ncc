@@ -235,14 +235,54 @@
         public abstract function getReleasePackage(string $group, string $project, string $release): ?RemotePackage;
 
         /**
-         * Returns a RemotePackage object representing the Git URL of a project
+         * Fetches the git URL for a project from the repository's API.
+         * Subclasses should override this to retrieve the actual git URL via the API.
+         *
+         * @param string $group The group or namespace the project belongs to
+         * @param string $project The name of the project
+         * @return RemotePackage|null Returns the source of the git repository, or null if not found
+         * @throws OperationException Thrown if there was an error during the operation
+         */
+        protected abstract function fetchGit(string $group, string $project): ?RemotePackage;
+
+        /**
+         * Returns a RemotePackage object representing the Git URL of a project.
+         * Falls back to a constructed URL using the repository host, group and project if the API
+         * call fails or returns null. If the host begins with "api.", that prefix is stripped before
+         * building the assumed URL.
          *
          * @param string $group The group or namespace the project belongs to
          * @param string $project The name of the project
          * @return RemotePackage|null Returns the source of the git repository
-         * @throws OperationException Thrown if there was an error during the operation
          */
-        public abstract function getGit(string $group, string $project): ?RemotePackage;
+        public function getGit(string $group, string $project): ?RemotePackage
+        {
+            try
+            {
+                $result = $this->fetchGit($group, $project);
+                if($result !== null)
+                {
+                    return $result;
+                }
+            }
+            catch(Exception $e)
+            {
+                Logger::getLogger()?->warning(sprintf('Failed to fetch git URL for %s/%s from API, falling back to assumed URL: %s', $group, $project, $e->getMessage()), $e);
+            }
+
+            // Fallback: construct an assumed git URL from the host, group and project
+            $host = $this->getConfiguration()->getHost();
+            if(str_starts_with($host, 'api.'))
+            {
+                $host = substr($host, 4);
+            }
+
+            $scheme = $this->getConfiguration()->isSslEnabled() ? 'https' : 'http';
+            $url = sprintf('%s://%s/%s/%s.git', $scheme, $host, $group, $project);
+            Logger::getLogger()?->debug(sprintf('Using assumed git URL for %s/%s: %s', $group, $project, $url));
+
+            return new RemotePackage($url, RemotePackageType::SOURCE_GIT, $group, $project);
+        }
 
         /**
          * Downloads and extracts the given remote package to a temporary location

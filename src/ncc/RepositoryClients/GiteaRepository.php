@@ -339,7 +339,7 @@
         /**
          * @inheritDoc
          */
-        public function getGit(string $group, string $project): ?RemotePackage
+        protected function fetchGit(string $group, string $project): ?RemotePackage
         {
             $endpoint = sprintf('%s://%s/api/v1/repos/%s/%s/', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), rawurlencode($group), rawurlencode($project));
             $curl = curl_init($endpoint);

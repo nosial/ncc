@@ -199,7 +199,7 @@
         /**
          * @inheritDoc
          */
-        public function getGit(string $group, string $project): ?RemotePackage
+        protected function fetchGit(string $group, string $project): ?RemotePackage
         {
             return null;
         }

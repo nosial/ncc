@@ -347,7 +347,7 @@
         /**
          * @inheritDoc
          */
-        public function getGit(string $group, string $project): ?RemotePackage
+        protected function fetchGit(string $group, string $project): ?RemotePackage
         {
             $project = str_replace('.', '/', $project);
             $endpoint = sprintf('%s://%s/api/v4/projects/%s%%2F%s', $this->getConfiguration()->isSslEnabled() ? 'https' : 'http', $this->getConfiguration()->getHost(), $group, rawurlencode($project));
