@@ -37,12 +37,12 @@
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\ExecutionUnitReference;
     use ncc\Objects\Package\Header;
+    use ncc\Objects\Package\PackageCacheData;
     use ncc\Objects\Package\ResourceReference;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project\Assembly;
     use ncc\Objects\Project\ExecutionUnit;
     use ncc\Runtime;
-    use ReflectionClass;
     use RuntimeException;
     use Throwable;
     use function msgpack_unpack;
@@ -505,7 +505,7 @@
          * @param ExecutionUnitReference $reference The execution unit reference.
          * @param string $outputDirectory The directory where the script will be created.
          * @return string The path to the created shell script.
-         * @throws IOException If there is an error writing the file.
+         * @throws OperationException
          */
         public function createExecutionUnit(ExecutionUnitReference $reference, string $outputDirectory): string
         {
@@ -985,56 +985,25 @@
          */
         public function exportCache(string $cacheFilePath): void
         {
-            $cacheData = [
-                'version' => 1, // Cache format version for future compatibility
-                'file_path' => $this->filePath,
-                'file_size' => IO::getFileSize($this->filePath),
-                'file_mtime' => filemtime($this->filePath),
-                'start_offset' => $this->startOffset,
-                'end_offset' => $this->endOffset,
-                'package_version' => $this->packageVersion,
-                'header' => $this->header->toArray(),
-                'assembly' => $this->assembly->toArray(),
-                'execution_unit_references' => $this->executionUnitReferences,
-                'component_references' => $this->componentReferences,
-                'resource_references' => $this->resourceReferences,
-            ];
-
-            $serialized = serialize($cacheData);
-            IO::writeFile($cacheFilePath, $serialized);
-        }
-
-        /**
-         * Creates a PackageReader instance from a cache file.
-         * This method provides a static factory for creating PackageReader instances
-         * from previously exported cache files.
-         *
-         * @param string $cacheFilePath The path to the cache file
-         * @param string $packageFilePath The path to the original package file
-         * @return static A new PackageReader instance
-         * @throws InvalidArgumentException If the cache file is invalid or corrupted
-         * @throws IOException If the cache file cannot be read
-         */
-        public static function importFromCache(string $cacheFilePath, string $packageFilePath): self
-        {
-            if(!IO::exists($cacheFilePath))
+            $fileSha1 = sha1_file($this->filePath);
+            if($fileSha1 === false)
             {
-                throw new InvalidArgumentException("Cache file does not exist: " . $cacheFilePath);
+                throw new IOException($this->filePath, "Could not compute SHA1 hash of package file");
             }
 
-            if(!IO::exists($packageFilePath))
-            {
-                throw new InvalidArgumentException("Package file does not exist: " . $packageFilePath);
-            }
+            $cacheData = new PackageCacheData(
+                $fileSha1,
+                $this->startOffset,
+                $this->endOffset,
+                $this->packageVersion,
+                $this->header,
+                $this->assembly,
+                $this->executionUnitReferences,
+                $this->componentReferences,
+                $this->resourceReferences
+            );
 
-            // Use reflection to create instance without calling constructor
-            $reflection = new ReflectionClass(self::class);
-            $instance = $reflection->newInstanceWithoutConstructor();
-            
-            $instance->filePath = $packageFilePath;
-            $instance->importFromCacheFile($cacheFilePath);
-            
-            return $instance;
+            IO::writeFile($cacheFilePath, serialize($cacheData));
         }
 
         /**
@@ -1046,34 +1015,45 @@
          */
         private function importFromCacheFile(string $cacheFilePath): void
         {
-            $cacheContent = IO::readFile($cacheFilePath);
-            $cacheData = unserialize($cacheContent);
-
-            if(!is_array($cacheData) || !isset($cacheData['version']))
+            // Check in-memory cache first – avoids disk I/O and SHA-1 re-computation
+            // on repeated loads of the same package within the same PHP process.
+            if(Cache::isEnabled() && Cache::has($cacheFilePath))
             {
-                throw new InvalidArgumentException("Invalid cache file format");
+                $cacheData = Cache::get($cacheFilePath);
+            }
+            else
+            {
+                $cacheContent = IO::readFile($cacheFilePath);
+                $cacheData = unserialize($cacheContent);
+
+                if(!($cacheData instanceof PackageCacheData) || $cacheData->getVersion() !== PackageCacheData::CACHE_VERSION)
+                {
+                    throw new InvalidArgumentException("Invalid or outdated cache file format");
+                }
+
+                // Validate cache by comparing the stored SHA-1 against the current file.
+                $currentSha1 = sha1_file($this->filePath);
+                if($currentSha1 === false || $cacheData->getFileSha1() !== $currentSha1)
+                {
+                    throw new InvalidArgumentException("Cache file is outdated (package file has been modified)");
+                }
+
+                // Warm the in-memory cache so subsequent loads are instant.
+                Cache::set($cacheFilePath, $cacheData);
             }
 
-            // Validate cache against current package file
-            $currentSize = IO::getFileSize($this->filePath);
-            $currentMtime = filemtime($this->filePath);
+            // Restore all properties directly from the cache object – Header and
+            // Assembly are already fully hydrated objects, so no fromArray() overhead.
+            $this->startOffset             = $cacheData->getStartOffset();
+            $this->endOffset               = $cacheData->getEndOffset();
+            $this->packageVersion          = $cacheData->getPackageVersion();
+            $this->header                  = $cacheData->getHeader();
+            $this->assembly                = $cacheData->getAssembly();
+            $this->executionUnitReferences = $cacheData->getExecutionUnitReferences();
+            $this->componentReferences     = $cacheData->getComponentReferences();
+            $this->resourceReferences      = $cacheData->getResourceReferences();
 
-            if($cacheData['file_size'] !== $currentSize || $cacheData['file_mtime'] !== $currentMtime)
-            {
-                throw new InvalidArgumentException("Cache file is outdated (package file has been modified)");
-            }
-
-            // Reconstruct all properties from cache
-            $this->startOffset = $cacheData['start_offset'];
-            $this->endOffset = $cacheData['end_offset'];
-            $this->packageVersion = $cacheData['package_version'];
-            $this->header = Header::fromArray($cacheData['header']);
-            $this->assembly = Assembly::fromArray($cacheData['assembly']);
-            $this->executionUnitReferences = $cacheData['execution_unit_references'];
-            $this->componentReferences = $cacheData['component_references'];
-            $this->resourceReferences = $cacheData['resource_references'];
-
-            // Open file handle for reading actual data when needed
+            // Open file handle for lazy data reads (execution units, components, resources).
             $this->fileHandle = fopen($this->filePath, 'rb');
             if(!$this->fileHandle)
             {
@@ -1087,7 +1067,7 @@
          * @param string|null $executionUnit The name of the execution unit to execute. If null, uses the main entry point.
          * @param array $arguments Arguments to pass to the execution unit (similar to $argv in PHP).
          * @return mixed The return value from the executed script (for PHP/WEB) or exit code (for SYSTEM).
-         * @throws IOException If there's an I/O error during execution.
+         * @throws OperationException
          */
         public function execute(?string $executionUnit = null, array $arguments = []): mixed
         {
@@ -1138,7 +1118,7 @@
          * @param ExecutionUnit $unit The execution unit to execute.
          * @param array $arguments Arguments to pass to the script.
          * @return mixed The return value from the executed script.
-         * @throws ExecutionUnitException If execution fails.
+         * @throws OperationException
          */
         private function executePhpUnit(ExecutionUnit $unit, array $arguments): mixed
         {
@@ -1251,6 +1231,7 @@
          * @param ExecutionUnit $unit The execution unit to execute.
          * @param array $arguments Arguments to pass to the command.
          * @return int The exit code from the executed process.
+         * @throws OperationException
          */
         private function executeSystemUnit(ExecutionUnit $unit, array $arguments): int
         {
