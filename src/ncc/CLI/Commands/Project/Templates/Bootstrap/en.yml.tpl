@@ -1,0 +1,13 @@
+home:
+  title: "${ASSEMBLY_NAME}"
+  heading: "Welcome to ${ASSEMBLY_NAME}"
+  subheading: "A web application powered by DynamicalWeb and Bootstrap."
+  get_started: "Get Started"
+  nav_home: "Home"
+  feature_fast_title: "Fast"
+  feature_fast_desc: "Built on DynamicalWeb with APCu caching for high performance."
+  feature_extensible_title: "Extensible"
+  feature_extensible_desc: "Add routes, locales, and templates with a clean project structure."
+  feature_deploy_title: "Ready to Deploy"
+  feature_deploy_desc: "Docker, Nginx, and Supervisor configured out of the box."
+  footer: "${ASSEMBLY_NAME} — Built with DynamicalWeb"
