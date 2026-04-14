@@ -49,7 +49,7 @@
 
             if(!IO::exists(dirname($targetBootstrapFile)))
             {
-                IO::createDirectory(dirname($targetBootstrapFile), true);
+                IO::createDirectory(dirname($targetBootstrapFile), 0755, true);
             }
 
             $basePhpunit = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'phpunit.tpl');

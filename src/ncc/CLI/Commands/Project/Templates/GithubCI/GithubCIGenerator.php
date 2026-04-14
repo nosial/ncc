@@ -40,11 +40,11 @@ class GithubCIGenerator implements TemplateGeneratorInterface
         // Create .github/workflows directory if it doesn't exist
         if(!IO::exists(dirname($targetFile)))
         {
-            IO::createDirectory(dirname($targetFile), true);
+            IO::createDirectory(dirname($targetFile), 0755, true);
         }
         if(!IO::exists(dirname($secondaryTargetFile)))
         {
-            IO::createDirectory(dirname($secondaryTargetFile), true);
+            IO::createDirectory(dirname($secondaryTargetFile), 0755, true);
         }
 
         // Remove the workflow file if it exists
