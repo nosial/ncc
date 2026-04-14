@@ -110,15 +110,22 @@
             switch($command)
             {
                 case 'create':
-                    Console::out('Usage: ncc project create --name=<name> --package=<package>' . PHP_EOL);
+                    Console::out('Usage: ncc project create --name=<name> --package=<package> [options]' . PHP_EOL);
                     Console::out('Creates a new PHP project with an ncc project configuration file.');
                     Console::out('Once created, you can apply templates to automatically generate a');
                     Console::out('build system for your project.' . PHP_EOL);
                     Console::out('Options:');
                     Console::out('  --name            (Required) The name of the project/product');
                     Console::out('  --package         (Required) The package name (e.g., com.example.project)');
-                    Console::out(PHP_EOL . 'Example:');
+                    Console::out('  --path            (Optional) Parent directory for the new project');
+                    Console::out('                    Defaults to current working directory');
+                    Console::out('  --generate, -g    (Optional) Apply a template after creating the project');
+                    Console::out('                    Same as running "ncc project --generate=<name>" on the new project');
+                    Console::out('                    See "ncc project --help=generate" for available templates');
+                    Console::out(PHP_EOL . 'Examples:');
                     Console::out('  ncc project create --name=MyProject --package=com.example.myproject');
+                    Console::out('  ncc project create --name=MyProject --package=com.example.myproject --generate=makefile');
+                    Console::out('  ncc project create --name=MyCLI --package=com.example.cli -g=cli');
                     break;
 
                 case 'validate':

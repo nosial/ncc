@@ -105,6 +105,15 @@
                 return 1;
             }
 
+            // If --generate is specified, apply the template to the newly created project
+            if(isset($argv['generate']) || isset($argv['g']))
+            {
+                return ApplyTemplate::handle([
+                    'generate' => $argv['generate'] ?? $argv['g'],
+                    'path' => $projectPath,
+                ]);
+            }
+
             Console::out("Project created successfully at: " . $projectPath);
             return 0;
         }
