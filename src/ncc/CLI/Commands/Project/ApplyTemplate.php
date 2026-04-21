@@ -26,6 +26,7 @@
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\CLI\Commands\Helper;
+    use ncc\CLI\Commands\Project\Templates\Bootstrap\BootstrapTemplate;
     use ncc\CLI\Commands\Project\Templates\Commandline\CommandlineTemplate;
     use ncc\CLI\Commands\Project\Templates\Dockerfile\DockerfileGenerator;
     use ncc\CLI\Commands\Project\Templates\GithubCI\GithubCIGenerator;
@@ -89,47 +90,64 @@
 
             try
             {
-                switch(strtolower($template))
+                // Check for bootstrap-<version> pattern before the main switch
+                $lowerTemplate = strtolower($template);
+                if(str_starts_with($lowerTemplate, 'bootstrap-'))
                 {
-                    case 'phpunit':
-                    case 'tests':
-                    case 'test':
-                        PhpunitGenerator::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    case 'phpdoc':
-                    case 'docs':
-                    case 'doc':
-                        PhpdocGenerator::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    case 'makefile':
-                    case 'make':
-                        MakefileGenerator::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    case 'github-ci':
-                    case 'github':
-                        GithubCIGenerator::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    case 'dockerfile':
-                    case 'docker':
-                        DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    case 'commandline':
-                    case 'cli':
-                        CommandlineTemplate::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    case 'web':
-                        WebTemplate::generate(dirname($projectPath), $projectConfiguration);
-                        break;
-
-                    default:
-                        Console::error("Unknown template: " . $template);
+                    $version = substr($template, strlen('bootstrap-'));
+                    if(empty($version))
+                    {
+                        Console::error("Bootstrap template requires a version number, e.g., --generate=bootstrap-5.3.3");
                         return 1;
+                    }
+
+                    BootstrapTemplate::setVersion($version);
+                    BootstrapTemplate::generate(dirname($projectPath), $projectConfiguration);
+                }
+                else
+                {
+                    switch($lowerTemplate)
+                    {
+                        case 'phpunit':
+                        case 'tests':
+                        case 'test':
+                            PhpunitGenerator::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'phpdoc':
+                        case 'docs':
+                        case 'doc':
+                            PhpdocGenerator::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'makefile':
+                        case 'make':
+                            MakefileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'github-ci':
+                        case 'github':
+                            GithubCIGenerator::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'dockerfile':
+                        case 'docker':
+                            DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'commandline':
+                        case 'cli':
+                            CommandlineTemplate::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'web':
+                            WebTemplate::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        default:
+                            Console::error("Unknown template: " . $template);
+                            return 1;
+                    }
                 }
             }
             catch(Exception $e)
