@@ -35,27 +35,154 @@
          */
         public static function generate(string $projectDirectory, Project $projectConfiguration): void
         {
-            $targetWebEntry = $projectDirectory . DIRECTORY_SEPARATOR . 'web_entry';
+            $assembly = $projectConfiguration->getAssembly();
+            $packageName = $assembly->getPackage();
+            $assemblyName = $assembly->getName();
+            $assemblyVersion = $assembly->getVersion();
+            $sourcePath = $projectConfiguration->getSourcePath() ?? 'src';
 
-            if(IO::exists($targetWebEntry))
+            $replacements = [
+                '${PACKAGE_NAME}' => $packageName,
+                '${ASSEMBLY_NAME}' => $assemblyName,
+                '${ASSEMBLY_VERSION}' => $assemblyVersion,
+            ];
+
+            // Generate web_entry
+            self::writeTemplate(
+                $projectDirectory . DIRECTORY_SEPARATOR . 'web_entry',
+                'web_entry.tpl',
+                $replacements
+            );
+
+            // Generate Dockerfile
+            self::writeTemplate(
+                $projectDirectory . DIRECTORY_SEPARATOR . 'Dockerfile',
+                'Dockerfile.tpl',
+                $replacements
+            );
+
+            // Generate docker-compose.yml
+            self::writeTemplate(
+                $projectDirectory . DIRECTORY_SEPARATOR . 'docker-compose.yml',
+                'docker-compose.yml.tpl',
+                $replacements
+            );
+
+            // Generate nginx.conf
+            self::writeTemplate(
+                $projectDirectory . DIRECTORY_SEPARATOR . 'nginx.conf',
+                'nginx.conf.tpl',
+                $replacements
+            );
+
+            // Generate supervisord.conf
+            self::writeTemplate(
+                $projectDirectory . DIRECTORY_SEPARATOR . 'supervisord.conf',
+                'supervisord.conf.tpl',
+                $replacements
+            );
+
+            // Generate docker-entrypoint.sh
+            self::writeTemplate(
+                $projectDirectory . DIRECTORY_SEPARATOR . 'docker-entrypoint.sh',
+                'docker-entrypoint.sh.tpl',
+                $replacements
+            );
+
+            // Generate .gitignore (only if it doesn't exist)
+            $gitignorePath = $projectDirectory . DIRECTORY_SEPARATOR . '.gitignore';
+            if(!IO::exists($gitignorePath))
             {
-                IO::delete($targetWebEntry);
+                self::writeTemplate($gitignorePath, 'gitignore.tpl', $replacements);
             }
 
-            $targetEntry = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'web_entry.tpl');
-            $targetEntry = str_replace('${PACKAGE_NAME}', $projectConfiguration->getAssembly()->getPackage(), $targetEntry);
+            // Create web application directory structure
+            $webAppDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebApplication';
+            $webErrorsDir = $webAppDir . DIRECTORY_SEPARATOR . 'errors';
+            $webResourcesDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebResources' . DIRECTORY_SEPARATOR . 'css';
+            $webLocaleDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebLocale';
 
-            IO::writeFile($targetWebEntry, $targetEntry);
-            Console::out('Generated File: ' . $targetWebEntry);
+            IO::createDirectory($webAppDir, 0755, true);
+            IO::createDirectory($webErrorsDir, 0755, true);
+            IO::createDirectory($webResourcesDir, 0755, true);
+            IO::createDirectory($webLocaleDir, 0755, true);
 
-            // Build configuration for web release
+            // Generate sample application files
+            self::writeTemplate(
+                $webAppDir . DIRECTORY_SEPARATOR . 'index.phtml',
+                'index.phtml.tpl',
+                $replacements
+            );
+
+            self::writeTemplate(
+                $webErrorsDir . DIRECTORY_SEPARATOR . '404.phtml',
+                '404.phtml.tpl',
+                $replacements
+            );
+
+            self::writeTemplate(
+                $webErrorsDir . DIRECTORY_SEPARATOR . '500.phtml',
+                '500.phtml.tpl',
+                $replacements
+            );
+
+            self::writeTemplate(
+                $webResourcesDir . DIRECTORY_SEPARATOR . 'style.css',
+                'style.css.tpl',
+                $replacements
+            );
+
+            self::writeTemplate(
+                $webLocaleDir . DIRECTORY_SEPARATOR . 'en.yml',
+                'en.yml.tpl',
+                $replacements
+            );
+
+            // Add DynamicalWeb dependency
+            if(!$projectConfiguration->dependencyExists('net.nosial.dynamicalweb'))
+            {
+                $projectConfiguration->addDependency('net.nosial.dynamicalweb', 'nosial/dynamicalweb@github');
+            }
+
+            // Build configuration for web release with web_configuration
             if(!$projectConfiguration->buildConfigurationExists('web_release'))
             {
-                $buildConfiguration = new BuildConfiguration([]);
+                $buildConfiguration = new BuildConfiguration(['type' => 'ncc']);
                 $buildConfiguration->setName('web_release');
                 $buildConfiguration->setOutput('target/web_release/${ASSEMBLY.PACKAGE}.ncc');
+                $buildConfiguration->setDefinitions(['NCC_DISABLE_LOGGING' => '1']);
                 $buildConfiguration->setOptions([
-                    'NCC_DISABLE_LOGGING' => '1'
+                    'web_configuration' => [
+                        'application' => [
+                            'name' => $assemblyName,
+                            'root' => $assemblyName . '/WebApplication',
+                            'resources' => $assemblyName . '/WebResources',
+                            'default_locale' => 'en',
+                            'report_errors' => true,
+                            'xss_level' => 0,
+                            'debug_panel' => true,
+                        ],
+                        'locales' => [
+                            'en' => $assemblyName . '/WebLocale/en.yml',
+                        ],
+                        'router' => [
+                            'base_path' => '/',
+                            'response_handlers' => [
+                                404 => 'errors/404.phtml',
+                                500 => 'errors/500.phtml',
+                            ],
+                            'routes' => [
+                                [
+                                    'id' => 'home',
+                                    'path' => '/',
+                                    'module' => 'index.phtml',
+                                    'locale_id' => 'home',
+                                    'allowed_methods' => ['GET'],
+                                ],
+                            ],
+                        ],
+                        'static' => true,
+                    ],
                 ]);
                 $projectConfiguration->addBuildConfiguration($buildConfiguration);
             }
@@ -65,7 +192,7 @@
             {
                 $executionUnit = new Project\ExecutionUnit([
                     'name' => 'web_entry',
-                    'entry' => 'web_entry'
+                    'entry' => 'web_entry',
                 ]);
                 $projectConfiguration->addExecutionUnit($executionUnit);
             }
@@ -75,5 +202,29 @@
 
             $projectConfiguration->save($projectDirectory . DIRECTORY_SEPARATOR . 'project.yml');
             Console::out('Modified File: ' . $projectDirectory . DIRECTORY_SEPARATOR . 'project.yml');
+        }
+
+        /**
+         * Reads a template file, applies replacements, and writes it to the target path.
+         *
+         * @param string $targetPath The destination file path.
+         * @param string $templateFile The template filename in the current directory.
+         * @param array $replacements Key-value pairs of placeholders to replace.
+         * @param string|null $templateDirectory The directory containing the template file. Defaults to the Web template directory.
+         * @return void
+         */
+        protected static function writeTemplate(string $targetPath, string $templateFile, array $replacements, ?string $templateDirectory=null): void
+        {
+            if(IO::exists($targetPath))
+            {
+                IO::delete($targetPath);
+            }
+
+            $templateDirectory = $templateDirectory ?? __DIR__;
+            $content = file_get_contents($templateDirectory . DIRECTORY_SEPARATOR . $templateFile);
+            $content = str_replace(array_keys($replacements), array_values($replacements), $content);
+
+            IO::writeFile($targetPath, $content);
+            Console::out('Generated File: ' . $targetPath);
         }
     }

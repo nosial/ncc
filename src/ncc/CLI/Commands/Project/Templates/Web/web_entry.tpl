@@ -1,5 +1,5 @@
 <?php
-        require 'ncc';
-        import('${PACKAGE_NAME}');
+    require 'ncc';
+    import('${PACKAGE_NAME}');
 
-        print('Hello, World!');
+    (new \DynamicalWeb\DynamicalWeb('${PACKAGE_NAME}'))->handleRequest();
