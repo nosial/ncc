@@ -37,7 +37,7 @@
   </component>
   <component name="PhpUnit">
     <phpunit_settings>
-      <PhpUnitSettings load_method="PHPUNIT_PHAR" configuration_file_path="$PROJECT_DIR$/phpunit.xml" custom_loader_path="" phpunit_phar_path="$USER_HOME$/phpunit.phar" use_configuration_file="true" />
+      <PhpUnitSettings load_method="PHPUNIT_PHAR" configuration_file_path="$PROJECT_DIR$/phpunit.xml" custom_loader_path="" phpunit_phar_path="$PROJECT_DIR$/../../../phpunit.phar" use_configuration_file="true" />
     </phpunit_settings>
   </component>
   <component name="Psalm">
