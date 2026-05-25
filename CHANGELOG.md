@@ -5,13 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [3.0.12] - Ongoing
+
+This update introduces a new build template for web development using DynamicalWeb
+
+### Added
+ - Added a new dynamic template option to `--generate` where template repositories may now include a `template.yml` file
+   in the root of their distributed templates that can be used to apply to a DynamicalWeb template using 
+   `ncc project --generate=nosial/liquid-elegance=1.0.0.berry-light-horizontal@github` to apply a template from a
+   repository to the existing project.
+
+### Changed
+ - The `ncc project create` command now supports the `--generate` parameter that works the same as `ncc project --generate`
+   but applied during project creation.
+ - PackageSource now supports a new property called 'variant' which allows for a variant to be defined for instance
+   `<organization>/<repository>:<variant>=<version>@<source>` which can be used to define different variants
+   of the same package.
+
+### Removed
+ - Removed the bootstrap integrity check from the Bootstrap template
+
+
+
 ### [3.0.11] - 2026-02-23
 
 This update introduces a performance improvement
 
 ### Changed
-
  - Add PackageCacheData class for caching parsed NCC package metadata
+
 
 
 ### [3.0.10] - 2026-02-19
