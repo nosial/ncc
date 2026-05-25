@@ -5,11 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### [3.0.13] - Ongoing
+## [3.0.13] - Ongoing
 
+### Fixed
 
+ - Fixed issue where .ncc files would not be resolved correctly using the `ncc install` command
 
-### [3.0.12] - 2026-05-25
+## [3.0.12] - 2026-05-25
 
 This update introduces a new build template for web development using DynamicalWeb
 
@@ -31,7 +33,7 @@ This update introduces a new build template for web development using DynamicalW
 
 
 
-### [3.0.11] - 2026-02-23
+## [3.0.11] - 2026-02-23
 
 This update introduces a performance improvement
 
@@ -40,7 +42,7 @@ This update introduces a performance improvement
 
 
 
-### [3.0.10] - 2026-02-19
+## [3.0.10] - 2026-02-19
 
 This update introduces a bug fix
 

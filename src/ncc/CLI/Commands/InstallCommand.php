@@ -51,7 +51,29 @@
                 return 0;
             }
 
-            $package = $argv['package'] ?? $argv['p'] ?? $argv['install'] ?? null;
+            $package = $argv['package'] ?? $argv['p'] ?? null;
+
+            // Attempt to extract the positional argument from the original argv
+            if ($package === null)
+            {
+                $rawArgv = $_SERVER['argv'] ?? [];
+                $foundInstall = false;
+                foreach ($rawArgv as $arg)
+                {
+                    if ($arg === 'install')
+                    {
+                        $foundInstall = true;
+                        continue;
+                    }
+
+                    if ($foundInstall && !str_starts_with($arg, '-'))
+                    {
+                        $package = $arg;
+                        break;
+                    }
+                }
+            }
+
             if ($package === null)
             {
                 Console::error("No package specified for installation.");
@@ -114,7 +136,12 @@
                 Console::warning('The "skip-dependencies" option was used, the package may not meet the requirements');
             }
 
-            if(IO::isFile($package))
+            $debug_isFile = IO::isFile($package);
+            file_put_contents('/tmp/ncc_debug.log', sprintf("[%s] package='%s' cwd='%s' isFile=%s argv=%s\n",
+                date('Y-m-d H:i:s'), $package, getcwd(), $debug_isFile ? 'true' : 'false',
+                json_encode($_SERVER['argv'] ?? [])), FILE_APPEND);
+
+            if($debug_isFile)
             {
                 try
                 {
