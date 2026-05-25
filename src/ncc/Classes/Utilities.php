@@ -40,8 +40,9 @@
                 return null;
             }
 
-            // Capture organization and package name separately, and optionally version and repository
-            $pattern = '/^(?P<organization>[a-z](?:[a-z0-9._-]*[a-z0-9])?)\/(?P<package_name>[a-z](?:[a-z0-9._-]*[a-z0-9])?)(?:=(?P<version>[^\s@=]*))?(?:@(?P<repository>[a-z](?:[a-z0-9._-]*[a-z0-9])?))?$/ix';
+            // Capture organization and package name separately, and optionally variant, version and repository
+            // Format: organization/name:variant=version@repository
+            $pattern = '/^(?P<organization>[a-z](?:[a-z0-9._-]*[a-z0-9])?)\/(?P<package_name>[a-z](?:[a-z0-9._-]*[a-z0-9])?)(?::(?P<variant>[^\s=@]+))?(?:=(?P<version>[^\s@=]*))?(?:@(?P<repository>[a-z](?:[a-z0-9._-]*[a-z0-9])?))?$/ix';
 
             if (!preg_match($pattern, $sourceString, $matches))
             {
@@ -51,6 +52,7 @@
             return [
                 'organization' => $matches['organization'],
                 'package_name' => $matches['package_name'],
+                'variant' => (!empty($matches['variant'])) ? $matches['variant'] : null,
                 'version' => (!empty($matches['version'])) ? $matches['version'] : 'latest',
                 'repository' => (!empty($matches['repository'])) ? $matches['repository'] : null
             ];
