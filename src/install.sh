@@ -156,6 +156,18 @@ get_php_include_path() {
             INSTALL_DIR="$path"
             break
         fi
+        
+        # If path doesn't exist but we have system privileges, create it
+        if [ ! -d "$path" ] && [ "$INSTALL_MODE" = "system" ]; then
+            print_info "Creating directory: $path"
+            if [ -n "$USE_SUDO" ]; then
+                $USE_SUDO mkdir -p "$path" || continue
+            else
+                mkdir -p "$path" || continue
+            fi
+            INSTALL_DIR="$path"
+            break
+        fi
     done
     unset IFS
     
