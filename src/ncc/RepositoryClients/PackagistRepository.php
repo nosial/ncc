@@ -207,6 +207,14 @@
         /**
          * @inheritDoc
          */
+        public function getReleaseAssetUrl(string $group, string $project, string $release, string $assetName): ?string
+        {
+            return null;
+        }
+
+        /**
+         * @inheritDoc
+         */
         protected function fetchGit(string $group, string $project): ?RemotePackage
         {
             return null;

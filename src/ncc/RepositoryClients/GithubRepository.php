@@ -312,6 +312,55 @@
         /**
          * @inheritDoc
          */
+        public function getReleaseAssetUrl(string $group, string $project, string $release, string $assetName): ?string
+        {
+            if(strtolower($release) === 'latest')
+            {
+                $release = $this->getLatestRelease($group, $project);
+            }
+            $endpoint = sprintf('%s://%s/repos/%s/%s/releases/tags/%s', $this->getConfiguration()->isSslEnabled() ? 'https' : 'http', $this->getConfiguration()->getHost(), $group, $project, $release);
+            $curl = curl_init($endpoint);
+            $headers = [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+                'User-Agent: ncc'
+            ];
+
+            if($this->getAuthentication() !== null)
+            {
+                $headers = self::injectAuthentication($curl, $headers);
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => $headers
+            ]);
+
+            Logger::getLogger()?->debug(sprintf('Fetching release asset URL for %s/%s/%s asset %s', $group, $project, $release, $assetName));
+            $response = self::processRequest($curl, $group, $project);
+
+            if(!isset($response['assets']) || !is_array($response['assets']))
+            {
+                return null;
+            }
+
+            foreach($response['assets'] as $asset)
+            {
+                if(isset($asset['name'], $asset['browser_download_url']) && $asset['name'] === $assetName)
+                {
+                    Logger::getLogger()?->verbose(sprintf('Found asset URL for %s in %s/%s/%s', $assetName, $group, $project, $release));
+                    return $asset['browser_download_url'];
+                }
+            }
+
+            Logger::getLogger()?->warning(sprintf('No asset found for %s in %s/%s/%s', $assetName, $group, $project, $release));
+            return null;
+        }
+
+        /**
+         * @inheritDoc
+         */
         protected function fetchGit(string $group, string $project): ?RemotePackage
         {
             $endpoint = sprintf('%s://%s/repos/%s/%s', ($this->getConfiguration()->isSslEnabled() ? 'https' : 'http'), $this->getConfiguration()->getHost(), $group, $project);
