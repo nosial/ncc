@@ -22,6 +22,13 @@
 
     /** @noinspection PhpDefineCanBeReplacedWithConstInspection */
 
+    use ncc\Classes\Logger;
+    use ncc\Classes\ShutdownHandler;
+    use ncc\Classes\StreamWrapper;
+    use ncc\CLI\Main;
+    use ncc\Exceptions\OperationException;
+    use ncc\Runtime;
+
     if(!defined('__NCC__'))
     {
         if(!file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'Autoloader.php'))
@@ -38,10 +45,10 @@
         define('__NCC_DIR__', __DIR__); // The directory where ncc is located
 
         // Register the shutdown handler
-        \ncc\Classes\ShutdownHandler::register();
+        ShutdownHandler::register();
 
         // Register the ncc:// stream wrapper
-        \ncc\Classes\StreamWrapper::register();
+        StreamWrapper::register();
 
         if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION'))
         {
@@ -74,9 +81,9 @@
             {
                 try
                 {
-                    \ncc\Runtime::import($packagePath);
+                    Runtime::import($packagePath);
                 }
-                catch (\ncc\Exceptions\OperationException $e)
+                catch (OperationException $e)
                 {
                     trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
                 }
@@ -93,7 +100,7 @@
              */
             function get_imported(): array
             {
-                return \ncc\Runtime::getImportedPackages();
+                return Runtime::getImportedPackages();
             }
         }
 
@@ -108,12 +115,12 @@
              */
             function is_imported(string $packageName): bool
             {
-                return \ncc\Runtime::isImported($packageName);
+                return Runtime::isImported($packageName);
             }
         }
 
-        \ncc\Classes\Logger::getLogger()?->debug(sprintf('ncc v%s initialized', __NCC_VERSION__));
-        \ncc\Classes\Logger::getLogger()?->debug(sprintf('ncc directory: %s', __NCC_DIR__));
+        Logger::getLogger()?->debug(sprintf('ncc v%s initialized', __NCC_VERSION__));
+        Logger::getLogger()?->debug(sprintf('ncc directory: %s', __NCC_DIR__));
 
         // Ensure that ncc's CLI mode only runs when executed from the command line
         if(php_sapi_name() === 'cli')
@@ -145,7 +152,7 @@
                 }
 
                 define('__NCC_CLI__', true);
-                exit(\ncc\CLI\Main::main(array_slice($argv, array_search('--ncc-cli', $argv, true) + 1)));
+                exit(Main::main(array_slice($argv, array_search('--ncc-cli', $argv, true) + 1)));
             }
         }
         else
