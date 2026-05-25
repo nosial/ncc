@@ -48,7 +48,7 @@
             {
                 $this->organization = 'organization';
                 $this->name = 'name';
-                $this->version = null;
+                $this->version = 'latest';
                 $this->variant = null;
                 $this->repository = 'repository';
                 return;
