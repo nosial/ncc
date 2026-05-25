@@ -235,6 +235,18 @@
         public abstract function getReleasePackage(string $group, string $project, string $release): ?RemotePackage;
 
         /**
+         * Returns the download URL for a specific release asset by name
+         *
+         * @param string $group The group or namespace the project belongs to
+         * @param string $project The name of the project
+         * @param string $release The release for which to get the asset
+         * @param string $assetName The name of the asset to find (e.g., "template.zip")
+         * @return string|null Returns the download URL of the asset, or null if not found
+         * @throws OperationException Thrown if there was an error during the operation
+         */
+        public abstract function getReleaseAssetUrl(string $group, string $project, string $release, string $assetName): ?string;
+
+        /**
          * Fetches the git URL for a project from the repository's API.
          * Subclasses should override this to retrieve the actual git URL via the API.
          *
