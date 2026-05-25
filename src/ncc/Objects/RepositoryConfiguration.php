@@ -176,6 +176,9 @@
             }
         }
 
+        /**
+         * @inheritDoc
+         */
         public function validate(): void
         {
             if(trim($this->name) === '')
