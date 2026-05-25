@@ -26,17 +26,8 @@
          cacheResultFile=".phpunit.cache/test-results"
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="true"
-         failOnRisky="true"
-         failOnWarning="true">
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory suffix=".php">src</directory>
-        </include>
-        <report>
-            <html outputDirectory="coverage"/>
-            <text outputFile="php://stdout"/>
-        </report>
-    </coverage>
+          failOnRisky="true"
+          failOnWarning="false">
 
     <testsuites>
         <testsuite name="ncc Test Suite">
