@@ -156,10 +156,13 @@
                     Console::out('  github-ci, github        Generate GitHub Actions CI/CD workflow');
                     Console::out('  dockerfile, docker       Generate Dockerfile for containerization for the project\'s web entry point');
                     Console::out('  web                      Generate web project template with web entry point and build configuration');
+                    Console::out('  bootstrap-<version>      Generate web project with local Bootstrap resources (e.g., bootstrap-5.3.3)');
                     Console::out('  commandline, cli         Generate command-line project template with main execution unit');
                     Console::out(PHP_EOL . 'Examples:');
                     Console::out('  ncc project --generate=phpunit');
                     Console::out('  ncc project --generate=makefile --path=/path/to/project');
+                    Console::out('  ncc project --generate=bootstrap-5.3.3');
+                    Console::out('  ncc project --generate=nosial/liquid-elegance:amber-dark-horizontal=latest@github');
                     Console::out('  ncc project -g=github-ci');
                     break;
 
