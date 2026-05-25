@@ -88,6 +88,29 @@
                 $baseMakefile = str_replace('${PHPDOC_TARGET}', '', $baseMakefile);
             }
 
+            if(IO::exists($projectDirectory . DIRECTORY_SEPARATOR . 'Dockerfile'))
+            {
+                $packageName = $projectConfiguration->getAssembly()->getPackage();
+                $version = $projectConfiguration->getAssembly()->getVersion();
+
+                $dockerTargets = "\ndocker-build:\n\tdocker build -t " . $packageName . ':' . $version . " .\n";
+                $dockerTargets .= "\ndocker-up:\n\tdocker compose up -d\n";
+                $dockerTargets .= "\ndocker-down:\n\tdocker compose down\n";
+                $dockerTargets .= "\ndocker-restart:\n\tdocker compose down && docker compose up -d\n";
+                $dockerTargets .= "\ndocker-logs:\n\tdocker compose logs -f\n";
+
+                $baseMakefile = str_replace('${DOCKER_TARGET}', $dockerTargets, $baseMakefile);
+                $extraPhony[] = 'docker-build';
+                $extraPhony[] = 'docker-up';
+                $extraPhony[] = 'docker-down';
+                $extraPhony[] = 'docker-restart';
+                $extraPhony[] = 'docker-logs';
+            }
+            else
+            {
+                $baseMakefile = str_replace('${DOCKER_TARGET}', '', $baseMakefile);
+            }
+
             if(count($extraPhony) > 0)
             {
                 $baseMakefile = str_replace('${EXTRA_PHONY}', ' ' . implode(' ', $extraPhony), $baseMakefile);
