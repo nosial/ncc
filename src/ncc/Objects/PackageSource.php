@@ -34,12 +34,13 @@
         private string $organization;
         private string $name;
         private ?string $version;
+        private ?string $variant;
         private ?string $repository;
 
         /**
          * PackageSource constructor.
          *
-         * @param string|null $sourceString The package string in the format "organization/name=version@repository".
+         * @param string|null $sourceString The package string in the format "organization/name:variant=version@repository".
          */
         public function __construct(?string $sourceString=null)
         {
@@ -47,7 +48,8 @@
             {
                 $this->organization = 'organization';
                 $this->name = 'name';
-                $this->version = 'latest';
+                $this->version = null;
+                $this->variant = null;
                 $this->repository = 'repository';
                 return;
             }
@@ -60,6 +62,7 @@
 
             $this->organization = $parsedPackage['organization'];
             $this->name = $parsedPackage['package_name'];
+            $this->variant = $parsedPackage['variant'] ?? null;
             $this->version = $parsedPackage['version'];
             $this->repository = $parsedPackage['repository'];
         }
@@ -178,6 +181,27 @@
         }
 
         /**
+         * Get the variant of the package source.
+         *
+         * @return string|null The variant of the package source, or null if not set.
+         */
+        public function getVariant(): ?string
+        {
+            return $this->variant;
+        }
+
+        /**
+         * Sets the variant of the package source
+         *
+         * @param string|null $variant The variant to set to the package source, or null to unset
+         * @return void
+         */
+        public function setVariant(?string $variant): void
+        {
+            $this->variant = $variant;
+        }
+
+        /**
          * Convert the PackageSource object to an associative array.
          *
          * @return array The associative array containing package source data.
@@ -187,6 +211,7 @@
             return [
                 'organization' => $this->organization,
                 'name' => $this->name,
+                'variant' => $this->variant,
                 'version' => $this->version,
                 'repository' => $this->repository,
             ];
@@ -203,6 +228,7 @@
             $packageSource = new PackageSource("dummy/dummy");
             $packageSource->setOrganization($data['organization']);
             $packageSource->setName($data['name']);
+            $packageSource->setVariant($data['variant'] ?? null);
             $packageSource->setVersion($data['version'] ?? null);
             $packageSource->setRepository($data['repository'] ?? null);
 
@@ -213,11 +239,17 @@
         /**
          * Convert the PackageSource object back to its string representation.
          *
-         * @return string The package string in various formats: "organization/name=version@repository", "organization/name@repository", "organization/name=version", or "organization/name".
+         * @return string The package string in various formats: "organization/name:variant=version@repository", "organization/name:variant@repository", "organization/name=version@repository", "organization/name@repository", "organization/name=version", or "organization/name".
          */
         public function __toString(): string
         {
             $result = "{$this->organization}/{$this->name}";
+
+            // Add variant if set
+            if($this->variant !== null && $this->variant !== '')
+            {
+                $result .= ":{$this->variant}";
+            }
 
             // Add version if not 'latest', not null, and not empty
             if($this->version !== null && $this->version !== 'latest' && $this->version !== '')
@@ -268,6 +300,14 @@
                 if(!is_string($data['repository']) || trim($data['repository']) === '')
                 {
                     throw new InvalidPropertyException('package.repository', 'The package repository must be a non-empty string or null');
+                }
+            }
+
+            if(isset($data['variant']) && $data['variant'] !== null)
+            {
+                if(!is_string($data['variant']) || trim($data['variant']) === '')
+                {
+                    throw new InvalidPropertyException('package.variant', 'The package variant must be a non-empty string or null');
                 }
             }
         }
