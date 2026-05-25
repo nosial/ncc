@@ -4,3 +4,4 @@ target/
 /tests/results/junit.xml
 /.phpunit.result.cache
 dependencies/
+./idea
