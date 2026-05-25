@@ -12,10 +12,10 @@
 	url = https://github.com/symfony/polyfill-ctype
 [submodule "dependencies/yaml"]
 	path = dependencies/yaml
-	url = https://github.com
+	url = https://github.com/symfony/yaml
 [submodule "dependencies/optslib"]
 	path = dependencies/optslib
-	url = https://github.com
+	url = https://github.com/nosial/optslib
 [submodule "dependencies/Process"]
 	path = dependencies/Process
 	url = https://github.com/symfony/process
@@ -24,10 +24,10 @@
 	url = https://github.com/composer/semver.git
 [submodule "dependencies/random_compat"]
 	path = dependencies/random_compat
-	url = https://github.com
+	url = https://github.com/symfony/random_compat
 [submodule "dependencies/php-encryption"]
 	path = dependencies/php-encryption
-	url = https://github.com
+	url = https://github.com/defuse/php-encryption
 [submodule "dependencies/fslib"]
 	path = dependencies/fslib
 	url = https://github.com/nosial/fslib
