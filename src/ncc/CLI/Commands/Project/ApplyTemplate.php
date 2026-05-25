@@ -34,7 +34,9 @@
     use ncc\CLI\Commands\Project\Templates\Phpdoc\PhpdocGenerator;
     use ncc\CLI\Commands\Project\Templates\Phpunit\PhpunitGenerator;
     use ncc\CLI\Commands\Project\Templates\Web\WebTemplate;
+    use ncc\CLI\Commands\Project\Templates\WebResource\WebResourceTemplate;
     use ncc\Exceptions\InvalidPropertyException;
+    use ncc\Objects\PackageSource;
     use ncc\Objects\Project;
 
     class ApplyTemplate extends AbstractCommandHandler
@@ -145,6 +147,26 @@
                             break;
 
                         default:
+                            // Check for repo-based template pattern using PackageSource
+                            try
+                            {
+                                $packageSource = new PackageSource($template);
+                                if($packageSource->getVariant() !== null)
+                                {
+                                    // First scaffold the full DynamicalWeb project structure
+                                    WebTemplate::generate(dirname($projectPath), $projectConfiguration);
+
+                                    // Then apply the remote template resources on top
+                                    WebResourceTemplate::setPackageSource($packageSource);
+                                    WebResourceTemplate::generate(dirname($projectPath), $projectConfiguration);
+                                    break;
+                                }
+                            }
+                            catch(\InvalidArgumentException)
+                            {
+                                // Not a valid package source format, fall through to error
+                            }
+
                             Console::error("Unknown template: " . $template);
                             return 1;
                     }
