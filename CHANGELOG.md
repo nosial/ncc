@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [3.1.1] - Ongoing
+## [3.1.1] - 2026-05-26
+
+This update introduces a minor fix
+
+### Fixed
+ - Removed deprecated used of `curl_close`
 
 
 
