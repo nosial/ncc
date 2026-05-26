@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - master
-      - develop
+      - dev
       - 'release/**'
     tags:
       - 'v*'
