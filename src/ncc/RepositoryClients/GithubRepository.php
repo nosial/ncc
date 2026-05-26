@@ -153,9 +153,7 @@
             if($http_code === 200)
             {
                 Logger::getLogger()?->verbose(sprintf('Found tag archive for %s/%s/%s', $group, $project, $tag));
-                $result = new RemotePackage(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RemotePackageType::SOURCE_ZIP, $group, $project);
-                curl_close($curl);
-                return $result;
+                return new RemotePackage(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RemotePackageType::SOURCE_ZIP, $group, $project);
             }
 
             Logger::getLogger()?->warning(sprintf('No tag archive found for %s/%s/%s (HTTP %d)', $group, $project, $tag, $http_code));

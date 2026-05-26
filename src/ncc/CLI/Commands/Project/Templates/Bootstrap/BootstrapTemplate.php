@@ -196,12 +196,10 @@
 
             if(curl_errno($curl))
             {
-                curl_close($curl);
                 throw new OperationException(sprintf('Failed to download Bootstrap v%s: %s', $version, curl_error($curl)));
             }
 
             $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            curl_close($curl);
             Console::completeProgress(sprintf('Downloaded Bootstrap v%s', $version));
 
             if($httpCode !== 200)

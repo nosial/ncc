@@ -97,7 +97,6 @@
             ]);
 
             $response = $this->processHttpResponse($curl, $group, $project);
-            curl_close($curl);
 
             if(!isset($response['package']['versions']))
             {
@@ -170,7 +169,6 @@
             ]);
 
             $response = $this->processHttpResponse($curl, $group, $project);
-            curl_close($curl);
 
             if(!isset($response['package']['versions'][$version]))
             {

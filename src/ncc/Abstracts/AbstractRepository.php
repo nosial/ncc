@@ -471,7 +471,6 @@
                 throw new OperationException(sprintf('Failed to download file from %s: %s', $url, curl_error($curl)));
             }
 
-            curl_close($curl);
             return $filePath;
         }
 
