@@ -1,15 +1,16 @@
 #
-#   ncc in Docker
+#   ncc CLI Docker Image
 #
-#   This image is intended to be used as a base for projects using ncc.
+#   This image is intended to be used as a base for CLI projects using ncc.
+#   It provides a standard PHP CLI environment with ncc pre-installed
+#   and the install-php-extensions tool available.
 #
 
 # Build-time args
 ARG PHP_VERSION=8.3
-ARG FPM_ENABLED=-fpm
 
 # Builder stage: builds ncc phar from source
-FROM php:${PHP_VERSION}-fpm AS builder
+FROM php:${PHP_VERSION} AS builder
 WORKDIR /tmp
 
 # Install build dependencies
@@ -23,12 +24,12 @@ COPY . /tmp/ncc
 RUN cd /tmp/ncc && make target/ncc.phar
 
 
-# Main stage: extends standard PHP image with ncc pre-installed
-FROM php:${PHP_VERSION}${FPM_ENABLED} AS production
+# Main stage: extends standard PHP CLI image with ncc pre-installed
+FROM php:${PHP_VERSION} AS production
 
 # OSI labels
 LABEL maintainer="Netkas <netkas@nosial.net>"
-LABEL description="ncc's official Docker image"
+LABEL description="ncc's official Docker CLI image"
 
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 

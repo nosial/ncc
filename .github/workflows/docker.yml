@@ -32,11 +32,11 @@ jobs:
       matrix:
         php_version: ['8.3']
         variant:
-          - name: "alpine"
-            fpm_enabled: ""
+          - name: "cli"
+            dockerfile: "ncc.dockerfile"
             tag: "latest"
           - name: "fpm"
-            fpm_enabled: "-fpm"
+            dockerfile: "ncc-fpm.dockerfile"
             tag: "fpm"
 
     steps:
@@ -77,7 +77,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag == 'latest' }}
           labels: |
             org.opencontainers.image.title=ncc
-            org.opencontainers.image.description=ncc's official Docker image (${{ matrix.variant.name }})
+            org.opencontainers.image.description=ncc's official Docker ${{ matrix.variant.name }} image
             org.opencontainers.image.vendor=Nosial
 
       - name: Build and push Docker image
@@ -85,7 +85,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile
+          file: ${{ matrix.variant.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -94,7 +94,6 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             PHP_VERSION=${{ matrix.php_version }}
-            FPM_ENABLED=${{ matrix.variant.fpm_enabled }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
@@ -140,7 +139,7 @@ jobs:
           echo "" >> changelog.md
           echo "This release includes the following Docker images:" >> changelog.md
           echo "" >> changelog.md
-          echo "### Alpine Version (Standard)" >> changelog.md
+          echo "### CLI Version (Standard)" >> changelog.md
           echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${GITHUB_REF#refs/tags/v}\` (Version tag)" >> changelog.md
           echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:latest\` (Latest from main/master)" >> changelog.md
           echo "" >> changelog.md
@@ -151,7 +150,7 @@ jobs:
           echo "### Usage" >> changelog.md
           echo "" >> changelog.md
           echo "\`\`\`bash" >> changelog.md
-          echo "# Pull the alpine version (standard)" >> changelog.md
+          echo "# Pull the CLI version (standard)" >> changelog.md
           echo "docker pull ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.tag.outputs.tag }}" >> changelog.md
           echo "docker pull ${{ env.REGISTRY }}/${{ github.repository }}:latest" >> changelog.md
           echo "" >> changelog.md
