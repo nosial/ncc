@@ -7,7 +7,7 @@
 #
 
 # Build-time args
-ARG PHP_VERSION=8.3
+ARG PHP_VERSION=8.5
 
 # Builder stage: builds ncc phar from source
 FROM php:${PHP_VERSION} AS builder

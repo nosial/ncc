@@ -3,7 +3,7 @@
     needs: [${BUILD_NAMES}, check-phpunit]
     runs-on: ubuntu-latest
     container:
-      image: php:8.3
+      image: php:8.5
     if: needs.check-phpunit.outputs.phpunit-exists == 'true'
 
     steps:

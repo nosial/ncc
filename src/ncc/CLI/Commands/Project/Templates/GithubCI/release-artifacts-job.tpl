@@ -4,7 +4,7 @@
     permissions: write-all
     runs-on: ubuntu-latest
     container:
-      image: php:8.3
+      image: php:8.5
     if: github.event_name == 'release'
 
     steps:

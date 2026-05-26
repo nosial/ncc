@@ -1,7 +1,7 @@
   ${BUILD_NAME}:
     runs-on: ubuntu-latest
     container:
-      image: php:8.3
+      image: php:8.5
 
     steps:
       - name: Checkout repository

@@ -1,5 +1,5 @@
 # --- STAGE 1: BUILDER (Compiles the NCC Package) ---
-FROM php:8.3-fpm AS builder
+FROM php:8.5-fpm AS builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN ncc project install -y && ncc build --configuration=web_release
 
 
 # --- STAGE 2: PRODUCTION ---
-FROM php:8.3-fpm AS production
+FROM php:8.5-fpm AS production
 
 LABEL org.opencontainers.image.title="${ASSEMBLY_NAME}" \
       org.opencontainers.image.version="${ASSEMBLY_VERSION}" \

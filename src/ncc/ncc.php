@@ -85,7 +85,7 @@
                 }
                 catch (OperationException $e)
                 {
-                    trigger_error('Failed to import package: ' . $e->getMessage(), E_USER_ERROR);
+                    throw new RuntimeException('Failed to import package: ' . $e->getMessage(), $e->getCode(), $e);
                 }
             }
         }

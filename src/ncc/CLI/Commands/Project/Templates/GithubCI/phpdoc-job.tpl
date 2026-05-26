@@ -3,7 +3,7 @@
     needs: [${DEFAULT_BUILD_CONFIG}, check-phpdoc]
     runs-on: ubuntu-latest
     container:
-      image: php:8.3
+      image: php:8.5
     if: needs.check-phpdoc.outputs.phpdoc-exists == 'true'
 
     steps:
