@@ -3,7 +3,6 @@ name: Build and Release Docker Images
 on:
   push:
     branches:
-      - main
       - master
       - dev
       - 'release/**'
@@ -11,9 +10,8 @@ on:
       - 'v*'
   pull_request:
     branches:
-      - main
       - master
-      - develop
+      - dev
 
 env:
   REGISTRY: ghcr.io
