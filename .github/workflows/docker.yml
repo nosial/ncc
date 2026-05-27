@@ -61,14 +61,13 @@ jobs:
           flavor: |
             latest=false
           tags: |
+            type=sha,enable=false
             type=raw,value={{branch}}-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
-            type=raw,value=pr-{{pr}}-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
             type=semver,pattern={{version}},suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
             type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
             type=semver,pattern={{major}},suffix=-${{ matrix.variant.tag }},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.variant.tag != 'latest' }}
             type=raw,value=${{ matrix.variant.tag }},enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag != 'latest' }}
             type=raw,value={{branch}},enable=${{ matrix.variant.tag == 'latest' }}
-            type=raw,value=pr-{{pr}},enable=${{ matrix.variant.tag == 'latest' }}
             type=semver,pattern={{version}},enable=${{ matrix.variant.tag == 'latest' }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.variant.tag == 'latest' }}
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.variant.tag == 'latest' }}
