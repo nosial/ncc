@@ -7,7 +7,7 @@ on:
       - dev
       - 'release/**'
     tags:
-      - 'v*'
+      - '*'
   pull_request:
     branches:
       - master
@@ -64,13 +64,9 @@ jobs:
             type=sha,enable=false
             type=raw,value={{branch}}-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
             type=semver,pattern={{version}},suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
-            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.variant.tag }},enable=${{ matrix.variant.tag != 'latest' }}
-            type=semver,pattern={{major}},suffix=-${{ matrix.variant.tag }},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.variant.tag != 'latest' }}
             type=raw,value=${{ matrix.variant.tag }},enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag != 'latest' }}
             type=raw,value={{branch}},enable=${{ matrix.variant.tag == 'latest' }}
             type=semver,pattern={{version}},enable=${{ matrix.variant.tag == 'latest' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.variant.tag == 'latest' }}
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') && matrix.variant.tag == 'latest' }}
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag == 'latest' }}
           labels: |
             org.opencontainers.image.title=ncc
@@ -100,7 +96,7 @@ jobs:
           push-to-registry: false
 
   create-release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -115,7 +111,10 @@ jobs:
 
       - name: Get tag name
         id: tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          raw="${GITHUB_REF#refs/tags/}"
+          echo "raw_tag=${raw}" >> $GITHUB_OUTPUT
+          echo "tag=${raw#v}" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: changelog
@@ -137,11 +136,11 @@ jobs:
           echo "This release includes the following Docker images:" >> changelog.md
           echo "" >> changelog.md
           echo "### CLI Version (Standard)" >> changelog.md
-          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${GITHUB_REF#refs/tags/v}\` (Version tag)" >> changelog.md
+          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.tag.outputs.tag }}\` (Version tag)" >> changelog.md
           echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:latest\` (Latest from main/master)" >> changelog.md
           echo "" >> changelog.md
           echo "### PHP-FPM Version" >> changelog.md
-          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${GITHUB_REF#refs/tags/v}-fpm\` (Version tag with FPM)" >> changelog.md
+          echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.tag.outputs.tag }}-fpm\` (Version tag with FPM)" >> changelog.md
           echo "- \`${{ env.REGISTRY }}/${{ github.repository }}:fpm\` (Latest FPM from main/master)" >> changelog.md
           echo "" >> changelog.md
           echo "### Usage" >> changelog.md
@@ -159,7 +158,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
+          tag_name: ${{ steps.tag.outputs.raw_tag }}
           name: Release ${{ steps.tag.outputs.tag }}
           body_path: changelog.md
           draft: false
