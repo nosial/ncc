@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.3] - Ongoing
 
+This update introduces some minor improvements and changes to the project
+
+### Changed
+ - Updated index.phtml in the web template to include a websocket connection handler
 
 
 ## [3.1.2] - 2025-05-27
