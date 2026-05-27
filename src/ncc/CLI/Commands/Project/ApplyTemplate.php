@@ -29,6 +29,7 @@
     use ncc\CLI\Commands\Project\Templates\Bootstrap\BootstrapTemplate;
     use ncc\CLI\Commands\Project\Templates\Commandline\CommandlineTemplate;
     use ncc\CLI\Commands\Project\Templates\Dockerfile\DockerfileGenerator;
+    use ncc\CLI\Commands\Project\Templates\Dockerfile\FpmDockerfileGenerator;
     use ncc\CLI\Commands\Project\Templates\GithubCI\GithubCIGenerator;
     use ncc\CLI\Commands\Project\Templates\Makefile\MakefileGenerator;
     use ncc\CLI\Commands\Project\Templates\Phpdoc\PhpdocGenerator;
@@ -135,6 +136,11 @@
                         case 'dockerfile':
                         case 'docker':
                             DockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
+                            break;
+
+                        case 'dockerfile-fpm':
+                        case 'docker-fpm':
+                            FpmDockerfileGenerator::generate(dirname($projectPath), $projectConfiguration);
                             break;
 
                         case 'commandline':

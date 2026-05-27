@@ -68,27 +68,6 @@
                 $replacements
             );
 
-            // Generate nginx.conf
-            self::writeTemplate(
-                $projectDirectory . DIRECTORY_SEPARATOR . 'nginx.conf',
-                'nginx.conf.tpl',
-                $replacements
-            );
-
-            // Generate supervisord.conf
-            self::writeTemplate(
-                $projectDirectory . DIRECTORY_SEPARATOR . 'supervisord.conf',
-                'supervisord.conf.tpl',
-                $replacements
-            );
-
-            // Generate docker-entrypoint.sh
-            self::writeTemplate(
-                $projectDirectory . DIRECTORY_SEPARATOR . 'docker-entrypoint.sh',
-                'docker-entrypoint.sh.tpl',
-                $replacements
-            );
-
             // Generate .gitignore (only if it doesn't exist)
             $gitignorePath = $projectDirectory . DIRECTORY_SEPARATOR . '.gitignore';
             if(!IO::exists($gitignorePath))

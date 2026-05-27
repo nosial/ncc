@@ -1,4 +1,4 @@
-FROM ghcr.io/nosial/ncc:latest
+FROM ghcr.io/nosial/ncc:fpm
 
 LABEL org.opencontainers.image.title="${ASSEMBLY_NAME}" \
       org.opencontainers.image.version="${ASSEMBLY_VERSION}" \

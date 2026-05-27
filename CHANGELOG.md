@@ -6,8 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [3.1.2] - Ongoing
+## [3.1.2] - 2025-05-27
 
+This update introduces changes to the template generate
+
+### Changed
+ - Changed all Dockerfile templates to use a base pre-built image for better performance and reliability, this simplifies
+   the generated Dockerfile and reduces the number of files needed to be generated for the Docker templates.
+
+### Added
+ - Added a new `docker-fpm`/`dockerfile-fpm` template for generating Dockerfiles for PHP-FPM based projects
+
+### Removed
+ - Removed nginx, supervisord and docker-entrypoint templates as they are no longer needed with the new Dockerfile templates
+   and already covered by the base images
 
 
 ## [3.1.1] - 2026-05-26

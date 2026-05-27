@@ -27,7 +27,7 @@ use ncc\Libraries\fslib\IO;
 use ncc\Interfaces\TemplateGeneratorInterface;
 use ncc\Objects\Project;
 
-class DockerfileGenerator implements TemplateGeneratorInterface
+class FpmDockerfileGenerator implements TemplateGeneratorInterface
 {
     /**
      * @inheritDoc
@@ -47,7 +47,7 @@ class DockerfileGenerator implements TemplateGeneratorInterface
 
         $buildOutput = $buildConfiguration->getOutput();
 
-        $dockerfileTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'Dockerfile.tpl');
+        $dockerfileTemplate = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'FpmDockerfile.tpl');
 
         $dockerfileContent = str_replace('${BUILD_OUTPUT}', $buildOutput, $dockerfileTemplate);
         $dockerfileContent = str_replace('${BUILD_CONFIGURATION}', $buildConfigName, $dockerfileContent);
