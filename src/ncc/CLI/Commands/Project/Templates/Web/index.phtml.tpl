@@ -1,4 +1,27 @@
-<?php use DynamicalWeb\Html\Functions; ?>
+<?php
+
+    use DynamicalWeb\Enums\RequestMethod;
+    use DynamicalWeb\Html\Functions;
+    use DynamicalWeb\WebSession;
+
+    if(WebSession::getRequest()->getMethod() === RequestMethod::WEBSOCKET)
+    {
+        $ws = WebSession::getWebSocket();
+        if ($ws !== null)
+        {
+            while ($ws->isConnected())
+            {
+                $data = $ws->read();
+                if ($data === null)
+                {
+                    break;
+                }
+                $ws->send('Hello there ' . $data . '!');
+            }
+        }
+        return;
+    }
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
