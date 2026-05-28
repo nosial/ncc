@@ -16,6 +16,7 @@
   </component>
   <component name="PhpIncludePathManager">
     <include_path>
+      <path value="$PROJECT_DIR$/../DynamicalWeb/src/DynamicalWeb" />
       <path value="/usr/share/php" />
     </include_path>
   </component>

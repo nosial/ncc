@@ -128,26 +128,7 @@
                 __DIR__
             );
 
-            // Add sections to the web_configuration
-            $buildConfig = $projectConfiguration->getBuildConfiguration('web_release');
-            if($buildConfig !== null)
-            {
-                $options = $buildConfig->getOptions();
-                $options['web_configuration']['sections'] = [
-                    'navbar' => [
-                        'module' => 'sections/navbar.phtml',
-                        'locale_id' => 'home',
-                    ],
-                    'footer' => [
-                        'module' => 'sections/footer.phtml',
-                        'locale_id' => 'home',
-                    ],
-                ];
-                $buildConfig->setOptions($options);
 
-                $projectConfiguration->save($projectDirectory . DIRECTORY_SEPARATOR . 'project.yml');
-                Console::out('Modified File: ' . $projectDirectory . DIRECTORY_SEPARATOR . 'project.yml');
-            }
         }
 
         /**

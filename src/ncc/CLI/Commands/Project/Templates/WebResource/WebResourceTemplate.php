@@ -99,70 +99,8 @@
 
             self::updateBuildConfiguration($projectConfiguration, $assemblyName, $sourcePath);
 
-            self::registerSections($projectConfiguration, $webApplicationDir);
-
             $projectConfiguration->save($projectDirectory . DIRECTORY_SEPARATOR . 'project.yml');
             Console::out('Modified File: ' . $projectDirectory . DIRECTORY_SEPARATOR . 'project.yml');
-        }
-
-        /**
-         * Scans the WebApplication/sections/ directory for .phtml files and registers each
-         * as a section in the web_configuration. Sections are reusable template partials
-         * that can be included via Functions::insertSection().
-         *
-         * @param Project $projectConfiguration The project configuration to update.
-         * @param string $webApplicationDir The WebApplication directory path.
-         * @return void
-         */
-        private static function registerSections(Project $projectConfiguration, string $webApplicationDir): void
-        {
-            $sectionsDir = $webApplicationDir . DIRECTORY_SEPARATOR . 'sections';
-            if (!IO::isDirectory($sectionsDir))
-            {
-                return;
-            }
-
-            $sections = [];
-            $items = scandir($sectionsDir);
-            foreach ($items as $item)
-            {
-                if ($item === '.' || $item === '..')
-                {
-                    continue;
-                }
-
-                $itemPath = $sectionsDir . DIRECTORY_SEPARATOR . $item;
-                if (!IO::isFile($itemPath) || !str_ends_with($item, '.phtml'))
-                {
-                    continue;
-                }
-
-                $sectionName = basename($item, '.phtml');
-                $sections[$sectionName] = [
-                    'module' => 'sections/' . $item,
-                    'locale_id' => 'home',
-                ];
-            }
-
-            if (empty($sections))
-            {
-                return;
-            }
-
-            // Try to update the existing web_release config, or create a new one
-            if ($projectConfiguration->buildConfigurationExists('web_release'))
-            {
-                $buildConfig = $projectConfiguration->getBuildConfiguration('web_release');
-                $options = $buildConfig->getOptions();
-                if (!isset($options['web_configuration']))
-                {
-                    $options['web_configuration'] = [];
-                }
-                $options['web_configuration']['sections'] = $sections;
-                $buildConfig->setOptions($options);
-            }
-
-            Console::out(sprintf('Registered %d section(s) from: %s', count($sections), $sectionsDir));
         }
 
         /**

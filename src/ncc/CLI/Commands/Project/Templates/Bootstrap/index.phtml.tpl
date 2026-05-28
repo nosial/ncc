@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="/css/style.css">
     </head>
     <body>
-        <?php Functions::insertSection('navbar'); ?>
+        <?php Functions::insertSection('sections/navbar.phtml'); ?>
 
         <main class="container py-5">
             <div class="px-4 py-5 my-5 text-center">
@@ -53,7 +53,7 @@
             </div>
         </main>
 
-        <?php Functions::insertSection('footer'); ?>
+        <?php Functions::insertSection('sections/footer.phtml'); ?>
 
         <script src="/js/bootstrap.bundle.min.js"></script>
     </body>

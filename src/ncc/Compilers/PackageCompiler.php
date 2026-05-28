@@ -35,7 +35,6 @@
     use ncc\Objects\Package\ComponentReference;
     use ncc\Objects\Package\Header;
     use ncc\Objects\ResolvedDependency;
-    use ncc\Runtime;
 
     class PackageCompiler extends AbstractCompiler
     {
@@ -523,10 +522,10 @@
                     {
                         $packageVersion = $sourceVersion;
                     }
-                    // Otherwise try to resolve from installed packages
+                    // Otherwise, keep 'latest' as-is so it always resolves to the latest installed version at runtime
                     else
                     {
-                        $packageVersion = Runtime::getPackageEntry($packageName, $sourceVersion ?? 'latest')?->getVersion() ?? 'latest';
+                        $packageVersion = $sourceVersion ?? 'latest';
                     }
 
                     // Ensure that there are no 'latest' versions when statically linking

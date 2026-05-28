@@ -12,6 +12,13 @@ This update introduces some minor improvements and changes to the project
 
 ### Changed
  - Updated index.phtml in the web template to include a websocket connection handler
+ - Changed default initial version to 1.0.0 for new projects
+
+### Fixed
+ - Fixed issue where ncc would not import the latest package correctly if multiple versions of the same package is installed
+
+### Removed
+ - Removed deprecated use of sections in the web templates
 
 
 ## [3.1.2] - 2025-05-27

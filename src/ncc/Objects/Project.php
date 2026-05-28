@@ -963,7 +963,7 @@
             return new self([
                 'assembly' => [
                     'name' => $name,
-                    'version' => '0.1.0',
+                    'version' => '1.0.0',
                     'package' => $package,
                 ],
                 'build_configurations' => [

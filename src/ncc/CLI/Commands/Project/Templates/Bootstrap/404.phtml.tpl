@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="/css/style.css">
     </head>
     <body>
-        <?php Functions::insertSection('navbar'); ?>
+        <?php Functions::insertSection('sections/navbar.phtml'); ?>
 
         <main class="d-flex align-items-center justify-content-center flex-grow-1">
             <div class="text-center">
@@ -19,7 +19,7 @@
             </div>
         </main>
 
-        <?php Functions::insertSection('footer'); ?>
+        <?php Functions::insertSection('sections/footer.phtml'); ?>
 
         <script src="/js/bootstrap.bundle.min.js"></script>
     </body>

@@ -50,7 +50,7 @@
             $data = [
                 'name' => 'app',
                 'package' => 'com.test.app',
-                'version' => '0.1.0'
+                'version' => ''
             ];
 
             Assembly::validateArray($data);

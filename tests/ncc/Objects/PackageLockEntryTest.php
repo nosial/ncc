@@ -59,13 +59,13 @@
         {
             $data = [
                 'package' => 'org/simple-package',
-                'version' => '0.1.0'
+                'version' => '1.0.0'
             ];
 
             $entry = new PackageLockEntry($data);
 
             $this->assertEquals('org/simple-package', $entry->getPackage());
-            $this->assertEquals('0.1.0', $entry->getVersion());
+            $this->assertEquals('1.0.0', $entry->getVersion());
             $this->assertIsArray($entry->getDependencies());
             $this->assertCount(0, $entry->getDependencies());
         }
