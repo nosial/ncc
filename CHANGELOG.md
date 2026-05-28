@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.4] - Ongoing
 
 
+### Removed
+ - Removed the installation of the APCU extension from the Web template as DynamicalWeb's image already includes it
+
 
 ## [3.1.3] - 2026-05-28
 

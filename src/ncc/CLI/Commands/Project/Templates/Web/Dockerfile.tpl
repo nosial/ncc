@@ -14,9 +14,6 @@ LABEL org.opencontainers.image.title="${ASSEMBLY_NAME}" \
       org.opencontainers.image.version="${ASSEMBLY_VERSION}" \
       ncc.package="${PACKAGE_NAME}"
 
-RUN install-php-extensions apcu \
-    && echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
-
 COPY --from=builder /app/target/web_release/${PACKAGE_NAME}.ncc /tmp/package.ncc
 RUN ncc package install --package=/tmp/package.ncc -y && rm /tmp/package.ncc
 
