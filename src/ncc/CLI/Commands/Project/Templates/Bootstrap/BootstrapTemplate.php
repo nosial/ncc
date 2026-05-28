@@ -78,7 +78,6 @@
 
             // Overwrite web application templates with Bootstrap-local versions
             $webAppDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebApplication';
-            $webErrorsDir = $webAppDir . DIRECTORY_SEPARATOR . 'errors';
             $webSectionsDir = $webAppDir . DIRECTORY_SEPARATOR . 'sections';
             $webLocaleDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebLocale';
 
@@ -92,14 +91,14 @@
             );
 
             self::writeTemplate(
-                $webErrorsDir . DIRECTORY_SEPARATOR . '404.phtml',
+                $webAppDir . DIRECTORY_SEPARATOR . '404.phtml',
                 '404.phtml.tpl',
                 $replacements,
                 __DIR__
             );
 
             self::writeTemplate(
-                $webErrorsDir . DIRECTORY_SEPARATOR . '500.phtml',
+                $webAppDir . DIRECTORY_SEPARATOR . '500.phtml',
                 '500.phtml.tpl',
                 $replacements,
                 __DIR__
