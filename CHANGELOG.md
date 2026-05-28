@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [3.1.3] - Ongoing
+## [3.1.3] - 2026-05-28
 
 This update introduces some minor improvements and changes to the project
 
@@ -21,7 +21,7 @@ This update introduces some minor improvements and changes to the project
  - Removed deprecated use of sections in the web templates
 
 
-## [3.1.2] - 2025-05-27
+## [3.1.2] - 2026-05-27
 
 This update introduces changes to the template generate
 
