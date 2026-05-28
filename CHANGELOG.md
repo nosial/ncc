@@ -21,6 +21,7 @@ This update introduces some minor improvements and changes to the project
  - Removed deprecated use of sections in the web templates
 
 
+
 ## [3.1.2] - 2026-05-27
 
 This update introduces changes to the template generate
