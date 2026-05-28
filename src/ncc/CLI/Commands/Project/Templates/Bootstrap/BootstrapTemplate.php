@@ -107,14 +107,14 @@
             // Generate section templates
             self::writeTemplate(
                 $webSectionsDir . DIRECTORY_SEPARATOR . 'navbar.phtml',
-                'sections' . DIRECTORY_SEPARATOR . 'navbar.phtml.tpl',
+                'navbar.phtml.tpl',
                 $replacements,
                 __DIR__
             );
 
             self::writeTemplate(
                 $webSectionsDir . DIRECTORY_SEPARATOR . 'footer.phtml',
-                'sections' . DIRECTORY_SEPARATOR . 'footer.phtml.tpl',
+                'footer.phtml.tpl',
                 $replacements,
                 __DIR__
             );

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
  - Update Bootstrap template to place 404.phtml and 500.phtml in WebApplication directory
+ - Refactor template paths and add WebSocket handling in index.phtml.tpl
 
 ### Removed
  - Removed the installation of the APCU extension from the Web template as DynamicalWeb's image already includes it
