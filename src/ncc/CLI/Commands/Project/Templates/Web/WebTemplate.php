@@ -77,12 +77,10 @@
 
             // Create web application directory structure
             $webAppDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebApplication';
-            $webErrorsDir = $webAppDir . DIRECTORY_SEPARATOR . 'errors';
             $webResourcesDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebResources' . DIRECTORY_SEPARATOR . 'css';
             $webLocaleDir = $projectDirectory . DIRECTORY_SEPARATOR . $sourcePath . DIRECTORY_SEPARATOR . 'WebLocale';
 
             IO::createDirectory($webAppDir, 0755, true);
-            IO::createDirectory($webErrorsDir, 0755, true);
             IO::createDirectory($webResourcesDir, 0755, true);
             IO::createDirectory($webLocaleDir, 0755, true);
 
@@ -94,13 +92,13 @@
             );
 
             self::writeTemplate(
-                $webErrorsDir . DIRECTORY_SEPARATOR . '404.phtml',
+                $webAppDir . DIRECTORY_SEPARATOR . '404.phtml',
                 '404.phtml.tpl',
                 $replacements
             );
 
             self::writeTemplate(
-                $webErrorsDir . DIRECTORY_SEPARATOR . '500.phtml',
+                $webAppDir . DIRECTORY_SEPARATOR . '500.phtml',
                 '500.phtml.tpl',
                 $replacements
             );
@@ -147,8 +145,8 @@
                         'router' => [
                             'base_path' => '/',
                             'response_handlers' => [
-                                404 => 'errors/404.phtml',
-                                500 => 'errors/500.phtml',
+                                404 => '404.phtml',
+                                500 => '500.phtml',
                             ],
                             'routes' => [
                                 [
