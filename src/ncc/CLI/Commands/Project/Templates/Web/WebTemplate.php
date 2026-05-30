@@ -154,7 +154,7 @@
                                     'path' => '/',
                                     'module' => 'index.phtml',
                                     'locale_id' => 'home',
-                                    'allowed_methods' => ['GET'],
+                                    'allowed_methods' => ['GET', 'WEBSOCKET'],
                                 ],
                             ],
                         ],

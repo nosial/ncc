@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.5] - Ongoing
 
+This update introduces some minor improvements and changes to the project
+
+### Changed
+ - WebTemplate now includes `WEBSOCKET` as one of the acceptable request methods in the `index.phtml` template
+   as a websocket demo has already been introduced
 
 
 
