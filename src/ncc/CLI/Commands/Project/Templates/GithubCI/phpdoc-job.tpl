@@ -3,17 +3,12 @@
     needs: [${DEFAULT_BUILD_CONFIG}, check-phpdoc]
     runs-on: ubuntu-latest
     container:
-      image: php:8.5
+      image: ghcr.io/nosial/ncc:latest
     if: needs.check-phpdoc.outputs.phpdoc-exists == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          apt update -yqq
-          apt install git libpq-dev libzip-dev zip make wget gnupg -yqq
 
       - name: Download PHPDocumentor
         run: |

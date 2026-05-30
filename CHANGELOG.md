@@ -5,13 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.4] - Ongoing
+## [3.1.4] - 2026-05-30
 
+This update introduces some minor improvements and changes to the project
 
 ### Changed
  - Update Bootstrap template to place 404.phtml and 500.phtml in WebApplication directory
  - Refactor template paths and add WebSocket handling in index.phtml.tpl
  - Refactor error template paths to use WebApplication directory
+ - Refactor GitHub CI templates to use `ghcr.io/nosial/ncc:latest` as the base image and remove unnecessary dependency
+   installations
 
 ### Removed
  - Removed the installation of the APCU extension from the Web template as DynamicalWeb's image already includes it
