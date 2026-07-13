@@ -17,6 +17,7 @@ This update introduces bug fixes and general improvements to the project
    transitive dependencies
 
 
+
 ## [3.1.5] - 2026-07-13
 
 This update introduces some minor improvements and changes to the project
