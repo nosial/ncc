@@ -633,15 +633,15 @@
          */
         protected function postCompile(): void
         {
-            if($this->getProjectConfiguration()->getPostInstall() === null)
+            if($this->getProjectConfiguration()->getPostCompile() === null)
             {
                 Logger::getLogger()?->debug('No post-compile execution units defined');
                 return;
             }
 
-            Logger::getLogger()?->verbose(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostInstall())));
+            Logger::getLogger()?->verbose(sprintf('Running %d post-compile execution units', count($this->getProjectConfiguration()->getPostCompile())));
             
-            foreach($this->getProjectConfiguration()->getPostInstall() as $unitName)
+            foreach($this->getProjectConfiguration()->getPostCompile() as $unitName)
             {
                 Logger::getLogger()?->verbose(sprintf('Executing post-compile unit: %s', $unitName));
                 ExecutionUnitRunner::fromSource($this->projectPath, $unitName);

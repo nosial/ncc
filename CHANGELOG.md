@@ -13,6 +13,10 @@ This update introduces some minor improvements and changes to the project
  - WebTemplate now includes `WEBSOCKET` as one of the acceptable request methods in the `index.phtml` template
    as a websocket demo has already been introduced
 
+### Fixed
+ - postCompile() now calls getPostCompile() instead of getPostInstall()
+ - getPostCompile() now returns $this->postCompile instead of $this->preCompile
+
 
 
 ## [3.1.4] - 2026-05-30
