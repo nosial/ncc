@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.6] - Ongoing
 
-This is an ongoing update
+This update introduces bug fixes and general improvements to the project
 
+### Changed
+ - Updated dependencies `deprecation-contracts`, `fslib`, `LogLib2` and `semver`
+
+### Fixed
+ - Fixed issue where `project stubs` would not generate stubs for child-dependencies, now the command will resolve 
+   transitive dependencies
 
 
 ## [3.1.5] - 2026-07-13
