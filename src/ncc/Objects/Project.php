@@ -291,7 +291,7 @@
 
             if(is_string($this->postCompile))
             {
-                return [$this->preCompile];
+                return [$this->postCompile];
             }
 
             return $this->postCompile;
