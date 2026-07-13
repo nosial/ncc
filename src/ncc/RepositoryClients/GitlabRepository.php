@@ -190,12 +190,19 @@
 
             Logger::getLogger()?->debug(sprintf('Fetching releases for %s/%s from %s', $group, $project, $endpoint));
             $results = [];
-            foreach($this->processHttpResponse($curl, $group, $project) as $item)
+            try
             {
-                if(isset($item['tag_name']))
+                foreach($this->processHttpResponse($curl, $group, $project) as $item)
                 {
-                    $results[] = $item['tag_name'];
+                    if(isset($item['tag_name']))
+                    {
+                        $results[] = $item['tag_name'];
+                    }
                 }
+            }
+            catch(OperationException $e)
+            {
+                Logger::getLogger()?->warning(sprintf('Failed to fetch releases for %s/%s: %s', $group, $project, $e->getMessage()));
             }
 
             Logger::getLogger()?->verbose(sprintf('Found %d releases for %s/%s', count($results), $group, $project));

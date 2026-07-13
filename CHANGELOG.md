@@ -16,6 +16,8 @@ This update introduces some minor improvements and changes to the project
 ### Fixed
  - postCompile() now calls getPostCompile() instead of getPostInstall()
  - getPostCompile() now returns $this->postCompile instead of $this->preCompile
+ - getReleases() now catches OperationException (including 403) instead of propagating it, and returns an empty array.
+   The downstream callers already handle this correctly
 
 
 
