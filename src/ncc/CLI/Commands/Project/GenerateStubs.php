@@ -239,6 +239,27 @@
                 return 1;
             }
 
+            // Resolve transitive dependencies for all installed packages
+            // This includes dependencies of dependencies recursively
+            $visited = [];
+            foreach($installedPackageReaders as $packageName => $packageReader)
+            {
+                $visited[$packageName] = true;
+            }
+
+            $initialCount = count($installedPackageReaders);
+            foreach($installedPackageReaders as $packageReader)
+            {
+                self::resolveTransitiveDependencies($packageReader, $visited, $installedPackageReaders);
+            }
+
+            $transitiveCount = count($installedPackageReaders) - $initialCount;
+            if($transitiveCount > 0)
+            {
+                Console::out(sprintf("Resolved %d transitive dependencie(s)", $transitiveCount));
+                Console::out('');
+            }
+
             // Determine output path
             if($outputPath === null)
             {
@@ -334,6 +355,86 @@
             }
 
             return 0;
+        }
+
+        /**
+         * Recursively resolves transitive dependencies for a given package reader.
+         * Missing transitive dependencies emit a warning and are skipped.
+         *
+         * @param PackageReader $packageReader The package reader to resolve dependencies for
+         * @param array $visited Reference to array of visited package names (prevents circular dependencies)
+         * @param array $installedPackageReaders Reference to the array of installed package readers
+         */
+        private static function resolveTransitiveDependencies(PackageReader $packageReader, array &$visited, array &$installedPackageReaders): void
+        {
+            $dependencyReferences = $packageReader->getHeader()->getDependencyReferences();
+
+            foreach($dependencyReferences as $dependencyReference)
+            {
+                $depPackageName = $dependencyReference->getPackage();
+
+                // Skip if already visited (circular dependency prevention) or already resolved
+                if(isset($visited[$depPackageName]) || isset($installedPackageReaders[$depPackageName]))
+                {
+                    $visited[$depPackageName] = true;
+                    continue;
+                }
+
+                $visited[$depPackageName] = true;
+                $depVersion = $dependencyReference->getVersion() ?? 'latest';
+
+                try
+                {
+                    // Check if the package is installed
+                    if(!Runtime::packageInstalled($depPackageName, $depVersion))
+                    {
+                        // Try to find any installed version
+                        $userManager = Runtime::getUserPackageManager();
+                        $systemManager = Runtime::getSystemPackageManager();
+                        $found = false;
+
+                        $systemVersions = $systemManager->getAllVersions($depPackageName);
+                        if(!empty($systemVersions))
+                        {
+                            $found = true;
+                            $depVersion = 'latest';
+                        }
+
+                        if(!$found && $userManager !== null)
+                        {
+                            $userVersions = $userManager->getAllVersions($depPackageName);
+                            if(!empty($userVersions))
+                            {
+                                $found = true;
+                                $depVersion = 'latest';
+                            }
+                        }
+
+                        if(!$found)
+                        {
+                            Console::out(sprintf("  [warning] Transitive dependency \"%s\" is not installed, skipping", $depPackageName));
+                            continue;
+                        }
+                    }
+
+                    $depPath = Runtime::getPackagePath($depPackageName, $depVersion);
+                    if($depPath === null)
+                    {
+                        Console::out(sprintf("  [warning] Transitive dependency \"%s\" is not installed, skipping", $depPackageName));
+                        continue;
+                    }
+
+                    $depReader = new PackageReader($depPath);
+                    $installedPackageReaders[$depPackageName] = $depReader;
+
+                    // Recursively resolve further transitive dependencies
+                    self::resolveTransitiveDependencies($depReader, $visited, $installedPackageReaders);
+                }
+                catch(Exception $e)
+                {
+                    Console::out(sprintf("  [warning] Failed to resolve transitive dependency \"%s\": %s", $depPackageName, $e->getMessage()));
+                }
+            }
         }
 
         /**
