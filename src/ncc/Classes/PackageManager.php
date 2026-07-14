@@ -28,6 +28,7 @@
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\fslib\IO;
     use ncc\Libraries\fslib\IOException;
+    use ncc\Classes\ApcuCache;
     use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
@@ -718,6 +719,15 @@
             }
 
             $this->modified = false;
+
+            // Clear APCu caches since the package lock has changed.
+            // This ensures stale cached package metadata and content are not served
+            // across package installs, uninstalls, or updates.
+            if(ApcuCache::isAvailable())
+            {
+                Logger::getLogger()?->debug('Clearing APCu cache due to package lock update');
+                ApcuCache::clear();
+            }
         }
 
         /**

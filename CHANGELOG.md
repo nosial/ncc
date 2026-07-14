@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.6] - Ongoing
+## [3.1.6] - 2026-07-14
 
-This update introduces bug fixes and general improvements to the project
+This update introduces a new apcu cache layer, updated dependencies and a bug fix
+
+### Added
+ - Added APCU Cache layer, this can be disabled with `NCC_DISABLE_APCU`, when the `apcu` extension is available for usage,
+   ncc can cache important runtime information to the apcu to improve runtime speed especially in web environments.
 
 ### Changed
  - Updated dependencies `deprecation-contracts`, `fslib`, `LogLib2` and `semver`
