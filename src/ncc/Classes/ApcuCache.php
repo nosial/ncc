@@ -41,7 +41,6 @@
                 self::$available =
                     extension_loaded('apcu') &&
                     function_exists('apcu_fetch') &&
-                    ini_get('apcu.enabled') &&
                     getenv('NCC_DISABLE_APCU') === false;
             }
 
