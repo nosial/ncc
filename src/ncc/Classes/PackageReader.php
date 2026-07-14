@@ -86,26 +86,45 @@
             // Try to load from cache if requested
             if($tryCache)
             {
+                // Try APCu cache first (fastest, no disk I/O)
+                if(ApcuCache::isAvailable())
+                {
+                    $apcuKey = 'package_data_' . hash('sha1', $this->filePath);
+                    Logger::getLogger()?->debug(sprintf('Checking APCu cache for package: %s (key: %s)', $this->filePath, $apcuKey));
+                    $cacheData = ApcuCache::get($apcuKey);
+                    if($cacheData instanceof PackageCacheData && $cacheData->getVersion() === PackageCacheData::CACHE_VERSION)
+                    {
+                        $currentSha1 = hash_file('sha1', $this->filePath);
+                        if($currentSha1 !== false && $cacheData->getFileSha1() === $currentSha1)
+                        {
+                            Logger::getLogger()?->debug(sprintf('APCu cache hit for: %s', $this->filePath));
+                            $this->restoreFromCacheData($cacheData);
+                            return;
+                        }
+
+                        Logger::getLogger()?->debug(sprintf('APCu cache stale for: %s (SHA-1 mismatch, cache was for previous version)', $this->filePath));
+                    }
+                }
+
+                // Then try on-disk cache file
                 $cacheFile = $this->filePath . '.cache';
                 if(IO::exists($cacheFile))
                 {
-                    Logger::getLogger()?->verbose('Attempting to load from cache file');
+                    Logger::getLogger()?->debug(sprintf('Attempting to load from cache file: %s', $cacheFile));
                     try
                     {
                         $this->importFromCacheFile($cacheFile);
-                        Logger::getLogger()?->verbose('Successfully loaded from cache');
+                        Logger::getLogger()?->debug(sprintf('Loaded package from cache file: %s', $this->filePath));
                         return;
                     }
                     catch(Exception $e)
                     {
-                        Logger::getLogger()?->debug(sprintf('Cache loading failed: %s, falling back to normal parsing', $e->getMessage()));
-                        // If cache loading fails, fall back to normal parsing
-                        // Silently continue to normal parsing
+                        Logger::getLogger()?->debug(sprintf('Cache file loading failed for %s: %s, falling back to normal parsing', $this->filePath, $e->getMessage()));
                     }
                 }
             }
             
-            Logger::getLogger()?->verbose('Parsing package file');
+            Logger::getLogger()?->debug(sprintf('Parsing package file directly: %s', $this->filePath));
 
             $this->fileHandle = fopen($this->filePath, 'rb');
             if(!$this->fileHandle)
@@ -312,6 +331,17 @@
          */
         public function readComponent(ComponentReference $reference): string
         {
+            $cacheKey = 'content_' . hash('sha1', $this->filePath) . '_' . hash('sha1', $reference->getName());
+            if(ApcuCache::isAvailable())
+            {
+                $cached = ApcuCache::get($cacheKey);
+                if($cached !== null)
+                {
+                    Logger::getLogger()?->debug(sprintf('APCu content cache hit for component: %s (key: %s)', $reference->getName(), $cacheKey));
+                    return $cached;
+                }
+            }
+
             fseek($this->fileHandle, $reference->getOffset());
             $data = fread($this->fileHandle, $reference->getSize());
 
@@ -325,6 +355,12 @@
                 $data = gzinflate($data);
             }
 
+            if(ApcuCache::isAvailable())
+            {
+                ApcuCache::set($cacheKey, $data, 3600);
+                Logger::getLogger()?->debug(sprintf('Stored component in APCu content cache: %s (%d bytes)', $reference->getName(), strlen($data)));
+            }
+
             return $data;
         }
 
@@ -336,6 +372,17 @@
          */
         public function readResource(ResourceReference $reference): string
         {
+            $cacheKey = 'content_' . hash('sha1', $this->filePath) . '_' . hash('sha1', $reference->getName());
+            if(ApcuCache::isAvailable())
+            {
+                $cached = ApcuCache::get($cacheKey);
+                if($cached !== null)
+                {
+                    Logger::getLogger()?->debug(sprintf('APCu content cache hit for resource: %s (key: %s)', $reference->getName(), $cacheKey));
+                    return $cached;
+                }
+            }
+
             fseek($this->fileHandle, $reference->getOffset());
             $data = fread($this->fileHandle, $reference->getSize());
             if(strlen($data) !== $reference->getSize())
@@ -346,6 +393,12 @@
             if($this->header->isCompressed())
             {
                 $data = gzinflate($data);
+            }
+
+            if(ApcuCache::isAvailable())
+            {
+                ApcuCache::set($cacheKey, $data, 3600);
+                Logger::getLogger()?->debug(sprintf('Stored resource in APCu content cache: %s (%d bytes)', $reference->getName(), strlen($data)));
             }
 
             return $data;
@@ -985,7 +1038,7 @@
          */
         public function exportCache(string $cacheFilePath): void
         {
-            $fileSha1 = sha1_file($this->filePath);
+            $fileSha1 = hash_file('sha1', $this->filePath);
             if($fileSha1 === false)
             {
                 throw new IOException($this->filePath, "Could not compute SHA1 hash of package file");
@@ -1004,6 +1057,38 @@
             );
 
             IO::writeFile($cacheFilePath, serialize($cacheData));
+
+            // Warm APCu cache for instant loading on subsequent requests
+            if(ApcuCache::isAvailable())
+            {
+                $pathSha1 = hash('sha1', $this->filePath);
+                ApcuCache::set('package_data_' . $pathSha1, $cacheData);
+                Logger::getLogger()?->debug(sprintf('Warmed APCu metadata cache for: %s', $this->filePath));
+            }
+        }
+
+        /**
+         * Restores all PackageReader properties from a PackageCacheData object.
+         *
+         * @param PackageCacheData $cacheData The cache data to restore from
+         * @throws InvalidArgumentException If the package file cannot be opened
+         */
+        private function restoreFromCacheData(PackageCacheData $cacheData): void
+        {
+            $this->startOffset = $cacheData->getStartOffset();
+            $this->endOffset = $cacheData->getEndOffset();
+            $this->packageVersion = $cacheData->getPackageVersion();
+            $this->header = $cacheData->getHeader();
+            $this->assembly = $cacheData->getAssembly();
+            $this->executionUnitReferences = $cacheData->getExecutionUnitReferences();
+            $this->componentReferences = $cacheData->getComponentReferences();
+            $this->resourceReferences = $cacheData->getResourceReferences();
+            $this->fileHandle = fopen($this->filePath, 'rb');
+
+            if(!$this->fileHandle)
+            {
+                throw new InvalidArgumentException("Could not open package file: " . $this->filePath);
+            }
         }
 
         /**
@@ -1032,7 +1117,7 @@
                 }
 
                 // Validate cache by comparing the stored SHA-1 against the current file.
-                $currentSha1 = sha1_file($this->filePath);
+                $currentSha1 = hash_file('sha1', $this->filePath);
                 if($currentSha1 === false || $cacheData->getFileSha1() !== $currentSha1)
                 {
                     throw new InvalidArgumentException("Cache file is outdated (package file has been modified)");
@@ -1040,25 +1125,17 @@
 
                 // Warm the in-memory cache so subsequent loads are instant.
                 Cache::set($cacheFilePath, $cacheData);
+
+                // Warm APCu cache if available
+                if(ApcuCache::isAvailable())
+                {
+                    $pathSha1 = hash('sha1', $this->filePath);
+                    ApcuCache::set('package_data_' . $pathSha1, $cacheData);
+                    Logger::getLogger()?->debug(sprintf('Warmed APCu metadata cache from disk cache for: %s', $this->filePath));
+                }
             }
 
-            // Restore all properties directly from the cache object – Header and
-            // Assembly are already fully hydrated objects, so no fromArray() overhead.
-            $this->startOffset             = $cacheData->getStartOffset();
-            $this->endOffset               = $cacheData->getEndOffset();
-            $this->packageVersion          = $cacheData->getPackageVersion();
-            $this->header                  = $cacheData->getHeader();
-            $this->assembly                = $cacheData->getAssembly();
-            $this->executionUnitReferences = $cacheData->getExecutionUnitReferences();
-            $this->componentReferences     = $cacheData->getComponentReferences();
-            $this->resourceReferences      = $cacheData->getResourceReferences();
-
-            // Open file handle for lazy data reads (execution units, components, resources).
-            $this->fileHandle = fopen($this->filePath, 'rb');
-            if(!$this->fileHandle)
-            {
-                throw new InvalidArgumentException("Could not open package file: " . $this->filePath);
-            }
+            $this->restoreFromCacheData($cacheData);
         }
 
         /**
