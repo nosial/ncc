@@ -1,4 +1,4 @@
-VERSION := 3.1.8
+VERSION := 3.1.9
 BUILD := $(shell git rev-parse --short HEAD)
 
 SOURCE_PATH = src/ncc
