@@ -155,7 +155,7 @@
                 // Step 1: Build the project locally
                 Console::out("Building project...");
                 $compiler = Project::compilerFromFile($projectPath, $configuration);
-                $outputPath = $compiler->compile(function(int $current, int $total, string $message) {
+                $outputPath = $compiler->build(function(int $current, int $total, string $message) {
                     Console::inlineProgress($current, $total, $message);
                 });
                 Console::completeProgress("Build completed: " . $outputPath);

@@ -581,7 +581,7 @@
             // Build & install the project
             try
             {
-                $packageReader = new PackageReader($compiler->compile(function(int $current, int $total, string $message) use ($calculateProgress) {
+                $packageReader = new PackageReader($compiler->build(function(int $current, int $total, string $message) use ($calculateProgress) {
                     $compileProgress = $total > 0 ? ($current / $total) : 0;
                     $progress = $calculateProgress('compile', $compileProgress);
                     Console::inlineProgress($progress, 100, $message);

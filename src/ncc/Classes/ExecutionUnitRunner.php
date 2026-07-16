@@ -47,7 +47,7 @@
             Logger::getLogger()?->debug(sprintf('Executing unit from source: %s (type: %s)', $unit->getName(), $unit->getType()->value));
             
             // Check if all the required files are available
-            foreach($unit->getRequiredFiles() as $requiredFile)
+            foreach($unit->getRequiredFiles() ?? [] as $requiredFile)
             {
                 Logger::getLogger()?->verbose(sprintf('Checking required file: %s', $requiredFile));
                 if(!IO::exists($projectPath . DIRECTORY_SEPARATOR . $requiredFile))
@@ -97,7 +97,7 @@
 
             // If all goes well, we apply the configuration from the unit to the process.
             Logger::getLogger()?->debug('Applying process configuration');
-            $process = self::applyProcessConfig($process, $unit);
+            $process = self::applyProcessConfig($process, $unit, $projectPath);
 
             try
             {
@@ -107,12 +107,11 @@
             catch(RuntimeException $e)
             {
                 Logger::getLogger()?->error(sprintf('Execution unit %s failed to execute: %s', $unit->getName(), $e->getMessage()));
+                throw new OperationException(sprintf('Execution unit %s failed to execute: %s', $unit->getName(), $e->getMessage()), 0, $e);
             }
-            finally
-            {
-                Logger::getLogger()?->verbose(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
-                return $process->getExitCode();
-            }
+
+            Logger::getLogger()?->verbose(sprintf('Execution unit %s finished with exit code %d.', $unit->getName(), $process->getExitCode()));
+            return $process->getExitCode();
         }
 
         public static function executeFromDistribution(ExecutionUnit $unit, PackageReader $packageReader): int
@@ -128,7 +127,7 @@
          * @param ExecutionUnit $unit The execution unit containing the configuration.
          * @return Process The configured process.
          */
-        private static function applyProcessConfig(Process $process, ExecutionUnit $unit): Process
+        private static function applyProcessConfig(Process $process, ExecutionUnit $unit, string $projectPath=''): Process
         {
             Logger::getLogger()?->debug(sprintf('Configuring process for unit: %s (mode: %s)', $unit->getName(), $unit->getMode()->value));
             
@@ -140,8 +139,13 @@
                 $process->setEnv($env);
             }
 
-            // Set working directory
-            $workingDirectory = MacroVariable::fromInput($unit->getWorkingDirectory());
+            // Set working directory with project path macro resolution
+            $workingDirectory = MacroVariable::fromInput($unit->getWorkingDirectory() ?? '', handle: function($input) use ($projectPath) {
+                return match($input) {
+                    '${PROJECT_PATH}' => $projectPath,
+                    default => $input,
+                };
+            });
             if(!empty($workingDirectory))
             {
                 Logger::getLogger()?->verbose(sprintf('Setting working directory: %s', $workingDirectory));

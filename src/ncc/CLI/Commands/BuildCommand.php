@@ -24,6 +24,7 @@
 
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\Exceptions\OperationException;
     use ncc\Libraries\fslib\IOException;
     use ncc\Objects\Project;
 
@@ -57,12 +58,12 @@
             try
             {
                 $compiler = Project::compilerFromFile($projectPath, $configuration);
-                $outputPath = $compiler->compile(function(int $current, int $total, string $message) {
+                $outputPath = $compiler->build(function(int $current, int $total, string $message) {
                     Console::inlineProgress($current, $total, $message);
                 });
                 Console::completeProgress("Build completed: " . $outputPath);
             }
-            catch (IOException $e)
+            catch (IOException | OperationException $e)
             {
                 Console::clearInlineProgress();
                 Console::error($e->getMessage());
