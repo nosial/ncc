@@ -5,9 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.9] - Ongoing
+## [3.1.9] - 2026-07-16
 
-This is an ongoing update
+This update introduces bug fixes related to compilation stages
+
+### Fixed
+ - Corrected execution unit handling to use arrays and improved error handling for missing units.
+ - Corrected build command to use `build` method and added exception handling for `OperationException`.
+ - Corrected `DockerUpdate.php` to use `build` method instead of `compile`.
+ - Corrected execution unit runner to handle missing required files and improve error handling.
+ - Corrected `InstallCommand.php` to use `build` method instead of `compile`.
+
 
 
 ## [3.1.8] - 2026-07-16
