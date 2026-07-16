@@ -141,6 +141,7 @@
             $this->requiredExecutionUnits = [];
             $this->sourceComponents = [];
             $this->sourceResources = [];
+            $this->temporaryExecutionUnits = [];
             $this->packageDependencies = [];
 
             if($this->projectConfiguration->getEntryPoint() !== null)
@@ -151,26 +152,26 @@
 
             if($this->projectConfiguration->getPreInstall() !== null)
             {
-                $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getPreInstall();
-                Logger::getLogger()?->verbose(sprintf('Pre-install unit: %s', $this->getProjectConfiguration()->getPreInstall()));
+                $this->requiredExecutionUnits = array_merge($this->requiredExecutionUnits, $this->getProjectConfiguration()->getPreInstall());
+                Logger::getLogger()?->verbose(sprintf('Pre-install unit: %s', implode(', ', $this->getProjectConfiguration()->getPreInstall())));
             }
 
             if($this->projectConfiguration->getPostInstall() !== null)
             {
-                $this->requiredExecutionUnits[] = $this->getProjectConfiguration()->getPostInstall();
-                Logger::getLogger()?->verbose(sprintf('Post-install unit: %s', $this->getProjectConfiguration()->getPostInstall()));
+                $this->requiredExecutionUnits = array_merge($this->requiredExecutionUnits, $this->getProjectConfiguration()->getPostInstall());
+                Logger::getLogger()?->verbose(sprintf('Post-install unit: %s', implode(', ', $this->getProjectConfiguration()->getPostInstall())));
             }
 
             if($this->projectConfiguration->getPreCompile() !== null)
             {
-                $this->temporaryExecutionUnits[] = $this->getProjectConfiguration()->getPreCompile();
-                Logger::getLogger()?->verbose(sprintf('Pre-compile unit: %s', $this->getProjectConfiguration()->getPreCompile()));
+                $this->temporaryExecutionUnits = array_merge($this->temporaryExecutionUnits, $this->getProjectConfiguration()->getPreCompile());
+                Logger::getLogger()?->verbose(sprintf('Pre-compile unit: %s', implode(', ', $this->getProjectConfiguration()->getPreCompile())));
             }
 
             if($this->projectConfiguration->getPostCompile() !== null)
             {
-                $this->temporaryExecutionUnits[] = $this->getProjectConfiguration()->getPostCompile();
-                Logger::getLogger()?->verbose(sprintf('Post-compile unit: %s', $this->getProjectConfiguration()->getPostCompile()));
+                $this->temporaryExecutionUnits = array_merge($this->temporaryExecutionUnits, $this->getProjectConfiguration()->getPostCompile());
+                Logger::getLogger()?->verbose(sprintf('Post-compile unit: %s', implode(', ', $this->getProjectConfiguration()->getPostCompile())));
             }
 
             if(isset($this->buildConfiguration->getOptions()['static']))
@@ -622,7 +623,12 @@
             foreach($this->getProjectConfiguration()->getPreCompile() as $unitName)
             {
                 Logger::getLogger()?->verbose(sprintf('Executing pre-compile unit: %s', $unitName));
-                ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
+                $unit = $this->getProjectConfiguration()->getExecutionUnit($unitName);
+                if($unit === null)
+                {
+                    throw new OperationException(sprintf('Pre-compile execution unit "%s" not found in project configuration', $unitName));
+                }
+                ExecutionUnitRunner::fromSource($this->projectPath, $unit);
             }
             
             Logger::getLogger()?->verbose('Pre-compile execution units completed');
@@ -644,7 +650,12 @@
             foreach($this->getProjectConfiguration()->getPostCompile() as $unitName)
             {
                 Logger::getLogger()?->verbose(sprintf('Executing post-compile unit: %s', $unitName));
-                ExecutionUnitRunner::fromSource($this->projectPath, $unitName);
+                $unit = $this->getProjectConfiguration()->getExecutionUnit($unitName);
+                if($unit === null)
+                {
+                    throw new OperationException(sprintf('Post-compile execution unit "%s" not found in project configuration', $unitName));
+                }
+                ExecutionUnitRunner::fromSource($this->projectPath, $unit);
             }
             
             Logger::getLogger()?->verbose('Post-compile execution units completed');
@@ -684,7 +695,7 @@
             $this->preCompile();
             
             Logger::getLogger()?->verbose('Starting compilation phase');
-            $buildPath = $this->compile(null, $overwrite);
+            $buildPath = $this->compile($progressCallback, $overwrite);
             Logger::getLogger()?->verbose(sprintf('Compilation completed: %s', $buildPath));
             $this->postCompile();
             
