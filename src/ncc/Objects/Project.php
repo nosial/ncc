@@ -1041,24 +1041,72 @@
                 }
             }
 
-            if(isset($data['pre_compile']) && !self::validateExecutionUnitExists($data, $data['pre_compile']))
+            if(isset($data['pre_compile']))
             {
-                throw new InvalidPropertyException('pre_compile', 'The pre-compile property must point to a valid execution point if it\'s set.');
+                if(!is_string($data['pre_compile']) && (!is_array($data['pre_compile']) || !array_is_list($data['pre_compile']) || !array_reduce($data['pre_compile'], fn($c, $v) => $c && is_string($v), true)))
+                {
+                    throw new InvalidPropertyException('pre_compile', 'The pre-compile property must be a string or an array of strings if set');
+                }
+
+                $units = is_string($data['pre_compile']) ? [$data['pre_compile']] : $data['pre_compile'];
+                foreach($units as $unit)
+                {
+                    if(!self::validateExecutionUnitExists($data, $unit))
+                    {
+                        throw new InvalidPropertyException('pre_compile', "The pre-compile property must point to a valid execution point, '$unit' not found.");
+                    }
+                }
             }
 
-            if(isset($data['post_compile']) && !self::validateExecutionUnitExists($data, $data['post_compile']))
+            if(isset($data['post_compile']))
             {
-                throw new InvalidPropertyException('post_compile', 'The post-compile property must point to a valid execution point if it\'s set');
+                if(!is_string($data['post_compile']) && (!is_array($data['post_compile']) || !array_is_list($data['post_compile']) || !array_reduce($data['post_compile'], fn($c, $v) => $c && is_string($v), true)))
+                {
+                    throw new InvalidPropertyException('post_compile', 'The post-compile property must be a string or an array of strings if set');
+                }
+
+                $units = is_string($data['post_compile']) ? [$data['post_compile']] : $data['post_compile'];
+                foreach($units as $unit)
+                {
+                    if(!self::validateExecutionUnitExists($data, $unit))
+                    {
+                        throw new InvalidPropertyException('post_compile', "The post-compile property must point to a valid execution point, '$unit' not found.");
+                    }
+                }
             }
 
-            if(isset($data['pre_install']) && !self::validateExecutionUnitExists($data, $data['pre_install']))
+            if(isset($data['pre_install']))
             {
-                throw new InvalidPropertyException('pre_install', 'The pre-install property must point to a valid execution point if it\'s set');
+                if(!is_string($data['pre_install']) && (!is_array($data['pre_install']) || !array_is_list($data['pre_install']) || !array_reduce($data['pre_install'], fn($c, $v) => $c && is_string($v), true)))
+                {
+                    throw new InvalidPropertyException('pre_install', 'The pre-install property must be a string or an array of strings if set');
+                }
+
+                $units = is_string($data['pre_install']) ? [$data['pre_install']] : $data['pre_install'];
+                foreach($units as $unit)
+                {
+                    if(!self::validateExecutionUnitExists($data, $unit))
+                    {
+                        throw new InvalidPropertyException('pre_install', "The pre-install property must point to a valid execution point, '$unit' not found.");
+                    }
+                }
             }
 
-            if(isset($data['post_install']) && !self::validateExecutionUnitExists($data, $data['post_install']))
+            if(isset($data['post_install']))
             {
-                throw new InvalidPropertyException('post_install', 'The post-install property must point to a valid execution point if it\'s set');
+                if(!is_string($data['post_install']) && (!is_array($data['post_install']) || !array_is_list($data['post_install']) || !array_reduce($data['post_install'], fn($c, $v) => $c && is_string($v), true)))
+                {
+                    throw new InvalidPropertyException('post_install', 'The post-install property must be a string or an array of strings if set');
+                }
+
+                $units = is_string($data['post_install']) ? [$data['post_install']] : $data['post_install'];
+                foreach($units as $unit)
+                {
+                    if(!self::validateExecutionUnitExists($data, $unit))
+                    {
+                        throw new InvalidPropertyException('post_install', "The post-install property must point to a valid execution point, '$unit' not found.");
+                    }
+                }
             }
 
             if(isset($data['repository']) && !is_array($data['repository']))
@@ -1142,7 +1190,6 @@
          */
         private static function validateExecutionUnitExists(array $data, string $name): bool
         {
-            // TODO: Update this! Currently only works for single string, not arrays of strings.
             if(!isset($data['execution_units']) || !is_array($data['execution_units']))
             {
                 return false;
