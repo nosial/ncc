@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is an ongoing update
 
+### Fixed
+ - Added exception handling for the ApcuCache layer if for whatever reason the APCU is available but APCU operations
+   fail during runtime
+
 
 
 ## [3.1.9] - 2026-07-16
