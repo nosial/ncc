@@ -40,6 +40,7 @@
             if (self::$available === null)
             {
                 self::$available =
+                    php_sapi_name() !== 'cli' &&
                     extension_loaded('apcu') &&
                     function_exists('apcu_fetch') &&
                     getenv('NCC_DISABLE_APCU') === false;
