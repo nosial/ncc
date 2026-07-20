@@ -23,7 +23,7 @@
     namespace ncc\Classes;
 
     use APCUIterator;
-    use Exception;
+    use Throwable;
 
     class ApcuCache
     {
@@ -67,7 +67,7 @@
             {
                 return apcu_store(self::KEY_PREFIX . $key, $value, $ttl);
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 Logger::getLogger()->warning($e->getMessage(), $e);
                 self::$available = false;
@@ -94,7 +94,7 @@
                 $result = apcu_fetch(self::KEY_PREFIX . $key, $success);
                 return $success ? $result : null;
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 Logger::getLogger()->warning($e->getMessage(), $e);
                 self::$available = false;
@@ -119,7 +119,7 @@
             {
                 return apcu_exists(self::KEY_PREFIX . $key);
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 Logger::getLogger()->warning($e->getMessage(), $e);
                 self::$available = false;
@@ -144,7 +144,7 @@
             {
                 return apcu_delete(self::KEY_PREFIX . $key);
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 Logger::getLogger()->warning($e->getMessage(), $e);
                 self::$available = false;
@@ -173,7 +173,7 @@
                 $iterator = new APCUIterator('/^' . preg_quote(self::KEY_PREFIX, '/') . '/');
                 apcu_delete($iterator);
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 Logger::getLogger()->warning($e->getMessage(), $e);
                 self::$available = false;
