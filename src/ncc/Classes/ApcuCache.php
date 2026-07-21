@@ -23,6 +23,7 @@
     namespace ncc\Classes;
 
     use APCUIterator;
+    use Throwable;
 
     class ApcuCache
     {
@@ -39,6 +40,7 @@
             if (self::$available === null)
             {
                 self::$available =
+                    php_sapi_name() !== 'cli' &&
                     extension_loaded('apcu') &&
                     function_exists('apcu_fetch') &&
                     getenv('NCC_DISABLE_APCU') === false;
@@ -62,7 +64,16 @@
                 return false;
             }
 
-            return apcu_store(self::KEY_PREFIX . $key, $value, $ttl);
+            try
+            {
+                return apcu_store(self::KEY_PREFIX . $key, $value, $ttl);
+            }
+            catch(Throwable $e)
+            {
+                Logger::getLogger()->warning($e->getMessage(), $e);
+                self::$available = false;
+                return false;
+            }
         }
 
         /**
@@ -78,9 +89,18 @@
                 return null;
             }
 
-            $success = false;
-            $result = apcu_fetch(self::KEY_PREFIX . $key, $success);
-            return $success ? $result : null;
+            try
+            {
+                $success = false;
+                $result = apcu_fetch(self::KEY_PREFIX . $key, $success);
+                return $success ? $result : null;
+            }
+            catch(Throwable $e)
+            {
+                Logger::getLogger()->warning($e->getMessage(), $e);
+                self::$available = false;
+                return null;
+            }
         }
 
         /**
@@ -96,7 +116,16 @@
                 return false;
             }
 
-            return apcu_exists(self::KEY_PREFIX . $key);
+            try
+            {
+                return apcu_exists(self::KEY_PREFIX . $key);
+            }
+            catch(Throwable $e)
+            {
+                Logger::getLogger()->warning($e->getMessage(), $e);
+                self::$available = false;
+                return false;
+            }
         }
 
         /**
@@ -112,7 +141,16 @@
                 return false;
             }
 
-            return apcu_delete(self::KEY_PREFIX . $key);
+            try
+            {
+                return apcu_delete(self::KEY_PREFIX . $key);
+            }
+            catch(Throwable $e)
+            {
+                Logger::getLogger()->warning($e->getMessage(), $e);
+                self::$available = false;
+                return false;
+            }
         }
 
         /**
@@ -131,7 +169,15 @@
                 return;
             }
 
-            $iterator = new APCUIterator('/^' . preg_quote(self::KEY_PREFIX, '/') . '/');
-            apcu_delete($iterator);
+            try
+            {
+                $iterator = new APCUIterator('/^' . preg_quote(self::KEY_PREFIX, '/') . '/');
+                apcu_delete($iterator);
+            }
+            catch(Throwable $e)
+            {
+                Logger::getLogger()->warning($e->getMessage(), $e);
+                self::$available = false;
+            }
         }
     }

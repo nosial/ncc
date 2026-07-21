@@ -693,6 +693,7 @@
             Logger::getLogger()?->verbose('Starting build process');
             Logger::getLogger()?->verbose(sprintf('Build options - Overwrite: %s', $overwrite ? 'true' : 'false'));
             $this->preCompile();
+            $this->refreshFiles();
             
             Logger::getLogger()?->verbose('Starting compilation phase');
             $buildPath = $this->compile($progressCallback, $overwrite);
