@@ -175,7 +175,7 @@ jobs:
           tar czf ncc-release.tar.gz -C release .
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: https://github.com/softprops/action-gh-release@v1
         with:
           files: |
             release/ncc.phar
