@@ -22,7 +22,7 @@ jobs:
           submodules: recursive
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: https://github.com/shivammathur/setup-php@v2
         with:
           php-version: '8.5'
           extensions: mbstring, ctype, json, zip, msgpack, tokenizer, phar, curl
@@ -60,7 +60,7 @@ jobs:
           submodules: recursive
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: https://github.com/shivammathur/setup-php@v2
         with:
           php-version: '8.5'
           extensions: mbstring, ctype, json, zip, msgpack, tokenizer, phar, curl
@@ -113,7 +113,7 @@ jobs:
           path: .
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: https://github.com/shivammathur/setup-php@v2
         with:
           php-version: '8.5'
           extensions: mbstring, ctype, json, zip, msgpack, tokenizer, phar, curl
