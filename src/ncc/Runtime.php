@@ -569,7 +569,7 @@
             if(self::$systemAuthenticationManager === null)
             {
                 $systemLocation = PathResolver::getSystemLocation();
-                $hasWriteAccess = IO::isWritable(dirname($systemLocation) || (IO::exists($systemLocation) && IO::isWritable($systemLocation)));
+                $hasWriteAccess = IO::isWritable(dirname($systemLocation)) || (IO::exists($systemLocation) && IO::isWritable($systemLocation));
                 if($hasWriteAccess && !IO::exists($systemLocation))
                 {
                     IO::createDirectory($systemLocation);
@@ -884,45 +884,34 @@
                 return;
             }
             
-            // Create the autoloader closure
-            $autoloader = function(string $className) use ($autoloaderMapping, $packageName): bool
+            // Build a lowercase lookup map once for case-insensitive fallback matching,
+            // keeping the first mapping when multiple class names differ only by case
+            $lowercaseMapping = [];
+            foreach($autoloaderMapping as $mappedClass => $filePath)
             {
-                // Try case-sensitive match first
-                if(isset($autoloaderMapping[$className]))
+                $lowercaseMapping[strtolower($mappedClass)] ??= $filePath;
+            }
+
+            // Create the autoloader closure
+            $autoloader = function(string $className) use ($autoloaderMapping, $lowercaseMapping): bool
+            {
+                // Try case-sensitive match first, then case-insensitive match as fallback
+                $filePath = $autoloaderMapping[$className] ?? $lowercaseMapping[strtolower($className)] ?? null;
+                if($filePath === null)
                 {
-                    $filePath = $autoloaderMapping[$className];
-                    
-                    try
-                    {
-                        require_once $filePath;
-                        return true;
-                    }
-                    catch(Exception $e)
-                    {
-                        trigger_error(sprintf('NCC Autoloader: Failed to load "%s" from "%s": %s', $className, $filePath, $e->getMessage()), E_USER_WARNING);
-                        return false;
-                    }
+                    return false;
                 }
-                
-                // Try case-insensitive match as fallback
-                foreach($autoloaderMapping as $mappedClass => $filePath)
+
+                try
                 {
-                    if(strcasecmp($mappedClass, $className) === 0)
-                    {
-                        try
-                        {
-                            require_once $filePath;
-                            return true;
-                        }
-                        catch(Exception $e)
-                        {
-                            trigger_error(sprintf('NCC Autoloader: Failed to load "%s" from "%s": %s', $className, $filePath, $e->getMessage()), E_USER_WARNING);
-                            return false;
-                        }
-                    }
+                    require_once $filePath;
+                    return true;
                 }
-                
-                return false;
+                catch(Exception $e)
+                {
+                    trigger_error(sprintf('NCC Autoloader: Failed to load "%s" from "%s": %s', $className, $filePath, $e->getMessage()), E_USER_WARNING);
+                    return false;
+                }
             };
             
             // Register the autoloader
