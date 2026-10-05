@@ -49,7 +49,9 @@
 
     class PackageReader
     {
+        private const int MAX_NAME_LENGTH = 65536;
         private string $filePath;
+        private ?string $filePathHash = null;
         private $fileHandle;
         private int $startOffset;
         private int $endOffset;
@@ -89,13 +91,12 @@
                 // Try APCu cache first (fastest, no disk I/O)
                 if(ApcuCache::isAvailable())
                 {
-                    $apcuKey = 'package_data_' . hash('sha1', $this->filePath);
+                    $apcuKey = 'package_data_' . $this->getFilePathHash();
                     Logger::getLogger()?->debug(sprintf('Checking APCu cache for package: %s (key: %s)', $this->filePath, $apcuKey));
                     $cacheData = ApcuCache::get($apcuKey);
                     if($cacheData instanceof PackageCacheData && $cacheData->getVersion() === PackageCacheData::CACHE_VERSION)
                     {
-                        $currentSha1 = hash_file('sha1', $this->filePath);
-                        if($currentSha1 !== false && $cacheData->getFileSha1() === $currentSha1)
+                        if($this->validateCacheData($cacheData, $apcuKey))
                         {
                             Logger::getLogger()?->debug(sprintf('APCu cache hit for: %s', $this->filePath));
                             $this->restoreFromCacheData($cacheData);
@@ -208,6 +209,53 @@
         public function getFilePath(): string
         {
             return $this->filePath;
+        }
+
+        /**
+         * Gets the SHA-1 hash of the package file path, computed once and reused for cache keys.
+         *
+         * @return string The SHA-1 hex digest of the file path.
+         */
+        private function getFilePathHash(): string
+        {
+            return $this->filePathHash ??= hash('sha1', $this->filePath);
+        }
+
+        /**
+         * Checks whether the given cache data still matches the package file on disk.
+         *
+         * The cheap stat-based fingerprint (inode, size, mtime, ctime) is checked first; the full
+         * SHA-1 of the file is only computed when the fingerprint does not match. When the SHA-1
+         * still matches, the fingerprint is refreshed so subsequent loads take the fast path.
+         *
+         * @param PackageCacheData $cacheData The cache data to validate
+         * @param string|null $apcuKey The APCu key to refresh the cache data under, if any
+         * @return bool True if the cache data is valid for the current package file
+         */
+        private function validateCacheData(PackageCacheData $cacheData, ?string $apcuKey=null): bool
+        {
+            $fingerprint = PackageCacheData::computeFingerprint($this->filePath);
+            if($fingerprint !== null && $cacheData->getFileFingerprint() === $fingerprint)
+            {
+                return true;
+            }
+
+            $currentSha1 = hash_file('sha1', $this->filePath);
+            if($currentSha1 === false || $cacheData->getFileSha1() !== $currentSha1)
+            {
+                return false;
+            }
+
+            if($fingerprint !== null)
+            {
+                $cacheData->setFileFingerprint($fingerprint);
+                if($apcuKey !== null)
+                {
+                    ApcuCache::set($apcuKey, $cacheData);
+                }
+            }
+
+            return true;
         }
 
         public function getPackageSource(): ?PackageSource
@@ -331,9 +379,10 @@
          */
         public function readComponent(ComponentReference $reference): string
         {
-            $cacheKey = 'content_' . hash('sha1', $this->filePath) . '_' . hash('sha1', $reference->getName());
+            $cacheKey = null;
             if(ApcuCache::isAvailable())
             {
+                $cacheKey = 'content_' . $this->getFilePathHash() . '_' . hash('sha1', $reference->getName());
                 $cached = ApcuCache::get($cacheKey);
                 if($cached !== null)
                 {
@@ -355,7 +404,7 @@
                 $data = gzinflate($data);
             }
 
-            if(ApcuCache::isAvailable())
+            if($cacheKey !== null)
             {
                 ApcuCache::set($cacheKey, $data, 3600);
                 Logger::getLogger()?->debug(sprintf('Stored component in APCu content cache: %s (%d bytes)', $reference->getName(), strlen($data)));
@@ -372,9 +421,10 @@
          */
         public function readResource(ResourceReference $reference): string
         {
-            $cacheKey = 'content_' . hash('sha1', $this->filePath) . '_' . hash('sha1', $reference->getName());
+            $cacheKey = null;
             if(ApcuCache::isAvailable())
             {
+                $cacheKey = 'content_' . $this->getFilePathHash() . '_' . hash('sha1', $reference->getName());
                 $cached = ApcuCache::get($cacheKey);
                 if($cached !== null)
                 {
@@ -395,7 +445,7 @@
                 $data = gzinflate($data);
             }
 
-            if(ApcuCache::isAvailable())
+            if($cacheKey !== null)
             {
                 ApcuCache::set($cacheKey, $data, 3600);
                 Logger::getLogger()?->debug(sprintf('Stored resource in APCu content cache: %s (%d bytes)', $reference->getName(), strlen($data)));
@@ -636,7 +686,7 @@
                 throw new InvalidArgumentException("File is too small to contain a valid package: " . $this->filePath);
             }
 
-            $chunkSize = 126;
+            $chunkSize = 65536;
             $buffer = '';
             $bufferStartPosition = 0;
 
@@ -715,7 +765,8 @@
                 throw new RuntimeException("Failed to read size prefix");
             }
 
-            $unpacked = unpack('Q', $packed);
+            // 'P' (little-endian) matches the format used by PackageWriter::createSizePrefix()
+            $unpacked = unpack('P', $packed);
             return $unpacked[1];
         }
 
@@ -939,21 +990,15 @@
                 return '';
             }
 
-            // Rewind to read the name
-            fseek($this->fileHandle, ftell($this->fileHandle) - 1);
-
-            $name = '';
-            while(true)
+            // Read the rest of the name up to (and consuming) SOFT_TERMINATE in a single call
+            $start = ftell($this->fileHandle);
+            $rest = stream_get_line($this->fileHandle, self::MAX_NAME_LENGTH, PackageStructure::SOFT_TERMINATE->value);
+            if($rest === false || ftell($this->fileHandle) !== $start + strlen($rest) + strlen(PackageStructure::SOFT_TERMINATE->value))
             {
-                $byte = fread($this->fileHandle, 1);
-                if($byte === PackageStructure::SOFT_TERMINATE->value)
-                {
-                    break;
-                }
-                $name .= $byte;
+                throw new RuntimeException("Failed to read name, expected SOFT_TERMINATE");
             }
 
-            return $name;
+            return $peek . $rest;
         }
 
         /**
@@ -1046,6 +1091,7 @@
 
             $cacheData = new PackageCacheData(
                 $fileSha1,
+                PackageCacheData::computeFingerprint($this->filePath),
                 $this->startOffset,
                 $this->endOffset,
                 $this->packageVersion,
@@ -1061,8 +1107,7 @@
             // Warm APCu cache for instant loading on subsequent requests
             if(ApcuCache::isAvailable())
             {
-                $pathSha1 = hash('sha1', $this->filePath);
-                ApcuCache::set('package_data_' . $pathSha1, $cacheData);
+                ApcuCache::set('package_data_' . $this->getFilePathHash(), $cacheData);
                 Logger::getLogger()?->debug(sprintf('Warmed APCu metadata cache for: %s', $this->filePath));
             }
         }
@@ -1116,9 +1161,8 @@
                     throw new InvalidArgumentException("Invalid or outdated cache file format");
                 }
 
-                // Validate cache by comparing the stored SHA-1 against the current file.
-                $currentSha1 = hash_file('sha1', $this->filePath);
-                if($currentSha1 === false || $cacheData->getFileSha1() !== $currentSha1)
+                // Validate cache against the current file (stat fingerprint first, SHA-1 as fallback).
+                if(!$this->validateCacheData($cacheData))
                 {
                     throw new InvalidArgumentException("Cache file is outdated (package file has been modified)");
                 }
@@ -1129,8 +1173,7 @@
                 // Warm APCu cache if available
                 if(ApcuCache::isAvailable())
                 {
-                    $pathSha1 = hash('sha1', $this->filePath);
-                    ApcuCache::set('package_data_' . $pathSha1, $cacheData);
+                    ApcuCache::set('package_data_' . $this->getFilePathHash(), $cacheData);
                     Logger::getLogger()?->debug(sprintf('Warmed APCu metadata cache from disk cache for: %s', $this->filePath));
                 }
             }

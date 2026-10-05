@@ -85,6 +85,8 @@
         private $pharHandle = null;
         /** @var bool Whether this stream is proxying to a real phar file */
         private bool $isPharProxy = false;
+        /** @var array<string, int> Cache of decompressed resource sizes (package file + resource name => size) */
+        private static array $decompressedSizes = [];
 
         /**
          * Registers the ncc:// stream wrapper.
@@ -160,8 +162,7 @@
                 return false;
             }
 
-            $packages = Runtime::getImportedPackages();
-            $this->packageReader = $packages[$packageName];
+            $this->packageReader = Runtime::getImportedPackage($packageName);
 
             // Handle package-only reference (e.g., ncc://package.name)
             if ($isPackageOnly)
@@ -239,23 +240,7 @@
             }
 
             // Lazy load the data only when needed
-            if ($this->data === null)
-            {
-                // Package-only reference (no resource path)
-                if ($this->reference === null)
-                {
-                    $this->data = '';
-                }
-                else
-                {
-                    $this->data = $this->packageReader->read($this->reference);
-                    // If it's an ExecutionUnit, it will return an object, convert to string
-                    if (!is_string($this->data))
-                    {
-                        $this->data = '';
-                    }
-                }
-            }
+            $this->loadData();
 
             $dataLength = strlen($this->data);
 
@@ -304,22 +289,7 @@
             }
 
             // We need to load data to know the size
-            if ($this->data === null)
-            {
-                // Package-only reference (no resource path)
-                if ($this->reference === null)
-                {
-                    $this->data = '';
-                }
-                else
-                {
-                    $this->data = $this->packageReader->read($this->reference);
-                    if (!is_string($this->data))
-                    {
-                        $this->data = '';
-                    }
-                }
-            }
+            $this->loadData();
 
             return $this->position >= strlen($this->data);
         }
@@ -339,22 +309,7 @@
             }
 
             // Load data if not already loaded
-            if ($this->data === null)
-            {
-                // Package-only reference (no resource path)
-                if ($this->reference === null)
-                {
-                    $this->data = '';
-                }
-                else
-                {
-                    $this->data = $this->packageReader->read($this->reference);
-                    if (!is_string($this->data))
-                    {
-                        $this->data = '';
-                    }
-                }
-            }
+            $this->loadData();
 
             $dataLength = strlen($this->data);
 
@@ -396,15 +351,8 @@
                 // Otherwise, the stored size is accurate and we can avoid decompression overhead
                 if ($this->packageReader->getHeader()->isCompressed())
                 {
-                    if ($this->data === null)
-                    {
-                        // Load data to get accurate decompressed size
-                        $this->data = $this->packageReader->read($this->reference);
-                        if (!is_string($this->data))
-                        {
-                            $this->data = '';
-                        }
-                    }
+                    // Load data to get accurate decompressed size
+                    $this->loadData();
                     $size = strlen($this->data);
                 }
                 else
@@ -466,8 +414,7 @@
                 return false;
             }
 
-            $packages = Runtime::getImportedPackages();
-            $packageReader = $packages[$packageName];
+            $packageReader = Runtime::getImportedPackage($packageName);
 
             // Handle package-only reference
             $size = 0;
@@ -487,8 +434,13 @@
                 // Otherwise use stored size to avoid unnecessary decompression overhead
                 if ($packageReader->getHeader()->isCompressed())
                 {
-                    $data = $packageReader->read($reference);
-                    $size = is_string($data) ? strlen($data) : 0;
+                    $sizeKey = self::getSizeCacheKey($packageReader, $reference);
+                    if (!isset(self::$decompressedSizes[$sizeKey]))
+                    {
+                        $data = $packageReader->read($reference);
+                        self::$decompressedSizes[$sizeKey] = is_string($data) ? strlen($data) : 0;
+                    }
+                    $size = self::$decompressedSizes[$sizeKey];
                 }
                 else
                 {
@@ -705,8 +657,7 @@
                 return false;
             }
 
-            $packages = Runtime::getImportedPackages();
-            $packageReader = $packages[$packageName];
+            $packageReader = Runtime::getImportedPackage($packageName);
 
             // Normalize the resource path (remove trailing slashes)
             $resourcePath = rtrim($resourcePath, '/');
@@ -797,6 +748,47 @@
             $this->dirEntries = null;
             $this->dirPosition = 0;
             return true;
+        }
+
+        /**
+         * Loads the data for the current resource if it has not been loaded yet.
+         *
+         * @return void
+         */
+        private function loadData(): void
+        {
+            if ($this->data !== null)
+            {
+                return;
+            }
+
+            // Package-only reference (no resource path)
+            if ($this->reference === null)
+            {
+                $this->data = '';
+                return;
+            }
+
+            $data = $this->packageReader->read($this->reference);
+            // If it's an ExecutionUnit, it will return an object, convert to string
+            $this->data = is_string($data) ? $data : '';
+
+            if ($this->packageReader->getHeader()->isCompressed())
+            {
+                self::$decompressedSizes[self::getSizeCacheKey($this->packageReader, $this->reference)] = strlen($this->data);
+            }
+        }
+
+        /**
+         * Builds the cache key used to remember the decompressed size of a resource.
+         *
+         * @param PackageReader $packageReader The package reader the resource belongs to
+         * @param ReferenceInterface $reference The resource reference
+         * @return string The cache key
+         */
+        private static function getSizeCacheKey(PackageReader $packageReader, ReferenceInterface $reference): string
+        {
+            return $packageReader->getFilePath() . "\0" . get_class($reference) . "\0" . $reference->getName();
         }
 
         /**
