@@ -31,6 +31,12 @@ This update introduces runtime performance improvements and bug fixes
    per `PackageReader`
  - `PackageReader` now reads entry names in a single call instead of byte by byte, and scans for the package signature
    in 64KB chunks instead of 126 byte chunks
+ - Updated the dependencies `LogLib2` (1.0.7), `Symfony/Process` (8.1.9), `Symfony/Yaml` (8.1.9), `Composer/Semver`
+   (3.5.1) and `random_compat` (9.99.100)
+ - ncc now requires PHP 8.4.1 or later (required by `Symfony/Process` and `Symfony/Yaml` 8), the installer refuses to
+   install ncc on older versions of PHP
+ - The installer warns when the installed version of PHP has known security vulnerabilities
+ - The Docker images can be rebuilt manually from GitHub Actions and always pull the latest PHP base image
 
 ### Fixed
  - Fixed a misplaced parenthesis in `Runtime::getSystemAuthenticationManager()` which caused the write access check
