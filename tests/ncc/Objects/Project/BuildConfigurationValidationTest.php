@@ -68,7 +68,7 @@
          */
         public function testValidateArrayWithAllBuildTypes(): void
         {
-            $types = ['ncc', 'phar', 'native'];
+            $types = ['ncc', 'phar', 'native', 'frankenphp'];
 
             foreach ($types as $type) {
                 $data = [

@@ -324,7 +324,8 @@
             $buildTypes = [
                 'ncc' => BuildType::NCC_PACKAGE,
                 'phar' => BuildType::PHAR_PACKAGE,
-                'native' => BuildType::NATIVE
+                'native' => BuildType::NATIVE,
+                'frankenphp' => BuildType::FRANKENPHP
             ];
 
             foreach ($buildTypes as $typeString => $enumValue) {

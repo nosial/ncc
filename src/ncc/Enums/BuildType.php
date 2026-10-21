@@ -28,4 +28,5 @@
         case PHP_PACKAGE = 'php';
         case PHAR_PACKAGE = 'phar';
         case NATIVE = 'native';
+        case FRANKENPHP = 'frankenphp';
     }
