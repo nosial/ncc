@@ -87,6 +87,10 @@
         private bool $isPharProxy = false;
         /** @var array<string, int> Cache of decompressed resource sizes (package file + resource name => size) */
         private static array $decompressedSizes = [];
+        /** @var string|null Size cache key of the resource held in $pendingDecompressedData */
+        private static ?string $pendingDecompressedKey = null;
+        /** @var string|null Data decompressed by url_stat(), kept so the following stream_open() doesn't inflate it again */
+        private static ?string $pendingDecompressedData = null;
 
         /**
          * Registers the ncc:// stream wrapper.
@@ -439,6 +443,12 @@
                     {
                         $data = $packageReader->read($reference);
                         self::$decompressedSizes[$sizeKey] = is_string($data) ? strlen($data) : 0;
+
+                        if (is_string($data))
+                        {
+                            self::$pendingDecompressedKey = $sizeKey;
+                            self::$pendingDecompressedData = $data;
+                        }
                     }
                     $size = self::$decompressedSizes[$sizeKey];
                 }
@@ -769,14 +779,26 @@
                 return;
             }
 
-            $data = $this->packageReader->read($this->reference);
-            // If it's an ExecutionUnit, it will return an object, convert to string
-            $this->data = is_string($data) ? $data : '';
-
             if ($this->packageReader->getHeader()->isCompressed())
             {
-                self::$decompressedSizes[self::getSizeCacheKey($this->packageReader, $this->reference)] = strlen($this->data);
+                $sizeKey = self::getSizeCacheKey($this->packageReader, $this->reference);
+
+                if (self::$pendingDecompressedKey === $sizeKey)
+                {
+                    $this->data = self::$pendingDecompressedData;
+                    self::$pendingDecompressedKey = null;
+                    self::$pendingDecompressedData = null;
+                    return;
+                }
+
+                $data = $this->packageReader->read($this->reference);
+                $this->data = is_string($data) ? $data : '';
+                self::$decompressedSizes[$sizeKey] = strlen($this->data);
+                return;
             }
+
+            $data = $this->packageReader->read($this->reference);
+            $this->data = is_string($data) ? $data : '';
         }
 
         /**
