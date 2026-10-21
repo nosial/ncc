@@ -1,4 +1,4 @@
-# ![NCC](assets/icon/ncc@32px.png "NCC") Nosial Code Compiler
+# <picture><source media="(prefers-color-scheme: dark)" srcset="assets/icon/ncc_light.svg"><img src="assets/icon/ncc_dark.svg" alt="ncc" width="32" height="32"></picture> Nosial Code Compiler
 
 [![wakatime](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada.svg)](https://wakatime.com/badge/user/bc15cc8e-c9b9-4c11-bad9-3e3cfacf01e4/project/273bc06f-12e7-43d7-824d-40a78b02aada)
 
