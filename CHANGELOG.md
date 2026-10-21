@@ -27,6 +27,11 @@ This update introduces runtime performance improvements and bug fixes
    every stream operation
  - `StreamWrapper` now caches the decompressed size of resources in compressed packages to avoid decompressing the
    same resource twice when stat'ing and then reading it
+ - `StreamWrapper` now reuses the data decompressed while stat'ing a resource in a compressed package when the same
+   resource is opened next (e.g. `file_exists()` followed by `require`), instead of decompressing it again
+ - `LogLib2` now checks the log level before creating an event, so filtered out log calls no longer capture a full
+   backtrace, this greatly reduces the overhead of debug/verbose logging in ncc and `fslib` when those levels are
+   not enabled
  - APCu content cache keys are only computed when APCu is available, and the package file path hash is computed once
    per `PackageReader`
  - `PackageReader` now reads entry names in a single call instead of byte by byte, and scans for the package signature
