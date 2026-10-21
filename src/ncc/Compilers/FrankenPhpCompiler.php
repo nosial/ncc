@@ -46,9 +46,10 @@
         private const string FRANKENPHP_TAG_URL = 'https://github.com/php/frankenphp/archive/refs/tags/v%s.tar.gz';
 
         private string $phpVersion;
+
         /**
          * @var string[]
-         */la
+         */
         private array $extensions;
         /**
          * @var string[]
