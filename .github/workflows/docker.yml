@@ -12,6 +12,7 @@ on:
     branches:
       - master
       - dev
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -80,6 +81,7 @@ jobs:
           context: .
           file: ${{ matrix.variant.dockerfile }}
           platforms: linux/amd64
+          pull: true
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

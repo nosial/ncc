@@ -23,6 +23,12 @@
 # Nosial Code Compiler Installer
 # This script will install the Nosial Code Compiler on your system.
 
+# Minimum PHP version required by ncc
+MIN_PHP_VERSION="8.4.1"
+# The first patched release of each PHP branch, versions of these branches older than the listed release have known
+# security vulnerabilities and a warning is printed, eg; "8.5.12 8.4.27"
+PHP_SECURITY_VERSIONS=""
+
 # Color output support (fallback to no color if not supported)
 if [ -t 1 ]; then
     RED=$(printf '\033[0;31m')
@@ -123,6 +129,19 @@ check_php() {
     fi
     
     print_info "Found PHP version: $PHP_VERSION"
+
+    if ! php -r "exit(version_compare(PHP_VERSION, '$MIN_PHP_VERSION', '>=') ? 0 : 1);" 2>/dev/null; then
+        print_error "ncc requires PHP $MIN_PHP_VERSION or later, found $PHP_VERSION"
+        exit 1
+    fi
+
+    PHP_BRANCH=$(php -r "echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;" 2>/dev/null)
+    for SECURITY_VERSION in $PHP_SECURITY_VERSIONS; do
+        if [ "${SECURITY_VERSION%.*}" = "$PHP_BRANCH" ] && \
+            php -r "exit(version_compare(PHP_VERSION, '$SECURITY_VERSION', '<') ? 0 : 1);" 2>/dev/null; then
+            print_warning "PHP $PHP_VERSION has known security vulnerabilities, please upgrade to PHP $SECURITY_VERSION or later"
+        fi
+    done
 }
 
 # Get PHP include path and determine installation directory
