@@ -42,8 +42,13 @@ RUN apt-get update -yqq && \
     apt-get install -yqq git libpq-dev libzip-dev zip make wget -yqq
 
 # Install PHP extensions
+# PECL can be briefly unavailable, retry the installation before failing the build
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
-	install-php-extensions zip xsl msgpack
+	for attempt in 1 2 3; do \
+		install-php-extensions zip xsl msgpack && break; \
+		[ "$attempt" -eq 3 ] && exit 1; \
+		sleep 30; \
+	done
 
 # Set PHP memory limit to 2GB
 RUN echo "memory_limit = 2048M" > /usr/local/etc/php/conf.d/memory-limit.ini
