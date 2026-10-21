@@ -7,7 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.11] - Ongoing
 
-This is an ongoing update
+This update introduces runtime performance improvements and bug fixes
+
+### Added
+ - Added the `frankenphp` build type which compiles a project into a standalone native executable powered by
+   FrankenPHP, the binary embeds the PHP interpreter, the ncc runtime and the compiled package and can run the
+   project's `entry_point` (`php-cli main.php`) and `web_entry_point` (`php-server`), the binary is built using
+   static-php-cli which is downloaded on demand
+
+### Changed
+ - Improved autoloader performance by precomputing a lowercase class map for case-insensitive lookups instead of
+   scanning every mapped class on each miss
+ - Package cache validation now checks a stat-based file fingerprint (inode, size, mtime, ctime) first and only falls
+   back to computing the SHA-1 of the package file when the fingerprint does not match, this applies to both the APCu
+   and the on-disk cache
+ - Bumped the package cache format version to `3`, existing `.cache` files are ignored until the package is reinstalled
+ - Package cache files are now generated from the installed package file rather than the source file
+ - `StreamWrapper` now looks up the requested package directly instead of rebuilding the list of imported packages on
+   every stream operation
+ - `StreamWrapper` now caches the decompressed size of resources in compressed packages to avoid decompressing the
+   same resource twice when stat'ing and then reading it
+ - APCu content cache keys are only computed when APCu is available, and the package file path hash is computed once
+   per `PackageReader`
+ - `PackageReader` now reads entry names in a single call instead of byte by byte, and scans for the package signature
+   in 64KB chunks instead of 126 byte chunks
+
+### Fixed
+ - Fixed a misplaced parenthesis in `Runtime::getSystemAuthenticationManager()` which caused the write access check
+   to be performed on an invalid path
+ - Fixed `PackageReader` reading size prefixes in machine byte order while `PackageWriter` writes them in
+   little-endian, which would break reading packages on big-endian systems
+ - Fixed `PackageReader` looping indefinitely when reading an entry name from a truncated or corrupted package, a
+   `RuntimeException` is now thrown instead
 
 
 
