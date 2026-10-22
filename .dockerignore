@@ -1,0 +1,11 @@
+**/.git
+**/.idea
+**/.vscode
+.claude
+.github
+target
+src/ncc/Libraries
+tests
+assets
+*.md
+.phpunit.result.cache
