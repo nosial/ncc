@@ -1,4 +1,4 @@
-VERSION := 3.1.12
+VERSION := 3.1.11
 BUILD ?= $(shell git rev-parse --short HEAD 2>/dev/null || printf unknown)
 
 SOURCE_PATH = src/ncc
