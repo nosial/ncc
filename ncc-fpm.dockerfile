@@ -11,7 +11,7 @@ RUN for attempt in 1 2 3; do \
         sleep 30; \
     done
 RUN echo "memory_limit = 2048M" > /usr/local/etc/php/conf.d/memory-limit.ini
-COPY --chmod=755 docker/runtime-dependencies.sh /usr/local/bin/ncc-runtime-dependencies
+COPY --chmod=755 runtime-dependencies.sh /usr/local/bin/ncc-runtime-dependencies
 
 # Export PHP separately from the OS: deleting compilers in a child layer would
 # still leave their bytes in the image's inherited layers.
