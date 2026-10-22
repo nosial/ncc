@@ -1,5 +1,6 @@
+# syntax=docker/dockerfile:1
 # --- STAGE 1: BUILDER (Compiles the NCC Package) ---
-FROM ghcr.io/nosial/ncc:latest AS builder
+FROM ghcr.io/nosial/ncc:builder AS builder
 
 WORKDIR /app
 
@@ -14,8 +15,8 @@ LABEL org.opencontainers.image.title="${ASSEMBLY_NAME}" \
       org.opencontainers.image.version="${ASSEMBLY_VERSION}" \
       ncc.package="${PACKAGE_NAME}"
 
-COPY --from=builder /app/target/web_release/${PACKAGE_NAME}.ncc /tmp/package.ncc
-RUN ncc package install --package=/tmp/package.ncc -y && rm /tmp/package.ncc
+RUN --mount=type=bind,from=builder,source=/app/target/web_release/${PACKAGE_NAME}.ncc,target=/tmp/package.ncc \
+    ncc package install --package=/tmp/package.ncc -y
 
 RUN mkdir -p /var/www/html
 COPY --from=builder /app/web_entry /var/www/html/index.php
