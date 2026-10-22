@@ -27,7 +27,7 @@
 MIN_PHP_VERSION="8.4.1"
 # The first patched release of each PHP branch, versions of these branches older than the listed release have known
 # security vulnerabilities and a warning is printed, eg; "8.5.12 8.4.27"
-PHP_SECURITY_VERSIONS=""
+PHP_SECURITY_VERSIONS="8.5.12 8.4.27"
 
 # Color output support (fallback to no color if not supported)
 if [ -t 1 ]; then
