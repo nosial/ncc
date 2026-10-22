@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.11] - Ongoing
+## [3.1.11] - 2026-10-22
 
-This update introduces runtime performance improvements and bug fixes
+This update introduces runtime performance improvements and bug fixes, introduces mandatory security updates for
+`CVE-2026-109618` and `CVE-2026-109619`. 
 
 ### Added
  - Added the `frankenphp` build type which compiles a project into a standalone native executable powered by
