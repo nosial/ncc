@@ -1,63 +1,65 @@
-#
-#   ncc FPM Docker Image
-#
-#   This image is intended to be used as a base for web projects using ncc.
-#   It provides a PHP-FPM environment with ncc pre-installed
-#   and the install-php-extensions tool available.
-#
-
-# Build-time args
+# syntax=docker/dockerfile:1
 ARG PHP_VERSION=8.5
+ARG DEBIAN_VERSION=trixie
 
-# Builder stage: builds ncc phar from source
-FROM php:${PHP_VERSION}-fpm AS builder
-WORKDIR /tmp
-
-# Install build dependencies
-RUN apt-get update -yqq && \
-    apt-get install git libpq-dev libzip-dev zip make -yqq
-
-# Copy the local repository to the image
-COPY . /tmp/ncc
-
-# Build ncc phar
-RUN cd /tmp/ncc && make target/ncc.phar
-
-
-# Main stage: extends standard PHP-FPM image with ncc pre-installed
-FROM php:${PHP_VERSION}-fpm AS production
-
-# OSI labels
-LABEL maintainer="Netkas <netkas@nosial.net>"
-LABEL description="ncc's official Docker FPM image"
-
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
-
-# Copy built ncc phar and installer from builder stage
-COPY --from=builder /tmp/ncc/target/ncc.phar /tmp/ncc.phar
-COPY --from=builder /tmp/ncc/target/install.sh /tmp/install.sh
-
-# Install runtime dependencies
-RUN apt-get update -yqq && \
-    apt-get install -yqq git libpq-dev libzip-dev zip make wget -yqq
-
-# Install PHP extensions
-# PECL can be briefly unavailable, retry the installation before failing the build
-RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
-	for attempt in 1 2 3; do \
-		install-php-extensions zip xsl msgpack && break; \
-		[ "$attempt" -eq 3 ] && exit 1; \
-		sleep 30; \
-	done
-
-# Set PHP memory limit to 2GB
+# Compile extensions before copying any ncc source, so code changes reuse this layer.
+FROM php:${PHP_VERSION}-fpm-${DEBIAN_VERSION} AS php-base
+ADD --chmod=755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/install-php-extensions
+RUN for attempt in 1 2 3; do \
+        install-php-extensions zip xsl msgpack && break; \
+        [ "$attempt" -eq 3 ] && exit 1; \
+        sleep 30; \
+    done
 RUN echo "memory_limit = 2048M" > /usr/local/etc/php/conf.d/memory-limit.ini
+COPY --chmod=755 docker/runtime-dependencies.sh /usr/local/bin/ncc-runtime-dependencies
 
-# Install ncc using the installer script
-RUN chmod +x /tmp/install.sh && \
-    /tmp/install.sh install && \
-    rm -f /tmp/ncc.phar /tmp/install.sh
+# Export PHP separately from the OS: deleting compilers in a child layer would
+# still leave their bytes in the image's inherited layers.
+FROM php-base AS runtime-files
+RUN ncc-runtime-dependencies > /tmp/runtime-packages.txt && \
+    mkdir -p /opt/php && cp -a /usr/local/. /opt/php/ && \
+    rm -rf /opt/php/include /opt/php/lib/php/build && \
+    rm -f /opt/php/bin/phpize /opt/php/bin/pear /opt/php/bin/peardev \
+        /opt/php/bin/pecl /opt/php/bin/install-php-extensions \
+        /opt/php/bin/docker-php-ext-* /opt/php/bin/docker-php-source
 
-# Set up default working directory
-RUN mkdir -p /app
+FROM php-base AS builder
+WORKDIR /tmp/ncc
+COPY Makefile ./
+COPY src ./src
+COPY dependencies ./dependencies
+ARG NCC_BUILD=unknown
+RUN make target/ncc.phar BUILD="$NCC_BUILD"
+
+# Existing latest/fpm tags remain suitable for compiling downstream projects.
+FROM php-base AS sdk
+LABEL maintainer="Netkas <netkas@nosial.net>"
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git libpq-dev libzip-dev zip make wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN --mount=type=bind,from=builder,source=/tmp/ncc/target,target=/tmp/ncc-install \
+    /tmp/ncc-install/install.sh install
 WORKDIR /app
+
+# Same Debian release as the PHP donor image, without its compiler toolchain.
+FROM debian:${DEBIAN_VERSION}-slim AS runtime
+ENV PHP_INI_DIR=/usr/local/etc/php
+COPY --from=runtime-files /opt/php/ /usr/local/
+COPY --from=php-base /etc/apt/preferences.d/no-debian-php /etc/apt/preferences.d/no-debian-php
+RUN --mount=type=bind,from=runtime-files,source=/tmp/runtime-packages.txt,target=/tmp/runtime-packages.txt \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates curl wget \
+        $(cat /tmp/runtime-packages.txt) && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /var/www/html && chown www-data:www-data /var/www/html && \
+    chmod 1777 /var/www/html
+RUN --mount=type=bind,from=builder,source=/tmp/ncc/target,target=/tmp/ncc-install \
+    /tmp/ncc-install/install.sh install
+WORKDIR /app
+ENTRYPOINT ["docker-php-entrypoint"]
+EXPOSE 9000
+STOPSIGNAL SIGQUIT
+CMD ["php-fpm"]
+
+# Preserve the default target for existing docker build -f invocations.
+FROM sdk AS production
