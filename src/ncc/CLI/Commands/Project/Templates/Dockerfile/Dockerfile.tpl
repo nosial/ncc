@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-ARG NCC_BUILDER_IMAGE=ghcr.io/nosial/ncc:builder
-ARG NCC_RUNTIME_IMAGE=ghcr.io/nosial/ncc:runtime-cli
+ARG NCC_BUILDER_IMAGE=ghcr.io/nosial/ncc:latest
+ARG NCC_RUNTIME_IMAGE=ghcr.io/nosial/ncc:latest
 
 FROM ${NCC_BUILDER_IMAGE} AS builder
 WORKDIR /app

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # --- STAGE 1: BUILDER (Compiles the NCC Package) ---
-FROM ghcr.io/nosial/ncc:builder AS builder
+FROM ghcr.io/nosial/ncc:latest AS builder
 
 WORKDIR /app
 
