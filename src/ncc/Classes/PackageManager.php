@@ -507,7 +507,9 @@
             try
             {
                 Logger::getLogger()?->debug('Creating cache file for faster imports');
-                $packageReader->exportCache($packageInstallationPath . '.cache');
+                // The cache is built from the installed file so its fingerprint and offsets
+                // match the file that is read on subsequent imports
+                (new PackageReader($packageInstallationPath))->exportCache($packageInstallationPath . '.cache');
             }
             catch(Exception $e)
             {

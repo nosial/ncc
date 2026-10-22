@@ -28,8 +28,9 @@
      * Serializable cache data object for a parsed NCC package.
      *
      * Stores all metadata extracted by PackageReader so that subsequent loads can
-     * skip full package parsing. Cache validity is verified via a SHA-1 hash of the
-     * original package file, which is more reliable than mtime/size checks.
+     * skip full package parsing. Cache validity is verified via a cheap stat-based
+     * fingerprint (inode, size, mtime, ctime) of the package file, falling back to a
+     * SHA-1 hash of the file when the fingerprint does not match.
      *
      * The object is persisted with PHP's native serialize()/unserialize(), which
      * handles private/protected properties on nested objects (Header, Assembly,
@@ -38,11 +39,13 @@
     class PackageCacheData
     {
         /** Cache format version – bump when the structure changes to force re-generation. */
-        public const CACHE_VERSION = 2;
+        public const CACHE_VERSION = 3;
 
         private int $version;
         /** SHA-1 hex digest of the package file at cache-creation time. */
         private string $fileSha1;
+        /** Stat-based fingerprint of the package file at cache-creation time, see computeFingerprint(). */
+        private ?string $fileFingerprint;
         private int $startOffset;
         private int $endOffset;
         private string $packageVersion;
@@ -57,6 +60,7 @@
 
         public function __construct(
             string   $fileSha1,
+            ?string  $fileFingerprint,
             int      $startOffset,
             int      $endOffset,
             string   $packageVersion,
@@ -69,6 +73,7 @@
         {
             $this->version                  = self::CACHE_VERSION;
             $this->fileSha1                 = $fileSha1;
+            $this->fileFingerprint          = $fileFingerprint;
             $this->startOffset              = $startOffset;
             $this->endOffset                = $endOffset;
             $this->packageVersion           = $packageVersion;
@@ -92,6 +97,28 @@
         public function setFileSha1(string $fileSha1): void
         {
             $this->fileSha1 = $fileSha1;
+        }
+
+        public function getFileFingerprint(): ?string
+        {
+            return $this->fileFingerprint;
+        }
+
+        public function setFileFingerprint(?string $fileFingerprint): void
+        {
+            $this->fileFingerprint = $fileFingerprint;
+        }
+
+        public static function computeFingerprint(string $filePath): ?string
+        {
+            clearstatcache(true, $filePath);
+            $stat = @stat($filePath);
+            if($stat === false)
+            {
+                return null;
+            }
+
+            return sprintf('%d:%d:%d:%d', $stat['ino'], $stat['size'], $stat['mtime'], $stat['ctime']);
         }
 
         public function getStartOffset(): int

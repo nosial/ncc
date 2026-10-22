@@ -12,10 +12,15 @@ on:
     branches:
       - master
       - dev
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -27,6 +32,7 @@ jobs:
       id-token: write
 
     strategy:
+      fail-fast: false
       matrix:
         php_version: ['8.5']
         variant:
@@ -39,23 +45,39 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Select image release channel
+        id: channel
+        shell: bash
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [[ "$REF_TYPE" == branch && "$REF_NAME" == "$DEFAULT_BRANCH" ]] ||
+             [[ "$REF_TYPE" == tag && "$REF_NAME" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -64,10 +86,10 @@ jobs:
             type=sha,enable=false
             type=raw,value={{branch}}-${{ matrix.variant.tag }},enable=${{ github.ref_type == 'branch' && matrix.variant.tag != 'latest' }}
             type=semver,pattern={{version}},suffix=-${{ matrix.variant.tag }},enable=${{ github.ref_type == 'tag' && matrix.variant.tag != 'latest' }}
-            type=raw,value=${{ matrix.variant.tag }},enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag != 'latest' }}
+            type=raw,value=${{ matrix.variant.tag }},enable=${{ steps.channel.outputs.stable == 'true' && matrix.variant.tag != 'latest' }}
             type=raw,value={{branch}},enable=${{ github.ref_type == 'branch' && matrix.variant.tag == 'latest' }}
             type=semver,pattern={{version}},enable=${{ matrix.variant.tag == 'latest' }}
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag == 'latest' }}
+            type=raw,value=latest,enable=${{ steps.channel.outputs.stable == 'true' && matrix.variant.tag == 'latest' }}
           labels: |
             org.opencontainers.image.title=ncc
             org.opencontainers.image.description=ncc's official Docker ${{ matrix.variant.name }} image
@@ -75,23 +97,25 @@ jobs:
 
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.variant.dockerfile }}
           platforms: linux/amd64
-          push: true
+          pull: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ncc-${{ matrix.php_version }}-${{ matrix.variant.name }}
+          cache-to: type=gha,mode=max,scope=ncc-${{ matrix.php_version }}-${{ matrix.variant.name }}
           build-args: |
             PHP_VERSION=${{ matrix.php_version }}
+            NCC_BUILD=${{ github.sha }}
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: false
-

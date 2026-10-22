@@ -1,58 +1,32 @@
-#
-#   ncc CLI Docker Image
-#
-#   This image is intended to be used as a base for CLI projects using ncc.
-#   It provides a standard PHP CLI environment with ncc pre-installed
-#   and the install-php-extensions tool available.
-#
-
-# Build-time args
+# syntax=docker/dockerfile:1
 ARG PHP_VERSION=8.5
+ARG DEBIAN_VERSION=trixie
 
-# Builder stage: builds ncc phar from source
-FROM php:${PHP_VERSION} AS builder
-WORKDIR /tmp
-
-# Install build dependencies
-RUN apt-get update -yqq && \
-    apt-get install git libpq-dev libzip-dev zip make -yqq
-
-# Copy the local repository to the image
-COPY . /tmp/ncc
-
-# Build ncc phar
-RUN cd /tmp/ncc && make target/ncc.phar
-
-
-# Main stage: extends standard PHP CLI image with ncc pre-installed
-FROM php:${PHP_VERSION} AS production
-
-# OSI labels
-LABEL maintainer="Netkas <netkas@nosial.net>"
-LABEL description="ncc's official Docker CLI image"
-
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
-
-# Copy built ncc phar and installer from builder stage
-COPY --from=builder /tmp/ncc/target/ncc.phar /tmp/ncc.phar
-COPY --from=builder /tmp/ncc/target/install.sh /tmp/install.sh
-
-# Install runtime dependencies
-RUN apt-get update -yqq && \
-    apt-get install -yqq git libpq-dev libzip-dev zip make wget -yqq
-
-# Install PHP extensions
-RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
-	install-php-extensions zip xsl msgpack
-
-# Set PHP memory limit to 2GB
+# Compile extensions before copying any ncc source, so code changes reuse this layer.
+FROM php:${PHP_VERSION}-cli-${DEBIAN_VERSION} AS php-base
+ADD --chmod=755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/install-php-extensions
+RUN for attempt in 1 2 3; do \
+        install-php-extensions zip xsl msgpack && break; \
+        [ "$attempt" -eq 3 ] && exit 1; \
+        sleep 30; \
+    done
 RUN echo "memory_limit = 2048M" > /usr/local/etc/php/conf.d/memory-limit.ini
+COPY --chmod=755 runtime-dependencies.sh /usr/local/bin/ncc-runtime-dependencies
 
-# Install ncc using the installer script
-RUN chmod +x /tmp/install.sh && \
-    /tmp/install.sh install && \
-    rm -f /tmp/ncc.phar /tmp/install.sh
+FROM php-base AS builder
+WORKDIR /tmp/ncc
+COPY Makefile ./
+COPY src ./src
+COPY dependencies ./dependencies
+ARG NCC_BUILD=unknown
+RUN make target/ncc.phar BUILD="$NCC_BUILD"
 
-# Set up default working directory
-RUN mkdir -p /app
+# Existing latest/fpm tags remain suitable for compiling downstream projects.
+FROM php-base AS production
+LABEL maintainer="Netkas <netkas@nosial.net>"
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git libpq-dev libzip-dev zip make wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN --mount=type=bind,from=builder,source=/tmp/ncc/target,target=/tmp/ncc-install \
+    /tmp/ncc-install/install.sh install
 WORKDIR /app

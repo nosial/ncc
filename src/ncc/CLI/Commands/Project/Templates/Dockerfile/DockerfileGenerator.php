@@ -62,5 +62,6 @@ class DockerfileGenerator implements TemplateGeneratorInterface
         }
         IO::writeFile($dockerfilePath, $dockerfileContent);
         Console::out(sprintf("Generated File: %s", $dockerfilePath));
+        DockerIgnoreGenerator::generate($projectDirectory);
     }
 }

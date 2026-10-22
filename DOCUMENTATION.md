@@ -41,6 +41,7 @@ capabilities to improve the development process of php projects.
     * [ncc](#ncc)
     * [php](#php)
     * [phar](#phar)
+    * [frankenphp](#frankenphp)
   * [Project Configuration](#project-configuration)
     * [Project Conversion](#project-conversion)
     * [Creating a project from scratch](#creating-a-project-from-scratch)
@@ -52,6 +53,7 @@ capabilities to improve the development process of php projects.
     * [ExecutionUnit Object](#executionunit-object)
     * [BuildConfiguration Object](#buildconfiguration-object)
   * [Building Projects](#building-projects)
+    * [Other project commands](#other-project-commands)
   * [Repository Manager](#repository-manager)
     * [Adding a repository](#adding-a-repository)
     * [Deleting a repository](#deleting-a-repository)
@@ -61,7 +63,6 @@ capabilities to improve the development process of php projects.
     * [Installing a package](#installing-a-package)
     * [Uninstalling a package](#uninstalling-a-package)
     * [Listing installed packages](#listing-installed-packages)
-    * [Updating packages](#updating-packages)
 <!-- TOC -->
 
 ## Introduction
@@ -132,8 +133,9 @@ the two is normal termination (`EO EO`) means the entire section is ended, which
 `E1` means part of that data section is terminated, which indicates additional entries of the same section exists, this
 only applies to sections such as "Execution Units", "Components" or "Resources" where more than one data entry may exist.
 
-An ncc package's entry will always begin with `A0` followed by `4E 43 43 50 48 47` which essentially becomes "NCCPKG"
-in ASCII characters, this section is immediately followed by `A1` which is the package structure version to indicate
+An ncc package's entry will always begin with `A0` followed by `4E 43 43 50 4B 47` which essentially becomes "NCCPKG"
+in ASCII characters and a full terminator (`E0 E0`), this section is immediately followed by `A1` which is the package
+structure version to indicate
 if this is a differnet version of the package structure that the package reader must account for, the ASCII string
 followed by the `A1` byte is a 4-character string indicating the version number of the package structure starting from
 version `1000`, future iterations will increment this ASCII number to represnet that the package includes in-compatible
@@ -152,8 +154,8 @@ as a ncc package. This dictates the start of the package structure. The followin
 ![a0](assets/a0.png "[A0][4E 43 43 50 48 47]")
 
 When the package reader encounters the `A0` byte (`\xA0`), it reads the next 6 bytes and verifies that they match the
-ASCII string "NCCPKG". If the signature does not match, the reader will throw an error indicating that the file is not
-a valid ncc package.
+ASCII string "NCCPKG" (`4E 43 43 50 4B 47`), followed by a full terminator (`E0 E0`). If the signature does not match,
+the reader will throw an error indicating that the file is not a valid ncc package.
 
 
 #### A1 - Package Version
@@ -167,7 +169,7 @@ separate from the project version and specifically identifies which version of t
 
 **Parsing:**
 When the package reader encounters the `A1` byte (`\xA1`), it reads the next 4 bytes as an ASCII string representing
-the version number. The version starts at is `1000`. This allows ncc to support future package format changes while
+the version number, followed by a full terminator (`E0 E0`). The version starts at `1000`. This allows ncc to support future package format changes while
 maintaining backwards compatibility or providing clear error messages when encountering incompatible formats.
 
 #### A2 - Header
@@ -184,7 +186,7 @@ the rest of the package is compressed.
 
 **Parsing:**
 1. The reader encounters the `A2` byte (`\xA2`)
-2. Reads the size prefix (platform-dependent long integer in little-endian)
+2. Reads the size prefix (an 8-byte unsigned integer in little-endian byte order)
 3. Expects a soft terminator (`E1` / `\xE1`)
 4. Reads the MessagePack-encoded header data
 5. Expects a full terminator (`E0 E0` / `\xE0\xE0`) to end the section
@@ -488,21 +490,23 @@ accessed lazily — file data is read only when required — which keeps memory 
 
 ### Importing packages
 
-Importing a package is done via the global helper `import`, an alias for `\ncc\Runtime::import`. The import API is
+Importing a package is done via the global helper `import`, which calls `\ncc\Runtime::import`. The import API is
 flexible and designed to cover common use cases while enforcing package integrity.
 
 #### Signature
 
-  - `import($package, $version = null)`
-  - `$package`: `string` \| `\ncc\Classes\PackageReader`
-  - `$version`: `string` (optional; used only when resolving through the Package Manager)
+  - `import(string $package)`: the global helper, always imports the latest installed version
+  - `\ncc\Runtime::import(string|PackageReader $package, string $version = 'latest')`
+  - `$package`: a path to a package file, a package name, or a `\ncc\Classes\PackageReader`
+  - `$version`: optional; used only when resolving through the Package Manager, so a specific version can only be
+    imported through `\ncc\Runtime::import`
 
 #### Behavior
 
 - If `$package` is a path to a pre-compiled ncc file on disk (for example, `build/com.example.foo.ncc`), ncc opens that
   file directly with a `PackageReader`.
 - If `$package` is a package name (for example, `com.example.foo`), ncc resolves it via the Package Manager and opens
-  the selected installed package.
+  the selected installed package, looking in the user scope first and then in the system scope.
 - Importing a package also causes its declared dependencies to be imported. Missing dependencies will trigger an
   exception unless the package is statically built (dependencies embedded).
 - Multiple versions of a package can be installed side-by-side, but only one version may be imported into the runtime.
@@ -519,9 +523,9 @@ flexible and designed to cover common use cases while enforcing package integrit
 ```php
 <?php
 require 'ncc';
-import('com.example.foo');                // Resolve and import latest installed version
-import('com.example.foo', '1.0.0');       // Import a specific version
-\ncc\Runtime::import('build/com.example.foo.ncc'); // Import directly from a local package file
+import('com.example.foo');                         // Resolve and import the latest installed version
+\ncc\Runtime::import('com.example.foo', '1.0.0');  // Import a specific version
+import('build/com.example.foo.ncc');               // Import directly from a local package file
 ```
 
 ## Build Types
@@ -577,6 +581,85 @@ The following options are supported in the `phar` build configuration:
  - `skip_execution`: Skips the inclusion of the self-executable logic in the phar file, resulting in a standard phar
                      archive that cannot be executed directly by PHP. Default is false but can be imported as a standard
                      phar archive.
+
+
+### frankenphp
+
+The `frankenphp` build type produces a standalone native executable that contains the PHP interpreter, the
+[FrankenPHP](https://frankenphp.dev) application server (Caddy), the ncc runtime and the compiled package. The resulting
+binary does not require PHP or ncc to be installed on the target system and can run the project both as a command-line
+application and as a web application.
+
+The build is performed by [static-php-cli](https://github.com/crazywhalecc/static-php-cli) (spc), which is downloaded
+on demand. spc then downloads the PHP and FrankenPHP sources and compiles them, neither FrankenPHP nor spc are
+distributed with ncc and Docker is not required. The project is first compiled into a regular ncc package which is then
+embedded into the binary alongside the ncc runtime of the ncc installation used to build it.
+
+ > Note: The first build can take a long time since PHP, its libraries and FrankenPHP are compiled from source, the
+         downloaded sources are cached in the working directory (see the `work_dir` option) so subsequent builds are
+         faster. The build environment requires a C toolchain, spc's `doctor` command is executed before every build to
+         verify the environment, enable the `auto_fix` option to let spc install what's missing. This build type is
+         only supported on Linux and macOS, and the binary is built for the platform it's built on.
+
+The `frankenphp` build extends the `ncc` build so it inherits all the options from the `ncc` build type. The project
+must define an `entry_point` and/or a `web_entry_point`, and if the project has dependencies the `static` option must
+be enabled since the binary cannot access packages installed on the system.
+
+The binary is executed using FrankenPHP's commands:
+
+```shell
+# Executes the package's entry_point, the arguments are passed to the entry point
+./my-app php-cli main.php [arguments...]
+
+# Serves the package's web_entry_point (or the entry_point if no web_entry_point is defined)
+./my-app php-server --listen :8080
+./my-app php-server --domain example.com   # Enables HTTPS with an automatic certificate
+```
+
+The web entry point is executed the same way it would be when deployed as the `index.php` of a web server, so web
+applications built with [DynamicalWeb](https://github.com/nosial/DynamicalWeb) using the `web` template can be built
+with this build type without any modifications, for example:
+
+```yaml
+build_configurations:
+  - name: native
+    output: target/native/${ASSEMBLY.NAME}
+    type: frankenphp
+    options:
+      static: true
+      extensions: [apcu, mbstring, opcache, openssl, session, sockets, yaml]
+      web_configuration: { ... } # The same web_configuration used by the web_release build configuration
+```
+
+ > Note: When the binary is executed, FrankenPHP extracts the embedded application into a temporary directory; if the
+         current working directory contains a file named `main.php` it's executed instead of the embedded one.
+         WebSocket routes of DynamicalWeb are not supported since FrankenPHP doesn't support WebSockets.
+
+The following options are supported in the `frankenphp` build configuration:
+
+ - `php_version` (string): The PHP version to build in `major.minor` format. Default is `8.4`.
+ - `extensions` (string|array): The PHP extensions to build into the binary, as an array or a comma separated
+                                string. `ctype`, `msgpack`, `phar` and `zlib` are always included since the ncc runtime
+                                requires them. Defaults to a common set of extensions (`apcu`, `bcmath`, `curl`, `dom`,
+                                `fileinfo`, `filter`, `iconv`, `mbstring`, `opcache`, `openssl`, `pcntl`, `pdo`,
+                                `pdo_sqlite`, `posix`, `session`, `simplexml`, `sockets`, `sodium`, `tokenizer`, `xml`,
+                                `xmlreader`, `xmlwriter` and `zip`).
+ - `libraries` (string|array): Additional libraries to build, passed to spc's `--with-libs` option.
+ - `libc` (string): `musl` or `glibc`, the C library to link against on Linux. Default is `musl` which produces a fully
+                    static binary.
+ - `php_ini` (key-value): php.ini directives to embed into the binary, these are applied when running `php-server`.
+ - `caddyfile` (string): Path to a Caddyfile (relative to the project directory) to embed into the binary. Note that
+                         when a Caddyfile is embedded, `php-server` uses it and ignores its command-line flags.
+ - `frankenphp_version` (string): The FrankenPHP release to build, eg; `1.9.0`. Defaults to the latest release.
+ - `frankenphp_source` (string): Path to a local FrankenPHP source directory to build from instead of downloading it.
+ - `xcaddy_modules` (string): Additional Caddy modules to build into the binary, eg;
+                              `--with github.com/dunglas/mercure/caddy`.
+ - `spc` (string): Path to an existing spc binary, if not set spc is downloaded into the working directory.
+ - `work_dir` (string): The working directory used by spc, defaults to `~/ncc/frankenphp` (or the temporary directory
+                        when running as root).
+ - `auto_fix` (boolean): Lets spc automatically install missing build dependencies. Default is false.
+ - `upx` (boolean): Compresses the binary using UPX, Linux only. Default is false.
+ - `debug_symbols` (boolean): Keeps debug symbols in the binary. Default is false.
 
 
 ## Project Configuration
@@ -700,17 +783,18 @@ The base of the project configuration structure implements the following propert
 
 | Property Name          | Property Type                                          | Description                                                                                                                                                                                    | Required |
 |------------------------|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| `source`               | `string`                                               | The relative path of the source directory, eg; `src/`                                                                                                                                          | **Yes**  |
-| `default_build`        | `string`                                               | The default build configuratoin to use, eg `release`                                                                                                                                           | **Yes**  |
+| `source`               | `string`                                               | The relative path of the source directory, defaults to `src`                                                                                                                                   | No       |
+| `default_build`        | `string`                                               | The default build configuration to use, defaults to `release`                                                                                                                                  | No       |
 | `entry_point`          | `string`                                               | The main CLI execution entrypoint for the package, this value would be the name of the execution unit                                                                                          | No       |
 | `web_entry_point`      | `string`                                               | The main web execution entrypoint for the package, this value would be the name of the execution unit                                                                                          | No       |
 | `update_source`        | `PackageSource(string)[]`                              | The update source for the package                                                                                                                                                              | No       |
 | `pre_compile`          | `string`, `string[]`                                   | One or more execution units to execute in the pre-compile stage                                                                                                                                | No       |
 | `post_compile`         | `string`, `string[]`                                   | One or more execution units to execute in the post-compile stage                                                                                                                               | No       |
-| `pre_install`          | `string`, `string[]`                                   | One or more execution units to execute in the pre-installation stage                                                                                                                           | No       |
-| `post_install`         | `string`, `string[]`                                   | One or more execution units to execute in the post-installation stage                                                                                                                          | No       |
+| `pre_install`          | `string`, `string[]`                                   | One or more execution units for the pre-installation stage (recorded in the package, not executed by the current version of ncc)                                                               | No       |
+| `post_install`         | `string`, `string[]`                                   | One or more execution units for the post-installation stage (recorded in the package, not executed by the current version of ncc)                                                              | No       |
 | `repository`           | `RepositoryConfiguration`, `RepositoryConfiguration[]` | One or more repositories that this package will need in order to operate correctly                                                                                                             | No       |
 | `assembly`             | `Assembly`                                             | Assembly information, basically metadata about the package                                                                                                                                     | **Yes**  |
+| `extensions`           | `string[]`                                             | PHP extensions the package requires at runtime (eg; `curl`), checked when the package is installed                                                                                             | No       |
 | `dependencies`         | `string[]`                                             | An array of key-value dependencies such as `com.symfony.console` => `symfony/console=version@packagist` where the key is the package name and the value is the remote source of the dependency | No       |
 | `execution_units`      | `ExecutionUnit[]`                                      | An array of execution units defined in the project                                                                                                                                             | No       |
 | `build_configurations` | `BuildConfiguration[]`                                 | An array of build executions for ncc to use when compiling the project, at least one must be defined                                                                                           | **Yes**  |
@@ -845,7 +929,7 @@ the package, you can use the `--configuration`, `-c` option to specify which bui
 |----------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | `name`               | `string`      | The unique name of the build configuration                                                                                                                                                     | Yes      |
 | `output`             | `string`      | The output path of the compiled package, supports macro variables such as `${ASSEMBLY.PACKAGE}`                                                                                                | Yes      |
-| `type`               | `string`      | The type of build, the supported types are `ncc`, `phar` and `php`                                                                                                                             | Yes      |
+| `type`               | `string`      | The type of build, the supported types are `ncc`, `phar`, `php` and `frankenphp`                                                                                                               | Yes      |
 | `definitions`        | `key-value`   | Key-value pairs of definitions to set when the package is imported, these use the builtin `define` method                                                                                      | No       |
 | `include_components` | `string[]`    | An array of component glob patterns to include in the build                                                                                                                                    | No       |
 | `exclude_components` | `string[]`    | An array of component glob patterns to exclude from the build                                                                                                                                  | No       |
@@ -880,9 +964,8 @@ build_configurations:
 ## Building Projects
 
 the `ncc build` command is used to build ncc projects into compiled packages, the build process is based entirely off
-the build configuration and project configuration defined in the project configuration file, the build process will
-also resolve dependencies defined in the project configuration file using the package manager before compiling the
-project.
+the build configuration and project configuration defined in the project configuration file. The dependencies defined in
+the project configuration file must already be installed when building, see `ncc project install` below.
 
 ```sh
 ncc build # Builds the project using the default build configuration
@@ -892,6 +975,21 @@ ncc build -c release # Builds the project using the 'release' build configuratio
 
 If you are missing dependencies you can use the `ncc project install` command to install all the dependencies defined in the
 project configuration file before building the project.
+
+### Other project commands
+
+The `ncc project` command provides several other tools for working with a project, run `ncc project --help` for the
+full list of options:
+
+ - `ncc project validate`: Validates the project configuration and reports any problems
+ - `ncc project install`: Installs every dependency defined in the project configuration
+ - `ncc project stubs`: Extracts the project's dependencies into `vendor/` with a `vendor/autoload.php`, so that IDEs
+   and development tools can read their source code
+ - `ncc project docker-update`: Builds the project and replaces the package installed in the running Docker container
+   defined in `docker-compose.yml`, without rebuilding or restarting the container
+ - `ncc project --generate=<template>`: Applies a template to an existing project, the available templates are `phpunit`,
+   `phpdoc`, `makefile`, `github-ci`, `dockerfile`, `dockerfile-fpm`, `cli`, `web` (a DynamicalWeb web application)
+   and `bootstrap-<version>` (a DynamicalWeb web application with a local copy of that version of Bootstrap)
 
 
 ## Repository Manager
@@ -909,6 +1007,7 @@ their own repositories in their user scope if they wish to do so.
  - `github`: The GitHub repository source, this repository allows ncc to retrieve packages directly from GitHub repositories
  - `gitlab`: The GitLab repository source, this repository allows ncc to retrieve packages directly from GitLab repositories
  - `codeberg`: The Codeberg repository source, this repository allows ncc to retrieve packages directly from Codeberg repositories
+ - `gitgud`: The GitGud repository source (a GitLab instance), this repository allows ncc to retrieve packages directly from GitGud repositories
 
 ### Adding a repository
 
@@ -1035,12 +1134,3 @@ from the system you need to run ncc with elevated permissions so that the ncc ha
 
 You can list all the packages that are installed and currently available to ncc using the `ncc list` or `ncc ls` command,
 this will display packages both installed in the user-scope and system-scope
-
-
-### Updating packages
-
-You can update installed packages by using the `ncc update` command, this will iterate through all the installed writeable
-packages from the package manager, check for a newer version than what you have installed and install the new version
-correctly.
-
-Note, this will only work for installed packages that had defined an update source in their project configuration file.

@@ -36,6 +36,7 @@
             $this->assertEquals('php', BuildType::PHP_PACKAGE->value);
             $this->assertEquals('phar', BuildType::PHAR_PACKAGE->value);
             $this->assertEquals('native', BuildType::NATIVE->value);
+            $this->assertEquals('frankenphp', BuildType::FRANKENPHP->value);
         }
 
         /**
@@ -47,6 +48,7 @@
             $this->assertSame(BuildType::PHP_PACKAGE, BuildType::from('php'));
             $this->assertSame(BuildType::PHAR_PACKAGE, BuildType::from('phar'));
             $this->assertSame(BuildType::NATIVE, BuildType::from('native'));
+            $this->assertSame(BuildType::FRANKENPHP, BuildType::from('frankenphp'));
         }
 
         /**
@@ -67,6 +69,7 @@
             $this->assertSame(BuildType::PHP_PACKAGE, BuildType::tryFrom('php'));
             $this->assertSame(BuildType::PHAR_PACKAGE, BuildType::tryFrom('phar'));
             $this->assertSame(BuildType::NATIVE, BuildType::tryFrom('native'));
+            $this->assertSame(BuildType::FRANKENPHP, BuildType::tryFrom('frankenphp'));
         }
 
         /**
@@ -87,11 +90,12 @@
         {
             $cases = BuildType::cases();
             
-            $this->assertCount(4, $cases);
+            $this->assertCount(5, $cases);
             $this->assertContains(BuildType::NCC_PACKAGE, $cases);
             $this->assertContains(BuildType::PHP_PACKAGE, $cases);
             $this->assertContains(BuildType::PHAR_PACKAGE, $cases);
             $this->assertContains(BuildType::NATIVE, $cases);
+            $this->assertContains(BuildType::FRANKENPHP, $cases);
         }
 
         /**

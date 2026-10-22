@@ -23,6 +23,7 @@
     namespace ncc\CLI\Commands\Project\Templates\Web;
 
     use ncc\Classes\Console;
+    use ncc\CLI\Commands\Project\Templates\Dockerfile\DockerIgnoreGenerator;
     use ncc\Libraries\fslib\IO;
     use ncc\Interfaces\TemplateGeneratorInterface;
     use ncc\Objects\Project;
@@ -60,6 +61,8 @@
                 'Dockerfile.tpl',
                 $replacements
             );
+
+            DockerIgnoreGenerator::generate($projectDirectory);
 
             // Generate docker-compose.yml
             self::writeTemplate(

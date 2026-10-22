@@ -5,9 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.11] - 2026-10-22
+
+This update introduces runtime performance improvements and bug fixes, introduces mandatory security updates for
+`CVE-2026-109618` and `CVE-2026-109619`. 
+
+### Added
+ - Added the `frankenphp` build type which compiles a project into a standalone native executable powered by
+   FrankenPHP, the binary embeds the PHP interpreter, the ncc runtime and the compiled package and can run the
+   project's `entry_point` (`php-cli main.php`) and `web_entry_point` (`php-server`), the binary is built using
+   static-php-cli which is downloaded on demand
+
+### Changed
+ - Improved autoloader performance by precomputing a lowercase class map for case-insensitive lookups instead of
+   scanning every mapped class on each miss
+ - Package cache validation now checks a stat-based file fingerprint (inode, size, mtime, ctime) first and only falls
+   back to computing the SHA-1 of the package file when the fingerprint does not match, this applies to both the APCu
+   and the on-disk cache
+ - Bumped the package cache format version to `3`, existing `.cache` files are ignored until the package is reinstalled
+ - Package cache files are now generated from the installed package file rather than the source file
+ - `StreamWrapper` now looks up the requested package directly instead of rebuilding the list of imported packages on
+   every stream operation
+ - `StreamWrapper` now caches the decompressed size of resources in compressed packages to avoid decompressing the
+   same resource twice when stat'ing and then reading it
+ - `StreamWrapper` now reuses the data decompressed while stat'ing a resource in a compressed package when the same
+   resource is opened next (e.g. `file_exists()` followed by `require`), instead of decompressing it again
+ - `LogLib2` now checks the log level before creating an event, so filtered out log calls no longer capture a full
+   backtrace, this greatly reduces the overhead of debug/verbose logging in ncc and `fslib` when those levels are
+   not enabled
+ - APCu content cache keys are only computed when APCu is available, and the package file path hash is computed once
+   per `PackageReader`
+ - `PackageReader` now reads entry names in a single call instead of byte by byte, and scans for the package signature
+   in 64KB chunks instead of 126 byte chunks
+ - Updated the dependencies `LogLib2` (1.0.7), `Symfony/Process` (8.1.9), `Symfony/Yaml` (8.1.9), `Composer/Semver`
+   (3.5.1) and `random_compat` (9.99.100)
+ - ncc now requires PHP 8.4.1 or later (required by `Symfony/Process` and `Symfony/Yaml` 8), the installer refuses to
+   install ncc on older versions of PHP
+ - The installer warns when the installed version of PHP has known security vulnerabilities
+ - The Docker images can be rebuilt manually from GitHub Actions and always pull the latest PHP base image
+
+### Fixed
+ - Fixed a misplaced parenthesis in `Runtime::getSystemAuthenticationManager()` which caused the write access check
+   to be performed on an invalid path
+ - Fixed `PackageReader` reading size prefixes in machine byte order while `PackageWriter` writes them in
+   little-endian, which would break reading packages on big-endian systems
+ - Fixed `PackageReader` looping indefinitely when reading an entry name from a truncated or corrupted package, a
+   `RuntimeException` is now thrown instead
+
+
+
 ## [3.1.10] - 2026-07-21
 
-This is an ongoing update
+This update introduces critical bug fixes related to compilation
 
 ### Fixed
  - Added exception handling for the ApcuCache layer if for whatever reason the APCU is available but APCU operations
