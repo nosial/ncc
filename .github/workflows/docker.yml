@@ -39,19 +39,9 @@ jobs:
           - name: "cli"
             dockerfile: "ncc.dockerfile"
             tag: "latest"
-            target: "production"
           - name: "fpm"
             dockerfile: "ncc-fpm.dockerfile"
             tag: "fpm"
-            target: "production"
-          - name: "runtime-cli"
-            dockerfile: "ncc.dockerfile"
-            tag: "runtime-cli"
-            target: "runtime"
-          - name: "runtime-fpm"
-            dockerfile: "ncc-fpm.dockerfile"
-            tag: "runtime-fpm"
-            target: "runtime"
 
     steps:
       - name: Checkout repository
@@ -70,6 +60,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Select image release channel
+        id: channel
+        shell: bash
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [[ "$REF_TYPE" == branch && "$REF_NAME" == "$DEFAULT_BRANCH" ]] ||
+             [[ "$REF_TYPE" == tag && "$REF_NAME" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
@@ -79,15 +84,12 @@ jobs:
             latest=false
           tags: |
             type=sha,enable=false
-            type=raw,value=builder,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.name == 'cli' }}
-            type=raw,value={{branch}}-builder,enable=${{ github.ref_type == 'branch' && matrix.variant.name == 'cli' }}
-            type=semver,pattern={{version}},suffix=-builder,enable=${{ github.ref_type == 'tag' && matrix.variant.name == 'cli' }}
             type=raw,value={{branch}}-${{ matrix.variant.tag }},enable=${{ github.ref_type == 'branch' && matrix.variant.tag != 'latest' }}
             type=semver,pattern={{version}},suffix=-${{ matrix.variant.tag }},enable=${{ github.ref_type == 'tag' && matrix.variant.tag != 'latest' }}
-            type=raw,value=${{ matrix.variant.tag }},enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag != 'latest' }}
+            type=raw,value=${{ matrix.variant.tag }},enable=${{ steps.channel.outputs.stable == 'true' && matrix.variant.tag != 'latest' }}
             type=raw,value={{branch}},enable=${{ github.ref_type == 'branch' && matrix.variant.tag == 'latest' }}
             type=semver,pattern={{version}},enable=${{ matrix.variant.tag == 'latest' }}
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && matrix.variant.tag == 'latest' }}
+            type=raw,value=latest,enable=${{ steps.channel.outputs.stable == 'true' && matrix.variant.tag == 'latest' }}
           labels: |
             org.opencontainers.image.title=ncc
             org.opencontainers.image.description=ncc's official Docker ${{ matrix.variant.name }} image
@@ -99,7 +101,6 @@ jobs:
         with:
           context: .
           file: ${{ matrix.variant.dockerfile }}
-          target: ${{ matrix.variant.target }}
           platforms: linux/amd64
           pull: true
           push: ${{ github.event_name != 'pull_request' }}
@@ -118,4 +119,3 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: false
-
