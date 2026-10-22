@@ -41,7 +41,7 @@
             'xmlwriter', 'zip'
         ];
 
-        private const string DEFAULT_PHP_VERSION = '8.4';
+        private const string DEFAULT_PHP_VERSION = '8.4.27';
         private const string SPC_DOWNLOAD_URL = 'https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-%s-%s';
         private const string FRANKENPHP_TAG_URL = 'https://github.com/php/frankenphp/archive/refs/tags/v%s.tar.gz';
 
