@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.12] - 2026-10-31
+
+This update is a regular maintenance update.
+
+### Changed
+ - Updated all required dependencies to their updated versions
+ - Updated the GitHub CI workflow templates to use `actions/checkout@v7`, `actions/upload-artifact@v7`,
+   `actions/download-artifact@v8` and `softprops/action-gh-release@v3` (all of which run on Node 24 and require
+   Actions Runner 2.327.1 or later), and PHPUnit `13.4` instead of `11.3`
+
+
 ## [3.1.11] - 2026-10-22
 
 This update introduces runtime performance improvements and bug fixes, introduces mandatory security updates for

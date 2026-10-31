@@ -9,16 +9,16 @@
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download documentation artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: documentation
           path: documentation
 
       - name: Upload documentation artifact
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
             files: |
                 documentation/*

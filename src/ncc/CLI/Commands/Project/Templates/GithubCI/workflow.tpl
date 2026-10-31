@@ -17,7 +17,7 @@ ${BUILD_JOBS}
       phpunit-exists: ${{ steps.check.outputs.phpunit-exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Check for phpunit.xml
         id: check
         run: |
@@ -34,7 +34,7 @@ ${BUILD_JOBS}
       phpdoc-exists: ${{ steps.check.outputs.phpdoc-exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Check for phpdoc.dist.xml
         id: check
         run: |

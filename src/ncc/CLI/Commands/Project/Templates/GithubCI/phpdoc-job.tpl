@@ -8,7 +8,7 @@
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download PHPDocumentor
         run: |
@@ -24,7 +24,7 @@
           zip -r docs.zip docs
 
       - name: Upload PHPDoc
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: documentation
           path: docs.zip

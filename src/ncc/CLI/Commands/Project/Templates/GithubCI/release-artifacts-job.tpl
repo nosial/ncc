@@ -9,6 +9,6 @@
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
 ${DOWNLOAD_ARTIFACTS}

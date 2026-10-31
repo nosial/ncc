@@ -5,7 +5,7 @@
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build project
         run: |
@@ -13,7 +13,7 @@
           ncc build --config ${BUILD_NAME} --log-level debug
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${BUILD_NAME}
           path: ${BUILD_OUTPUT}
