@@ -5,3 +5,4 @@ target/
 /.phpunit.result.cache
 dependencies/
 ./idea
+.phpunit.cache/
