@@ -6,7 +6,7 @@ ARG DEBIAN_VERSION=trixie
 FROM php:${PHP_VERSION}-cli-${DEBIAN_VERSION} AS php-base
 ADD --chmod=755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/install-php-extensions
 RUN for attempt in 1 2 3; do \
-        install-php-extensions zip xsl msgpack && break; \
+        install-php-extensions zip xsl msgpack apcu && break; \
         [ "$attempt" -eq 3 ] && exit 1; \
         sleep 30; \
     done

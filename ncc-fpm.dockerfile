@@ -6,7 +6,7 @@ ARG DEBIAN_VERSION=trixie
 FROM php:${PHP_VERSION}-fpm-${DEBIAN_VERSION} AS php-base
 ADD --chmod=755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/install-php-extensions
 RUN for attempt in 1 2 3; do \
-        install-php-extensions zip xsl msgpack && break; \
+        install-php-extensions zip xsl msgpack apcu && break; \
         [ "$attempt" -eq 3 ] && exit 1; \
         sleep 30; \
     done
@@ -29,4 +29,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 RUN --mount=type=bind,from=builder,source=/tmp/ncc/target,target=/tmp/ncc-install \
     /tmp/ncc-install/install.sh install
+RUN ncc_phar="$(php -r 'echo stream_resolve_include_path("ncc");')" && \
+    [ -n "$ncc_phar" ] && \
+    echo "phar.cache_list = $ncc_phar" > /usr/local/etc/php/conf.d/ncc-phar.ini
 WORKDIR /app
