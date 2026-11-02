@@ -40,6 +40,7 @@
             $this->assertEquals("\xA4", PackageStructure::EXECUTION_UNITS->value);
             $this->assertEquals("\xA5", PackageStructure::COMPONENTS->value);
             $this->assertEquals("\xA6", PackageStructure::RESOURCES->value);
+            $this->assertEquals("\xA7", PackageStructure::SIGNATURES->value);
             $this->assertEquals("\xE0\xE0", PackageStructure::TERMINATE->value);
             $this->assertEquals("\xE1", PackageStructure::SOFT_TERMINATE->value);
         }
@@ -101,7 +102,7 @@
         {
             $cases = PackageStructure::cases();
             
-            $this->assertCount(10, $cases);
+            $this->assertCount(11, $cases);
             $this->assertContains(PackageStructure::START_PACKAGE, $cases);
             $this->assertContains(PackageStructure::MAGIC_BYTES, $cases);
             $this->assertContains(PackageStructure::PACKAGE_VERSION, $cases);
@@ -110,6 +111,7 @@
             $this->assertContains(PackageStructure::EXECUTION_UNITS, $cases);
             $this->assertContains(PackageStructure::COMPONENTS, $cases);
             $this->assertContains(PackageStructure::RESOURCES, $cases);
+            $this->assertContains(PackageStructure::SIGNATURES, $cases);
             $this->assertContains(PackageStructure::TERMINATE, $cases);
             $this->assertContains(PackageStructure::SOFT_TERMINATE, $cases);
         }
