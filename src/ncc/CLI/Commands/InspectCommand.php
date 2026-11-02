@@ -63,9 +63,10 @@
             $packagePath = null;
             if(isset($argv['path']))
             {
-                $packagePath = realpath($argv['path']);
+                $packagePath = Helper::resolvePath($argv['path']);
             }
-            else
+
+            if($packagePath === null)
             {
                 Console::error('No package path specified, use --path to specify a package file to inspect');
                 return 1;
