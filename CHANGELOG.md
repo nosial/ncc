@@ -5,9 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.13] - Ongoing
+## [3.1.13] - 2026-11-02
 
-This is an ongoing update
+This update introduces several new features and improvements, and most importantly, it introduces package signing
+
+### Added
+ - Added the `--optimized` (`-O`) option to `ncc install` which also extracts the installed package to a directory next
+   to it, when the package is imported the autoloader loads its classes from those files so they can be cached by
+   OPcache (files included through `ncc://` are never cached by OPcache, so under php-fpm every class was compiled on
+   every request), importing the package works the same way and falls back to `ncc://` if the optimized installation
+   is missing or outdated, `NCC_DISABLE_OPTIMIZED` disables the use of optimized installations
+ - The ncc Docker images include the `apcu` extension, and the fpm image preloads the ncc phar using `phar.cache_list`
+ - Added package signing: packages can be signed with Ed25519 keys on behalf of the organization or author declared in
+   their assembly, signatures are stored in an optional trailer (`A7`) after the end of the package so packages remain
+   readable by older versions of ncc, and a package can carry several signatures (eg; author and organization)
+ - Added the `ncc key` command to generate, list, export, import and delete passphrase-encrypted signing keys
+ - Added the `ncc sign` command and the `--sign`/`--no-sign` options of `ncc build`, `ncc build` signs packages
+   automatically when `NCC_SIGNING_KEY` (and `NCC_SIGNING_KEY_PASSPHRASE`) is set
+ - Added the `ncc trust` command to list, add, remove and revoke the keys trusted to sign packages
+ - `ncc install` and `ncc project install` verify package signatures before installing: unsigned packages are installed
+   with a deprecation warning (future versions of ncc will refuse them), packages signed by a key that is not trusted
+   yet prompt to trust the key (`--trust` or `NCC_TRUST=1` trusts it without prompting, non-interactive sessions install
+   without trusting it), and packages that were modified after signing or are signed by a different key than the one
+   trusted for their signer are refused unless `--skip-signature-check` is used
+ - `ncc inspect` shows the signatures of a package and their verification status
+ - The generated GitHub workflow passes the `NCC_SIGNING_KEY` and `NCC_SIGNING_KEY_PASSPHRASE` secrets to its build
+   jobs, and the generated Dockerfiles accept them as optional BuildKit secrets
+
+### Changed
+ - Importing a package that is already imported by name no longer touches the filesystem
+ - Importing a package from a file path now uses the package metadata cache (APCu and `.cache` files)
+ - Executables compiled with the `php` build type read their package once instead of twice on startup
+ - The package lock is cached in APCu (keyed by the lock file's stat fingerprint) and indexed by package name, so it
+   is no longer decoded on every request under php-fpm and version lookups no longer scan every installed package
+ - The ncc version and build are read from a generated `version.php` which can be cached by OPcache
+
+### Fixed
+ - Fixed APCu caching file contents of a package without regard to the package file, after a package was reinstalled
+   in place (e.g. by `ncc install` from the command line, which cannot clear the APCu cache of php-fpm) the contents of
+   the previous package could be served for up to an hour
+ - Fixed a fatal error when an APCu error occurred while logging was disabled (`NCC_DISABLE_LOGGING`)
+ - APCu is no longer used when it's loaded but disabled (`apc.enabled=0`)
+ - Fixed the user-level package, repository and authentication managers being probed again on every call when the
+   user location is unusable (e.g. php-fpm workers whose `HOME` is not writable), and `import()` failing with an
+   exception when the home directory could not be resolved (e.g. php-fpm with `clear_env`)
+ - Fixed `Runtime::getPackagePath()` crashing when running as root and the package is not installed
+ - Fixed install options being lost when they were parsed a second time, `ncc project install --reinstall` and
+   dependency installations treated any enabled option as `--skip-repositories`
+ - Fixed `--force-symlink` being ignored by `ncc install`
+ - Fixed `PackageManager::install()` always skipping the already-installed check and emitting a warning when the
+   `no-symlink` option was not given
+ - Uninstalling a package now also removes its `.cache` file
+ - Extracting a package refuses entries whose paths would escape the output directory
+ - Fixed relative file paths not being detected by the command-line interface when ncc runs as a phar (e.g.
+   `ncc install foo.ncc` was treated as a remote package source), the phar extension resolves relative paths passed
+   to `is_file()`/`file_exists()` against the phar archive, all path arguments (`install`, `inspect`, `extract`,
+   `project create`, `project convert` and `project stubs`) are now resolved against the current working directory
+ - Fixed `ncc extract --output` and `ncc project stubs --output` failing when the output directory did not exist yet
+ - Removed leftover debug code from the `install` command that wrote to `/tmp/ncc_debug.log` on every run
+ - Fixed `StreamWrapper` not recognising directories inside packages, `is_dir()` and `file_exists()` now work on
+   directories, the package root (`ncc://package.name/`) is reported as a directory, `readdir()`/`scandir()` no
+   longer append a trailing slash to directory names (which caused `RecursiveDirectoryIterator` to skip
+   subdirectories) and `opendir()` now fails for files and paths that do not exist
+ - Fixed `Runtime::import()` crashing when given a `PackageReader` instance, and made it register defined constants,
+   statically linked dependencies and dependencies the same way as importing by name or path
+ - Fixed a PHP warning and deprecation when a build configuration does not specify a `type`
+ - Unknown authentication types now throw an `InvalidArgumentException` instead of a `ValueError`
+ - Fixed `PackageReader` reading one byte past the end of a package whose last section is a collection (execution
+   units, components or resources), the end offset of the package is now exact so exported packages no longer include
+   a stray byte of any data that follows the package
+
+### Changed
+ - Migrated `phpunit.xml` to the PHPUnit 13 configuration schema
+ - The package metadata cache format version is now 4 (it stores the package's signatures), existing `.cache` files
+   are rebuilt automatically
+
+
 
 
 ## [3.1.12] - 2026-10-31
@@ -19,6 +92,7 @@ This update is a regular maintenance update.
  - Updated the GitHub CI workflow templates to use `actions/checkout@v7`, `actions/upload-artifact@v7`,
    `actions/download-artifact@v8` and `softprops/action-gh-release@v3` (all of which run on Node 24 and require
    Actions Runner 2.327.1 or later), and PHPUnit `13.4` instead of `11.3`
+
 
 
 ## [3.1.11] - 2026-10-22
