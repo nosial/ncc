@@ -38,7 +38,7 @@
      */
     class PackageCacheData
     {
-        public const int CACHE_VERSION = 3;
+        public const int CACHE_VERSION = 4;
 
         private int $version;
         private string $fileSha1;
@@ -55,7 +55,11 @@
         /** @var array<string, ResourceReference> */
         private array $resourceReferences;
         private ?string $optimizedPath = null;
-
+        private int $bodyEndOffset;
+        /** @var PackageSignature[] */
+        private array $signatures;
+        private ?string $signatureError;
+        private bool $signatureUnsupported;
 
         /**
          * Constructor method for initializing the object with file metadata, package details, and component references.
@@ -71,11 +75,16 @@
          * @param array $componentReferences An array of component references.
          * @param array $resourceReferences An array of resource references.
          * @param string|null $optimizedPath The optional optimized path for the file.
+         * @param int|null $bodyEndOffset The end offset of the package body, defaults to the end offset.
+         * @param PackageSignature[] $signatures The signatures of the package.
+         * @param string|null $signatureError The error encountered while parsing the signature trailer, if any.
+         * @param bool $signatureUnsupported Whether the signature trailer format is unsupported.
          *
          * @return void
          */
         public function __construct(string $fileSha1, ?string $fileFingerprint, int $startOffset, int  $endOffset, string $packageVersion, Header $header,
-            Assembly $assembly, array $executionUnitReferences, array $componentReferences, array $resourceReferences, ?string $optimizedPath = null
+            Assembly $assembly, array $executionUnitReferences, array $componentReferences, array $resourceReferences, ?string $optimizedPath = null,
+            ?int $bodyEndOffset = null, array $signatures = [], ?string $signatureError = null, bool $signatureUnsupported = false
         )
         {
             $this->version = self::CACHE_VERSION;
@@ -90,6 +99,50 @@
             $this->componentReferences = $componentReferences;
             $this->resourceReferences = $resourceReferences;
             $this->optimizedPath = $optimizedPath;
+            $this->bodyEndOffset = $bodyEndOffset ?? $endOffset;
+            $this->signatures = $signatures;
+            $this->signatureError = $signatureError;
+            $this->signatureUnsupported = $signatureUnsupported;
+        }
+
+        /**
+         * Retrieves the end offset of the package body (the data covered by signatures).
+         *
+         * @return int The end offset of the package body.
+         */
+        public function getBodyEndOffset(): int
+        {
+            return $this->bodyEndOffset;
+        }
+
+        /**
+         * Retrieves the signatures of the package.
+         *
+         * @return PackageSignature[] The signatures of the package.
+         */
+        public function getSignatures(): array
+        {
+            return $this->signatures;
+        }
+
+        /**
+         * Retrieves the error encountered while parsing the signature trailer.
+         *
+         * @return string|null The error message, or null if there was none.
+         */
+        public function getSignatureError(): ?string
+        {
+            return $this->signatureError;
+        }
+
+        /**
+         * Returns whether the signature trailer format is unsupported.
+         *
+         * @return bool True if the signature trailer format is unsupported.
+         */
+        public function isSignatureUnsupported(): bool
+        {
+            return $this->signatureUnsupported;
         }
 
         /**
