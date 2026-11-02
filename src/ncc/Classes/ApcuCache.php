@@ -43,6 +43,7 @@
                     php_sapi_name() !== 'cli' &&
                     extension_loaded('apcu') &&
                     function_exists('apcu_fetch') &&
+                    function_exists('apcu_enabled') && apcu_enabled() &&
                     getenv('NCC_DISABLE_APCU') === false;
             }
 
@@ -70,7 +71,7 @@
             }
             catch(Throwable $e)
             {
-                Logger::getLogger()->warning($e->getMessage(), $e);
+                Logger::getLogger()?->warning($e->getMessage(), $e);
                 self::$available = false;
                 return false;
             }
@@ -97,7 +98,7 @@
             }
             catch(Throwable $e)
             {
-                Logger::getLogger()->warning($e->getMessage(), $e);
+                Logger::getLogger()?->warning($e->getMessage(), $e);
                 self::$available = false;
                 return null;
             }
@@ -122,7 +123,7 @@
             }
             catch(Throwable $e)
             {
-                Logger::getLogger()->warning($e->getMessage(), $e);
+                Logger::getLogger()?->warning($e->getMessage(), $e);
                 self::$available = false;
                 return false;
             }
@@ -147,7 +148,7 @@
             }
             catch(Throwable $e)
             {
-                Logger::getLogger()->warning($e->getMessage(), $e);
+                Logger::getLogger()?->warning($e->getMessage(), $e);
                 self::$available = false;
                 return false;
             }
@@ -176,7 +177,7 @@
             }
             catch(Throwable $e)
             {
-                Logger::getLogger()->warning($e->getMessage(), $e);
+                Logger::getLogger()?->warning($e->getMessage(), $e);
                 self::$available = false;
             }
         }
