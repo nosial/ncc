@@ -22,6 +22,7 @@
 
     namespace ncc\CLI\Commands\Project;
 
+    use ncc\CLI\Commands\Helper;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\Libraries\fslib\IO;
@@ -53,9 +54,9 @@
                 return 1;
             }
 
-            if(isset($argv['path']))
+            if(isset($argv['path']) && Helper::resolvePath($argv['path']) !== null)
             {
-                $projectPath = rtrim($argv['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $argv['name'];
+                $projectPath = rtrim(Helper::resolvePath($argv['path']), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $argv['name'];
             }
             else
             {
