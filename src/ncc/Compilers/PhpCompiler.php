@@ -133,11 +133,8 @@ require 'ncc';
 
 try
 {
-    // Import this package into the runtime
-    import(realpath(__FILE__));
-    
-    // Create a package reader to access the header information
     $packageReader = new \ncc\Classes\PackageReader(realpath(__FILE__), true);
+    \ncc\Runtime::import($packageReader);
     $header = $packageReader->getHeader();
     
     // Determine the execution environment
