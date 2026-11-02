@@ -136,16 +136,12 @@
                 Console::warning('The "skip-dependencies" option was used, the package may not meet the requirements');
             }
 
-            $debug_isFile = IO::isFile($package);
-            file_put_contents('/tmp/ncc_debug.log', sprintf("[%s] package='%s' cwd='%s' isFile=%s argv=%s\n",
-                date('Y-m-d H:i:s'), $package, getcwd(), $debug_isFile ? 'true' : 'false',
-                json_encode($_SERVER['argv'] ?? [])), FILE_APPEND);
-
-            if($debug_isFile)
+            $packageFile = Helper::resolvePath($package);
+            if($packageFile !== null && IO::isFile($packageFile))
             {
                 try
                 {
-                    $packageReader = new PackageReader($package);
+                    $packageReader = new PackageReader($packageFile);
                 }
                 catch(Exception $e)
                 {
