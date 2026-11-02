@@ -63,9 +63,10 @@
 
             if(isset($argv['path']))
             {
-                $packagePath = realpath($argv['path']);
+                $packagePath = Helper::resolvePath($argv['path']);
             }
-            else
+
+            if($packagePath === null)
             {
                 Console::error('No package path specified, use --path to specify a package file to extract');
                 return 1;
@@ -80,7 +81,7 @@
             $outputPath = null;
             if(isset($argv['output']))
             {
-                $outputPath = realpath($argv['output']);
+                $outputPath = Helper::resolvePath($argv['output']);
             }
 
             try
