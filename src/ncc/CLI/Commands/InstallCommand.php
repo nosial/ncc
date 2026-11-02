@@ -88,6 +88,7 @@
             $buildSource = $argv['build-source'] ?? $argv['bs'] ?? false;
             $noSymlink = $argv['no-symlink'] ?? false;
             $forceSymlink = $argv['force-symlink'] ?? false;
+            $optimized = $argv['optimized'] ?? $argv['O'] ?? false;
             
             // Build options array
             $options = [];
@@ -118,6 +119,10 @@
             if($forceSymlink)
             {
                 $options[] = 'force-symlink';
+            }
+            if($optimized)
+            {
+                $options[] = 'optimized';
             }
             
             // Parse dynamic repository authentication arguments (e.g., --github-auth=foo)
@@ -601,11 +606,27 @@
                 'build-source' => false,
                 'reinstall' => false,
                 'no-symlink' => false,
-                'force-symlink' => false
+                'force-symlink' => false,
+                'optimized' => false
             ];
 
-            foreach($options as $option)
+            foreach($options as $key => $option)
             {
+                if(is_string($key))
+                {
+                    if(array_key_exists($key, $results))
+                    {
+                        $results[$key] = (bool)$option;
+                    }
+
+                    continue;
+                }
+
+                if(!is_string($option))
+                {
+                    continue;
+                }
+
                 switch($option)
                 {
                     case 'skip-repositories':
@@ -640,8 +661,14 @@
                         $results['no-symlink'] = true;
                         break;
 
+                    case 'force-symlink':
                     case 'c':
                         $results['force-symlink'] = true;
+                        break;
+
+                    case 'optimized':
+                    case 'O':
+                        $results['optimized'] = true;
                         break;
                 }
             }
@@ -738,6 +765,8 @@
             Console::out('                    Skip validation of required PHP extensions');
             Console::out('  --no-symlink      Do not create a symlink for the package');
             Console::out('  --force-symlink   Force symlink creation even if one exists');
+            Console::out('  --optimized, -O   Also extract the package to the filesystem so its classes are loaded from');
+            Console::out('                    real files that OPcache can cache (recommended for php-fpm deployments)');
             Console::out('  --<repository>-auth=<entry>');
             Console::out('                    Authenticate using the specified vault entry for a repository');
             Console::out('                    Example: --github-auth=mytoken');
@@ -746,6 +775,7 @@
             Console::out('  ncc install symfony/console=5.0@packagist');
             Console::out('  ncc install com.example.package --yes');
             Console::out('  ncc install package.ncc --skip-deps');
+            Console::out('  ncc install package.ncc --optimized');
             Console::out('  ncc install group/project=latest@repo --github-auth=mytoken');
         }
     }
