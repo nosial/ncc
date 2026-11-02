@@ -27,6 +27,9 @@
     use ncc\Classes\Console;
     use ncc\Libraries\fslib\IO;
     use ncc\Classes\PackageReader;
+    use ncc\Classes\SignatureVerifier;
+    use ncc\Enums\SignatureStatus;
+    use ncc\Runtime;
 
     class InspectCommand extends AbstractCommandHandler
     {
@@ -40,7 +43,7 @@
             Console::out('Usage: ncc inspect --path=<package-file> [--component=<name>]' . PHP_EOL);
             Console::out('Displays detailed information about an ncc package.' . PHP_EOL);
             Console::out('This includes package metadata, version, components, resources,');
-            Console::out('execution units, dependencies, and entry points.' . PHP_EOL);
+            Console::out('execution units, dependencies, entry points and signatures.' . PHP_EOL);
             Console::out('Options:');
             Console::out('  --path=<file>       (Required) Path to the .ncc package file to inspect');
             Console::out('  --component=<name>  (Optional) Display the contents of a specific component');
@@ -309,6 +312,48 @@
                 }
             }
 
+            // =============== SIGNATURES ===============
+            self::printSignatures($packageReader);
+
             return 0;
+        }
+
+        /**
+         * Prints the signatures of the package and their verification status
+         *
+         * @param PackageReader $packageReader The package
+         * @return void
+         */
+        private static function printSignatures(PackageReader $packageReader): void
+        {
+            $result = SignatureVerifier::verify($packageReader, Runtime::getTrustStores());
+            Console::out(PHP_EOL . '=== Signatures (' . count($result->getEntries()) . ') ===');
+            Console::out('Status: ' . match($result->getStatus())
+            {
+                SignatureStatus::UNSIGNED => 'Not signed',
+                SignatureStatus::VERIFIED => 'Verified',
+                SignatureStatus::UNTRUSTED => 'Signed by an untrusted key',
+                SignatureStatus::INVALID => 'INVALID',
+                SignatureStatus::KEY_MISMATCH => 'KEY MISMATCH',
+                SignatureStatus::UNSUPPORTED => 'Cannot be verified',
+            });
+
+            if(count($result->getEntries()) === 0)
+            {
+                if($result->getStatus() !== SignatureStatus::UNSIGNED)
+                {
+                    Console::out($result->getSummary());
+                }
+                return;
+            }
+
+            foreach($result->getEntries() as $entry)
+            {
+                $signature = $entry['signature'];
+                Console::out('- ' . $signature->describeSigner());
+                Console::out('  Fingerprint: ' . $signature->getFingerprint());
+                Console::out('  Signed At: ' . date('Y-m-d H:i:s', $signature->getSignedAt()));
+                Console::out('  Status: ' . $entry['status']->value . ' (' . $entry['message'] . ')');
+            }
         }
     }
