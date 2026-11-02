@@ -8,6 +8,9 @@
         uses: actions/checkout@v7
 
       - name: Build project
+        env:
+          NCC_SIGNING_KEY: ${{ secrets.NCC_SIGNING_KEY }}
+          NCC_SIGNING_KEY_PASSPHRASE: ${{ secrets.NCC_SIGNING_KEY_PASSPHRASE }}
         run: |
           ncc project install --log-level debug -y
           ncc build --config ${BUILD_NAME} --log-level debug
