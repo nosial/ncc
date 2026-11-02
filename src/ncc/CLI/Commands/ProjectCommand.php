@@ -200,6 +200,9 @@
                     Console::out('                    Skip adding package repositories');
                     Console::out('  --skip-extensions, --skip-exts, --se');
                     Console::out('                    Skip installing PHP extensions');
+                    Console::out('  --trust           Trust the signing keys of dependencies signed by a key that is not trusted yet');
+                    Console::out('  --skip-signature-check');
+                    Console::out('                    Install dependencies that fail signature verification (not recommended)');
                     Console::out('  --<repository>-auth=<entry>');
                     Console::out('                    Authenticate using the specified vault entry for a repository');
                     Console::out(PHP_EOL . 'Examples:');
