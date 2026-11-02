@@ -31,9 +31,12 @@
     use ncc\CLI\Commands\ExtractCommand;
     use ncc\CLI\Commands\InspectCommand;
     use ncc\CLI\Commands\InstallCommand;
+    use ncc\CLI\Commands\KeyCommand;
     use ncc\CLI\Commands\ListPackagesCommand;
     use ncc\CLI\Commands\ProjectCommand;
     use ncc\CLI\Commands\RepositoryCommand;
+    use ncc\CLI\Commands\SignCommand;
+    use ncc\CLI\Commands\TrustCommand;
     use ncc\CLI\Commands\UninstallCommand;
     use ncc\Libraries\OptsLib\Parse;
 
@@ -114,6 +117,18 @@
             {
                 return RepositoryCommand::handle($argv);
             }
+            elseif(isset($argv['sign']))
+            {
+                return SignCommand::handle($argv);
+            }
+            elseif(isset($argv['trust']))
+            {
+                return TrustCommand::handle($argv);
+            }
+            elseif(isset($argv['key']))
+            {
+                return KeyCommand::handle($argv);
+            }
             elseif(isset($argv['list']) || isset($argv['ls']))
             {
                 return ListPackagesCommand::handle($argv);
@@ -166,6 +181,9 @@
                 Console::out('  authenticate      Manage authentication entries for repositories');
                 Console::out('  repository        Manage package repositories');
                 Console::out('  list              List all installed ncc packages');
+                Console::out('  sign              Sign an ncc package');
+                Console::out('  key               Manage the signing keys used to sign packages');
+                Console::out('  trust             Manage the keys trusted to sign packages');
                 Console::out(PHP_EOL . 'Options:');
                 Console::out('  --version, -v     Display version information');
                 Console::out('  --help, -h        Display this help message');
@@ -222,6 +240,18 @@
                 case 'list':
                 case 'ls':
                     ListPackagesCommand::help();
+                    break;
+
+                case 'sign':
+                    SignCommand::help();
+                    break;
+
+                case 'key':
+                    KeyCommand::help();
+                    break;
+
+                case 'trust':
+                    TrustCommand::help();
                     break;
 
                 default:
