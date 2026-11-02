@@ -22,6 +22,7 @@
 
     namespace ncc\CLI\Commands\Project;
 
+    use ncc\CLI\Commands\Helper;
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
@@ -44,7 +45,7 @@
             $projectPath = getcwd();
             if(isset($argv['path']))
             {
-                $projectPath = $argv['path'];
+                $projectPath = Helper::resolvePath($argv['path']) ?? $projectPath;
             }
 
             $projectType = ProjectType::detectProjectType($projectPath);
