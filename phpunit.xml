@@ -21,13 +21,13 @@
   -->
 
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.0/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
-         cacheResultFile=".phpunit.cache/test-results"
+         cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="true"
-          failOnRisky="true"
-          failOnWarning="false">
+         failOnRisky="true"
+         failOnWarning="false">
 
     <testsuites>
         <testsuite name="ncc Test Suite">
