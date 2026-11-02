@@ -30,6 +30,7 @@
     use ncc\Classes\PathResolver;
     use ncc\Classes\RepositoryManager;
     use ncc\Classes\StreamWrapper;
+    use ncc\Classes\TrustStore;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\semver\Semver;
@@ -49,6 +50,8 @@
         private static ?RepositoryManager $systemRepositoryManager = null;
         private static ?AuthenticationManager $systemAuthenticationManager = null;
         private static ?AuthenticationManager $userAuthenticationManager = null;
+        private static ?TrustStore $userTrustStore = null;
+        private static ?TrustStore $systemTrustStore = null;
         private static bool $userLocationUnavailable = false;
 
         /**
@@ -607,6 +610,73 @@
             }
 
             return self::getSystemAuthenticationManager();
+        }
+
+        /**
+         * Gets the user-level TrustStore instance, initializing it if necessary.
+         * Returns null when running as root/system user or if the user directory is unavailable.
+         *
+         * @return TrustStore|null The user-level TrustStore instance, or null if unavailable.
+         */
+        public static function getUserTrustStore(): ?TrustStore
+        {
+            if(self::$userTrustStore === null)
+            {
+                $userLocation = self::getUserLocation();
+                if($userLocation === null)
+                {
+                    return null;
+                }
+
+                self::$userTrustStore = new TrustStore($userLocation);
+            }
+
+            return self::$userTrustStore;
+        }
+
+        /**
+         * Gets the system-level TrustStore instance, initializing it if necessary.
+         *
+         * @return TrustStore The system-level TrustStore instance.
+         */
+        public static function getSystemTrustStore(): TrustStore
+        {
+            if(self::$systemTrustStore === null)
+            {
+                self::$systemTrustStore = new TrustStore(PathResolver::getSystemLocation());
+            }
+
+            return self::$systemTrustStore;
+        }
+
+        /**
+         * Gets the primary (writable) TrustStore instance, new trusted keys are added to this store.
+         * Returns the user-level trust store for regular users and the system-level trust store for system users (root).
+         *
+         * @return TrustStore The primary TrustStore instance.
+         */
+        public static function getTrustStore(): TrustStore
+        {
+            return self::getUserTrustStore() ?? self::getSystemTrustStore();
+        }
+
+        /**
+         * Gets all the trust stores whose keys are trusted, the user-level trust store (if available) and the
+         * system-level trust store.
+         *
+         * @return TrustStore[] The trust stores.
+         */
+        public static function getTrustStores(): array
+        {
+            $stores = [];
+            $userStore = self::getUserTrustStore();
+            if($userStore !== null)
+            {
+                $stores[] = $userStore;
+            }
+
+            $stores[] = self::getSystemTrustStore();
+            return $stores;
         }
 
         /**
