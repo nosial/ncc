@@ -5,7 +5,11 @@ ARG NCC_RUNTIME_IMAGE=ghcr.io/nosial/ncc:latest
 FROM ${NCC_BUILDER_IMAGE} AS builder
 WORKDIR /app
 COPY . /app
-RUN ncc project install -y && ncc build --configuration=${BUILD_CONFIGURATION} && \
+# The package is signed when the optional build secrets are provided, they never become an image layer:
+#   docker build --secret id=ncc_signing_key,env=NCC_SIGNING_KEY --secret id=ncc_signing_key_passphrase,env=NCC_SIGNING_KEY_PASSPHRASE .
+RUN --mount=type=secret,id=ncc_signing_key,env=NCC_SIGNING_KEY \
+    --mount=type=secret,id=ncc_signing_key_passphrase,env=NCC_SIGNING_KEY_PASSPHRASE \
+    ncc project install -y && ncc build --configuration=${BUILD_CONFIGURATION} && \
     cp "${BUILD_OUTPUT}" /tmp/package.ncc
 
 FROM ${NCC_RUNTIME_IMAGE} AS production
