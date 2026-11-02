@@ -24,6 +24,9 @@
 
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\Classes\KeyManager;
+    use ncc\Classes\PackageSigner;
+    use ncc\Compilers\PackageCompiler;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\fslib\IOException;
     use ncc\Objects\Project;
@@ -58,10 +61,53 @@
             try
             {
                 $compiler = Project::compilerFromFile($projectPath, $configuration);
+
+                // Resolve the signing key before building so a wrong passphrase or identity fails early
+                $sign = $argv['sign'] ?? null;
+                $signingKey = null;
+                if(!isset($argv['no-sign']))
+                {
+                    if(is_string($sign))
+                    {
+                        $signingKey = KeyManager::resolve($sign);
+                    }
+                    elseif($sign === true && !KeyManager::hasEnvironmentKey())
+                    {
+                        throw new OperationException(sprintf('No signing key specified, use --sign=<name> or set %s', KeyManager::ENV_SIGNING_KEY));
+                    }
+                    elseif(KeyManager::hasEnvironmentKey())
+                    {
+                        $signingKey = KeyManager::resolve();
+                    }
+                }
+
+                if($signingKey !== null)
+                {
+                    if(!($compiler instanceof PackageCompiler))
+                    {
+                        // Only ncc packages carry signatures, a key provided through the environment is skipped silently
+                        if($sign !== null)
+                        {
+                            Console::warning('The build type of this configuration does not produce an ncc package, the build will not be signed');
+                        }
+                        $signingKey = null;
+                    }
+                    else
+                    {
+                        PackageSigner::assertSignerMatches($signingKey, $compiler->getProjectConfiguration()->getAssembly());
+                        $compiler->setSigningKey($signingKey);
+                    }
+                }
+
                 $outputPath = $compiler->build(function(int $current, int $total, string $message) {
                     Console::inlineProgress($current, $total, $message);
                 });
                 Console::completeProgress("Build completed: " . $outputPath);
+
+                if($signingKey !== null)
+                {
+                    Console::out(sprintf('Signed as %s (%s)', $signingKey->describeSigner(), $signingKey->getFingerprint()));
+                }
             }
             catch (IOException | OperationException $e)
             {
@@ -88,9 +134,16 @@
             Console::out('  --path=<path>           Path to the project directory (defaults to current directory)');
             Console::out('  --configuration=<name>  Specific build configuration to use');
             Console::out('  --config, -c            Alias for --configuration');
+            Console::out('  --sign=<key>            Sign the package with a stored signing key (see "ncc key")');
+            Console::out('  --no-sign               Do not sign the package, even if NCC_SIGNING_KEY is set');
+            Console::out(PHP_EOL . 'Signing:');
+            Console::out('  When NCC_SIGNING_KEY is set (the output of "ncc key export", or a path to a file containing it)');
+            Console::out('  the package is signed automatically, the passphrase is read from NCC_SIGNING_KEY_PASSPHRASE.');
+            Console::out('  An empty NCC_SIGNING_KEY (eg; a missing CI secret) builds an unsigned package.');
             Console::out(PHP_EOL . 'Examples:');
             Console::out('  ncc build');
             Console::out('  ncc build --path=/path/to/project');
             Console::out('  ncc build --configuration=release');
+            Console::out('  ncc build --configuration=release --sign=nosial');
         }
     }
