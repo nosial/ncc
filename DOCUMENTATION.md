@@ -1105,6 +1105,31 @@ project during the installation process and compile it. For example installing a
 parse the project structure and attempt to use a conversion process only if applicable.
 
 
+#### Optimized installations
+
+By default the classes of an imported package are loaded through the `ncc://` stream wrapper. OPcache never caches
+files included through a stream wrapper, so under long-running SAPIs such as php-fpm every class of every imported
+package is compiled again on each request. Installing a package with `--optimized` (or `-O`) additionally extracts the
+package's components and resources to a directory next to the installed package:
+
+```sh
+ncc install --package="com.example.foo.ncc" --optimized
+```
+
+Importing the package works exactly the same way (`import('com.example.foo')`, `ncc://` paths and the `Runtime` API are
+unchanged), when an optimized installation is available the autoloader loads the package's classes from the extracted
+files instead, which OPcache can cache. This is recommended for php-fpm deployments such as Docker images.
+
+ - The optimized installation is only used while it matches the installed package (a marker file containing the SHA-1
+   of the package is checked on import), otherwise the package is loaded through `ncc://` as usual
+ - Reinstalling the package without `--optimized` or uninstalling it removes the optimized installation
+ - Inside autoloaded classes of an optimized package, `__FILE__` and `__DIR__` are real filesystem paths rather than
+   `ncc://` paths, resources are extracted alongside the source files so reading files relative to `__DIR__` still
+   works, explicit `ncc://` paths keep working through the stream wrapper
+ - Setting the environment variable `NCC_DISABLE_OPTIMIZED` makes ncc ignore optimized installations
+ - The extracted files are uncompressed, so an optimized installation uses more disk space
+
+
 ### Uninstalling a package
 
 The `ncc uninstall` command has several different functions built into it, for example you can uninstall a specific
