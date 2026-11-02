@@ -53,7 +53,7 @@
         {
             $this->name = $data['name'] ?? 'release';
             $this->output = $data['output'] ?? 'out';
-            $this->type = BuildType::tryFrom($data['type']) ?? BuildType::NCC_PACKAGE;
+            $this->type = BuildType::tryFrom($data['type'] ?? '') ??BuildType::NCC_PACKAGE;
             $this->definitions = $data['definitions'] ?? [];
             $this->includeComponents = $data['include_components'] ?? [];
             $this->excludeComponents = $data['exclude_components'] ?? [];
