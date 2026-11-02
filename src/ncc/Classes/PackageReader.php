@@ -50,8 +50,14 @@
     class PackageReader
     {
         private const int MAX_NAME_LENGTH = 65536;
+        public const string OPTIMIZED_SUFFIX = '.optimized';
+        public const string OPTIMIZED_MARKER = '.ncc-optimized';
         private string $filePath;
         private ?string $filePathHash = null;
+        private ?string $contentVersion = null;
+        private ?string $cachedFileSha1 = null;
+        private ?string $cachedOptimizedPath = null;
+        private string|false|null $optimizedPath = null;
         private $fileHandle;
         private int $startOffset;
         private int $endOffset;
@@ -237,6 +243,7 @@
             $fingerprint = PackageCacheData::computeFingerprint($this->filePath);
             if($fingerprint !== null && $cacheData->getFileFingerprint() === $fingerprint)
             {
+                $this->contentVersion = $fingerprint;
                 return true;
             }
 
@@ -255,7 +262,51 @@
                 }
             }
 
+            $this->contentVersion = $fingerprint ?? $currentSha1;
             return true;
+        }
+
+        /**
+         * Builds the APCu content cache key of a component or resource. The key is scoped to the current contents of
+         * the package file so that content cached before the package was reinstalled in place (e.g. by a CLI
+         * `ncc install` which cannot clear the APCu cache of php-fpm) is never served for the new package.
+         *
+         * @param string $name The name of the component or resource
+         * @return string The APCu content cache key
+         */
+        private function getContentCacheKey(string $name): string
+        {
+            $this->contentVersion ??= PackageCacheData::computeFingerprint($this->filePath) ?? (string)hash_file('sha1', $this->filePath);
+            return 'content_' . $this->getFilePathHash() . '_' . hash('sha1', $this->contentVersion . "\0" . $name);
+        }
+
+        /**
+         * Returns the path to the optimized installation of this package (the package extracted to the filesystem by
+         * `ncc install --optimized`) if one exists and was extracted from the current package file, otherwise null.
+         * The result is resolved once per reader.
+         *
+         * @return string|null The optimized installation path, or null if the package should be read through ncc://
+         */
+        public function getOptimizedPath(): ?string
+        {
+            if($this->optimizedPath === null)
+            {
+                $this->optimizedPath = false;
+                if($this->cachedOptimizedPath !== null && $this->cachedFileSha1 !== null && getenv('NCC_DISABLE_OPTIMIZED') === false)
+                {
+                    $marker = @file_get_contents($this->cachedOptimizedPath . DIRECTORY_SEPARATOR . self::OPTIMIZED_MARKER);
+                    if($marker !== false && trim($marker) === $this->cachedFileSha1)
+                    {
+                        $this->optimizedPath = $this->cachedOptimizedPath;
+                    }
+                    else
+                    {
+                        Logger::getLogger()?->warning(sprintf('Optimized installation %s is missing or outdated, loading %s through ncc://', $this->cachedOptimizedPath, $this->filePath));
+                    }
+                }
+            }
+
+            return $this->optimizedPath === false ? null : $this->optimizedPath;
         }
 
         public function getPackageSource(): ?PackageSource
@@ -382,7 +433,7 @@
             $cacheKey = null;
             if(ApcuCache::isAvailable())
             {
-                $cacheKey = 'content_' . $this->getFilePathHash() . '_' . hash('sha1', $reference->getName());
+                $cacheKey = $this->getContentCacheKey($reference->getName());
                 $cached = ApcuCache::get($cacheKey);
                 if($cached !== null)
                 {
@@ -424,7 +475,7 @@
             $cacheKey = null;
             if(ApcuCache::isAvailable())
             {
-                $cacheKey = 'content_' . $this->getFilePathHash() . '_' . hash('sha1', $reference->getName());
+                $cacheKey = $this->getContentCacheKey($reference->getName());
                 $cached = ApcuCache::get($cacheKey);
                 if($cached !== null)
                 {
@@ -563,17 +614,45 @@
                 @chmod($outputDirectory, 0755);
             }
 
-            // Extract all the references from the package
-            foreach($this->getAllReferences() as $reference)
+            $this->extractContents($outputDirectory);
+            foreach($this->getExecutionUnitReferences() as $reference)
             {
-                // Execution Units are to be generated
-                if($reference instanceof ExecutionUnitReference)
+                $this->createExecutionUnit($reference, $outputDirectory);
+            }
+
+            IO::writeFile($outputDirectory . DIRECTORY_SEPARATOR . 'autoload.php', Autoloader::generateAutoloader($outputDirectory, [
+                'relative' => true
+            ]));
+        }
+
+        /**
+         * Writes all components and resources of the package to the given directory using their names as relative
+         * paths, execution units and the autoloader are not generated.
+         *
+         * @param string $outputDirectory The directory to write the files to
+         * @throws IOException If a file cannot be written or a reference name would escape the output directory
+         */
+        public function extractContents(string $outputDirectory): void
+        {
+            if(!IO::isDirectory($outputDirectory))
+            {
+                IO::createDirectory($outputDirectory, 0755, true);
+                @chmod($outputDirectory, 0755);
+            }
+
+            foreach(array_merge($this->getComponentReferences(), $this->getResourceReferences()) as $reference)
+            {
+                $name = $reference->getName();
+                if($name === '')
                 {
-                    $this->createExecutionUnit($reference, $outputDirectory);
                     continue;
                 }
 
-                // Everything is just written as-is
+                if(str_starts_with($name, '/') || in_array('..', explode('/', str_replace('\\', '/', $name)), true))
+                {
+                    throw new IOException($name, 'Refusing to extract a package entry with an unsafe path');
+                }
+
                 $outputPath = rtrim($outputDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $reference->getName();
                 $parentDir = dirname($outputPath);
                 
@@ -595,11 +674,6 @@
 
                 IO::writeFile($outputPath, $this->read($reference));
             }
-
-            // Generate the autoloader
-            IO::writeFile($outputDirectory . DIRECTORY_SEPARATOR . 'autoload.php', Autoloader::generateAutoloader($outputDirectory, [
-                'relative' => true
-            ]));
         }
 
         /**
@@ -1081,7 +1155,7 @@
          * @param string $cacheFilePath The path where the cache file should be saved
          * @throws IOException If the cache file cannot be written
          */
-        public function exportCache(string $cacheFilePath): void
+        public function exportCache(string $cacheFilePath, ?string $optimizedPath = null): void
         {
             $fileSha1 = hash_file('sha1', $this->filePath);
             if($fileSha1 === false)
@@ -1099,7 +1173,8 @@
                 $this->assembly,
                 $this->executionUnitReferences,
                 $this->componentReferences,
-                $this->resourceReferences
+                $this->resourceReferences,
+                $optimizedPath
             );
 
             IO::writeFile($cacheFilePath, serialize($cacheData));
@@ -1128,6 +1203,8 @@
             $this->executionUnitReferences = $cacheData->getExecutionUnitReferences();
             $this->componentReferences = $cacheData->getComponentReferences();
             $this->resourceReferences = $cacheData->getResourceReferences();
+            $this->cachedFileSha1 = $cacheData->getFileSha1();
+            $this->cachedOptimizedPath = $cacheData->getOptimizedPath();
             $this->fileHandle = fopen($this->filePath, 'rb');
 
             if(!$this->fileHandle)
@@ -1255,6 +1332,20 @@
             
             // Build the ncc:// protocol path
             $scriptPath = 'ncc://' . $packageName . '/' . ltrim($unit->getEntryPoint(), '/');
+            $optimizedPath = Runtime::getImportedPackage($packageName)?->getOptimizedPath();
+            if($optimizedPath !== null)
+            {
+                $optimizedScriptPath = $optimizedPath . DIRECTORY_SEPARATOR . ltrim($unit->getEntryPoint(), '/');
+                if(is_file($optimizedScriptPath))
+                {
+                    $scriptPath = $optimizedScriptPath;
+                }
+                elseif(!str_ends_with($optimizedScriptPath, '.php') && is_file($optimizedScriptPath . '.php'))
+                {
+                    $scriptPath = $optimizedScriptPath . '.php';
+                }
+            }
+
             Logger::getLogger()?->verbose(sprintf('Executing PHP script: %s', $scriptPath));
 
             // Verify the script exists, if not try with .php extension
