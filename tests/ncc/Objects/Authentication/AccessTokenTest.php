@@ -22,6 +22,8 @@
 
     namespace ncc\Objects\Authentication;
 
+    use InvalidArgumentException;
+    use ncc\Abstracts\AbstractAuthentication;
     use ncc\Enums\AuthenticationType;
     use ncc\Objects\Authentication\AccessToken;
     use PHPUnit\Framework\TestCase;
@@ -145,5 +147,23 @@
             $this->assertEquals($token1, $accessToken1->getAccessToken());
             $this->assertEquals($token2, $accessToken2->getAccessToken());
             $this->assertNotEquals($accessToken1->getAccessToken(), $accessToken2->getAccessToken());
+        }
+    
+        /**
+         * Test that an unknown authentication type is rejected with an InvalidArgumentException
+         */
+        public function testFromArrayWithUnknownTypeThrowsInvalidArgument(): void
+        {
+            $this->expectException(InvalidArgumentException::class);
+            AbstractAuthentication::fromArray(['type' => 999]);
+        }
+
+        /**
+         * Test that a non-string authentication type is rejected with an InvalidArgumentException
+         */
+        public function testFromArrayWithNonStringTypeThrowsInvalidArgument(): void
+        {
+            $this->expectException(InvalidArgumentException::class);
+            AbstractAuthentication::fromArray(['type' => ['access_token']]);
         }
     }
