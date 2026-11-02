@@ -66,67 +66,46 @@
          */
         public static function import(string|PackageReader $package, string $version='latest'): void
         {
-            Logger::getLogger()?->debug(sprintf('Import requested: %s@%s', $package, $version));
+            Logger::getLogger()?->debug(sprintf('Import requested: %s@%s', $package instanceof PackageReader ? $package->getFilePath() : $package, $version));
             self::initializeStreamWrapper();
 
             if($package instanceof PackageReader)
             {
-                $packageName = $package->getAssembly()->getPackage();
-
-                // Check if package is already imported before attempting to import
-                if(isset(self::$importedPackages[$packageName]))
-                {
-                    Logger::getLogger()?->debug(sprintf('Package already imported: %s', $packageName));
-                    return; // Package already imported, skip
-                }
-
-                Logger::getLogger()?->verbose(sprintf('Importing from PackageReader instance: %s', $packageName));
+                Logger::getLogger()?->verbose(sprintf('Importing from PackageReader instance: %s', $package->getAssembly()->getPackage()));
                 $packageReader = $package;
-
-                // Import the package as a reference
-                $referenceId = uniqid();
-                Logger::getLogger()?->verbose(sprintf('Registering package: %s=%s', $packageName, $packageReader->getAssembly()->getVersion()));
-                self::$packageReaderReferences[$referenceId] = $packageReader;
-                self::$importedPackageOptions[$referenceId] = $packageReader->getHeader()->getOptions() ?? [];
-                self::$importedPackages[$packageName] = $referenceId;
-
-                // Register the autoloader for this package
-                Logger::getLogger()?->debug(sprintf('Registering autoloader for: %s', $packageName));
-                self::registerAutoloader($packageReader);
-                Logger::getLogger()?->verbose(sprintf('Package import completed: %s', $packageName));
-
-                return;
             }
-
-            try
+            else
             {
-                // Resolve relative paths to absolute paths before checking if file exists
-                $resolvedPackage = IO::isAbsolutePath($package) ? $package : IO::resolvePath($package);
-                
-                if(IO::isFile($resolvedPackage))
+                try
                 {
-                    Logger::getLogger()?->verbose(sprintf('Importing from file: %s', $resolvedPackage));
-                    $packageReader = self::importFromFile($resolvedPackage);
-                }
-                else
-                {
-                    // Check if package is already imported before attempting to import
-                    if(isset(self::$importedPackages[$package]))
-                    {
-                        Logger::getLogger()?->debug(sprintf('Package already imported: %s', $package));
-                        return; // Package already imported, skip
-                    }
+                    // Resolve relative paths to absolute paths before checking if file exists
+                    $resolvedPackage = IO::isAbsolutePath($package) ? $package : IO::resolvePath($package);
                     
-                    Logger::getLogger()?->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
-                    $packageReader = self::importFromPackageManager($package, $version);
+                    if(IO::isFile($resolvedPackage))
+                    {
+                        Logger::getLogger()?->verbose(sprintf('Importing from file: %s', $resolvedPackage));
+                        $packageReader = self::importFromFile($resolvedPackage);
+                    }
+                    else
+                    {
+                        // Check if package is already imported before attempting to import
+                        if(isset(self::$importedPackages[$package]))
+                        {
+                            Logger::getLogger()?->debug(sprintf('Package already imported: %s', $package));
+                            return; // Package already imported, skip
+                        }
+                        
+                        Logger::getLogger()?->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
+                        $packageReader = self::importFromPackageManager($package, $version);
+                    }
                 }
+                catch(IOException $e)
+                {
+                    throw new OperationException(sprintf('Fatal error while reading the package %s: %s', $package, $e->getMessage()), $e->getCode(), $e);
+                }
+            }
 
-                $packageName = $packageReader->getAssembly()->getPackage();
-            }
-            catch(IOException $e)
-            {
-                throw new OperationException(sprintf('Fatal error while reading the package %s: %s', $package, $e->getMessage()), $e->getCode(), $e);
-            }
+            $packageName = $packageReader->getAssembly()->getPackage();
 
             // Check again with the actual package name (in case a file path was used)
             if(isset(self::$importedPackages[$packageName]))
