@@ -185,8 +185,16 @@
                 'skip-dependencies' => $skipDependencies,
                 'skip-repositories' => $skipRepositories,
                 'skip-extensions' => $skipExtensions,
-                'reinstall' => $reinstall
+                'reinstall' => $reinstall,
+                'yes' => $autoConfirm,
+                'skip-signature-check' => $argv['skip-signature-check'] ?? false
             ];
+
+            // Only pass --trust when given so NCC_TRUST=1 still applies otherwise
+            if(isset($argv['trust']))
+            {
+                $options['trust'] = true;
+            }
 
             foreach($allDependencies as $depString => $packageSource)
             {
