@@ -24,14 +24,15 @@
 
     enum PackageStructure : string
     {
-        case START_PACKAGE =    "\xA0";     // True start of the package, always followed by MAGIC_BYTES
+        case START_PACKAGE =    "\xA0"; // True start of the package, always followed by MAGIC_BYTES
         case MAGIC_BYTES =      "\x4E\x43\x43\x50\x4B\x47"; // NCCPKG, Always ends with TERMINATE
-        case PACKAGE_VERSION =  "\xA1";     // Start of the package version bytes
-        case HEADER =           "\xA2";     // Start of Header section
-        case ASSEMBLY =         "\xA3";     // Start of Assembly section
-        case EXECUTION_UNITS =  "\xA4";     // Used to define the start of execution units
-        case COMPONENTS =       "\xA5";     // Used to define the start of components
-        case RESOURCES =        "\xA6";     // Used to define the start of resources
+        case PACKAGE_VERSION =  "\xA1"; // Start of the package version bytes
+        case HEADER =           "\xA2"; // Start of Header section
+        case ASSEMBLY =         "\xA3"; // Start of Assembly section
+        case EXECUTION_UNITS =  "\xA4"; // Used to define the start of execution units
+        case COMPONENTS =       "\xA5"; // Used to define the start of components
+        case RESOURCES =        "\xA6"; // Used to define the start of resources
+        case SIGNATURES =       "\xA7"; // Optional signature trailer, placed after the final TERMINATE of the package
         case TERMINATE =        "\xE0\xE0"; // Ends the section definition
-        case SOFT_TERMINATE =   "\xE1";     // Ends the current subsection
+        case SOFT_TERMINATE =   "\xE1"; // Ends the current subsection
     }
