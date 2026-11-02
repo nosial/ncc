@@ -49,6 +49,7 @@
         private static ?RepositoryManager $systemRepositoryManager = null;
         private static ?AuthenticationManager $systemAuthenticationManager = null;
         private static ?AuthenticationManager $userAuthenticationManager = null;
+        private static bool $userLocationUnavailable = false;
 
         /**
          * Imports a package into the runtime, this method supports two ways of importing a method
@@ -74,6 +75,11 @@
                 Logger::getLogger()?->verbose(sprintf('Importing from PackageReader instance: %s', $package->getAssembly()->getPackage()));
                 $packageReader = $package;
             }
+            elseif(isset(self::$importedPackages[$package]))
+            {
+                Logger::getLogger()?->debug(sprintf('Package already imported: %s', $package));
+                return;
+            }
             else
             {
                 try
@@ -88,13 +94,6 @@
                     }
                     else
                     {
-                        // Check if package is already imported before attempting to import
-                        if(isset(self::$importedPackages[$package]))
-                        {
-                            Logger::getLogger()?->debug(sprintf('Package already imported: %s', $package));
-                            return; // Package already imported, skip
-                        }
-                        
                         Logger::getLogger()?->verbose(sprintf('Importing from package manager: %s@%s', $package, $version));
                         $packageReader = self::importFromPackageManager($package, $version);
                     }
@@ -320,7 +319,7 @@
             $systemPackagePath = self::getSystemPackageManager()->getPackagePath($package, $version);
             if($systemPackagePath === null)
             {
-                return self::getUserPackageManager()->getPackagePath($package, $version);
+                return self::getUserPackageManager()?->getPackagePath($package, $version);
             }
 
             return $systemPackagePath;
@@ -352,7 +351,7 @@
         {
             if(self::$userPackageManager === null)
             {
-                $userLocation = PathResolver::getUserLocation();
+                $userLocation = self::getUserLocation();
                 if($userLocation === null)
                 {
                     return null;
@@ -369,13 +368,44 @@
                 }
                 catch(IOException $e)
                 {
-                    // Silently fail and fall back to system-level package manager only
+                    self::$userLocationUnavailable = true;
                     Logger::getLogger()?->debug(sprintf('User package manager unavailable: %s', $e->getMessage()));
                     return null;
                 }
             }
 
             return self::$userPackageManager;
+        }
+
+        /**
+         * Returns the user-level location, or null when running as a system user, when the home directory cannot be
+         * resolved (e.g. php-fpm with clear_env) or when the location was already found to be unusable.
+         *
+         * @return string|null The user-level location or null if unavailable
+         */
+        private static function getUserLocation(): ?string
+        {
+            if(self::$userLocationUnavailable)
+            {
+                return null;
+            }
+
+            try
+            {
+                $userLocation = PathResolver::getUserLocation();
+            }
+            catch(\RuntimeException $e)
+            {
+                Logger::getLogger()?->debug(sprintf('User location unavailable: %s', $e->getMessage()));
+                $userLocation = null;
+            }
+
+            if($userLocation === null)
+            {
+                self::$userLocationUnavailable = true;
+            }
+
+            return $userLocation;
         }
 
         /**
@@ -431,7 +461,7 @@
         {
             if(self::$userRepositoryManager === null)
             {
-                $userLocation = PathResolver::getUserLocation();
+                $userLocation = self::getUserLocation();
                 if($userLocation === null)
                 {
                     return null;
@@ -448,7 +478,7 @@
                 }
                 catch(IOException $e)
                 {
-                    // Silently fail and fall back to system-level repository manager only
+                    self::$userLocationUnavailable = true;
                     Logger::getLogger()?->debug(sprintf('User repository manager unavailable: %s', $e->getMessage()));
                     return null;
                 }
@@ -510,7 +540,7 @@
         {
             if(self::$userAuthenticationManager === null)
             {
-                $userLocation = PathResolver::getUserLocation();
+                $userLocation = self::getUserLocation();
                 if($userLocation === null)
                 {
                     return null;
@@ -527,7 +557,7 @@
                 }
                 catch(IOException $e)
                 {
-                    // Silently fail and fall back to system-level authentication manager only
+                    self::$userLocationUnavailable = true;
                     Logger::getLogger()?->debug(sprintf('User authentication manager unavailable: %s', $e->getMessage()));
                     return null;
                 }
@@ -644,11 +674,6 @@
             if(IO::isFile($resolvedPackage))
             {
                 $packagePath = IO::getRealPath($resolvedPackage);
-                if($packagePath === null)
-                {
-                    throw new IOException($package, 'The specified package file does not exist');
-                }
-
                 Logger::getLogger()?->verbose(sprintf('Executing package from file: %s', $packagePath));
             }
             else
@@ -716,7 +741,7 @@
             {
                 Logger::getLogger()?->verbose(sprintf('Package found in user manager: %s@%s', $package, $version));
                 $packagePath = $userManager->getPackagePath($package, $version);
-                return self::importFromFileWithCache($packagePath);
+                return self::importFromFile($packagePath);
             }
 
             // Try system package manager
@@ -725,7 +750,7 @@
             {
                 Logger::getLogger()?->verbose(sprintf('Package found in system manager: %s@%s', $package, $version));
                 $packagePath = $systemManager->getPackagePath($package, $version);
-                return self::importFromFileWithCache($packagePath);
+                return self::importFromFile($packagePath);
             }
 
             // If exact version not found and not 'latest', try semver matching
@@ -740,14 +765,14 @@
                     if($userManager !== null && $userManager->entryExists($package, $satisfyingVersion))
                     {
                         $packagePath = $userManager->getPackagePath($package, $satisfyingVersion);
-                        return self::importFromFileWithCache($packagePath);
+                        return self::importFromFile($packagePath);
                     }
 
                     // Check system manager
                     if($systemManager->entryExists($package, $satisfyingVersion))
                     {
                         $packagePath = $systemManager->getPackagePath($package, $satisfyingVersion);
-                        return self::importFromFileWithCache($packagePath);
+                        return self::importFromFile($packagePath);
                     }
                 }
                 else
@@ -760,7 +785,9 @@
         }
 
         /**
-         * Constructs a PackageReader instance based off a package file on disk
+         * Constructs a PackageReader instance based off a package file on disk. The package metadata cache (APCu or
+         * the .cache file next to installed packages) is used when available, it is validated against the package
+         * file so a modified package is always parsed again.
          *
          * @param string $packagePath The file path to the package
          * @return PackageReader Returns the PackageReader
@@ -768,12 +795,7 @@
          */
         private static function importFromFile(string $packagePath): PackageReader
         {
-            // Initialize the StreamWrapper on first import
             $realPath = IO::getRealPath($packagePath);
-            if($realPath === null)
-            {
-                throw new IOException($packagePath, 'Package not found');
-            }
 
             if(!IO::isFile($realPath))
             {
@@ -785,36 +807,6 @@
                 throw new IOException($realPath, 'Package file is not readable');
             }
 
-            return new PackageReader($realPath);
-        }
-
-        /**
-         * Constructs a PackageReader instance with cache support for faster loading
-         *
-         * @param string $packagePath The file path to the package
-         * @return PackageReader Returns the PackageReader
-         * @throws IOException Thrown if the file cannot be read/found
-         */
-        private static function importFromFileWithCache(string $packagePath): PackageReader
-        {
-            // Initialize the StreamWrapper on first import
-            $realPath = IO::getRealPath($packagePath);
-            if($realPath === null)
-            {
-                throw new IOException($packagePath, 'Package not found');
-            }
-
-            if(!IO::isFile($realPath))
-            {
-                throw new IOException($realPath, 'Package path is not a file');
-            }
-
-            if(!IO::isReadable($realPath))
-            {
-                throw new IOException($realPath, 'Package file is not readable');
-            }
-
-            // Try to use cache for faster loading
             return new PackageReader($realPath, true);
         }
 
@@ -863,8 +855,23 @@
                 return;
             }
             
-            // Build a lowercase lookup map once for case-insensitive fallback matching,
-            // keeping the first mapping when multiple class names differ only by case
+            $optimizedPath = $packageReader->getOptimizedPath();
+            if($optimizedPath !== null)
+            {
+                $prefix = 'ncc://' . $packageName . '/';
+                $prefixLength = strlen($prefix);
+                $basePath = $optimizedPath . DIRECTORY_SEPARATOR;
+                foreach($autoloaderMapping as $mappedClass => $filePath)
+                {
+                    if(str_starts_with($filePath, $prefix))
+                    {
+                        $autoloaderMapping[$mappedClass] = $basePath . substr($filePath, $prefixLength);
+                    }
+                }
+
+                Logger::getLogger()?->verbose(sprintf('Using optimized installation for %s: %s', $packageName, $optimizedPath));
+            }
+
             $lowercaseMapping = [];
             foreach($autoloaderMapping as $mappedClass => $filePath)
             {
@@ -923,24 +930,16 @@
             // Get versions from user manager
             if($userManager !== null)
             {
-                $userEntries = $userManager->getEntries();
-                foreach($userEntries as $entry)
+                foreach($userManager->getAllVersions($package) as $entry)
                 {
-                    if($entry->getPackage() === $package)
-                    {
-                        $availableVersions[] = $entry->getVersion();
-                    }
+                    $availableVersions[] = $entry->getVersion();
                 }
             }
             
             // Get versions from system manager
-            $systemEntries = $systemManager->getEntries();
-            foreach($systemEntries as $entry)
+            foreach($systemManager->getAllVersions($package) as $entry)
             {
-                if($entry->getPackage() === $package)
-                {
-                    $availableVersions[] = $entry->getVersion();
-                }
+                $availableVersions[] = $entry->getVersion();
             }
             
             if(empty($availableVersions))
