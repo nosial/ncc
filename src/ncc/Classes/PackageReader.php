@@ -38,6 +38,7 @@
     use ncc\Objects\Package\ExecutionUnitReference;
     use ncc\Objects\Package\Header;
     use ncc\Objects\Package\PackageCacheData;
+    use ncc\Objects\Package\PackageSignature;
     use ncc\Objects\Package\ResourceReference;
     use ncc\Objects\PackageSource;
     use ncc\Objects\Project\Assembly;
@@ -45,6 +46,7 @@
     use ncc\Runtime;
     use RuntimeException;
     use Throwable;
+    use function msgpack_pack;
     use function msgpack_unpack;
 
     class PackageReader
@@ -60,6 +62,7 @@
         private string|false|null $optimizedPath = null;
         private $fileHandle;
         private int $startOffset;
+        private int $bodyEndOffset;
         private int $endOffset;
         private string $packageVersion;
         private Header $header;
@@ -70,6 +73,10 @@
         private array $componentReferences = [];
         /** @var array<string, ResourceReference> */
         private array $resourceReferences = [];
+        /** @var PackageSignature[] */
+        private array $signatures = [];
+        private ?string $signatureError = null;
+        private bool $signatureUnsupported = false;
 
         /**
          * Public constructor for the PackageReader class.
@@ -200,13 +207,23 @@
                 }
             }
 
-            // After reading all sections, check if we need to read the final TERMINATE
-            // The marker check above breaks on TERMINATE, so we need to consume it if present
+            // The marker check above breaks on the first byte of the final TERMINATE (collection sections leave it
+            // unread), consume the second byte so the offset points right after the package body
             if($marker === PackageStructure::TERMINATE->value[0])
             {
-                // Read the second byte of TERMINATE (it's \xE0\xE0)
-                fread($this->fileHandle, 1);
+                $position = ftell($this->fileHandle);
+                if(fread($this->fileHandle, 1) !== PackageStructure::TERMINATE->value[1])
+                {
+                    fseek($this->fileHandle, $position);
+                }
             }
+
+            // Save the end offset of the package body, this is what signatures cover
+            $this->bodyEndOffset = ftell($this->fileHandle);
+
+            // Read the optional signature trailer, older versions of ncc stop reading at the final TERMINATE and
+            // ignore it
+            $this->readSignatureTrailer();
 
             // Save the end offset - this is where the package ends
             $this->endOffset = ftell($this->fileHandle);
@@ -371,6 +388,124 @@
         public function getAssembly(): ?Assembly
         {
             return $this->assembly;
+        }
+
+        /**
+         * Gets the offset where the package starts within the file (non-zero when the package is embedded, eg; in an
+         * executable compiled with the php build type).
+         *
+         * @return int The start offset of the package.
+         */
+        public function getStartOffset(): int
+        {
+            return $this->startOffset;
+        }
+
+        /**
+         * Gets the offset right after the final TERMINATE of the package body, the body ranges from the start offset
+         * up to this offset and is what package signatures cover.
+         *
+         * @return int The end offset of the package body.
+         */
+        public function getBodyEndOffset(): int
+        {
+            return $this->bodyEndOffset;
+        }
+
+        /**
+         * Gets the offset where the package ends, including the optional signature trailer.
+         *
+         * @return int The end offset of the package.
+         */
+        public function getEndOffset(): int
+        {
+            return $this->endOffset;
+        }
+
+        /**
+         * Gets the signatures stored in the signature trailer of the package.
+         *
+         * @return PackageSignature[] The signatures, empty if the package is not signed.
+         */
+        public function getSignatures(): array
+        {
+            return $this->signatures;
+        }
+
+        /**
+         * Returns whether the package has a signature trailer, including one that could not be parsed or uses an
+         * unsupported format.
+         *
+         * @return bool True if the package has a signature trailer.
+         */
+        public function hasSignatureTrailer(): bool
+        {
+            return $this->endOffset > $this->bodyEndOffset;
+        }
+
+        /**
+         * Gets the error encountered while parsing the signature trailer, if any.
+         *
+         * @return string|null The error message, or null if the trailer is absent or valid.
+         */
+        public function getSignatureError(): ?string
+        {
+            return $this->signatureError;
+        }
+
+        /**
+         * Returns whether the signature trailer uses a format version this version of ncc does not support.
+         *
+         * @return bool True if the signature format is unsupported.
+         */
+        public function isSignatureUnsupported(): bool
+        {
+            return $this->signatureUnsupported;
+        }
+
+        /**
+         * Computes the digest of the package body (from the start offset up to the body end offset) by streaming it
+         * from the file, the package is never loaded into memory as a whole.
+         *
+         * @param string $algorithm The hashing algorithm to use.
+         * @return string The raw binary digest.
+         * @throws IOException If the package body cannot be read.
+         */
+        public function computeBodyDigest(string $algorithm=PackageSignature::DIGEST_SHA512): string
+        {
+            $handle = fopen($this->filePath, 'rb');
+            if($handle === false)
+            {
+                throw new IOException($this->filePath, 'Could not open the package file to compute its digest');
+            }
+
+            try
+            {
+                if(fseek($handle, $this->startOffset) !== 0)
+                {
+                    throw new IOException($this->filePath, 'Could not seek to the start of the package');
+                }
+
+                $context = hash_init($algorithm);
+                $remaining = $this->bodyEndOffset - $this->startOffset;
+                while($remaining > 0)
+                {
+                    $chunk = fread($handle, min(1048576, $remaining));
+                    if($chunk === false || $chunk === '')
+                    {
+                        throw new IOException($this->filePath, 'Unexpected end of file while computing the package digest');
+                    }
+
+                    hash_update($context, $chunk);
+                    $remaining -= strlen($chunk);
+                }
+
+                return hash_final($context, true);
+            }
+            finally
+            {
+                fclose($handle);
+            }
         }
 
         /**
@@ -928,6 +1063,7 @@
                 $peek = fread($this->fileHandle, 1);
                 if($this->isEndOfSection($peek))
                 {
+                    $this->unreadTerminate($peek);
                     break;
                 }
 
@@ -965,6 +1101,7 @@
                 $peek = $this->peekNextByte();
                 if($this->isEndOfSection($peek))
                 {
+                    $this->unreadTerminate($peek);
                     break;
                 }
 
@@ -1001,6 +1138,7 @@
                 $peek = $this->peekNextByte();
                 if($this->isEndOfSection($peek))
                 {
+                    $this->unreadTerminate($peek);
                     break;
                 }
 
@@ -1036,6 +1174,128 @@
         private function isEndOfSection(string|false $peek): bool
         {
             return $peek === false || $peek === '' || $peek === PackageStructure::TERMINATE->value[0];
+        }
+
+        /**
+         * Steps back over the first byte of a TERMINATE that ended a collection section, so the main loop reads the
+         * whole TERMINATE and the end offset of the package body is exact.
+         *
+         * @param string|false $peek The peeked byte that ended the section.
+         * @return void
+         */
+        private function unreadTerminate(string|false $peek): void
+        {
+            if($peek === PackageStructure::TERMINATE->value[0])
+            {
+                fseek($this->fileHandle, ftell($this->fileHandle) - 1);
+            }
+        }
+
+        /**
+         * Reads the optional signature trailer located right after the package body. The trailer has the same
+         * framing as the HEADER and ASSEMBLY sections: SIGNATURES [SIZE] SOFT_TERMINATE [DATA] TERMINATE, where DATA
+         * is a msgpack map {"version": 1, "signatures": [...]}.
+         *
+         * A trailer that cannot be parsed does not prevent the package from being read, it is recorded so that
+         * signature verification treats the package as tampered with.
+         *
+         * @return void
+         */
+        private function readSignatureTrailer(): void
+        {
+            $marker = fread($this->fileHandle, 1);
+            if($marker !== PackageStructure::SIGNATURES->value)
+            {
+                // No trailer (or unrelated trailing data), the package ends with its body
+                fseek($this->fileHandle, $this->bodyEndOffset);
+                return;
+            }
+
+            // Older versions of ncc read one byte past the package body when exporting a package (eg; while
+            // installing it), which leaves a lone SIGNATURES marker behind; that is not a signature trailer
+            if(fread($this->fileHandle, 1) === '')
+            {
+                Logger::getLogger()?->debug('Ignoring a lone SIGNATURES marker at the end of the package');
+                fseek($this->fileHandle, $this->bodyEndOffset);
+                return;
+            }
+            fseek($this->fileHandle, $this->bodyEndOffset + 1);
+
+            Logger::getLogger()?->debug('Reading SIGNATURES trailer');
+
+            try
+            {
+                $size = $this->readSizePrefix();
+                $this->expectSoftTerminate('signatures size');
+                $data = $size > 0 ? fread($this->fileHandle, $size) : '';
+                if($data === false || strlen($data) !== $size)
+                {
+                    throw new RuntimeException('Failed to read signatures data');
+                }
+                $this->expectTerminate('signatures data');
+
+                $payload = msgpack_unpack($data);
+                if(!is_array($payload) || !isset($payload['version']) || !is_int($payload['version']))
+                {
+                    throw new RuntimeException('The signatures data is not a valid signature block');
+                }
+
+                if($payload['version'] !== 1)
+                {
+                    Logger::getLogger()?->warning(sprintf('Unsupported signature block version %d in %s', $payload['version'], $this->filePath));
+                    $this->signatureUnsupported = true;
+                    return;
+                }
+
+                if(!isset($payload['signatures']) || !is_array($payload['signatures']) || !array_is_list($payload['signatures']))
+                {
+                    throw new RuntimeException('The signature block does not contain a list of signatures');
+                }
+
+                $signatures = [];
+                foreach($payload['signatures'] as $signature)
+                {
+                    if(!is_array($signature))
+                    {
+                        throw new RuntimeException('The signature block contains an invalid signature entry');
+                    }
+
+                    $signatures[] = PackageSignature::fromArray($signature);
+                }
+
+                $this->signatures = $signatures;
+                Logger::getLogger()?->verbose(sprintf('Loaded %d package signatures', count($this->signatures)));
+            }
+            catch(Throwable $e)
+            {
+                Logger::getLogger()?->warning(sprintf('The signature trailer of %s is corrupted: %s', $this->filePath, $e->getMessage()));
+                $this->signatures = [];
+                $this->signatureError = $e->getMessage();
+                fseek($this->fileHandle, 0, SEEK_END);
+            }
+        }
+
+        /**
+         * Builds the binary signature trailer for the given signatures, an empty list produces an empty string (no
+         * trailer)
+         *
+         * @param PackageSignature[] $signatures The signatures to encode
+         * @return string The binary signature trailer
+         */
+        public static function createSignatureTrailer(array $signatures): string
+        {
+            if(count($signatures) === 0)
+            {
+                return '';
+            }
+
+            $data = msgpack_pack([
+                'version' => 1,
+                'signatures' => array_values(array_map(fn(PackageSignature $signature) => $signature->toArray(), $signatures))
+            ]);
+
+            return PackageStructure::SIGNATURES->value . pack('P', strlen($data)) . PackageStructure::SOFT_TERMINATE->value .
+                $data . PackageStructure::TERMINATE->value;
         }
 
         /**
@@ -1174,7 +1434,11 @@
                 $this->executionUnitReferences,
                 $this->componentReferences,
                 $this->resourceReferences,
-                $optimizedPath
+                $optimizedPath,
+                $this->bodyEndOffset,
+                $this->signatures,
+                $this->signatureError,
+                $this->signatureUnsupported
             );
 
             IO::writeFile($cacheFilePath, serialize($cacheData));
@@ -1197,6 +1461,10 @@
         {
             $this->startOffset = $cacheData->getStartOffset();
             $this->endOffset = $cacheData->getEndOffset();
+            $this->bodyEndOffset = $cacheData->getBodyEndOffset();
+            $this->signatures = $cacheData->getSignatures();
+            $this->signatureError = $cacheData->getSignatureError();
+            $this->signatureUnsupported = $cacheData->isSignatureUnsupported();
             $this->packageVersion = $cacheData->getPackageVersion();
             $this->header = $cacheData->getHeader();
             $this->assembly = $cacheData->getAssembly();
