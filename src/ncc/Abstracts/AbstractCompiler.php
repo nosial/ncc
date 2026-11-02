@@ -36,6 +36,7 @@
     use ncc\Objects\Project;
     use ncc\Objects\Project\BuildConfiguration;
     use ncc\Objects\ResolvedDependency;
+    use ncc\Objects\Signing\SigningKey;
 
     abstract class AbstractCompiler
     {
@@ -79,6 +80,7 @@
         private array $packageDependencies;
         private bool $staticallyLinked;
         private string $buildNumber;
+        private ?SigningKey $signingKey = null;
 
         /**
          * AbstractCompiler constructor. This class is intended to be extended and usd to create different compilers,
@@ -295,6 +297,27 @@
         public function getBuildNumber(): string
         {
             return $this->buildNumber;
+        }
+
+        /**
+         * Returns the key the compiled ncc package is signed with, if any
+         *
+         * @return SigningKey|null The signing key, null if the package is not signed
+         */
+        public function getSigningKey(): ?SigningKey
+        {
+            return $this->signingKey;
+        }
+
+        /**
+         * Sets the key the compiled ncc package is signed with, compilers that do not produce an ncc package ignore it
+         *
+         * @param SigningKey|null $signingKey The signing key, null to not sign the package
+         * @return void
+         */
+        public function setSigningKey(?SigningKey $signingKey): void
+        {
+            $this->signingKey = $signingKey;
         }
 
         /**
