@@ -96,11 +96,23 @@
             return self::$isVerboseOrDebugMode;
         }
 
+        /**
+         * Outputs a message to the standard output followed by a newline.
+         *
+         * @param string $message The message to be printed.
+         * @return void
+         */
         public static function out(string $message): void
         {
             print($message . PHP_EOL);
         }
 
+        /**
+         * Displays an error message, optionally formatted with red color if ANSI colors are enabled.
+         *
+         * @param string $message The error message to display.
+         * @return void
+         */
         public static function error(string $message): void
         {
             if (self::$ansiColorsEnabled)
@@ -111,6 +123,12 @@
             self::out($message);
         }
 
+        /**
+         * Outputs a warning message. If ANSI colors are enabled, the message will be styled in yellow.
+         *
+         * @param string $message The warning message to display.
+         * @return void
+         */
         public static function warning(string $message): void
         {
             if (self::$ansiColorsEnabled)
@@ -121,6 +139,23 @@
             self::out($message);
         }
 
+        /**
+         * Returns whether the user can answer prompts, false when STDIN is not a terminal (eg; Docker builds, CI
+         * pipelines or piped input)
+         *
+         * @return bool True if STDIN is an interactive terminal
+         */
+        public static function isInteractive(): bool
+        {
+            return defined('STDIN') && function_exists('stream_isatty') && @stream_isatty(STDIN);
+        }
+
+        /**
+         * Displays a prompt message to the user and captures their input.
+         *
+         * @param string $prompt The message to display to the user.
+         * @return string The user input after trimming whitespace.
+         */
         public static function prompt(string $prompt): string
         {
             print($prompt);
@@ -128,19 +163,19 @@
         }
 
         /**
-         * Prompts the user for a password in a secure way (without echoing input).
-         * Tries multiple methods depending on platform and availability:
-         * 1. GUI dialogs (zenity, kdialog, osascript) if in graphical environment
-         * 2. Terminal-based secure input (stty on Unix, PowerShell on Windows)
-         * 3. Falls back to raw input if no secure method is available
+         * Retrieves a password securely using various input methods.
+         * This method tries to fetch the password from an environment variable,
+         * graphical input methods, or terminal-based input methods in sequence.
+         * It falls back to visible plain-text input if all other methods fail.
          *
-         * @param string $prompt The prompt message to display
-         * @return string The entered password
+         * @param string $prompt The prompt message displayed to the user.
+         * @param bool $useEnvironment Whether to attempt retrieving the password from the NCC_AUTH environment variable.
+         * @return string The entered password.
          */
-        public static function getPassword(string $prompt = 'Enter password: '): string
+        public static function getPassword(string $prompt = 'Enter password: ', bool $useEnvironment = true): string
         {
             // Check if the environment variable has the password
-            $envPassword = getenv('NCC_AUTH');
+            $envPassword = $useEnvironment ? getenv('NCC_AUTH') : false;
             if ($envPassword !== false)
             {
                 return $envPassword;
