@@ -21,6 +21,7 @@ capabilities to improve the development process of php projects.
       * [A4 - Execution Units](#a4---execution-units)
       * [A5 - Components](#a5---components)
       * [A6 - Resources](#a6---resources)
+      * [A7 - Signatures](#a7---signatures)
       * [Compression](#compression)
     * [Reading compiled ncc packages](#reading-compiled-ncc-packages)
     * [Filesystem Permissions](#filesystem-permissions)
@@ -54,6 +55,11 @@ capabilities to improve the development process of php projects.
     * [BuildConfiguration Object](#buildconfiguration-object)
   * [Building Projects](#building-projects)
     * [Other project commands](#other-project-commands)
+  * [Signing Packages](#signing-packages)
+    * [Signing keys](#signing-keys)
+    * [Signing a package](#signing-a-package)
+    * [Signing in CI and Docker](#signing-in-ci-and-docker)
+    * [Trusted keys](#trusted-keys)
   * [Repository Manager](#repository-manager)
     * [Adding a repository](#adding-a-repository)
     * [Deleting a repository](#deleting-a-repository)
@@ -61,6 +67,8 @@ capabilities to improve the development process of php projects.
   * [Package Manager](#package-manager)
     * [Remote Package Format](#remote-package-format)
     * [Installing a package](#installing-a-package)
+      * [Optimized installations](#optimized-installations)
+      * [Signature verification](#signature-verification)
     * [Uninstalling a package](#uninstalling-a-package)
     * [Listing installed packages](#listing-installed-packages)
 <!-- TOC -->
@@ -127,6 +135,7 @@ differance in it's hex values.
  - `A4` - Execution Units
  - `A5` - Components
  - `A6` - Resources
+ - `A7` - Signatures (optional, follows the end of the package)
 
 Each section contains ends in a termination byte which is `E0 E0` or `E1` for soft termination, the diffence between
 the two is normal termination (`EO EO`) means the entire section is ended, which is one of the `A*` sections above,
@@ -326,6 +335,48 @@ compression is enabled.
 
 Resources are also lazily loaded for efficiency. The package reader maintains an index of resource locations and only
 reads the actual data when the resource is requested by the application.
+
+#### A7 - Signatures
+
+The `A7` section is an optional signature trailer placed directly after the final terminator (`E0 E0`) of the package.
+Everything from `A0` up to and including that final terminator is the package body, which is what signatures cover, the
+trailer itself is never part of the signed data. Because the trailer follows the end of the package, versions of ncc
+that do not know about signatures stop reading at the final terminator and read signed packages normally.
+
+**Binary Structure:**
+
+```
+[A7][SIZE][E1][DATA][E0 E0]
+```
+
+`SIZE` is a little-endian 64-bit unsigned integer (the same size prefix used by the other sections) and `DATA` is a
+msgpack encoded map:
+
+| Key          | Type   | Description                                        |
+|--------------|--------|----------------------------------------------------|
+| `version`    | int    | The format version of the signature block, `1`     |
+| `signatures` | array  | A list of signatures, see below                    |
+
+Each signature is a map with the following keys:
+
+| Key          | Type   | Description                                                                                 |
+|--------------|--------|---------------------------------------------------------------------------------------------|
+| `type`       | string | `organization` or `author`, the identity the signature is made on behalf of                 |
+| `signer`     | string | The organization or author name, must equal the corresponding field of the package assembly |
+| `alg`        | string | The signature algorithm, `ed25519`                                                          |
+| `public_key` | binary | The 32-byte Ed25519 public key of the signer                                                |
+| `digest_alg` | string | The digest algorithm, `sha512`                                                              |
+| `digest`     | binary | The digest of the package body                                                              |
+| `signed_at`  | int    | Unix timestamp of when the signature was made (asserted by the signer, informational)       |
+| `signature`  | binary | The 64-byte Ed25519 signature                                                               |
+
+The signed message is the ASCII string `NCC-PACKAGE-SIGNATURE-V1` followed by a null byte and the msgpack encoding of
+the array `[type, signer, public_key, digest_alg, digest, signed_at]`. Including the signer and the public key in the
+signed message prevents a signature from being relabelled as another identity.
+
+A package may carry several signatures, eg; one by its author and one by its organization. Since each signature only
+covers the package body, adding or replacing a signature never invalidates the others. The key ID of a public key is the
+first 16 bytes of its SHA-256 hash in hexadecimal, it is displayed as a fingerprint in groups of four characters.
 
 #### Compression
 
@@ -992,6 +1043,109 @@ full list of options:
    and `bootstrap-<version>` (a DynamicalWeb web application with a local copy of that version of Bootstrap)
 
 
+## Signing Packages
+
+Signing a package lets anyone installing it verify that it was published by the organization or author declared in its
+assembly and that it was not altered after it was signed. Signatures are stored inside the package (see
+[A7 - Signatures](#a7---signatures)), no additional files are distributed with the package.
+
+A signature only proves which key signed a package, anyone can generate a key and declare any organization in their
+package's assembly. The link between a key and an identity comes from the [trusted keys](#trusted-keys) of the system
+installing the package: once a key is trusted for an identity, packages claiming that identity but signed by another key
+are refused, similar to how SSH remembers the keys of known hosts.
+
+Signing and verifying packages requires the PHP extension `sodium`, which is included in most PHP distributions and the
+official PHP Docker images.
+
+### Signing keys
+
+Signing keys are managed with the `ncc key` command. A key signs either as the `organization` or the `author` of a
+package, and its signer name must equal the `organization` or `author` field of the [assembly](#assembly-object) of
+every package it signs.
+
+```sh
+ncc key generate --name=nosial --type=organization --signer="Nosial"   # Prompts for a passphrase
+ncc key list                                                           # Lists the stored keys and their fingerprints
+ncc key export --name=nosial --public                                  # Prints the public key to publish
+ncc key export --name=nosial --output=nosial.key                       # Exports the encrypted private key
+ncc key import --name=nosial --input=nosial.key                        # Imports an exported key
+ncc key delete --name=nosial
+```
+
+Keys are stored in the `keys` directory of the user's ncc data directory (or the system data directory when running as
+root) with permissions that only allow the owner to read them. The secret key is always encrypted with the key's
+passphrase (Argon2id and XSalsa20-Poly1305). The exported form (`ncc-sk1:...`) is the same encrypted key, it can be
+backed up, imported on another machine or stored as a CI secret. A lost key or passphrase cannot be recovered.
+
+Publish the public key (or at least its fingerprint) somewhere your users can find it, eg; your project's README, so they
+can check the fingerprint they are asked to trust.
+
+### Signing a package
+
+A package can be signed while it is built or afterwards:
+
+```sh
+ncc build --configuration=release --sign=nosial               # Signs the package after it is compiled
+ncc sign --path=target/release/com.example.foo.ncc --key=nosial   # Signs an existing package
+```
+
+The key's identity is checked against the project's assembly before the build starts, so a mismatch fails early.
+Signing an already signed package adds a signature, this is how an organization counter-signs a package built and signed
+by its author. Signing a package again with the same key replaces that key's signature. Packages built with the `php`
+build type and the base package of the `frankenphp` build type are signed as well, the `phar` build type does not
+produce an ncc package and cannot be signed.
+
+### Signing in CI and Docker
+
+Automated environments provide the signing key through environment variables instead of key files:
+
+| Variable                     | Description                                                                                |
+|------------------------------|--------------------------------------------------------------------------------------------|
+| `NCC_SIGNING_KEY`            | The exported key (output of `ncc key export`) or the path to a file containing it          |
+| `NCC_SIGNING_KEY_PASSPHRASE` | The passphrase of the key                                                                  |
+
+When `NCC_SIGNING_KEY` is set, `ncc build` signs the package automatically (`--no-sign` disables this) and `ncc sign`
+uses it when `--key` is not given. An empty `NCC_SIGNING_KEY`, such as a secret that is not available to pull requests
+from forks, builds an unsigned package without failing. Without a terminal the passphrase must be provided through
+`NCC_SIGNING_KEY_PASSPHRASE`, ncc never waits for input in non-interactive sessions.
+
+The GitHub workflow generated by `ncc project --generate=github-ci` passes the repository secrets `NCC_SIGNING_KEY` and
+`NCC_SIGNING_KEY_PASSPHRASE` to its build jobs, the Dockerfiles generated by `--generate=dockerfile` and
+`--generate=dockerfile-fpm` accept them as BuildKit secrets so the key never becomes part of an image layer:
+
+```sh
+docker build --secret id=ncc_signing_key,env=NCC_SIGNING_KEY \
+             --secret id=ncc_signing_key_passphrase,env=NCC_SIGNING_KEY_PASSPHRASE .
+```
+
+### Trusted keys
+
+Keys are normally trusted while installing a package, see [Signature verification](#signature-verification). The
+`ncc trust` command manages the trusted keys directly:
+
+```sh
+ncc trust list                                                                     # Lists the trusted and revoked keys
+ncc trust add --type=organization --signer="Nosial" --public-key=<base64>          # Trusts a key
+ncc trust remove --key-id=<fingerprint>                                            # Forgets a key
+ncc trust revoke --key-id=<fingerprint>                                            # Refuses packages signed by a key
+```
+
+Trusted keys are stored in `trusted_keys.json` in the user's ncc data directory, or the system data directory when
+running as root (eg; inside Docker containers), keys trusted in the system data directory are trusted by every user.
+ncc also includes built-in keys that are trusted on every installation. Identities are compared case-insensitively when
+looking up trusted keys, so a package claiming `nosial` with an unknown key is treated as a key mismatch for `Nosial`
+rather than a new signer. A revoked key is refused for every identity and is never offered for trust again.
+
+To pin keys in a Docker image ahead of time, add them in the Dockerfile so they become part of the image:
+
+```dockerfile
+RUN ncc trust add --type=organization --signer="Example" --public-key=<base64>
+```
+
+Keys trusted at container runtime (eg; by an entrypoint installing packages) are lost when the container is recreated
+unless the ncc data directory is stored in a volume.
+
+
 ## Repository Manager
 
 Repository Management in ncc provides a way for ncc to be able to find packages from different sources, by default ncc 
@@ -1128,6 +1282,38 @@ files instead, which OPcache can cache. This is recommended for php-fpm deployme
    works, explicit `ncc://` paths keep working through the stream wrapper
  - Setting the environment variable `NCC_DISABLE_OPTIMIZED` makes ncc ignore optimized installations
  - The extracted files are uncompressed, so an optimized installation uses more disk space
+
+
+#### Signature verification
+
+Every package is verified before anything from it is acted upon (its repositories, dependencies or pre-install units).
+Signing is not enforced yet, unsigned packages are installed with a warning, but future versions of ncc will refuse to
+install unsigned packages.
+
+| Result                                        | Behavior                                                                            |
+|-----------------------------------------------|-------------------------------------------------------------------------------------|
+| Signed with a trusted key                     | Installed, the signer and fingerprint are printed                                   |
+| Not signed                                    | Installed with a deprecation warning                                                |
+| Signed with a key that is not trusted yet     | You are asked whether to trust the key, see below                                   |
+| Modified after signing, or a broken signature | Refused                                                                             |
+| Signer does not match the assembly            | Refused                                                                             |
+| Signed with a revoked key                     | Refused                                                                             |
+| Signer is trusted with a different key        | Refused, the package may have been tampered with or the publisher changed their key |
+| Cannot be verified (no `sodium` extension)    | Installed with a warning                                                            |
+
+When a package is signed by a key that is not trusted yet, ncc shows the signer and the key's fingerprint and asks
+whether to trust it: `y` trusts the key and remembers it for that signer, `n` (the default) installs the package
+without trusting the key, `a` aborts the installation. Only trust a key whose fingerprint you can confirm, eg; from the
+publisher's README. If a package carries several signatures and one of them is trusted, the others are not prompted for.
+
+ - `--trust` trusts such keys automatically, the same as answering `y` (setting `NCC_TRUST=1` does the same, which is
+   useful for Docker entrypoints)
+ - `--skip-signature-check` installs packages that would be refused (not recommended)
+ - In non-interactive sessions (no terminal, or `--yes`) there is no prompt, the package is installed without trusting
+   the key unless `--trust` is used. `--yes` never trusts keys by itself
+ - `--trust` never overrides a refusal, it only answers the question of whether to trust a key that is not trusted yet
+ - The same options apply to `ncc project install`
+ - Packages built from source while installing (eg; from packagist) are unsigned
 
 
 ### Uninstalling a package
