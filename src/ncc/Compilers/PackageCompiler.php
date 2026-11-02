@@ -27,6 +27,7 @@
     use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
+    use ncc\Classes\PackageSigner;
     use ncc\Classes\PackageWriter;
     use ncc\Enums\ExecutionUnitType;
     use ncc\Enums\WritingMode;
@@ -411,6 +412,17 @@
                         Logger::getLogger()?->verbose(sprintf('Resources section completed (%d resources)', $resourceCount));
                         break;
                 }
+            }
+
+            if($this->getSigningKey() !== null)
+            {
+                if($progressCallback !== null)
+                {
+                    $progressCallback($totalStages, $totalStages, 'Signing package');
+                }
+
+                $signature = PackageSigner::sign($this->getOutputPath(), $this->getSigningKey());
+                Logger::getLogger()?->verbose(sprintf('Signed package as %s (%s)', $signature->describeSigner(), $signature->getFingerprint()));
             }
 
             Logger::getLogger()?->verbose(sprintf('Package compilation completed: %s', $this->getOutputPath()));
