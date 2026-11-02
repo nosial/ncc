@@ -268,12 +268,7 @@
             }
             else
             {
-                $outputPath = IO::getRealPath($outputPath);
-                if($outputPath === null)
-                {
-                    Console::error("The specified output path does not exist");
-                    return 1;
-                }
+                $outputPath = Helper::resolvePath($outputPath) ?? getcwd() . DIRECTORY_SEPARATOR . 'vendor';
             }
 
             // Create vendor directory if it doesn't exist
