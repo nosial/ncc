@@ -28,8 +28,8 @@
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\fslib\IO;
     use ncc\Libraries\fslib\IOException;
-    use ncc\Classes\ApcuCache;
     use ncc\Libraries\semver\VersionParser;
+    use ncc\Objects\Package\PackageCacheData;
     use ncc\Objects\PackageLockEntry;
     use ncc\Runtime;
 
@@ -41,6 +41,8 @@
          * @var PackageLockEntry[]
          */
         private array $entries;
+        /** @var array<string, PackageLockEntry[]>|null Entries grouped by package name, built on demand */
+        private ?array $packageIndex = null;
         private bool $modified;
         private bool $readOnly;
         private bool $autoSave;
@@ -102,6 +104,24 @@
          */
         private function loadLockFile(): void
         {
+            $apcuKey = null;
+            $fingerprint = null;
+            if(ApcuCache::isAvailable())
+            {
+                $fingerprint = PackageCacheData::computeFingerprint($this->packageLockPath);
+                if($fingerprint !== null)
+                {
+                    $apcuKey = 'lock_' . hash('sha1', $this->packageLockPath);
+                    $cached = ApcuCache::get($apcuKey);
+                    if(is_array($cached) && ($cached['fingerprint'] ?? null) === $fingerprint && is_array($cached['entries'] ?? null))
+                    {
+                        $this->entries = $cached['entries'];
+                        Logger::getLogger()?->debug(sprintf('Loaded %d package entries from APCu lock cache', count($this->entries)));
+                        return;
+                    }
+                }
+            }
+
             Logger::getLogger()?->debug('Parsing package lock file');
             $content = IO::readFile($this->packageLockPath);
 
@@ -145,6 +165,30 @@
             }
             
             Logger::getLogger()?->verbose(sprintf('Loaded %d package entries from lock file', count($this->entries)));
+
+            if($apcuKey !== null)
+            {
+                ApcuCache::set($apcuKey, ['fingerprint' => $fingerprint, 'entries' => $this->entries]);
+            }
+        }
+
+        /**
+         * Returns the package entries grouped by package name, the index is rebuilt after entries change
+         *
+         * @return array<string, PackageLockEntry[]> The entries grouped by package name
+         */
+        private function getPackageIndex(): array
+        {
+            if($this->packageIndex === null)
+            {
+                $this->packageIndex = [];
+                foreach($this->entries as $entry)
+                {
+                    $this->packageIndex[$entry->getPackage()][] = $entry;
+                }
+            }
+
+            return $this->packageIndex;
         }
 
         /**
@@ -197,14 +241,11 @@
 
             $latestEntry = null;
 
-            foreach($this->entries as $entry)
+            foreach($this->getPackageIndex()[$packageName] ?? [] as $entry)
             {
-                if($entry->getPackage() === $packageName)
+                if($latestEntry === null || version_compare($entry->getVersion(), $latestEntry->getVersion(), '>'))
                 {
-                    if($latestEntry === null || version_compare($entry->getVersion(), $latestEntry->getVersion(), '>'))
-                    {
-                        $latestEntry = $entry;
-                    }
+                    $latestEntry = $entry;
                 }
             }
 
@@ -281,25 +322,22 @@
                 $normalizedRequestedVersion = $versionParser->normalize($version);
                 
                 // Check all versions of this package
-                foreach($this->entries as $key => $packageEntry)
+                foreach($this->getPackageIndex()[$packageName] ?? [] as $packageEntry)
                 {
-                    if($packageEntry->getPackage() === $packageName)
+                    try
                     {
-                        try
+                        $normalizedInstalledVersion = $versionParser->normalize($packageEntry->getVersion());
+
+                        // Compare normalized versions
+                        if($normalizedRequestedVersion === $normalizedInstalledVersion)
                         {
-                            $normalizedInstalledVersion = $versionParser->normalize($packageEntry->getVersion());
-                            
-                            // Compare normalized versions
-                            if($normalizedRequestedVersion === $normalizedInstalledVersion)
-                            {
-                                return $packageEntry;
-                            }
+                            return $packageEntry;
                         }
-                        catch(Exception $e)
-                        {
-                            // Skip invalid versions
-                            continue;
-                        }
+                    }
+                    catch(Exception $e)
+                    {
+                        // Skip invalid versions
+                        continue;
                     }
                 }
             }
@@ -324,17 +362,7 @@
                 return [];
             }
 
-            $results = [];
-
-            foreach($this->entries as $entry)
-            {
-                if($entry->getPackage() === $packageName)
-                {
-                    $results[] = $entry;
-                }
-            }
-
-            return $results;
+            return $this->getPackageIndex()[$packageName] ?? [];
         }
 
         /**
@@ -397,6 +425,7 @@
             ]);
 
             $this->entries[(string)$entry] = $entry;
+            $this->packageIndex = null;
             $this->modified = true;
             
             Logger::getLogger()?->verbose(sprintf('Package entry added: %s', (string)$entry));
@@ -430,6 +459,7 @@
             if(isset($this->entries[$key]))
             {
                 unset($this->entries[$key]);
+                $this->packageIndex = null;
                 $this->modified = true;
                 if($this->autoSave && $this->modified && !$this->readOnly)
                 {
@@ -474,7 +504,7 @@
             Logger::getLogger()?->verbose(sprintf('Installing package: %s=%s', $packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()));
             
             // If the 'reinstall' option isn't set, we check if the pcakage is already installed
-            if(!isset($options['reinstall']) && Runtime::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
+            if(empty($options['reinstall']) && Runtime::packageInstalled($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion()))
             {
                 Logger::getLogger()?->debug('Package already installed and reinstall not requested');
                 throw new OperationException(sprintf('Cannot install "%s" because the package is already installed', $packageReader->getAssembly()->getPackage()));
@@ -498,6 +528,9 @@
                 IO::delete($packageInstallationPath, false);
             }
 
+            // Remove the cache file and optimized installation of a previous installation, they are regenerated below
+            self::removeInstallationArtifacts($packageInstallationPath);
+
             Logger::getLogger()?->verbose('Exporting package to installation path');
             $packageReader->exportPackage($packageInstallationPath); // Export (ONLY) the package to a file
             // The reason we don't copy the file directly is because the package could be embedded into another file,
@@ -507,9 +540,16 @@
             try
             {
                 Logger::getLogger()?->debug('Creating cache file for faster imports');
-                // The cache is built from the installed file so its fingerprint and offsets
-                // match the file that is read on subsequent imports
-                (new PackageReader($packageInstallationPath))->exportCache($packageInstallationPath . '.cache');
+                $installedReader = new PackageReader($packageInstallationPath);
+                $optimizedPath = null;
+
+                if(!empty($options['optimized']))
+                {
+                    Logger::getLogger()?->verbose('Creating optimized installation');
+                    $optimizedPath = self::createOptimizedInstallation($installedReader, $packageInstallationPath);
+                }
+
+                $installedReader->exportCache($packageInstallationPath . '.cache', $optimizedPath);
             }
             catch(Exception $e)
             {
@@ -521,7 +561,7 @@
             $this->addEntry($packageReader); // Finally add the entry to the package manager
             
             // Handle symlink creation if this is a system installation
-            if (Runtime::isSystemUser() && !$options['no-symlink'])
+            if (Runtime::isSystemUser() && empty($options['no-symlink']))
             {
                 try
                 {
@@ -654,6 +694,9 @@
                     IO::delete($packagePath, false);
                 }
 
+                // Remove the cache file and the optimized installation if present
+                self::removeInstallationArtifacts($packagePath);
+
                 // Remove the entry from the lock file
                 if($this->removeEntry($package, $entry->getVersion()))
                 {
@@ -662,6 +705,97 @@
             }
 
             return $removedEntries;
+        }
+
+        /**
+         * Returns the path of the optimized installation directory of an installed package file
+         *
+         * @param string $packagePath The path to the installed package file
+         * @return string The path to the optimized installation directory
+         */
+        public static function getOptimizedInstallationPath(string $packagePath): string
+        {
+            return $packagePath . PackageReader::OPTIMIZED_SUFFIX;
+        }
+
+        /**
+         * Extracts the installed package to a directory next to it so that its source files can be loaded from the
+         * filesystem (and therefore cached by OPcache) instead of through the ncc:// stream wrapper. The package is
+         * extracted to a temporary directory first and moved into place once complete, the marker file containing the
+         * SHA-1 of the package is written last so that a partial extraction is never used by the runtime.
+         *
+         * @param PackageReader $packageReader The reader of the installed package file
+         * @param string $packagePath The path to the installed package file
+         * @return string|null The path to the optimized installation, or null if it could not be created
+         */
+        private static function createOptimizedInstallation(PackageReader $packageReader, string $packagePath): ?string
+        {
+            $optimizedPath = self::getOptimizedInstallationPath($packagePath);
+            $temporaryPath = $optimizedPath . '.tmp-' . bin2hex(random_bytes(4));
+
+            try
+            {
+                $sha1 = hash_file('sha1', $packagePath);
+                if($sha1 === false)
+                {
+                    throw new IOException($packagePath, 'Could not compute SHA1 hash of package file');
+                }
+
+                $packageReader->extractContents($temporaryPath);
+                IO::writeFile($temporaryPath . DIRECTORY_SEPARATOR . PackageReader::OPTIMIZED_MARKER, $sha1);
+
+                if(IO::exists($optimizedPath))
+                {
+                    IO::delete($optimizedPath, true);
+                }
+
+                if(!@rename($temporaryPath, $optimizedPath))
+                {
+                    throw new IOException($optimizedPath, 'Failed to move the optimized installation into place');
+                }
+
+                Logger::getLogger()?->verbose(sprintf('Created optimized installation at: %s', $optimizedPath));
+                return $optimizedPath;
+            }
+            catch(Exception $e)
+            {
+                // The optimized installation is not critical, the package is imported through ncc:// without it
+                Logger::getLogger()?->warning(sprintf('Failed to create optimized installation: %s', $e->getMessage()));
+
+                try
+                {
+                    if(IO::exists($temporaryPath))
+                    {
+                        IO::delete($temporaryPath, true);
+                    }
+                }
+                catch(Exception $cleanupException)
+                {
+                    Logger::getLogger()?->debug(sprintf('Failed to clean up %s: %s', $temporaryPath, $cleanupException->getMessage()));
+                }
+
+                return null;
+            }
+        }
+
+        /**
+         * Removes the cache file and the optimized installation that belong to an installed package file
+         *
+         * @param string $packagePath The path to the installed package file
+         * @throws IOException If the files cannot be removed
+         */
+        private static function removeInstallationArtifacts(string $packagePath): void
+        {
+            if(IO::exists($packagePath . '.cache'))
+            {
+                IO::delete($packagePath . '.cache', false);
+            }
+
+            $optimizedPath = self::getOptimizedInstallationPath($packagePath);
+            if(IO::exists($optimizedPath))
+            {
+                IO::delete($optimizedPath, true);
+            }
         }
 
         /**
