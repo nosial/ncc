@@ -46,6 +46,8 @@ target: clean
 	make target/Autoloader.php
 	echo $(VERSION) > $(TARGET_BUILD)/VERSION
 	echo $(BUILD) > $(TARGET_BUILD)/BUILD
+	php -r 'file_put_contents($$argv[1], "<?php return " . var_export(["version" => $$argv[2], "build" => $$argv[3]], true) . ";\n");' \
+		$(TARGET_BUILD)/version.php "$(VERSION)" "$(BUILD)"
 
 target/Autoloader.php:
 	php -r " \
