@@ -29,6 +29,27 @@
     class Helper
     {
         /**
+         * Resolves a path given on the command line to an absolute path based on the current working directory.
+         *
+         * This must be used for every user supplied path before it is checked or accessed, when ncc runs as a phar
+         * the phar extension intercepts filesystem functions such as is_file() and file_exists() and resolves relative
+         * paths against the contents of the phar archive instead of the current working directory, causing relative
+         * paths to files that exist to be reported as missing.
+         *
+         * @param string|null $path The path given on the command line
+         * @return string|null The absolute path, or null if no path (or an empty path) was given
+         */
+        public static function resolvePath(?string $path): ?string
+        {
+            if($path === null || trim($path) === '')
+            {
+                return null;
+            }
+
+            return IO::resolvePath($path);
+        }
+
+        /**
          * Resolves the project.yml/project.yaml configuration path with the given project path input
          *
          * @param string|null $projectPath The project path input, if the input points to the project configuration then the same value would be returned
