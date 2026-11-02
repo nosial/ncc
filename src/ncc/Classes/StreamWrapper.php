@@ -91,6 +91,8 @@
         private static ?string $pendingDecompressedKey = null;
         /** @var string|null Data decompressed by url_stat(), kept so the following stream_open() doesn't inflate it again */
         private static ?string $pendingDecompressedData = null;
+        /** @var array<string, array<string, true>> Cache of the directories contained in each package (package file => directory set) */
+        private static array $directoryIndex = [];
 
         /**
          * Registers the ncc:// stream wrapper.
@@ -370,22 +372,7 @@
                 $size = strlen($this->data);
             }
 
-            // Return minimal stat array
-            return [
-                'dev' => 0,
-                'ino' => 0,
-                'mode' => 0100444, // Regular file, read-only
-                'nlink' => 1,
-                'uid' => 0,
-                'gid' => 0,
-                'rdev' => 0,
-                'size' => $size,
-                'atime' => 0,
-                'mtime' => 0,
-                'ctime' => 0,
-                'blksize' => self::READ_BUFFER_SIZE,
-                'blocks' => ceil($size / 512),
-            ];
+            return self::buildStat($size, false);
         }
 
         /**
@@ -420,60 +407,38 @@
 
             $packageReader = Runtime::getImportedPackage($packageName);
 
-            // Handle package-only reference
-            $size = 0;
             if ($isPackageOnly)
             {
-                $size = 0; // Empty content for package-only reference
+                return self::buildStat(0, true);
             }
-            else
+
+            $reference = $packageReader->find($resourcePath);
+            if ($reference === null)
             {
-                // Find the resource reference
-                $reference = $packageReader->find($resourcePath);
-                if ($reference === null)
-                {
-                    return false;
-                }
-                // If compressed, report decompressed size for PHP's require/include to work correctly
-                // Otherwise use stored size to avoid unnecessary decompression overhead
-                if ($packageReader->getHeader()->isCompressed())
-                {
-                    $sizeKey = self::getSizeCacheKey($packageReader, $reference);
-                    if (!isset(self::$decompressedSizes[$sizeKey]))
-                    {
-                        $data = $packageReader->read($reference);
-                        self::$decompressedSizes[$sizeKey] = is_string($data) ? strlen($data) : 0;
-
-                        if (is_string($data))
-                        {
-                            self::$pendingDecompressedKey = $sizeKey;
-                            self::$pendingDecompressedData = $data;
-                        }
-                    }
-                    $size = self::$decompressedSizes[$sizeKey];
-                }
-                else
-                {
-                    $size = $reference->getSize();
-                }
+                return self::isPackageDirectory($packageReader, $resourcePath) ? self::buildStat(0, true) : false;
             }
 
-            // Return minimal stat array
-            return [
-                'dev' => 0,
-                'ino' => 0,
-                'mode' => 0100444, // Regular file, read-only
-                'nlink' => 1,
-                'uid' => 0,
-                'gid' => 0,
-                'rdev' => 0,
-                'size' => $size,
-                'atime' => 0,
-                'mtime' => 0,
-                'ctime' => 0,
-                'blksize' => self::READ_BUFFER_SIZE,
-                'blocks' => ceil($size / 512),
-            ];
+            // If compressed, report decompressed size for PHP's require/include to work correctly
+            // Otherwise use stored size to avoid unnecessary decompression overhead
+            if ($packageReader->getHeader()->isCompressed())
+            {
+                $sizeKey = self::getSizeCacheKey($packageReader, $reference);
+                if (!isset(self::$decompressedSizes[$sizeKey]))
+                {
+                    $data = $packageReader->read($reference);
+                    self::$decompressedSizes[$sizeKey] = is_string($data) ? strlen($data) : 0;
+
+                    if (is_string($data))
+                    {
+                        self::$pendingDecompressedKey = $sizeKey;
+                        self::$pendingDecompressedData = $data;
+                    }
+                }
+
+                return self::buildStat(self::$decompressedSizes[$sizeKey], false);
+            }
+
+            return self::buildStat($reference->getSize(), false);
         }
 
         /**
@@ -670,8 +635,18 @@
             $packageReader = Runtime::getImportedPackage($packageName);
 
             // Normalize the resource path (remove trailing slashes)
-            $resourcePath = rtrim($resourcePath, '/');
+            $resourcePath = $isPackageOnly ? '' : rtrim($resourcePath, '/');
             $searchPrefix = $resourcePath === '' ? '' : $resourcePath . '/';
+
+            // Only directories can be opened, fail like a real filesystem would for files and missing paths
+            if ($resourcePath !== '' && !self::isPackageDirectory($packageReader, $resourcePath))
+            {
+                if ($options & STREAM_REPORT_ERRORS)
+                {
+                    trigger_error("Directory not found: $resourcePath in package $packageName", E_USER_WARNING);
+                }
+                return false;
+            }
 
             // Get all references and filter those that match the directory path
             $allReferences = $packageReader->getAllReferences();
@@ -697,11 +672,10 @@
                     }
                     else
                     {
-                        // File in subdirectory - add the subdirectory name only once
                         $dirName = substr($relativePath, 0, $slashPos);
                         if (!isset($seenDirs[$dirName]))
                         {
-                            $entries[] = $dirName . '/';
+                            $entries[] = $dirName;
                             $seenDirs[$dirName] = true;
                         }
                     }
@@ -811,6 +785,76 @@
         private static function getSizeCacheKey(PackageReader $packageReader, ReferenceInterface $reference): string
         {
             return $packageReader->getFilePath() . "\0" . get_class($reference) . "\0" . $reference->getName();
+        }
+
+        /**
+         * Determines whether the given path is a directory inside the package, a directory exists when at least
+         * one reference in the package is located beneath it. The set of directories is computed once per package.
+         *
+         * @param PackageReader $packageReader The package reader to check
+         * @param string $path The normalized resource path (without leading or trailing slashes)
+         * @return bool True if the path is a directory in the package, false otherwise
+         */
+        private static function isPackageDirectory(PackageReader $packageReader, string $path): bool
+        {
+            $path = trim($path, '/');
+            if ($path === '')
+            {
+                return true;
+            }
+
+            $key = $packageReader->getFilePath();
+            if (!isset(self::$directoryIndex[$key]))
+            {
+                $directories = [];
+                foreach ($packageReader->getAllReferences() as $reference)
+                {
+                    $name = $reference->getName();
+                    $slashPos = strrpos($name, '/');
+                    while ($slashPos !== false)
+                    {
+                        $name = substr($name, 0, $slashPos);
+                        if (isset($directories[$name]))
+                        {
+                            // All parent directories have already been registered
+                            break;
+                        }
+
+                        $directories[$name] = true;
+                        $slashPos = strrpos($name, '/');
+                    }
+                }
+
+                self::$directoryIndex[$key] = $directories;
+            }
+
+            return isset(self::$directoryIndex[$key][$path]);
+        }
+
+        /**
+         * Builds a minimal stat array for a read-only file or directory.
+         *
+         * @param int $size The size of the file in bytes (0 for directories)
+         * @param bool $isDirectory True to describe a directory, false to describe a regular file
+         * @return array The stat array
+         */
+        private static function buildStat(int $size, bool $isDirectory): array
+        {
+            return [
+                'dev' => 0,
+                'ino' => 0,
+                'mode' => $isDirectory ? 0040555 : 0100444,
+                'nlink' => 1,
+                'uid' => 0,
+                'gid' => 0,
+                'rdev' => 0,
+                'size' => $size,
+                'atime' => 0,
+                'mtime' => 0,
+                'ctime' => 0,
+                'blksize' => self::READ_BUFFER_SIZE,
+                'blocks' => intdiv($size + 511, 512),
+            ];
         }
 
         /**
