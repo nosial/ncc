@@ -50,23 +50,18 @@
         // Register the ncc:// stream wrapper
         StreamWrapper::register();
 
-        if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION'))
+        $nccVersionInfo = is_file(__DIR__ . DIRECTORY_SEPARATOR . 'version.php') ? (require __DIR__ . DIRECTORY_SEPARATOR . 'version.php') : null;
+        if(is_array($nccVersionInfo) && isset($nccVersionInfo['version'], $nccVersionInfo['build']))
         {
-            define('__NCC_VERSION__', trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION')));
+            define('__NCC_VERSION__', $nccVersionInfo['version']);
+            define('__NCC_BUILD__', $nccVersionInfo['build']);
         }
         else
         {
-            define('__NCC_VERSION__', 'unknown');
+            define('__NCC_VERSION__', file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION') ? trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'VERSION')) : 'unknown');
+            define('__NCC_BUILD__', file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD') ? trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD')) : 'unknown');
         }
-
-        if(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD'))
-        {
-            define('__NCC_BUILD__', trim(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'BUILD')));
-        }
-        else
-        {
-            define('__NCC_BUILD__', 'unknown');
-        }
+        unset($nccVersionInfo);
 
         // Define the core methods
         if(!function_exists('import'))
