@@ -62,7 +62,18 @@
                 throw new InvalidArgumentException('Authentication data must contain a type field');
             }
 
-            return match(AuthenticationType::from($data['type']))
+            $type = match(true)
+            {
+                is_int($data['type']) => AuthenticationType::tryFrom($data['type']),
+                is_string($data['type']) && ctype_digit($data['type']) => AuthenticationType::tryFrom((int)$data['type']),
+                default => null
+            };
+            if($type === null)
+            {
+                throw new InvalidArgumentException(sprintf('Unknown authentication type "%s"', is_scalar($data['type']) ? $data['type'] : get_debug_type($data['type'])));
+            }
+
+            return match($type)
             {
                 AuthenticationType::USERNAME_PASSWORD => UsernamePassword::fromArray($data),
                 AuthenticationType::ACCESS_TOKEN => AccessToken::fromArray($data),
