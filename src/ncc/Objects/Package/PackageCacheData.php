@@ -38,13 +38,10 @@
      */
     class PackageCacheData
     {
-        /** Cache format version – bump when the structure changes to force re-generation. */
-        public const CACHE_VERSION = 3;
+        public const int CACHE_VERSION = 3;
 
         private int $version;
-        /** SHA-1 hex digest of the package file at cache-creation time. */
         private string $fileSha1;
-        /** Stat-based fingerprint of the package file at cache-creation time, see computeFingerprint(). */
         private ?string $fileFingerprint;
         private int $startOffset;
         private int $endOffset;
@@ -57,58 +54,124 @@
         private array $componentReferences;
         /** @var array<string, ResourceReference> */
         private array $resourceReferences;
+        private ?string $optimizedPath = null;
 
-        public function __construct(
-            string   $fileSha1,
-            ?string  $fileFingerprint,
-            int      $startOffset,
-            int      $endOffset,
-            string   $packageVersion,
-            Header   $header,
-            Assembly $assembly,
-            array    $executionUnitReferences,
-            array    $componentReferences,
-            array    $resourceReferences
+
+        /**
+         * Constructor method for initializing the object with file metadata, package details, and component references.
+         *
+         * @param string $fileSha1 The SHA-1 hash of the file.
+         * @param string|null $fileFingerprint An optional unique fingerprint for the file.
+         * @param int $startOffset The starting byte offset of the file.
+         * @param int $endOffset The ending byte offset of the file.
+         * @param string $packageVersion The version of the package.
+         * @param Header $header The header metadata of the package.
+         * @param Assembly $assembly The assembly associated with the file.
+         * @param array $executionUnitReferences An array of execution unit references.
+         * @param array $componentReferences An array of component references.
+         * @param array $resourceReferences An array of resource references.
+         * @param string|null $optimizedPath The optional optimized path for the file.
+         *
+         * @return void
+         */
+        public function __construct(string $fileSha1, ?string $fileFingerprint, int $startOffset, int  $endOffset, string $packageVersion, Header $header,
+            Assembly $assembly, array $executionUnitReferences, array $componentReferences, array $resourceReferences, ?string $optimizedPath = null
         )
         {
-            $this->version                  = self::CACHE_VERSION;
-            $this->fileSha1                 = $fileSha1;
-            $this->fileFingerprint          = $fileFingerprint;
-            $this->startOffset              = $startOffset;
-            $this->endOffset                = $endOffset;
-            $this->packageVersion           = $packageVersion;
-            $this->header                   = $header;
-            $this->assembly                 = $assembly;
-            $this->executionUnitReferences  = $executionUnitReferences;
-            $this->componentReferences      = $componentReferences;
-            $this->resourceReferences       = $resourceReferences;
+            $this->version = self::CACHE_VERSION;
+            $this->fileSha1 = $fileSha1;
+            $this->fileFingerprint = $fileFingerprint;
+            $this->startOffset = $startOffset;
+            $this->endOffset = $endOffset;
+            $this->packageVersion = $packageVersion;
+            $this->header = $header;
+            $this->assembly = $assembly;
+            $this->executionUnitReferences = $executionUnitReferences;
+            $this->componentReferences = $componentReferences;
+            $this->resourceReferences = $resourceReferences;
+            $this->optimizedPath = $optimizedPath;
         }
 
+        /**
+         * Retrieves the optimized path associated with the file, if available.
+         *
+         * @return string|null The optimized path, or null if not set.
+         */
+        public function getOptimizedPath(): ?string
+        {
+            return $this->optimizedPath;
+        }
+
+        /**
+         * Sets the optimized path for the file.
+         *
+         * @param string|null $optimizedPath The optional optimized path to be set for the file.
+         *
+         * @return void
+         */
+        public function setOptimizedPath(?string $optimizedPath): void
+        {
+            $this->optimizedPath = $optimizedPath;
+        }
+
+        /**
+         * Retrieves the current version of the object.
+         *
+         * @return int The version of the object.
+         */
         public function getVersion(): int
         {
             return $this->version;
         }
 
+        /**
+         * Retrieves the SHA-1 hash of the file.
+         *
+         * @return string The SHA-1 hash of the file.
+         */
         public function getFileSha1(): string
         {
             return $this->fileSha1;
         }
 
+        /**
+         * Sets the SHA-1 hash of the file.
+         *
+         * @param string $fileSha1 The SHA-1 hash of the file.
+         * @return void
+         */
         public function setFileSha1(string $fileSha1): void
         {
             $this->fileSha1 = $fileSha1;
         }
 
+        /**
+         * Retrieves the fingerprint of the file.
+         *
+         * @return string|null The fingerprint of the file, or null if not set.
+         */
         public function getFileFingerprint(): ?string
         {
             return $this->fileFingerprint;
         }
 
+        /**
+         * Sets the fingerprint of the file.
+         *
+         * @param string|null $fileFingerprint The fingerprint of the file or null if not specified.
+         * @return void
+         */
         public function setFileFingerprint(?string $fileFingerprint): void
         {
             $this->fileFingerprint = $fileFingerprint;
         }
 
+        /**
+         * Computes a unique fingerprint for a file based on its metadata.
+         *
+         * @param string $filePath The path to the file for which the fingerprint is computed.
+         * @return string|null The computed fingerprint as a string, or null if the file metadata could not be retrieved.
+         */
         public static function computeFingerprint(string $filePath): ?string
         {
             clearstatcache(true, $filePath);
@@ -121,58 +184,115 @@
             return sprintf('%d:%d:%d:%d', $stat['ino'], $stat['size'], $stat['mtime'], $stat['ctime']);
         }
 
+        /**
+         * Retrieves the start offset value.
+         *
+         * @return int The start offset.
+         */
         public function getStartOffset(): int
         {
             return $this->startOffset;
         }
 
+        /**
+         * Sets the start offset value.
+         *
+         * @param int $startOffset The start offset to be set.
+         * @return void
+         */
         public function setStartOffset(int $startOffset): void
         {
             $this->startOffset = $startOffset;
         }
 
+        /**
+         * Retrieves the end offset value.
+         *
+         * @return int The end offset value.
+         */
         public function getEndOffset(): int
         {
             return $this->endOffset;
         }
 
+        /**
+         * Sets the end offset value.
+         *
+         * @param int $endOffset The end offset to be set.
+         * @return void
+         */
         public function setEndOffset(int $endOffset): void
         {
             $this->endOffset = $endOffset;
         }
 
+        /**
+         * Retrieves the version of the package.
+         *
+         * @return string The version of the package.
+         */
         public function getPackageVersion(): string
         {
             return $this->packageVersion;
         }
 
+        /**
+         * Sets the version of the package.
+         *
+         * @param string $packageVersion The version of the package.
+         * @return void
+         */
         public function setPackageVersion(string $packageVersion): void
         {
             $this->packageVersion = $packageVersion;
         }
 
+        /**
+         * Retrieves the header object.
+         *
+         * @return Header The header object.
+         */
         public function getHeader(): Header
         {
             return $this->header;
         }
 
+        /**
+         * Sets the header object.
+         *
+         * @param Header $header The header to be set.
+         * @return void
+         */
         public function setHeader(Header $header): void
         {
             $this->header = $header;
         }
 
+        /**
+         * Gets the assembly instance.
+         *
+         * @return Assembly The assembly instance.
+         */
         public function getAssembly(): Assembly
         {
             return $this->assembly;
         }
 
+        /**
+         * Sets the assembly instance.
+         *
+         * @param Assembly $assembly The assembly instance to set.
+         * @return void
+         */
         public function setAssembly(Assembly $assembly): void
         {
             $this->assembly = $assembly;
         }
 
         /**
-         * @return array<string, ExecutionUnitReference>
+         * Retrieves the references to the execution units.
+         *
+         * @return array An array containing the execution unit references.
          */
         public function getExecutionUnitReferences(): array
         {
@@ -180,7 +300,10 @@
         }
 
         /**
-         * @param array<string, ExecutionUnitReference> $executionUnitReferences
+         * Sets the execution unit references.
+         *
+         * @param array $executionUnitReferences An array of execution unit references.
+         * @return void
          */
         public function setExecutionUnitReferences(array $executionUnitReferences): void
         {
@@ -188,7 +311,9 @@
         }
 
         /**
-         * @return array<string, ComponentReference>
+         * Retrieves the component references.
+         *
+         * @return array An array containing the component references.
          */
         public function getComponentReferences(): array
         {
@@ -196,7 +321,10 @@
         }
 
         /**
-         * @param array<string, ComponentReference> $componentReferences
+         * Sets the references for the components.
+         *
+         * @param array $componentReferences An array containing the component references.
+         * @return void
          */
         public function setComponentReferences(array $componentReferences): void
         {
@@ -204,7 +332,9 @@
         }
 
         /**
-         * @return array<string, ResourceReference>
+         * Retrieves the resource references.
+         *
+         * @return array The array of resource references.
          */
         public function getResourceReferences(): array
         {
@@ -212,7 +342,10 @@
         }
 
         /**
-         * @param array<string, ResourceReference> $resourceReferences
+         * Sets the resource references.
+         *
+         * @param array $resourceReferences The array of resource references to be set.
+         * @return void
          */
         public function setResourceReferences(array $resourceReferences): void
         {
