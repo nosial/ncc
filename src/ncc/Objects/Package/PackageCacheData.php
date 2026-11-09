@@ -38,7 +38,7 @@
      */
     class PackageCacheData
     {
-        public const int CACHE_VERSION = 4;
+        public const int CACHE_VERSION = 5;
 
         private int $version;
         private string $fileSha1;
@@ -60,6 +60,13 @@
         private array $signatures;
         private ?string $signatureError;
         private bool $signatureUnsupported;
+        /**
+         * The classes declared by the package's components, keyed by class name with the component name as value.
+         * Null until computed, caches written by older versions of ncc don't contain it and unserialize to null.
+         *
+         * @var array<string,string>|null
+         */
+        private ?array $classMap = null;
 
         /**
          * Constructor method for initializing the object with file metadata, package details, and component references.
@@ -143,6 +150,27 @@
         public function isSignatureUnsupported(): bool
         {
             return $this->signatureUnsupported;
+        }
+
+        /**
+         * Retrieves the class map of the package's components, if it has been computed.
+         *
+         * @return array<string,string>|null The class names mapped to their component names, or null if not computed.
+         */
+        public function getClassMap(): ?array
+        {
+            return $this->classMap;
+        }
+
+        /**
+         * Sets the class map of the package's components.
+         *
+         * @param array<string,string>|null $classMap The class names mapped to their component names.
+         * @return void
+         */
+        public function setClassMap(?array $classMap): void
+        {
+            $this->classMap = $classMap;
         }
 
         /**
