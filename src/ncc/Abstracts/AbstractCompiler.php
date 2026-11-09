@@ -153,6 +153,14 @@
                 Logger::getLogger()?->verbose(sprintf('Entry point unit: %s', $this->getProjectConfiguration()->getEntryPoint()));
             }
 
+            foreach($this->projectConfiguration->getExecutionUnits() ?? [] as $executionUnit)
+            {
+                if($executionUnit->isComposerBin() && !in_array($executionUnit->getName(), $this->requiredExecutionUnits, true))
+                {
+                    $this->requiredExecutionUnits[] = $executionUnit->getName();
+                }
+            }
+
             if($this->projectConfiguration->getPreInstall() !== null)
             {
                 $this->requiredExecutionUnits = array_merge($this->requiredExecutionUnits, $this->getProjectConfiguration()->getPreInstall());
