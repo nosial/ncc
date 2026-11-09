@@ -43,6 +43,8 @@
         private ?array $options;
         /** @var string[]|null */
         private ?array $extensions;
+        /** @var string[] */
+        private array $autoloadFiles = [];
 
         /**
          * BuildConfiguration constructor.
