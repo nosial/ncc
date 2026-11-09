@@ -64,6 +64,7 @@
             $this->dependencies = isset($data['dependencies']) ? array_map(function($item) { return is_string($item) ? new PackageSource($item) : $item; }, $data['dependencies']) : null;
             $this->options = $data['options'] ?? null;
             $this->extensions = $data['extensions'] ?? null;
+            $this->autoloadFiles = $data['autoload_files'] ?? [];
         }
 
         /**
@@ -192,6 +193,55 @@
         public function setOptions(?array $options): void
         {
             $this->options = $options;
+        }
+
+        /**
+         * Returns the files that are executed whenever the package is imported (like Composer's autoload.files),
+         * relative to the project path
+         *
+         * @return string[] The autoload files, in the order they are executed
+         */
+        public function getAutoloadFiles(): array
+        {
+            return $this->autoloadFiles;
+        }
+
+        /**
+         * Sets the files that are executed whenever the package is imported
+         *
+         * @param string[] $autoloadFiles The autoload files relative to the project path
+         * @throws InvalidArgumentException If an entry is not a non-empty string
+         */
+        public function setAutoloadFiles(array $autoloadFiles): void
+        {
+            foreach($autoloadFiles as $file)
+            {
+                if(!is_string($file) || trim($file) === '')
+                {
+                    throw new InvalidArgumentException('Autoload files must be non-empty strings');
+                }
+            }
+
+            $this->autoloadFiles = array_values(array_unique($autoloadFiles));
+        }
+
+        /**
+         * Adds a file that is executed whenever the package is imported
+         *
+         * @param string $autoloadFile The autoload file relative to the project path
+         * @throws InvalidArgumentException If the file is empty
+         */
+        public function addAutoloadFile(string $autoloadFile): void
+        {
+            if(trim($autoloadFile) === '')
+            {
+                throw new InvalidArgumentException('Autoload file cannot be empty');
+            }
+
+            if(!in_array($autoloadFile, $this->autoloadFiles, true))
+            {
+                $this->autoloadFiles[] = $autoloadFile;
+            }
         }
 
         /**
