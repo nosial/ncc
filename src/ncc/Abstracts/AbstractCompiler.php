@@ -460,8 +460,8 @@
             
             // Find all the required components/resources in the source path based on the include/exclude patterns.
             $this->sourceComponents = FileCollector::collectFiles($this->sourcePath, $this->includeComponents, $this->excludeComponents);
+            $this->sourceComponents = array_values(array_unique(array_merge($this->sourceComponents, $this->collectExplicitComponents())));
             Logger::getLogger()?->verbose(sprintf('Collected %d source components', count($this->sourceComponents)));
-            
             $this->sourceResources = FileCollector::collectFiles($this->sourcePath, $this->includeResources, $this->excludeResources);
             Logger::getLogger()?->verbose(sprintf('Collected %d source resources', count($this->sourceResources)));
 
