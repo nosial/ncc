@@ -612,7 +612,7 @@
                 }
             }
 
-            return [
+            $data = [
                 'name' => $this->name,
                 'output' => $this->output,
                 'type' => $this->type->value,
@@ -625,6 +625,14 @@
                 'options' => $this->options,
                 'extensions' => $this->extensions
             ];
+
+            // Only written when set so existing project files are unchanged
+            if(!empty($this->autoloadFiles))
+            {
+                $data['autoload_files'] = $this->autoloadFiles;
+            }
+
+            return $data;
         }
 
         /**
@@ -699,6 +707,22 @@
             if(isset($data['options']) && !is_array($data['options']))
             {
                 throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.options', 'Build configuration options must be an array if set');
+            }
+
+            if(isset($data['autoload_files']))
+            {
+                if(!is_array($data['autoload_files']))
+                {
+                    throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.autoload_files', 'Build configuration autoload_files must be an array if set');
+                }
+
+                foreach($data['autoload_files'] as $index => $file)
+                {
+                    if(!is_string($file) || trim($file) === '')
+                    {
+                        throw new InvalidPropertyException('build_configurations.' . $data['name'] . '.autoload_files.' . $index, 'Each autoload file must be a non-empty string');
+                    }
+                }
             }
         }
 
