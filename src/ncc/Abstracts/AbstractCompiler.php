@@ -522,7 +522,7 @@
                 }
             }
 
-            // Finally, we calculate the build number based on the collected files.
+            $this->sourceResources = array_values(array_unique($this->sourceResources));
             $this->buildNumber = $this->calculateBuildNumber();
             Logger::getLogger()?->verbose(sprintf('Build number calculated: %s', $this->buildNumber));
         }
