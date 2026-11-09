@@ -40,6 +40,7 @@
         private ?array $environment;
         private ?array $requiredFiles;
         private ?int $timeout;
+        private bool $composerBin = false;
 
         /**
          * Public Constructor for the Execution Unit
@@ -67,6 +68,7 @@
             $this->environment = $data['environment'] ?? null;
             $this->requiredFiles = $data['required_files'] ?? null;
             $this->timeout = $data['timeout'] ?? null;
+            $this->composerBin = (bool)($data['composer_bin'] ?? false);
         }
 
         /**
@@ -261,11 +263,23 @@
             return $this->requiredFiles;
         }
 
+        /**
+         * Set the required files for the execution unit.
+         *
+         * @param array|null $requiredFiles The required files for the execution unit.
+         * @return void
+         */
         public function setRequiredFiles(?array $requiredFiles): void
         {
             $this->requiredFiles = $requiredFiles;
         }
 
+        /**
+         * Add a required file to the execution unit.
+         *
+         * @param string $requiredFile The required file to add
+         * @return void
+         */
         public function addRequiredFile(string $requiredFile): void
         {
             if($this->requiredFiles === null)
@@ -281,14 +295,46 @@
             $this->requiredFiles[] = $requiredFile;
         }
 
+        /**
+         * Get the timeout duration.
+         *
+         * @return int|null The timeout duration, or null if no timeout is set
+         */
         public function getTimeout(): ?int
         {
             return $this->timeout;
         }
 
+        /**
+         * Set the timeout for the execution unit.
+         *
+         * @param int|null $timeout The timeout value, or null to disable the timeout
+         * @return void
+         */
         public function setTimeout(?int $timeout): void
         {
             $this->timeout = $timeout;
+        }
+
+        /**
+         * Whether this unit runs a Composer bin script. Composer's bin proxies ignore the script's return value, so
+         * a Composer bin exits with 0 unless it calls exit() itself.
+         *
+         * @return bool True if the unit runs a Composer bin script
+         */
+        public function isComposerBin(): bool
+        {
+            return $this->composerBin;
+        }
+
+        /**
+         * Sets whether this unit runs a Composer bin script
+         *
+         * @param bool $composerBin True if the unit runs a Composer bin script
+         */
+        public function setComposerBin(bool $composerBin): void
+        {
+            $this->composerBin = $composerBin;
         }
 
         /**
@@ -296,7 +342,7 @@
          */
         public function toArray(): array
         {
-            return [
+            $data = [
                 'name' => $this->name,
                 'type' => $this->type->value,
                 'mode' => $this->mode->value,
@@ -307,6 +353,14 @@
                 'required_files' => $this->requiredFiles,
                 'timeout' => $this->timeout,
             ];
+
+            // Only written when set so existing project files and packages are unchanged
+            if($this->composerBin)
+            {
+                $data['composer_bin'] = true;
+            }
+
+            return $data;
         }
 
         /**
@@ -398,6 +452,11 @@
                         throw new InvalidPropertyException('execution_units.' . $data['name'] . '.required_files.' . $index, 'Each required file must be a non-empty string');
                     }
                 }
+            }
+
+            if(isset($data['composer_bin']) && !is_bool($data['composer_bin']))
+            {
+                throw new InvalidPropertyException('execution_units.' . $data['name'] . '.composer_bin', 'Property \'composer_bin\' must be a boolean if set');
             }
 
             if(isset($data['timeout']) && !is_int($data['timeout']))
