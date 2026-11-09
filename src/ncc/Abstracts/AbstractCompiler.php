@@ -528,6 +528,105 @@
         }
 
         /**
+         * Collects explicitly configured component and autoload file paths.
+         *
+         * Resolves configured entries relative to the project path, ignores wildcard
+         * entries and paths outside the project, includes individual files directly,
+         * and collects PHP files from explicitly referenced directories that are not
+         * within the source path while respecting excluded components.
+         *
+         * @return array The collected absolute file paths for explicitly named components.
+         */
+        protected function collectExplicitComponents(): array
+        {
+            $collected = [];
+            $entries = array_merge($this->buildConfiguration->getIncludedComponents(), $this->buildConfiguration->getAutoloadFiles());
+
+            foreach(array_unique($entries) as $entry)
+            {
+                if(strpbrk($entry, '*?[') !== false)
+                {
+                    continue;
+                }
+
+                $path = realpath($this->projectPath . DIRECTORY_SEPARATOR . ltrim($entry, '/\\'));
+                if($path === false || !str_starts_with($path, $this->projectPath . DIRECTORY_SEPARATOR))
+                {
+                    continue;
+                }
+
+                if(is_file($path))
+                {
+                    $collected[] = $path;
+                    continue;
+                }
+
+                if(is_dir($path) && !$this->isInSourcePath($path))
+                {
+                    foreach(FileCollector::collectFiles($path, ['*.php']) as $filePath)
+                    {
+                        $relativePath = substr($filePath, strlen($this->projectPath) + 1);
+                        if(!FileCollector::matchesAny($relativePath, $this->excludeComponents))
+                        {
+                            $collected[] = $filePath;
+                        }
+                    }
+                }
+            }
+
+            foreach($this->buildConfiguration->getAutoloadFiles() as $autoloadFile)
+            {
+                $path = realpath($this->projectPath . DIRECTORY_SEPARATOR . ltrim($autoloadFile, '/\\'));
+                if($path === false || !is_file($path))
+                {
+                    Logger::getLogger()?->warning(sprintf('Autoload file not found, it will not be executed on import: %s', $autoloadFile));
+                }
+            }
+
+            Logger::getLogger()?->debug(sprintf('Collected %d explicitly named components', count($collected)));
+            return $collected;
+        }
+
+        /**
+         * Checks whether a real path is inside the source path
+         *
+         * @param string $path The real path to check
+         * @return bool True if the path is inside the source path
+         */
+        protected function isInSourcePath(string $path): bool
+        {
+            return str_starts_with($path, $this->sourcePath . DIRECTORY_SEPARATOR);
+        }
+
+        /**
+         * Returns the name a project file is stored under in the package, without the assembly name prefix.
+         *
+         * Files inside the source path are named relative to the source path, files outside of it (bin scripts,
+         * extra autoload roots) relative to the project path so their directory layout is kept. Only files outside the
+         * project path fall back to their basename.
+         *
+         * @param string $filePath The real path of the file
+         * @return string The packaged name using forward slashes
+         */
+        public function resolvePackagedName(string $filePath): string
+        {
+            if($this->isInSourcePath($filePath))
+            {
+                $name = substr($filePath, strlen($this->sourcePath) + 1);
+            }
+            elseif(str_starts_with($filePath, $this->projectPath . DIRECTORY_SEPARATOR))
+            {
+                $name = substr($filePath, strlen($this->projectPath) + 1);
+            }
+            else
+            {
+                $name = basename($filePath);
+            }
+
+            return str_replace(DIRECTORY_SEPARATOR, '/', $name);
+        }
+
+        /**
          * Resolves and retrieves all dependency readers for the defined package dependencies
          *
          * @return ResolvedDependency[] An array of ResolvedDependency objects representing the resolved dependencies
