@@ -104,7 +104,7 @@
                 throw new OperationException("No project configuration file found");
             }
 
-            $this->projectPath = dirname($projectFilePath);
+            $this->projectPath = realpath(dirname($projectFilePath)) ?: dirname($projectFilePath);
             Logger::getLogger()?->verbose(sprintf('Project path resolved to: %s', $this->projectPath));
             
             $this->projectConfiguration = Project::fromFile($projectFilePath, true);
@@ -130,6 +130,7 @@
             $this->buildConfiguration = $this->projectConfiguration->getBuildConfiguration($buildConfiguration);
             Logger::getLogger()?->verbose(sprintf('Using build configuration: %s', $buildConfiguration));
             $this->sourcePath = $this->projectPath . DIRECTORY_SEPARATOR . $this->projectConfiguration->getSourcePath();
+            $this->sourcePath = realpath($this->sourcePath) ?: $this->sourcePath;
             $this->outputPath = $this->projectPath . DIRECTORY_SEPARATOR . $this->buildConfiguration->getOutput();
             Logger::getLogger()?->verbose(sprintf('Source path: %s', $this->sourcePath));
             Logger::getLogger()?->verbose(sprintf('Output path: %s', $this->outputPath));
