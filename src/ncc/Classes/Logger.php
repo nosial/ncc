@@ -48,7 +48,7 @@
 
             if(self::$logger === null)
             {
-                self::$logger = new \ncc\Libraries\LogLib2\Logger('ncc');
+                self::$logger = new ProgressLogger('ncc');
             }
 
             return self::$logger;
