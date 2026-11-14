@@ -34,10 +34,11 @@
          * @param string $projectName The project name (e.g., "ConfigLib")
          * @param string $packageName The package name (e.g., "com.example.configlib")
          * @param bool $force Force creation even if a symlink already exists
+         * @param string|null $executionUnit The execution unit the launcher runs, null for the package's entry point
          * @return string|null The path to the created symlink, or null if creation was skipped
          * @throws OperationException If symlink creation fails
          */
-        public static function createSymlink(string $projectName, string $packageName, bool $force = false): ?string
+        public static function createSymlink(string $projectName, string $packageName, bool $force = false, ?string $executionUnit = null): ?string
         {
             Logger::getLogger()?->verbose(sprintf('Creating symlink for package %s (project: %s)', $packageName, $projectName));
 
@@ -87,21 +88,25 @@
                 IO::delete($symlinkPath);
             }
             
-            // Create the shell script
-            $scriptContent = self::generateSymlinkScript($packageName);
-            
-            // Write the script
-            try {
+            $scriptContent = self::generateSymlinkScript($packageName, $executionUnit);
+
+            try
+            {
                 IO::writeFile($symlinkPath, $scriptContent);
-            } catch (IOException $e) {
-                throw new OperationException(sprintf('Failed to create symlink script at: %s', $symlinkPath));
+            }
+            catch (IOException $e)
+            {
+                throw new OperationException(sprintf('Failed to create symlink script at: %s', $symlinkPath), $e->getCode(), $e);
             }
             
             // Make it executable
-            try {
+            try
+            {
                 IO::chmod($symlinkPath, 0755);
-            } catch (IOException $e) {
-                throw new OperationException(sprintf('Failed to make symlink executable: %s', $symlinkPath));
+            }
+            catch (IOException $e)
+            {
+                throw new OperationException(sprintf('Failed to make symlink executable: %s', $symlinkPath), $e->getCode(), $e);
             }
             
             Logger::getLogger()?->verbose(sprintf('Successfully created symlink: %s', $symlinkPath));
@@ -161,17 +166,21 @@
          * Generates the shell script content for the symlink
          *
          * @param string $packageName The package name
+         * @param string|null $executionUnit The execution unit to run, null for the package's entry point
          * @return string The script content
          */
-        private static function generateSymlinkScript(string $packageName): string
+        private static function generateSymlinkScript(string $packageName, ?string $executionUnit = null): string
         {
+            $unitArgument = $executionUnit === null ? '' : sprintf(' --unit="%s"', $executionUnit);
+            $unitComment = $executionUnit === null ? '' : PHP_EOL . '# Execution unit: ' . $executionUnit;
+
             return <<<BASH
 #!/bin/sh
 # NCC_MANAGED_SYMLINK
 # This symlink is managed by ncc. Do not edit manually.
-# Package: $packageName
+# Package: $packageName$unitComment
 
-exec ncc exec --package="$packageName" --args "\$@"
+exec ncc exec --package="$packageName"$unitArgument --args "\$@"
 BASH;
         }
 
