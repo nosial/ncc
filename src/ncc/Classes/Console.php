@@ -35,6 +35,15 @@
         private static ?bool $isVerboseOrDebugMode = null;
         private static bool $simplifiedMode = false;
         private static ?string $currentSimplifiedOperation = null;
+        /** @var array<int, array{0: float, 1: float}> Absolute [start, end] fractions of the active progress scopes */
+        private static array $progressScopes = [];
+        private static float $lastFraction = 0.0;
+        private static ?string $lastProgressOutput = null;
+        /** @var bool|null Whether the terminal can draw the eighth block progress bar, null until detected */
+        private static ?bool $smoothProgressSupported = null;
+
+        /** Left aligned eighth blocks, index n draws (n + 1) eighths of a cell */
+        private const array PROGRESS_EIGHTHS = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
 
         public static function enableAnsiColors(): void
         {
@@ -104,6 +113,13 @@
          */
         public static function out(string $message): void
         {
+            if (self::$lastProgressLength > 0 && self::$lastProgressOutput !== null && !self::$simplifiedMode && !self::isVerboseOrDebugMode())
+            {
+                print("\r\033[K" . $message . PHP_EOL . self::$lastProgressOutput);
+                flush();
+                return;
+            }
+
             print($message . PHP_EOL);
         }
 
@@ -158,6 +174,7 @@
          */
         public static function prompt(string $prompt): string
         {
+            self::clearInlineProgress();
             print($prompt);
             return trim(fgets(STDIN));
         }
@@ -174,6 +191,8 @@
          */
         public static function getPassword(string $prompt = 'Enter password: ', bool $useEnvironment = true): string
         {
+            self::clearInlineProgress();
+
             // Check if the environment variable has the password
             $envPassword = $useEnvironment ? getenv('NCC_AUTH') : false;
             if ($envPassword !== false)
@@ -349,22 +368,196 @@
                 return;
             }
 
+            $fraction = self::mapProgress($total > 0 ? ($current / $total) : 0.0);
+            $percentage = round($fraction * 100);
+
             // If in verbose or debug mode, use logger info statements instead of animated progress
             if (self::isVerboseOrDebugMode())
             {
-                $percentage = $total > 0 ? round(($current / $total) * 100) : 0;
-                $logMessage = sprintf('[%d/%d] (%d%%) %s', $current, $total, $percentage, $message);
+                if (empty(self::$progressScopes))
+                {
+                    $logMessage = sprintf('[%d/%d] (%d%%) %s', $current, $total, $percentage, $message);
+                }
+                else
+                {
+                    $logMessage = sprintf('(%d%%) %s', $percentage, $message);
+                }
+
                 Logger::getLogger()?->info($logMessage);
                 return;
             }
-            
-            $percentage = $total > 0 ? round(($current / $total) * 100) : 0;
-            $progressBar = self::createProgressBar($current, $total, 30);
-            
-            // Add color if ANSI is enabled
+
+            self::renderProgress($fraction, $message);
+        }
+
+        /**
+         * Updates the message shown on the progress bar without changing its progress. Inside a progress scope the
+         * bar keeps its current position and only the inline text changes; with no active scope the message is
+         * printed as a regular line. In verbose or debug mode the message is logged instead, in simplified mode it
+         * is printed once when it changes.
+         *
+         * @param string $message The message to display
+         * @return void
+         */
+        public static function progressMessage(string $message): void
+        {
+            if (self::$simplifiedMode)
+            {
+                if (self::$currentSimplifiedOperation !== $message)
+                {
+                    self::$currentSimplifiedOperation = $message;
+                    self::out($message);
+                }
+                return;
+            }
+
+            if (self::isVerboseOrDebugMode())
+            {
+                Logger::getLogger()?->info($message);
+                return;
+            }
+
+            if (empty(self::$progressScopes))
+            {
+                self::out($message);
+                return;
+            }
+
+            [$start] = self::$progressScopes[array_key_last(self::$progressScopes)];
+            self::$lastFraction = max(self::$lastFraction, $start);
+            self::renderProgress(self::$lastFraction, $message);
+        }
+
+        /**
+         * Temporarily removes the drawn progress bar so that output written directly to the terminal (eg; log
+         * events) starts on a clean line. The bar is drawn again by resumeProgress().
+         *
+         * @return void
+         */
+        public static function suspendProgress(): void
+        {
+            if (self::$simplifiedMode || self::isVerboseOrDebugMode() || self::$lastProgressLength <= 0)
+            {
+                return;
+            }
+
+            print("\r\033[K");
+            flush();
+        }
+
+        /**
+         * Draws the progress bar again after suspendProgress(), does nothing if no progress bar was drawn.
+         *
+         * @return void
+         */
+        public static function resumeProgress(): void
+        {
+            if (self::$simplifiedMode || self::isVerboseOrDebugMode() || self::$lastProgressLength <= 0 || self::$lastProgressOutput === null)
+            {
+                return;
+            }
+
+            print("\r\033[K" . self::$lastProgressOutput);
+            flush();
+        }
+
+        /**
+         * Runs an operation within a slice of the current progress range, any progress reported by the operation
+         * (0..total) is mapped into that slice so that nested operations share a single progress bar. When the
+         * outermost scope ends the progress bar is cleared.
+         *
+         * @param float $start The start of the slice, relative to the current scope (0.0 - 1.0)
+         * @param float $end The end of the slice, relative to the current scope (0.0 - 1.0)
+         * @param callable $operation The operation to run within the slice
+         * @return mixed The return value of the operation
+         */
+        public static function withProgressScope(float $start, float $end, callable $operation): mixed
+        {
+            $start = max(0.0, min(1.0, $start));
+            $end = max($start, min(1.0, $end));
+
+            [$parentStart, $parentEnd] = empty(self::$progressScopes) ? [0.0, 1.0] : self::$progressScopes[array_key_last(self::$progressScopes)];
+            $absoluteStart = $parentStart + ($start * ($parentEnd - $parentStart));
+            $absoluteEnd = $parentStart + ($end * ($parentEnd - $parentStart));
+
+            self::$progressScopes[] = [$absoluteStart, $absoluteEnd];
+            $completed = false;
+
+            try
+            {
+                $result = $operation();
+                $completed = true;
+                return $result;
+            }
+            finally
+            {
+                array_pop(self::$progressScopes);
+
+                if (empty(self::$progressScopes))
+                {
+                    // The outermost scope ended, the progress bar is no longer needed
+                    self::clearProgressLine();
+                    self::$lastFraction = 0.0;
+                    self::$currentSimplifiedOperation = null;
+                }
+                elseif ($completed)
+                {
+                    // Advance the bar to the end of the finished slice
+                    self::$lastFraction = max(self::$lastFraction, $absoluteEnd);
+                    if (self::$lastProgressLength > 0 && self::$currentProgressMessage !== null)
+                    {
+                        self::renderProgress(self::$lastFraction, self::$currentProgressMessage);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns the current progress scope depth, 0 when no scope is active.
+         *
+         * @return int The number of active progress scopes
+         */
+        public static function getProgressScopeDepth(): int
+        {
+            return count(self::$progressScopes);
+        }
+
+        /**
+         * Maps a fraction of the current scope into the overall progress, the result never decreases while a scope
+         * is active so the progress bar never moves backwards.
+         *
+         * @param float $fraction The fraction of the current scope (0.0 - 1.0)
+         * @return float The overall fraction (0.0 - 1.0)
+         */
+        private static function mapProgress(float $fraction): float
+        {
+            $fraction = max(0.0, min(1.0, $fraction));
+            if (empty(self::$progressScopes))
+            {
+                return $fraction;
+            }
+
+            [$start, $end] = self::$progressScopes[array_key_last(self::$progressScopes)];
+            self::$lastFraction = max(self::$lastFraction, $start + ($fraction * ($end - $start)));
+            return self::$lastFraction;
+        }
+
+        /**
+         * Renders the progress bar on the current line.
+         *
+         * @param float $fraction The overall fraction (0.0 - 1.0)
+         * @param string $message The message to display
+         * @return void
+         */
+        private static function renderProgress(float $fraction, string $message): void
+        {
+            $percentage = round($fraction * 100);
+            [$filledPart, $emptyPart] = self::createProgressBar((int)round($fraction * 10000), 10000, 30);
+            $progressBar = $filledPart . $emptyPart;
+
             if (self::$ansiColorsEnabled)
             {
-                $coloredBar = self::colorizeProgressBar($progressBar, $percentage);
+                $coloredBar = self::colorizeProgressBar($filledPart, $emptyPart, $percentage);
                 $percentageStr = sprintf("\e[1;36m%3d%%\e[0m", $percentage); // Cyan bold
                 $output = sprintf('⟦%s⟧ %s %s', $coloredBar, $percentageStr, $message);
             }
@@ -372,15 +565,33 @@
             {
                 $output = sprintf('[%s] %3d%% - %s', $progressBar, $percentage, $message);
             }
-            
+
             // Clear the entire line first, then print the new progress
             print("\r\033[K" . $output);
-            
+
             // Store the length for next clear operation (strip ANSI codes for accurate length)
             self::$lastProgressLength = mb_strlen(preg_replace('/\e\[[0-9;]*m/', '', $output));
+            self::$lastProgressOutput = $output;
             self::$currentProgressMessage = $message;
-            
+
             flush();
+        }
+
+        /**
+         * Clears the progress bar line if one is currently drawn.
+         *
+         * @return void
+         */
+        private static function clearProgressLine(): void
+        {
+            if (self::$lastProgressLength > 0)
+            {
+                // Use ANSI escape code to clear the entire line
+                print("\r\033[K");
+                self::$lastProgressLength = 0;
+                self::$lastProgressOutput = null;
+                self::$currentProgressMessage = null;
+            }
         }
 
         /**
@@ -396,26 +607,21 @@
             {
                 return;
             }
-            
-            if (self::$lastProgressLength > 0)
-            {
-                // Use ANSI escape code to clear the entire line
-                print("\r\033[K");
-                self::$lastProgressLength = 0;
-                self::$currentProgressMessage = null;
-            }
+
+            // Within a progress scope the bar is drawn again on the next progress update
+            self::clearProgressLine();
         }
 
         /**
          * Completes the progress display and moves to a new line.
-         * If in verbose or debug mode, uses Logger info for final message.
-         * If in simplified mode, shows a completion message.
          *
          * @param string|null $finalMessage Optional message to display when complete
          * @return void
          */
         public static function completeProgress(?string $finalMessage = null): void
         {
+            $inScope = !empty(self::$progressScopes);
+
             // In simplified mode, show completion message and reset operation tracking
             if (self::$simplifiedMode)
             {
@@ -423,7 +629,11 @@
                 {
                     self::out($finalMessage);
                 }
-                self::$currentSimplifiedOperation = null;
+
+                if (!$inScope)
+                {
+                    self::$currentSimplifiedOperation = null;
+                }
                 return;
             }
 
@@ -436,15 +646,18 @@
                 }
                 return;
             }
-            
-            if (self::$lastProgressLength > 0)
+
+            if ($inScope)
             {
-                // Use ANSI escape code to clear the entire line
-                print("\r\033[K");
-                self::$lastProgressLength = 0;
-                self::$currentProgressMessage = null;
+                if ($finalMessage !== null)
+                {
+                    self::out($finalMessage);
+                }
+                return;
             }
-            
+
+            self::clearProgressLine();
+
             if ($finalMessage !== null)
             {
                 print($finalMessage . PHP_EOL);
@@ -452,63 +665,108 @@
         }
 
         /**
-         * Creates a text-based progress bar.
+         * Creates a text-based progress bar, split into its filled and empty parts so they can be colored apart.
          *
          * @param int $current Current progress value
          * @param int $total Total progress value
          * @param int $width Width of the progress bar in characters
-         * @return string The progress bar string
+         * @return array{0: string, 1: string} The filled and the empty part of the progress bar
          */
-        private static function createProgressBar(int $current, int $total, int $width = 30): string
+        private static function createProgressBar(int $current, int $total, int $width = 30): array
         {
-            if ($total <= 0)
+            $smooth = self::supportsSmoothProgress();
+            $progress = $total > 0 ? max(0.0, min(1.0, $current / $total)) : 1.0;
+
+            if ($smooth)
             {
-                return str_repeat('█', $width);
+                $units = (int)round($progress * $width * 8);
+                $full = intdiv($units, 8);
+                $remainder = $units % 8;
+
+                $filled = str_repeat('█', $full) . ($remainder > 0 ? self::PROGRESS_EIGHTHS[$remainder - 1] : '');
+                return [$filled, str_repeat(' ', $width - $full - ($remainder > 0 ? 1 : 0))];
             }
 
-            $progress = min(1.0, $current / $total);
-            $filled = (int)round($width * $progress);
-            $empty = $width - $filled;
+            $units = (int)round($progress * $width * 2);
+            $full = intdiv($units, 2);
+            $half = $units % 2;
 
-            // Use Unicode block characters for a smooth gradient effect
-            $bar = str_repeat('█', $filled);
-            
-            // Add a transitional character for smoother animation
-            if ($filled < $width && $progress > 0)
-            {
-                $fractional = ($width * $progress) - $filled;
-                if ($fractional > 0.75)
-                {
-                    $bar .= '▓';
-                }
-                elseif ($fractional > 0.5)
-                {
-                    $bar .= '▒';
-                }
-                elseif ($fractional > 0.25)
-                {
-                    $bar .= '░';
-                }
-                else
-                {
-                    $bar .= '░';
-                }
-                $empty--;
-            }
-            
-            $bar .= str_repeat('░', max(0, $empty));
-
-            return $bar;
+            return [str_repeat('━', $full) . ($half > 0 ? '╸' : ''), str_repeat('─', $width - $full - $half)];
         }
 
         /**
-         * Colorizes the progress bar based on percentage.
+         * Returns whether the terminal is expected to draw the eighth block progress bar, the result is cached.
          *
-         * @param string $bar The progress bar string
+         * @return bool True to use the eighth block style, false to use the connected line style
+         */
+        private static function supportsSmoothProgress(): bool
+        {
+            if (self::$smoothProgressSupported === null)
+            {
+                $environment = [];
+                foreach (['TERM', 'LC_ALL', 'LC_CTYPE', 'LANG', 'WT_SESSION', 'TERM_PROGRAM', 'ConEmuANSI'] as $name)
+                {
+                    $value = getenv($name);
+                    if ($value !== false)
+                    {
+                        $environment[$name] = $value;
+                    }
+                }
+
+                self::$smoothProgressSupported = self::detectSmoothProgress(PHP_OS_FAMILY, $environment);
+            }
+
+            return self::$smoothProgressSupported;
+        }
+
+        /**
+         * Decides from the environment whether the terminal can draw eighth blocks. The Linux text console
+         * (TERM=linux), a locale that is not UTF-8 and the legacy Windows console lack them; an unset locale is
+         * treated as capable since containers and minimal shells often leave it unset on UTF-8 terminals.
+         *
+         * @param string $osFamily The operating system family (PHP_OS_FAMILY)
+         * @param array<string, string> $environment The relevant environment variables that are set
+         * @return bool True if the eighth block style should be used
+         */
+        private static function detectSmoothProgress(string $osFamily, array $environment): bool
+        {
+            if (($environment['TERM'] ?? '') === 'linux')
+            {
+                return false;
+            }
+
+            // The first locale variable that is set and not empty decides, the same precedence as setlocale()
+            foreach (['LC_ALL', 'LC_CTYPE', 'LANG'] as $name)
+            {
+                $locale = $environment[$name] ?? '';
+                if ($locale !== '')
+                {
+                    if (!preg_match('/utf-?8/i', $locale))
+                    {
+                        return false;
+                    }
+                    break;
+                }
+            }
+
+            if ($osFamily === 'Windows')
+            {
+                // Windows Terminal, VS Code and ConEmu render them, the legacy console host does not
+                return isset($environment['WT_SESSION']) || isset($environment['TERM_PROGRAM']) || ($environment['ConEmuANSI'] ?? '') === 'ON';
+            }
+
+            return true;
+        }
+
+        /**
+         * Colorizes the progress bar based on percentage, the empty part is dimmed.
+         *
+         * @param string $filled The filled part of the progress bar
+         * @param string $empty The empty part of the progress bar
          * @param float $percentage The completion percentage
          * @return string The colorized progress bar
          */
-        private static function colorizeProgressBar(string $bar, float $percentage): string
+        private static function colorizeProgressBar(string $filled, string $empty, float $percentage): string
         {
             // Color scheme based on progress
             if ($percentage < 33)
@@ -524,6 +782,6 @@
                 $color = "\e[92m"; // Green for 66-100%
             }
 
-            return $color . $bar . "\e[0m";
+            return ($filled !== '' ? $color . $filled . "\e[0m" : '') . ($empty !== '' ? "\e[2m" . $empty . "\e[0m" : '');
         }
     }
