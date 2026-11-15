@@ -803,6 +803,7 @@
          * @param bool $overwrite Whether to overwrite existing output files. Default is true.
          * @return string The path to the compiled output file.
          * @throws IOException thrown if there was an IO error
+         * @throws OperationException thrown if there was an operation error
          */
         protected abstract function compile(?callable $progressCallback=null, bool $overwrite=true): string;
 
