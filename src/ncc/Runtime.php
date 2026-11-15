@@ -23,6 +23,7 @@
 
     use Exception;
     use ncc\Classes\AuthenticationManager;
+    use ncc\Classes\ComposerCompat;
     use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageManager;
@@ -36,6 +37,7 @@
     use ncc\Libraries\semver\Semver;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\RepositoryConfiguration;
+    use Throwable;
 
     class Runtime
     {
@@ -166,8 +168,48 @@
                     self::import($reference->getPackage(), $reference->getVersion());
                 }
             }
-            
+
+            self::executeAutoloadFiles($packageReader);
             Logger::getLogger()?->verbose(sprintf('Package import completed: %s', $packageName));
+        }
+
+        /**
+         * Executes the autoload files of an imported package (like Composer's autoload.files), preferring the
+         * optimized installation when there is one
+         *
+         * @param PackageReader $packageReader The imported package
+         * @throws OperationException If an autoload file fails to execute
+         */
+        private static function executeAutoloadFiles(PackageReader $packageReader): void
+        {
+            $autoloadFiles = $packageReader->getHeader()->getAutoloadFiles();
+            if(empty($autoloadFiles))
+            {
+                return;
+            }
+
+            $packageName = $packageReader->getAssembly()->getPackage();
+            $prefix = 'ncc://' . $packageName . '/';
+            $optimizedPath = $packageReader->getOptimizedPath();
+
+            foreach($autoloadFiles as $autoloadFile)
+            {
+                if($optimizedPath !== null && str_starts_with($autoloadFile, $prefix))
+                {
+                    $autoloadFile = $optimizedPath . DIRECTORY_SEPARATOR . substr($autoloadFile, strlen($prefix));
+                }
+
+                Logger::getLogger()?->debug(sprintf('Executing autoload file of %s: %s', $packageName, $autoloadFile));
+
+                try
+                {
+                    (static function(string $__nccAutoloadFile): void { require_once $__nccAutoloadFile; })($autoloadFile);
+                }
+                catch(Throwable $e)
+                {
+                    throw new OperationException(sprintf('Failed to execute the autoload file %s of %s: %s', $autoloadFile, $packageName, $e->getMessage()), 0, $e);
+                }
+            }
         }
 
         /**
@@ -894,6 +936,7 @@
             }
 
             StreamWrapper::register();
+            ComposerCompat::registerInstalledVersionsFallback();
             self::$streamWrapperInitialized = true;
         }
 
@@ -976,6 +1019,8 @@
             if($registered)
             {
                 self::$registeredAutoloaders[$packageName] = $autoloader;
+                // Keep the Composer\InstalledVersions fallback behind the package autoloaders
+                ComposerCompat::registerInstalledVersionsFallback();
             }
             else
             {
