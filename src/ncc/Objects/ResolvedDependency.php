@@ -47,7 +47,7 @@
             else
             {
                 Logger::getLogger()?->debug(sprintf('ResolvedDependency: Package entry found, path=%s', Runtime::getPackagePath($package, $version)), 'ResolvedDependency');
-                $this->reader = new PackageReader(Runtime::getPackagePath($package, $version));
+                $this->reader = new PackageReader(Runtime::getPackagePath($package, $version), true);
             }
         }
 
