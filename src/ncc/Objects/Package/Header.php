@@ -55,6 +55,10 @@
         private ?array $autoloader;
         /** @var string[]|null */
         private ?array $extensions;
+        /**
+         * @var string[]|null ncc:// paths of the files executed when the package is imported
+         */
+        private ?array $autoloadFiles = null;
 
         /**
          * Public constructor for the package header
@@ -98,6 +102,7 @@
             $this->repositories = isset($data['repositories']) ? array_map(function($item){ return  RepositoryConfiguration::fromArray($item); }, $data['repositories']) : [];
             $this->autoloader = $data['autoloader'] ?? null;
             $this->extensions = $data['extensions'] ?? null;
+            $this->autoloadFiles = $data['autoload_files'] ?? null;
         }
 
         /**
@@ -507,11 +512,32 @@
         }
 
         /**
+         * Returns the files executed when the package is imported (like Composer's autoload.files), as ncc:// paths
+         * in the order they are executed
+         *
+         * @return string[]|null The autoload files, or null if there are none
+         */
+        public function getAutoloadFiles(): ?array
+        {
+            return $this->autoloadFiles;
+        }
+
+        /**
+         * Sets the files executed when the package is imported
+         *
+         * @param string[]|null $autoloadFiles The ncc:// paths of the autoload files, or null for none
+         */
+        public function setAutoloadFiles(?array $autoloadFiles): void
+        {
+            $this->autoloadFiles = empty($autoloadFiles) ? null : array_values(array_unique($autoloadFiles));
+        }
+
+        /**
          * @inheritDoc
          */
         public function toArray(): array
         {
-            return [
+            $data = [
                 'flags' => $this->flags,
                 'compressed' => $this->compressed,
                 'statically_linked' => $this->staticallyLinked,
@@ -528,6 +554,13 @@
                 'autoloader' => $this->autoloader,
                 'extensions' => $this->extensions
             ];
+
+            if(!empty($this->autoloadFiles))
+            {
+                $data['autoload_files'] = $this->autoloadFiles;
+            }
+
+            return $data;
         }
 
         /**
