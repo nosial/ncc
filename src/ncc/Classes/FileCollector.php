@@ -154,11 +154,32 @@
         }
 
         /**
-         * Checks if a file path matches any of the exclusion patterns.
+         * Checks if a relative file path matches any of the given glob patterns, using the same matching rules as
+         * collectFiles().
          *
          * @param string $relativePath The relative file path to check.
-         * @param string[] $excludePatterns Array of exclusion patterns (supports wildcards).
-         * @return bool True if the path should be excluded, false otherwise.
+         * @param string[] $patterns Array of glob patterns (supports wildcards).
+         * @return bool True if the path matches at least one pattern, false otherwise.
+         */
+        public static function matchesAny(string $relativePath, array $patterns): bool
+        {
+            foreach ($patterns as $pattern)
+            {
+                if (self::matchesPattern($relativePath, $pattern))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * Checks if a file should be excluded based on exclude patterns.
+         *
+         * @param string $relativePath The relative path of the file.
+         * @param array $excludePatterns Array of glob patterns for files to exclude.
+         * @return bool True if the file should be excluded, false otherwise.
          */
         private static function isExcluded(string $relativePath, array $excludePatterns): bool
         {
