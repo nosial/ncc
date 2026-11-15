@@ -25,6 +25,7 @@
     use Exception;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
+    use ncc\CLI\Main;
     use ncc\Runtime;
 
     class ExecuteCommand extends AbstractCommandHandler
@@ -43,18 +44,7 @@
             $package = $argv['package'] ?? $argv['p'] ?? null;
             $version = $argv['version'] ?? $argv['v'] ?? 'latest';
             $executionUnit = $argv['unit'] ?? $argv['u'] ?? null;
-
-            // Parse arguments to pass to the executed package
-            // Everything after --args should be passed as arguments
-            $arguments = [];
-            global $argv;
-            $argsIndex = array_search('--args', $argv, true);
-            
-            if($argsIndex !== false && $argsIndex < count($argv) - 1)
-            {
-                // Get all arguments after --args
-                $arguments = array_slice($argv, $argsIndex + 1);
-            }
+            $arguments = Main::getPassthroughArguments() ?? self::getRawPassthroughArguments();
 
             if($package === null)
             {
@@ -91,6 +81,23 @@
         }
 
         /**
+         * Extracts the passthrough arguments from the raw global argv, used when the command is handled without
+         * going through Main (which already split them off)
+         *
+         * @return string[] The arguments after the first passthrough separator, empty if there is none
+         */
+        private static function getRawPassthroughArguments(): array
+        {
+            $rawArguments = $GLOBALS['argv'] ?? $_SERVER['argv'] ?? [];
+            if(!is_array($rawArguments))
+            {
+                return [];
+            }
+
+            return Main::splitPassthroughArguments($rawArguments)[1] ?? [];
+        }
+
+        /**
          * Prints out the help menu for the execute command
          *
          * @return void
@@ -101,12 +108,12 @@
             Console::out('Executes an installed ncc package.' . PHP_EOL);
             Console::out('The execute command runs an execution unit from an installed package.');
             Console::out('If no execution unit is specified, the default entry point is used.');
-            Console::out('Arguments passed after --args will be forwarded to the executed package.' . PHP_EOL);
+            Console::out('Arguments passed after --args (or --) are forwarded to the executed package untouched.' . PHP_EOL);
             Console::out('Options:');
             Console::out('  --package, -p     (Required) Package name to execute');
             Console::out('  --version, -v     Package version to execute (default: latest)');
             Console::out('  --unit, -u        Specific execution unit to run (default: main entry point)');
-            Console::out('  --args            Arguments to pass to the executed package');
+            Console::out('  --args, --        Arguments to pass to the executed package, ncc does not parse anything after it');
             Console::out(PHP_EOL . 'Examples:');
             Console::out('  ncc execute --package=com.example.myapp');
             Console::out('  ncc execute --package=com.example.myapp --version=1.2.0');
