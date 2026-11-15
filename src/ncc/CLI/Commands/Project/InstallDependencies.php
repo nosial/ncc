@@ -179,7 +179,8 @@
             }
 
             // Install each dependency
-            $installedCount = 0;
+            $installedPackages = [];
+            $alreadyInstalled = 0;
             $failedDependencies = [];
             $options = [
                 'skip-dependencies' => $skipDependencies,
@@ -196,26 +197,50 @@
                 $options['trust'] = true;
             }
 
-            foreach($allDependencies as $depString => $packageSource)
+            Console::withProgressScope(0.0, 1.0, static function() use ($allDependencies, $options, $repositoryAuth, &$installedPackages, &$alreadyInstalled, &$failedDependencies)
             {
-                Console::out(sprintf("Installing %s...", $depString));
-                
-                try
+                $dependencyCount = count($allDependencies);
+                $index = 0;
+
+                foreach($allDependencies as $depString => $packageSource)
                 {
-                    InstallCommand::installFromRemote($packageSource, $options, [], $repositoryAuth);
-                    $installedCount++;
+                    Console::progressMessage(sprintf("Installing %s", $depString));
+
+                    try
+                    {
+                        $previousCount = count($installedPackages);
+                        $installedPackages = Console::withProgressScope($index / $dependencyCount, ($index + 1) / $dependencyCount,
+                            static fn() => InstallCommand::installFromRemote($packageSource, $options, $installedPackages, $repositoryAuth)
+                        );
+
+                        // Nothing new was installed, the dependency was already satisfied
+                        if(count($installedPackages) === $previousCount)
+                        {
+                            $alreadyInstalled++;
+                        }
+                    }
+                    catch(Exception $e)
+                    {
+                        Console::clearInlineProgress();
+                        Console::error(sprintf("Failed to install %s: %s", $depString, $e->getMessage()));
+                        $failedDependencies[] = $depString;
+                    }
+
+                    $index++;
                 }
-                catch(Exception $e)
-                {
-                    Console::error(sprintf("Failed to install %s: %s", $depString, $e->getMessage()));
-                    $failedDependencies[] = $depString;
-                }
-            }
+            });
 
             // Display final summary
+            $installedPackages = array_values(array_unique($installedPackages));
             Console::out('');
-            Console::out(sprintf("Installation complete: %d successful, %d failed", $installedCount, count($failedDependencies)));
-            
+            Console::out(sprintf("Installation complete: %d package(s) installed, %d of %d dependencies already installed, %d failed",
+                count($installedPackages), $alreadyInstalled, count($allDependencies), count($failedDependencies)));
+
+            foreach($installedPackages as $installedPackage)
+            {
+                Console::out("  - " . $installedPackage);
+            }
+
             if(count($failedDependencies) > 0)
             {
                 Console::out("Failed dependencies:");
