@@ -35,6 +35,10 @@
          */
         private array $dependencies;
         private bool $symlinkRegistered;
+        /**
+         * @var string[]
+         */
+        private array $symlinks = [];
 
         /**
          * PackageLockEntry constructor.
@@ -49,6 +53,7 @@
                 return DependencyReference::fromArray($item);} else {return $item;}}, $data['dependencies'] ?? []
             );
             $this->symlinkRegistered = $data['symlink_registered'] ?? false;
+            $this->symlinks = array_values(array_filter($data['symlinks'] ?? [], 'is_string'));
         }
 
         /**
@@ -96,16 +101,50 @@
             $this->symlinkRegistered = $registered;
         }
 
+        /**
+         * Returns the names of the launchers registered for this package (one per Composer bin). Empty when the
+         * package uses the default launcher named after its assembly.
+         *
+         * @return string[] The launcher names
+         */
+        public function getSymlinks(): array
+        {
+            return $this->symlinks;
+        }
+
+        /**
+         * Sets the names of the launchers registered for this package
+         *
+         * @param string[] $symlinks The launcher names
+         */
+        public function setSymlinks(array $symlinks): void
+        {
+            $this->symlinks = array_values(array_unique($symlinks));
+        }
+
+        /**
+         * @inheritDoc
+         */
         public function toArray(): array
         {
-            return [
+            $data = [
                 'package' => $this->package,
                 'version' => $this->version,
                 'dependencies' => array_map(function($item) { return $item->toArray(); }, $this->dependencies),
                 'symlink_registered' => $this->symlinkRegistered
             ];
+
+            if(!empty($this->symlinks))
+            {
+                $data['symlinks'] = $this->symlinks;
+            }
+
+            return $data;
         }
 
+        /**
+         * @inheritDoc
+         */
         public static function fromArray(array $data): PackageLockEntry
         {
             return new self($data);
