@@ -43,6 +43,51 @@
     class Main
     {
         /**
+         * The arguments that tell ncc that everything after them is passed through to the executed package
+         */
+        public const array PASSTHROUGH_SEPARATORS = ['--args', '--'];
+
+        /**
+         * The raw arguments found after the passthrough separator, null if there was no separator
+         *
+         * @var string[]|null
+         */
+        private static ?array $passthroughArguments = null;
+
+        /**
+         * Splits the raw command-line arguments into ncc's own arguments and the arguments passed through to an
+         * executed package. Only the first separator counts, so a separator meant for the executed package is
+         * passed through as-is.
+         *
+         * @param string[] $argv The raw command-line arguments (without the script name)
+         * @return array{0: string[], 1: string[]|null} ncc's arguments and the passthrough arguments, the latter being
+         *                                             null if no separator was given
+         */
+        public static function splitPassthroughArguments(array $argv): array
+        {
+            $argv = array_values($argv);
+            foreach($argv as $index => $argument)
+            {
+                if(in_array($argument, self::PASSTHROUGH_SEPARATORS, true))
+                {
+                    return [array_slice($argv, 0, $index), array_slice($argv, $index + 1)];
+                }
+            }
+
+            return [$argv, null];
+        }
+
+        /**
+         * Returns the raw arguments given after the passthrough separator in the current invocation
+         *
+         * @return string[]|null The passthrough arguments, or null if no separator was given
+         */
+        public static function getPassthroughArguments(): ?array
+        {
+            return self::$passthroughArguments;
+        }
+
+        /**
          * The main execution point for ncc's command-line interface
          *
          * @param array $argv Command-line arguments to be passed on
@@ -67,7 +112,9 @@
             }
 
             ShutdownHandler::register();
-            $argv = Parse::parseArgument($argv);
+
+            [$nccArguments, self::$passthroughArguments] = self::splitPassthroughArguments($argv);
+            $argv = Parse::parseArgument($nccArguments);
 
             // Check for global --no-cache flag
             if(isset($argv['no-cache']))
