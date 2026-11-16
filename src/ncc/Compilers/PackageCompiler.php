@@ -27,6 +27,7 @@
     use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
     use ncc\Classes\PackageReader;
+    use ncc\Classes\PhpClassParser;
     use ncc\Classes\PackageSigner;
     use ncc\Classes\PackageWriter;
     use ncc\Enums\ExecutionUnitType;
@@ -190,21 +191,10 @@
                                 // Try to find this file in the sourceResources array
                                 if($realPath !== false && in_array($realPath, $this->getSourceResources(), true))
                                 {
-                                    // File is in sourceResources, resolve to path relative to source directory
-                                    if(str_starts_with($realPath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
-                                    {
-                                        // File is inside source path - use relative path with assembly prefix
-                                        $resolvedEntryPoint = $mainPackageName . '/' . substr($realPath, strlen($this->getSourcePath()) + 1);
-                                        $executionUnitData['entry'] = $resolvedEntryPoint;
-                                        Logger::getLogger()?->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
-                                    }
-                                    else
-                                    {
-                                        // File is outside source path - use basename with assembly prefix
-                                        $resolvedEntryPoint = $mainPackageName . '/' . basename($realPath);
-                                        $executionUnitData['entry'] = $resolvedEntryPoint;
-                                        Logger::getLogger()?->debug(sprintf('Resolved entry point for %s (outside source): %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
-                                    }
+                                    // File is in sourceResources, resolve to where it is written in the package
+                                    $resolvedEntryPoint = $mainPackageName . '/' . $this->resolvePackagedName($realPath);
+                                    $executionUnitData['entry'] = $resolvedEntryPoint;
+                                    Logger::getLogger()?->debug(sprintf('Resolved entry point for %s: %s -> %s', $executionUnitName, $executionUnit->getEntryPoint(), $resolvedEntryPoint));
                                 }
                                 else
                                 {
@@ -237,17 +227,7 @@
                         {
                             $currentStage++;
                             
-                            // Check if component is within source path
-                            if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
-                            {
-                                // File is inside source path, use relative path
-                                $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
-                            }
-                            else
-                            {
-                                // File is outside source path, use just the filename
-                                $componentName = basename($componentFilePath);
-                            }
+                            $componentName = $this->resolvePackagedName($componentFilePath);
 
                             if(empty($componentName) || $componentName === false)
                             {
@@ -336,17 +316,7 @@
                         // Resources can be multiple, write them named.
                         foreach($this->getSourceResources() as $resourceFilePath)
                         {
-                            // Check if resource is within source path
-                            if(str_starts_with($resourceFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
-                            {
-                                // File is inside source path, use relative path
-                                $resourceName = substr($resourceFilePath, strlen($this->getSourcePath()) + 1);
-                            }
-                            else
-                            {
-                                // File is outside source path, use just the filename
-                                $resourceName = basename($resourceFilePath);
-                            }
+                            $resourceName = $this->resolvePackagedName($resourceFilePath);
 
                             if(empty($resourceName) || $resourceName === false)
                             {
@@ -461,6 +431,13 @@
                 Logger::getLogger()?->verbose(sprintf('Added %d required PHP extensions to header', count($extensions)));
             }
             
+            $autoloadFiles = $this->resolveAutoloadFiles($dependencyReaders);
+            if(count($autoloadFiles) > 0)
+            {
+                $header->setAutoloadFiles($autoloadFiles);
+                Logger::getLogger()?->verbose(sprintf('Added %d autoload files to header', count($autoloadFiles)));
+            }
+
             if(count($this->getBuildConfiguration()->getDefinitions()) > 0)
             {
                 $header->setDefinedConstants($this->getBuildConfiguration()->getDefinitions());
@@ -593,11 +570,13 @@
                 
                 if($sourceMapping !== false && is_array($sourceMapping))
                 {
+                    $packagedComponents = array_flip($this->getSourceComponents());
+
                     // Convert file paths to ncc:// protocol paths
                     foreach($sourceMapping as $className => $filePath)
                     {
                         // Make path relative to source directory
-                        if(str_starts_with($filePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
+                        if(isset($packagedComponents[$filePath]) && str_starts_with($filePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
                         {
                             $relativePath = substr($filePath, strlen($this->getSourcePath()) + 1);
                             $mapping[$className] = $baseDirectory . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
@@ -620,21 +599,10 @@
                         {
                             // Read the component file
                             $componentData = IO::readFile($componentFilePath);
-                            
-                            // Determine the component name (relative path for mapping)
-                            if(str_starts_with($componentFilePath, $this->getSourcePath() . DIRECTORY_SEPARATOR))
-                            {
-                                $componentName = substr($componentFilePath, strlen($this->getSourcePath()) + 1);
-                            }
-                            else
-                            {
-                                $componentName = basename($componentFilePath);
-                            }
-                            
-                            $componentPath = $baseDirectory . str_replace(DIRECTORY_SEPARATOR, '/', $componentName);
+                            $componentPath = $baseDirectory . $this->resolvePackagedName($componentFilePath);
                             
                             // Parse the PHP code to extract class names
-                            $classes = $this->parsePhpClasses($componentData);
+                            $classes = PhpClassParser::parse($componentData);
                             
                             foreach($classes as $className)
                             {
@@ -649,6 +617,29 @@
                     }
                     
                     Logger::getLogger()?->verbose(sprintf('Generated %d source class mappings via fallback parser', count($mapping)));
+                }
+                else
+                {
+                    foreach($this->getSourceComponents() as $componentFilePath)
+                    {
+                        if($this->isInSourcePath($componentFilePath))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            $componentPath = $baseDirectory . $this->resolvePackagedName($componentFilePath);
+                            foreach(PhpClassParser::parse(IO::readFile($componentFilePath)) as $className)
+                            {
+                                $mapping[$className] ??= $componentPath;
+                            }
+                        }
+                        catch(Exception $e)
+                        {
+                            Logger::getLogger()?->warning(sprintf('Failed to parse component %s: %s', $componentFilePath, $e->getMessage()));
+                        }
+                    }
                 }
             }
             
@@ -688,6 +679,59 @@
         }
 
         /**
+         * Resolves the build configuration's autoload files to the ncc:// paths they are written to. When statically
+         * linking, the autoload files of the embedded dependencies come first (dependency-first, like Composer) and
+         * are remapped into this package since their components are embedded in it.
+         *
+         * @param array|null $dependencyReaders The statically linked dependencies, if any
+         * @return string[] The ncc:// paths of the autoload files in execution order
+         */
+        private function resolveAutoloadFiles(?array $dependencyReaders=null): array
+        {
+            $packageName = $this->getProjectConfiguration()->getAssembly()->getPackage();
+            $assemblyName = $this->getProjectConfiguration()->getAssembly()->getName();
+            $autoloadFiles = [];
+
+            if($this->isStaticallyLinked() && $dependencyReaders !== null)
+            {
+                /** @var ResolvedDependency $resolvedDependency */
+                foreach($dependencyReaders as $resolvedDependency)
+                {
+                    $packageReader = $resolvedDependency->getPackageReader();
+                    if($packageReader === null)
+                    {
+                        continue;
+                    }
+
+                    $dependencyPrefix = 'ncc://' . $packageReader->getAssembly()->getPackage() . '/';
+                    foreach($packageReader->getHeader()?->getAutoloadFiles() ?? [] as $dependencyFile)
+                    {
+                        if(str_starts_with($dependencyFile, $dependencyPrefix))
+                        {
+                            $dependencyFile = 'ncc://' . $packageName . '/' . substr($dependencyFile, strlen($dependencyPrefix));
+                        }
+
+                        $autoloadFiles[] = $dependencyFile;
+                    }
+                }
+            }
+
+            foreach($this->getBuildConfiguration()->getAutoloadFiles() as $autoloadFile)
+            {
+                $realPath = realpath($this->getProjectPath() . DIRECTORY_SEPARATOR . ltrim($autoloadFile, '/\\'));
+                if($realPath === false || !in_array($realPath, $this->getSourceComponents(), true))
+                {
+                    // Already warned about while collecting the files
+                    continue;
+                }
+
+                $autoloadFiles[] = 'ncc://' . $packageName . '/' . $assemblyName . '/' . $this->resolvePackagedName($realPath);
+            }
+
+            return array_values(array_unique($autoloadFiles));
+        }
+
+        /**
          * Parses components from a PackageReader to extract class definitions.
          * 
          * Reads each component from the package, tokenizes the PHP code, and extracts
@@ -700,292 +744,11 @@
         private function parsePackageComponents(PackageReader $packageReader, string $baseDirectory): array
         {
             $mapping = [];
-            
-            foreach($packageReader->getComponentReferences() as $componentRef)
+            foreach($packageReader->getClassMap() as $className => $componentName)
             {
-                try
-                {
-                    // Read the component data
-                    $componentData = $packageReader->readComponent($componentRef);
-                    $componentName = $componentRef->getName();
-                    Logger::getLogger()?->debug(sprintf('Component name from reader: %s, baseDirectory: %s', $componentName, $baseDirectory));
-                    $componentPath = $baseDirectory . $componentName;
-                    
-                    // Parse the PHP code to extract class names
-                    $classes = $this->parsePhpClasses($componentData);
-                    
-                    foreach($classes as $className)
-                    {
-                        $mapping[$className] = $componentPath;
-                        Logger::getLogger()?->debug(sprintf('Mapped dependency class: %s => %s', $className, $componentPath));
-                    }
-                }
-                catch(Exception $e)
-                {
-                    Logger::getLogger()?->warning(sprintf('Failed to parse component %s: %s', $componentRef->getName(), $e->getMessage()));
-                }
+                $mapping[$className] = $baseDirectory . $componentName;
             }
-            
+
             return $mapping;
-        }
-
-        /**
-         * Parses PHP source code to extract class, interface, trait, and enum names.
-         * 
-         * Uses PHP tokenizer to analyze the code and extract fully qualified class names.
-         * This is similar to pal's parseSourceFile but works with string content instead of files.
-         *
-         * @param string $phpCode The PHP source code to parse
-         * @return array<string> Array of fully qualified class names found in the code
-         */
-        private function parsePhpClasses(string $phpCode): array
-        {
-            $tokens = @token_get_all($phpCode);
-            if(!is_array($tokens))
-            {
-                return [];
-            }
-            
-            $classes = [];
-            $namespace = '';
-            $tokenCount = count($tokens);
-            $bracketLevel = 0;
-            $namespaceBracketLevel = 0;
-            
-            for($i = 0; $i < $tokenCount; $i++)
-            {
-                $token = $tokens[$i];
-                
-                if(!is_array($token))
-                {
-                    if($token === '{')
-                    {
-                        $bracketLevel++;
-                    }
-                    elseif($token === '}')
-                    {
-                        $bracketLevel--;
-                        if($namespaceBracketLevel > 0 && $bracketLevel < $namespaceBracketLevel)
-                        {
-                            $namespace = '';
-                            $namespaceBracketLevel = 0;
-                        }
-                    }
-                    continue;
-                }
-                
-                $tokenType = $token[0];
-                
-                // Handle namespace declarations
-                if($tokenType === T_NAMESPACE)
-                {
-                    $namespace = $this->extractNamespaceFromTokens($tokens, $i);
-                    
-                    // Check if this is a bracketed namespace
-                    $j = $i + 1;
-                    while($j < $tokenCount)
-                    {
-                        if(!is_array($tokens[$j]) && $tokens[$j] === '{')
-                        {
-                            $namespaceBracketLevel = $bracketLevel + 1;
-                            break;
-                        }
-                        $j++;
-                    }
-                    continue;
-                }
-                
-                // Handle class/interface/trait/enum definitions
-                $allowedTypes = [T_CLASS, T_INTERFACE];
-                
-                if(defined('T_TRAIT'))
-                {
-                    $allowedTypes[] = T_TRAIT;
-                }
-                
-                if(defined('T_ENUM'))
-                {
-                    $allowedTypes[] = T_ENUM;
-                }
-                
-                if(in_array($tokenType, $allowedTypes))
-                {
-                    // Skip anonymous classes
-                    if($this->isAnonymousClass($tokens, $i))
-                    {
-                        continue;
-                    }
-                    
-                    // Skip ::class constants
-                    if($this->isClassConstant($tokens, $i))
-                    {
-                        continue;
-                    }
-                    
-                    $className = $this->extractClassNameFromTokens($tokens, $i);
-                    if($className)
-                    {
-                        $fullClassName = $namespace ? $namespace . '\\' . $className : $className;
-                        $classes[] = $fullClassName;
-                    }
-                }
-            }
-            
-            return array_unique($classes);
-        }
-
-        /**
-         * Extracts namespace from tokens starting at a T_NAMESPACE token.
-         *
-         * @param array $tokens Token array
-         * @param int $startPos Position of T_NAMESPACE token
-         * @return string The namespace string
-         */
-        private function extractNamespaceFromTokens(array $tokens, int $startPos): string
-        {
-            $namespace = '';
-            $i = $startPos + 1;
-            
-            while($i < count($tokens))
-            {
-                $token = $tokens[$i];
-                
-                if(!is_array($token))
-                {
-                    if($token === ';' || $token === '{')
-                    {
-                        break;
-                    }
-                    $i++;
-                    continue;
-                }
-                
-                if($token[0] === T_STRING || $token[0] === T_NS_SEPARATOR)
-                {
-                    $namespace .= $token[1];
-                }
-                elseif(defined('T_NAME_QUALIFIED') && $token[0] === T_NAME_QUALIFIED)
-                {
-                    $namespace .= $token[1];
-                }
-                elseif(defined('T_NAME_FULLY_QUALIFIED') && $token[0] === T_NAME_FULLY_QUALIFIED)
-                {
-                    $namespace .= $token[1];
-                }
-                
-                $i++;
-            }
-            
-            return trim($namespace, '\\');
-        }
-
-        /**
-         * Extracts class name from tokens starting at a class/interface/trait/enum token.
-         *
-         * @param array $tokens Token array
-         * @param int $startPos Position of class-like token
-         * @return string|null The class name or null if not found
-         */
-        private function extractClassNameFromTokens(array $tokens, int $startPos): ?string
-        {
-            $i = $startPos + 1;
-            
-            while($i < count($tokens))
-            {
-                $token = $tokens[$i];
-                
-                if(is_array($token) && $token[0] === T_STRING)
-                {
-                    return $token[1];
-                }
-                
-                $i++;
-            }
-            
-            return null;
-        }
-
-        /**
-         * Checks if a class token represents an anonymous class.
-         *
-         * @param array $tokens Token array
-         * @param int $pos Position of T_CLASS token
-         * @return bool True if anonymous class
-         */
-        private function isAnonymousClass(array $tokens, int $pos): bool
-        {
-            // Look ahead for class name or opening parenthesis/brace
-            $i = $pos + 1;
-            while($i < count($tokens))
-            {
-                $token = $tokens[$i];
-                
-                if(!is_array($token))
-                {
-                    // If we hit ( or { before a T_STRING, it's anonymous
-                    if($token === '(' || $token === '{')
-                    {
-                        return true;
-                    }
-                    $i++;
-                    continue;
-                }
-                
-                if($token[0] === T_WHITESPACE)
-                {
-                    $i++;
-                    continue;
-                }
-                
-                if($token[0] === T_STRING)
-                {
-                    return false;
-                }
-                
-                break;
-            }
-            
-            return false;
-        }
-
-        /**
-         * Checks if a class token is part of a ::class constant.
-         *
-         * @param array $tokens Token array
-         * @param int $pos Position of T_CLASS token
-         * @return bool True if ::class constant
-         */
-        private function isClassConstant(array $tokens, int $pos): bool
-        {
-            // Look backward for double colon
-            $i = $pos - 1;
-            while($i >= 0)
-            {
-                $token = $tokens[$i];
-                
-                if(is_array($token) && $token[0] === T_WHITESPACE)
-                {
-                    $i--;
-                    continue;
-                }
-                
-                if(defined('T_DOUBLE_COLON') && is_array($token) && $token[0] === T_DOUBLE_COLON)
-                {
-                    return true;
-                }
-                
-                if(!is_array($token) && $token === ':')
-                {
-                    // Check for ::
-                    if($i > 0 && !is_array($tokens[$i - 1]) && $tokens[$i - 1] === ':')
-                    {
-                        return true;
-                    }
-                }
-                
-                break;
-            }
-            
-            return false;
         }
     }
