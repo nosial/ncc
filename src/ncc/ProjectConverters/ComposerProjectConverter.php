@@ -38,6 +38,8 @@
 
     class ComposerProjectConverter extends AbstractProjectConverter
     {
+        public const string COMPOSER_NAME_OPTION = 'composer_name';
+
         /**
          * @inheritDoc
          */
@@ -66,18 +68,16 @@
 
             // Apply release configuration
             $releaseConfiguration = Project\BuildConfiguration::defaultRelease();
-            // Exclude vendor directory from compilation to avoid permission/scanning issues
-            $releaseConfiguration->addExcludedComponent('vendor' . DIRECTORY_SEPARATOR . '*');
-            $releaseConfiguration->addExcludedComponent('vendor');
             
             if(isset($composerData['require']))
             {
                 Logger::getLogger()?->debug(sprintf('Processing %d production dependencies', count($composerData['require'])));
-                foreach($this->generateDependencies($composerData, $progressCallback) as $dependencyName => $dependencySource)
+                $dependencies = $this->generateDependencies($composerData['require'], false, $progressCallback);
+                foreach($dependencies as $dependencyName => $dependencySource)
                 {
                     $project->addDependency($dependencyName, $dependencySource);
                 }
-                Logger::getLogger()?->verbose(sprintf('Added %d production dependencies', count($this->generateDependencies($composerData))));
+                Logger::getLogger()?->verbose(sprintf('Added %d production dependencies', count($dependencies)));
 
                 // Extract PHP extensions from require
                 $extensions = $this->extractExtensions($composerData['require']);
@@ -95,18 +95,16 @@
 
             // Apply debug configuration
             $debugConfiguration = Project\BuildConfiguration::defaultDebug();
-            // Exclude vendor directory from compilation to avoid permission/scanning issues
-            $debugConfiguration->addExcludedComponent('vendor' . DIRECTORY_SEPARATOR . '*');
-            $debugConfiguration->addExcludedComponent('vendor');
             
             if(isset($composerData['require-dev']))
             {
                 Logger::getLogger()?->debug(sprintf('Processing %d development dependencies', count($composerData['require-dev'])));
-                foreach($this->generateDebugDependencies($composerData, $progressCallback) as $dependencyName => $dependencySource)
+                $devDependencies = $this->generateDependencies($composerData['require-dev'], true, $progressCallback);
+                foreach($devDependencies as $dependencyName => $dependencySource)
                 {
                     $debugConfiguration->addDependency($dependencyName, $dependencySource);
                 }
-                Logger::getLogger()?->verbose(sprintf('Added %d development dependencies', count($this->generateDebugDependencies($composerData))));
+                Logger::getLogger()?->verbose(sprintf('Added %d development dependencies', count($devDependencies)));
 
                 // Extract PHP extensions from require-dev
                 $devExtensions = $this->extractExtensions($composerData['require-dev']);
@@ -143,104 +141,19 @@
             // Get the base directory of the composer.json file
             $baseDir = dirname($filePath);
             
-            // Even if target-dir is deprecated, we will still support it for setting the source path if it exists
-            if(isset($composerData['target-dir']))
+            $project->setSourcePath('.');
+            foreach(self::getExcludedPaths($baseDir, $composerData, [$releaseConfiguration, $debugConfiguration]) as $excludedPath)
             {
-                Logger::getLogger()?->verbose(sprintf('Using deprecated target-dir for source path: %s', $composerData['target-dir']));
-                $validatedPath = $this->validateSourcePath($baseDir, $composerData['target-dir']);
-                $project->setSourcePath($validatedPath ?? $this->detectSourcePath($baseDir));
-            }
-            // PSR-4 autoloading
-            elseif(isset($composerData['autoload']['psr-4']))
-            {
-                Logger::getLogger()?->debug(sprintf('Processing PSR-4 autoload configuration with %d entries', count($composerData['autoload']['psr-4'])));
-                // Get first item, we consider this the main source path
-                $psr4Paths = array_values($composerData['autoload']['psr-4']);
-                $firstPath = $psr4Paths[0] ?? 'src';
-                
-                // PSR-4 paths can be either strings or arrays of strings
-                if(is_array($firstPath))
+                foreach([$excludedPath, $excludedPath . '/*'] as $pattern)
                 {
-                    $firstPath = $firstPath[0] ?? 'src';
-                }
-                
-                // Empty string in PSR-4 means the root directory, use '.' instead
-                $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
-                $validatedPath = $this->validateSourcePath($baseDir, $normalizedPath);
-                $project->setSourcePath($validatedPath ?? $this->detectSourcePath($baseDir));
-                Logger::getLogger()?->verbose(sprintf('Set source path from PSR-4 autoload: %s', $validatedPath ?? $this->detectSourcePath($baseDir)));
-
-                // If there are more than one, add them as included components
-                if(count($psr4Paths) > 1)
-                {
-                    Logger::getLogger()?->verbose(sprintf('Adding %d additional PSR-4 paths as included components', count($psr4Paths) - 1));
-                    foreach(array_slice($psr4Paths, 1) as $item)
+                    foreach([$releaseConfiguration, $debugConfiguration] as $buildConfiguration)
                     {
-                        // PSR-4 paths can be either strings or arrays of strings
-                        $paths = is_array($item) ? $item : [$item];
-                        
-                        foreach($paths as $path)
-                        {
-                            // Empty string means root directory
-                            $includePath = $path === '' ? '.' : rtrim($path, '/\\');
-                            $validatedPath = $this->validateSourcePath($baseDir, $includePath);
-                            if($validatedPath !== null)
-                            {
-                                Logger::getLogger()?->debug(sprintf('Adding included component: %s', $includePath));
-                                $releaseConfiguration->addIncludedComponent($validatedPath);
-                                $debugConfiguration->addIncludedComponent($validatedPath);
-                            }
-                            else
-                            {
-                                Logger::getLogger()?->warning(sprintf('PSR-4 path does not exist, skipping: %s', $includePath));
-                            }
-                        }
+                        $buildConfiguration->addExcludedComponent($pattern);
+                        $buildConfiguration->addExcludedResource($pattern);
                     }
                 }
             }
-            // PSR-0 autoloading or classmap
-            elseif(isset($composerData['autoload']['classmap']))
-            {
-                Logger::getLogger()?->debug(sprintf('Processing classmap autoload configuration with %d entries', count($composerData['autoload']['classmap'])));
-                // Get first item, we consider this the main source path
-                $firstPath = $composerData['autoload']['classmap'][0] ?? 'src';
-                // Empty string in classmap means the root directory, use '.' instead
-                $normalizedPath = $firstPath === '' ? '.' : rtrim($firstPath, '/\\');
-                $validatedPath = $this->validateSourcePath($baseDir, $normalizedPath);
-                $project->setSourcePath($validatedPath ?? $this->detectSourcePath($baseDir));
-                Logger::getLogger()?->verbose(sprintf('Set source path from classmap autoload: %s', $validatedPath ?? $this->detectSourcePath($baseDir)));
 
-                // If there are more than one, add them as included components
-                if(count($composerData['autoload']['classmap']) > 1)
-                {
-                    Logger::getLogger()?->verbose(sprintf('Adding %d additional classmap paths as included components', count($composerData['autoload']['classmap']) - 1));
-                    foreach(array_slice($composerData['autoload']['classmap'], 1) as $item)
-                    {
-                        // Empty string means root directory
-                        $includePath = $item === '' ? '.' : rtrim($item, '/\\');
-                        $validatedPath = $this->validateSourcePath($baseDir, $includePath);
-                        if($validatedPath !== null)
-                        {
-                            Logger::getLogger()?->debug(sprintf('Adding included component: %s', $includePath));
-                            $releaseConfiguration->addIncludedComponent($validatedPath);
-                            $debugConfiguration->addIncludedComponent($validatedPath);
-                        }
-                        else
-                        {
-                            Logger::getLogger()?->warning(sprintf('Classmap path does not exist, skipping: %s', $includePath));
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // No autoload information, try to find the source path automatically
-                Logger::getLogger()?->debug('No autoload configuration found, attempting to detect source path automatically');
-                $project->setSourcePath($this->detectSourcePath($baseDir));
-                Logger::getLogger()?->verbose(sprintf('Auto-detected source path: %s', $project->getSourcePath()));
-            }
-
-            // Add any files autoloaded via files to included components
             if(isset($composerData['autoload']['files']))
             {
                 Logger::getLogger()?->debug(sprintf('Adding %d autoloaded files as included components', count($composerData['autoload']['files'])));
@@ -249,6 +162,10 @@
                     Logger::getLogger()?->verbose(sprintf('Including autoload file: %s', $item));
                     $releaseConfiguration->addIncludedComponent($item);
                     $debugConfiguration->addIncludedComponent($item);
+
+                    // Executed whenever the package is imported, like Composer does
+                    $releaseConfiguration->addAutoloadFile($item);
+                    $debugConfiguration->addAutoloadFile($item);
                 }
             }
 
@@ -262,24 +179,43 @@
                 Logger::getLogger()?->debug(sprintf('Adding %d excluded components', count($excludedComponents)));
                 foreach($excludedComponents as $component)
                 {
+                    $component = trim(str_replace('\\', '/', (string)$component), '/');
+                    if($component === '')
+                    {
+                        continue;
+                    }
+
                     Logger::getLogger()?->verbose(sprintf('Excluding component: %s', $component));
-                    $releaseConfiguration->addExcludedComponent($component);
-                    $debugConfiguration->addExcludedComponent($component);
+                    foreach([$component, $component . '/*'] as $pattern)
+                    {
+                        $releaseConfiguration->addExcludedComponent($pattern);
+                        $debugConfiguration->addExcludedComponent($pattern);
+                    }
                 }
+            }
+
+            if(isset($composerData['name']) && is_string($composerData['name']))
+            {
+                $releaseConfiguration->addOption(self::COMPOSER_NAME_OPTION, $composerData['name']);
+                $debugConfiguration->addOption(self::COMPOSER_NAME_OPTION, $composerData['name']);
             }
 
             $project->addBuildConfiguration($releaseConfiguration);
             $project->addBuildConfiguration($debugConfiguration);
             Logger::getLogger()?->debug('Added release and debug build configurations');
 
-            if(isset($composerData['bin']) && is_array($composerData['bin']) && count($composerData['bin']) > 0)
+            $bins = self::getBins($composerData);
+            if(count($bins) > 0)
             {
-                Logger::getLogger()?->verbose(sprintf('Generating execution unit from %d bin entries', count($composerData['bin'])));
-                $project->addExecutionUnit($this->generateExecutionUnit($composerData));
+                Logger::getLogger()?->verbose(sprintf('Generating execution units from %d bin entries', count($bins)));
+                foreach($this->generateExecutionUnits($bins) as $executionUnit)
+                {
+                    $project->addExecutionUnit($executionUnit);
+                }
+
                 $project->setEntryPoint('main');
                 Logger::getLogger()?->verbose('Set entry point to "main" from composer bin field');
                 
-                // Add Composer compatibility stub files to the build
                 $this->addComposerCompatibilityStubs($baseDir, $releaseConfiguration, $debugConfiguration);
             }
 
@@ -288,34 +224,106 @@
         }
 
         /**
-         * Generate an execution unit from Composer data.
+         * Returns the bin entries of a composer.json, skipping invalid ones
          *
          * @param array $composerData The parsed Composer JSON data.
-         * @return Project\ExecutionUnit The generated execution unit.
+         * @return string[] The bin paths in the order they are declared
          */
-        private function generateExecutionUnit(array $composerData): Project\ExecutionUnit
+        public static function getBins(array $composerData): array
         {
-            Logger::getLogger()?->verbose(sprintf('Generating execution unit with entry point: %s', $composerData['bin'][0]));
+            $bins = $composerData['bin'] ?? [];
+            if(is_string($bins))
+            {
+                $bins = [$bins];
+            }
+
+            if(!is_array($bins))
+            {
+                return [];
+            }
+
+            return array_values(array_filter($bins, static fn($bin) => is_string($bin) && trim($bin) !== ''));
+        }
+
+        /**
+         * Generates the execution units for the Composer bin entries: one unit per bin named after the bin's basename
+         * (the name Composer gives it in vendor/bin), plus "main" running the first bin as the package entry point.
+         *
+         * @param string[] $bins The bin paths from composer.json
+         * @return Project\ExecutionUnit[] The generated execution units
+         */
+        private function generateExecutionUnits(array $bins): array
+        {
+            $units = [self::createBinExecutionUnit('main', $bins[0])];
+            $usedNames = ['main' => true];
+
+            foreach($bins as $bin)
+            {
+                $name = self::getBinName($bin);
+                $uniqueName = $name;
+                $suffix = 2;
+                while(isset($usedNames[$uniqueName]))
+                {
+                    // "main" is taken by the entry point, a bin that is literally called main is that same script
+                    if($uniqueName === 'main' && $bin === $bins[0])
+                    {
+                        continue 2;
+                    }
+
+                    $uniqueName = $name . '-' . $suffix++;
+                }
+
+                $usedNames[$uniqueName] = true;
+                Logger::getLogger()?->verbose(sprintf('Generating execution unit %s for bin %s', $uniqueName, $bin));
+                $units[] = self::createBinExecutionUnit($uniqueName, $bin);
+            }
+
+            return $units;
+        }
+
+        /**
+         * Returns the command name of a Composer bin entry (its basename, like Composer's vendor/bin proxies)
+         *
+         * @param string $bin The bin path from composer.json
+         * @return string The command name
+         */
+        public static function getBinName(string $bin): string
+        {
+            return basename(str_replace('\\', '/', $bin));
+        }
+
+        /**
+         * Creates the execution unit for a Composer bin script
+         *
+         * @param string $name The execution unit name
+         * @param string $bin The bin path relative to the project path
+         * @return Project\ExecutionUnit The execution unit
+         */
+        private static function createBinExecutionUnit(string $name, string $bin): Project\ExecutionUnit
+        {
             return new Project\ExecutionUnit([
-                'name' => 'main',
+                'name' => $name,
                 'type' => 'php',
                 'mode' => 'auto',
-                'entry' => $composerData['bin'][0], // TODO: Ensure the entry is considered to be a required file
+                'entry' => $bin,
                 'working_directory' => MacroVariable::CURRENT_WORKING_DIRECTORY->value,
+                'composer_bin' => true,
             ]);
         }
 
         /**
-         * Generate dependencies from Composer data.
+         * Generates the ncc dependencies for a Composer require or require-dev section, skipping PHP, extensions and
+         * Composer virtual packages (composer-runtime-api, composer-plugin-api, ...)
          *
-         * @param array $composerData The parsed Composer JSON data.
+         * @param array $requirements The require or require-dev section from composer.json.
+         * @param bool $development Whether these are development dependencies (only used for messages).
          * @param callable|null $progressCallback Optional callback for progress updates.
          * @return array An associative array of dependency names to PackageSource objects.
          */
-        private function generateDependencies(array $composerData, ?callable $progressCallback = null): array
+        private function generateDependencies(array $requirements, bool $development, ?callable $progressCallback = null): array
         {
             $dependencies = [];
-            foreach ($composerData['require'] as $dependency => $version)
+            foreach ($requirements as $dependency => $version)
             {
                 if(str_starts_with($dependency, 'ext-') || $dependency === 'php')
                 {
@@ -323,7 +331,6 @@
                     continue;
                 }
 
-                // Skip Composer virtual packages (composer-runtime-api, composer-plugin-api, etc.)
                 if(!str_contains($dependency, '/'))
                 {
                     Logger::getLogger()?->debug(sprintf('Skipping Composer virtual package: %s', $dependency));
@@ -332,56 +339,17 @@
 
                 if($progressCallback !== null)
                 {
-                    $progressCallback(sprintf('Resolving dependency %s', $dependency));
+                    $progressCallback(sprintf($development ? 'Resolving dev dependency %s' : 'Resolving dependency %s', $dependency));
                 }
 
-                Logger::getLogger()?->verbose(sprintf('Processing dependency: %s@%s', $dependency, $version));
-                $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
-                $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
+                Logger::getLogger()?->verbose(sprintf('Processing %sdependency: %s@%s', $development ? 'development ' : '', $dependency, $version));
+                $packageName = self::generatePackageName($dependency);
+                $resolvedVersion = $this->resolvePackageVersion($dependency, $version, $development);
                 Logger::getLogger()?->debug(sprintf('Resolved %s version %s to %s', $dependency, $version, $resolvedVersion));
-                $dependencies[$this->generatePackageName($dependency)]->setVersion($resolvedVersion);
-                $dependencies[$this->generatePackageName($dependency)]->setRepository('packagist');
-            }
 
-            return $dependencies;
-        }
-
-        /**
-         * Generate debug dependencies from Composer data.
-         *
-         * @param array $composerData The parsed Composer JSON data.
-         * @param callable|null $progressCallback Optional callback for progress updates.
-         * @return array An associative array of dependency names to PackageSource objects for debug dependencies.
-         */
-        private function generateDebugDependencies(array $composerData, ?callable $progressCallback = null): array
-        {
-            $dependencies = [];
-            foreach ($composerData['require-dev'] as $dependency => $version)
-            {
-                if(str_starts_with($dependency, 'ext-') || $dependency === 'php')
-                {
-                    Logger::getLogger()?->debug(sprintf('Skipping PHP/extension development requirement: %s', $dependency));
-                    continue;
-                }
-
-                // Skip Composer virtual packages (composer-runtime-api, composer-plugin-api, etc.)
-                if(!str_contains($dependency, '/'))
-                {
-                    Logger::getLogger()?->debug(sprintf('Skipping Composer virtual package: %s', $dependency));
-                    continue;
-                }
-
-                if($progressCallback !== null)
-                {
-                    $progressCallback(sprintf('Resolving dev dependency %s', $dependency));
-                }
-
-                Logger::getLogger()?->verbose(sprintf('Processing development dependency: %s@%s', $dependency, $version));
-                $dependencies[$this->generatePackageName($dependency)] = new PackageSource($dependency);
-                $resolvedVersion = $this->resolvePackageVersion($dependency, $version);
-                Logger::getLogger()?->debug(sprintf('Resolved %s version %s to %s', $dependency, $version, $resolvedVersion));
-                $dependencies[$this->generatePackageName($dependency)]->setVersion($resolvedVersion);
-                $dependencies[$this->generatePackageName($dependency)]->setRepository('packagist');
+                $dependencies[$packageName] = new PackageSource($dependency);
+                $dependencies[$packageName]->setVersion($resolvedVersion);
+                $dependencies[$packageName]->setRepository('packagist');
             }
 
             return $dependencies;
@@ -457,14 +425,13 @@
             }
 
             // Set the package identifier (e.g., com.symfony.process)
-            $packageName = $this->generatePackageName($composerData['name']);
+            $packageName = self::generatePackageName($composerData['name']);
             Logger::getLogger()?->debug(sprintf('Generated package name: %s from %s', $packageName, $composerData['name']));
             $assembly->setPackage($packageName);
             
-            // Set the assembly name from the composer package name (without vendor prefix)
+            // Set the assembly name from the composer package name (without vendor prefix, eg; symfony/process -> process)
             // Assembly names must not contain slashes to avoid path conflicts
-            list($name) = explode('/', $composerData['name'], 2);
-            $assembly->setName($name);
+            $assembly->setName(self::getAssemblyName($composerData['name']));
 
             // Extract and normalize version
             // First prioritize the version provided externally (from repository)
@@ -544,9 +511,12 @@
          *
          * @param string $package The package name (e.g., "symfony/process")
          * @param string $versionConstraint The version constraint (e.g., "^5.0", "~3.4", "*")
+         * @param bool $development Whether the package is a development dependency, dev dependencies of third-party
+         *                          packages are often not available on Packagist so failing to resolve them is only
+         *                          logged at debug level
          * @return string The resolved version or 'latest' if resolution fails
          */
-        private function resolvePackageVersion(string $package, string $versionConstraint): string
+        private function resolvePackageVersion(string $package, string $versionConstraint, bool $development=false): string
         {
             Logger::getLogger()?->debug(sprintf('Resolving version for %s with constraint %s', $package, $versionConstraint));
             // If it's already a specific version, normalize and return it
@@ -626,11 +596,13 @@
                         continue;
                     }
                 }
-                Logger::getLogger()?->warning(sprintf('No matching version found for constraint %s on package %s, defaulting to latest', $versionConstraint, $package));
+                $message = sprintf('No matching version found for constraint %s on package %s, defaulting to latest', $versionConstraint, $package);
+                $development ? Logger::getLogger()?->debug($message) : Logger::getLogger()?->warning($message);
             }
             catch(Exception $e)
             {
-                Logger::getLogger()?->warning(sprintf('Failed to resolve version for package %s: %s, defaulting to latest.', $package, $e->getMessage()));
+                $message = sprintf('Failed to resolve version for package %s: %s, defaulting to latest.', $package, $e->getMessage());
+                $development ? Logger::getLogger()?->debug($message) : Logger::getLogger()?->warning($message);
             }
 
             return 'latest';
@@ -642,7 +614,7 @@
          * @param string $composerPackageName The Composer package name (e.g., "vendor/package-name").
          * @return string The generated package name (e.g., "com.vendor.packagename").
          */
-        private function generatePackageName(string $composerPackageName): string
+        public static function generatePackageName(string $composerPackageName): string
         {
             return sprintf("%s.%s.%s",
                 'com',
@@ -652,35 +624,72 @@
         }
 
         /**
-         * Validates and normalizes a source path, checking if it exists in the base directory.
-         * 
-         * @param string $baseDir The base directory (where composer.json is located).
-         * @param string $sourcePath The source path to validate (relative to baseDir).
-         * @return string|null The validated source path, or null if the path doesn't exist.
+         * Returns the assembly name for a Composer package name: the package part without the vendor
+         *
+         * @param string $composerPackageName The Composer package name (e.g., "symfony/process").
+         * @return string The assembly name (e.g., "process").
          */
-        private function validateSourcePath(string $baseDir, string $sourcePath): ?string
+        public static function getAssemblyName(string $composerPackageName): string
         {
-            // Normalize the path
-            $normalizedPath = rtrim($sourcePath, '/\\');
-            
-            // '.' means root directory, which always exists
-            if($normalizedPath === '.')
+            $parts = explode('/', $composerPackageName, 2);
+            return $parts[1] ?? $parts[0];
+        }
+
+        /**
+         * Returns the paths (relative to the package root, without leading slash) that Composer would not install or
+         * that are not part of the package: vendor/, the build outputs, and what the package excludes from its
+         * archives through `archive.exclude` in composer.json or `export-ignore` in .gitattributes. Packages
+         * downloaded from Packagist already lack the latter, these matter when converting a working copy.
+         *
+         * @param string $baseDir The package root
+         * @param array $composerData The parsed Composer JSON data
+         * @param Project\BuildConfiguration[] $buildConfigurations The build configurations whose output is excluded
+         * @return string[] The excluded paths, matched as glob patterns from the package root
+         */
+        public static function getExcludedPaths(string $baseDir, array $composerData, array $buildConfigurations = []): array
+        {
+            $patterns = ['vendor'];
+
+            foreach($buildConfigurations as $buildConfiguration)
             {
-                Logger::getLogger()?->debug('Source path is root directory');
-                return '.';
+                // target/release/${ASSEMBLY.PACKAGE}.ncc -> target/release
+                $patterns[] = dirname($buildConfiguration->getOutput());
             }
-            
-            // Check if the path exists
-            $fullPath = $baseDir . DIRECTORY_SEPARATOR . $normalizedPath;
-            if(IO::isDirectory($fullPath) || IO::isFile($fullPath))
+
+            foreach((array)($composerData['archive']['exclude'] ?? []) as $pattern)
             {
-                Logger::getLogger()?->debug(sprintf('Validated source path: %s', $normalizedPath));
-                return $normalizedPath;
+                if(is_string($pattern) && !str_starts_with($pattern, '!'))
+                {
+                    $patterns[] = $pattern;
+                }
             }
-            
-            // Path doesn't exist, return null
-            Logger::getLogger()?->warning(sprintf('Source path does not exist: %s', $fullPath));
-            return null;
+
+            $gitAttributesPath = $baseDir . DIRECTORY_SEPARATOR . '.gitattributes';
+            if(is_file($gitAttributesPath))
+            {
+                foreach(file($gitAttributesPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line)
+                {
+                    $parts = preg_split('/\s+/', trim($line));
+                    if(count($parts) > 1 && !str_starts_with($parts[0], '#') && in_array('export-ignore', array_slice($parts, 1), true))
+                    {
+                        $patterns[] = $parts[0];
+                    }
+                }
+            }
+
+            $normalized = [];
+            foreach($patterns as $pattern)
+            {
+                $pattern = trim(str_replace('\\', '/', $pattern), '/');
+                if($pattern === '' || $pattern === '.' || str_contains($pattern, '..'))
+                {
+                    continue;
+                }
+
+                $normalized[] = $pattern;
+            }
+
+            return array_values(array_unique($normalized));
         }
 
         /**
@@ -783,41 +792,6 @@ PHP;
                     Logger::getLogger()?->warning(sprintf('Failed to create compatibility stub %s: %s', $location, $e->getMessage()));
                 }
             }
-        }
-
-        /**
-         * Automatically detects the source path by looking for common directory structures.
-         * 
-         * @param string $baseDir The base directory to search in.
-         * @return string The detected source path (defaults to '.' if nothing specific is found).
-         */
-        private function detectSourcePath(string $baseDir): string
-        {
-            Logger::getLogger()?->debug(sprintf('Auto-detecting source path in %s', $baseDir));
-            // Common source directory names to check, in order of preference
-            $commonSourceDirs = ['src', 'lib', 'Source', 'includes', 'app'];
-            
-            foreach($commonSourceDirs as $dir)
-            {
-                if(IO::isDirectory($baseDir . DIRECTORY_SEPARATOR . $dir))
-                {
-                    Logger::getLogger()?->verbose(sprintf('Detected source directory: %s', $dir));
-                    return $dir;
-                }
-            }
-            
-            // If no common source directory found, check if there are any .php files in the root
-            // If yes, use the root directory as source
-            $files = glob($baseDir . DIRECTORY_SEPARATOR . '*.php');
-            if(!empty($files))
-            {
-                Logger::getLogger()?->verbose('Found PHP files in root directory, using root as source path');
-                return '.';
-            }
-            
-            // Default to root directory if nothing else is found
-            Logger::getLogger()?->warning('No source directory detected, defaulting to root directory');
-            return '.';
         }
 
         /**
