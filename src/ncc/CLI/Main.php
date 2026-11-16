@@ -24,8 +24,8 @@
 
     use ncc\Classes\Cache;
     use ncc\Classes\Console;
-    use ncc\Libraries\fslib\IO;
     use ncc\CLI\Commands\AuthenticationCommand;
+    use ncc\CLI\Commands\AutoremoveCommand;
     use ncc\CLI\Commands\BuildCommand;
     use ncc\CLI\Commands\ExecuteCommand;
     use ncc\CLI\Commands\ExtractCommand;
@@ -38,6 +38,7 @@
     use ncc\CLI\Commands\SignCommand;
     use ncc\CLI\Commands\TrustCommand;
     use ncc\CLI\Commands\UninstallCommand;
+    use ncc\CLI\Commands\UpdateCommand;
     use ncc\Libraries\OptsLib\Parse;
 
     class Main
@@ -152,6 +153,14 @@
             {
                 return UninstallCommand::handle($argv);
             }
+            elseif(isset($argv['update']))
+            {
+                return UpdateCommand::handle($argv);
+            }
+            elseif(isset($argv['autoremove']))
+            {
+                return AutoremoveCommand::handle($argv);
+            }
             elseif(isset($argv['extract']) || isset($argv['ext']))
             {
                 return ExtractCommand::handle($argv);
@@ -222,6 +231,8 @@
                 Console::out('  build             Build a project into an ncc package');
                 Console::out('  install           Install an ncc package from file or repository');
                 Console::out('  uninstall         Uninstall an installed ncc package');
+                Console::out('  update            Install the latest versions of installed packages');
+                Console::out('  autoremove        Uninstall old versions of installed packages');
                 Console::out('  execute           Execute an installed ncc package');
                 Console::out('  inspect           Display information about an ncc package');
                 Console::out('  extract           Extract package contents to a directory');
@@ -261,6 +272,14 @@
 
                 case 'uninstall':
                     UninstallCommand::help();
+                    break;
+
+                case 'update':
+                    UpdateCommand::help();
+                    break;
+
+                case 'autoremove':
+                    AutoremoveCommand::help();
                     break;
 
                 case 'execute':
