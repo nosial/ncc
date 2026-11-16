@@ -59,6 +59,11 @@
         private ?string $contentVersion = null;
         private ?string $cachedFileSha1 = null;
         private ?string $cachedOptimizedPath = null;
+        private ?PackageCacheData $cacheData = null;
+        /**
+         * @var array<string,string>|null
+         */
+        private ?array $classMap = null;
         private string|false|null $optimizedPath = null;
         private $fileHandle;
         private int $startOffset;
@@ -526,6 +531,82 @@
         public function getComponentReferences(): array
         {
             return $this->componentReferences;
+        }
+
+        /**
+         * Returns the classes declared by the package's components. The components are tokenized once and the result
+         * is stored in the package's cache file (when the package was loaded from one) so that subsequent builds that
+         * statically link this package don't have to tokenize it again.
+         *
+         * @return array<string,string> The class names mapped to the names of the components declaring them
+         */
+        public function getClassMap(): array
+        {
+            if($this->classMap !== null)
+            {
+                return $this->classMap;
+            }
+
+            $classMap = [];
+            foreach($this->componentReferences as $componentReference)
+            {
+                try
+                {
+                    foreach(PhpClassParser::parse($this->readComponent($componentReference)) as $className)
+                    {
+                        $classMap[$className] = $componentReference->getName();
+                    }
+                }
+                catch(Exception $e)
+                {
+                    Logger::getLogger()?->warning(sprintf('Failed to parse component %s: %s', $componentReference->getName(), $e->getMessage()));
+                }
+            }
+
+            $this->classMap = $classMap;
+            if($this->cacheData !== null)
+            {
+                $this->cacheData->setClassMap($classMap);
+                $this->persistCacheData($this->cacheData);
+            }
+
+            return $classMap;
+        }
+
+        /**
+         * Rewrites the cache file and the warmed caches of the package with the given cache data, this is a best-effort
+         * operation since the cache file may not be writable by the current user (eg; system-wide installations).
+         *
+         * @param PackageCacheData $cacheData The cache data to persist
+         * @return void
+         */
+        private function persistCacheData(PackageCacheData $cacheData): void
+        {
+            $cacheFilePath = $this->filePath . '.cache';
+            if(Cache::isEnabled())
+            {
+                Cache::set($cacheFilePath, $cacheData);
+            }
+
+            if(ApcuCache::isAvailable())
+            {
+                ApcuCache::set('package_data_' . $this->getFilePathHash(), $cacheData);
+            }
+
+            if(!is_file($cacheFilePath) || !is_writable($cacheFilePath))
+            {
+                return;
+            }
+
+            try
+            {
+                IO::writeFile($cacheFilePath, serialize($cacheData));
+                Logger::getLogger()?->debug(sprintf('Updated cache file with the class map: %s', $cacheFilePath));
+            }
+            catch(Exception $e)
+            {
+                Logger::getLogger()?->debug(sprintf('Unable to update cache file %s: %s', $cacheFilePath, $e->getMessage()));
+            }
         }
 
         /**
@@ -1441,6 +1522,10 @@
                 $this->signatureUnsupported
             );
 
+            $this->cacheData = null;
+            $cacheData->setClassMap($this->getClassMap());
+            $this->cacheData = $cacheData;
+
             IO::writeFile($cacheFilePath, serialize($cacheData));
 
             // Warm APCu cache for instant loading on subsequent requests
@@ -1473,6 +1558,8 @@
             $this->resourceReferences = $cacheData->getResourceReferences();
             $this->cachedFileSha1 = $cacheData->getFileSha1();
             $this->cachedOptimizedPath = $cacheData->getOptimizedPath();
+            $this->cacheData = $cacheData;
+            $this->classMap = $cacheData->getClassMap();
             $this->fileHandle = fopen($this->filePath, 'rb');
 
             if(!$this->fileHandle)
@@ -1563,18 +1650,12 @@
             Logger::getLogger()?->verbose(sprintf('Executing unit: %s (type: %s)', $executionUnit, $unit->getType()->value));
             
             // Handle execution based on type
-            switch($unit->getType())
+            return match ($unit->getType())
             {
-                case ExecutionUnitType::PHP:
-                case ExecutionUnitType::WEB:
-                    return $this->executePhpUnit($unit, $arguments);
-                    
-                case ExecutionUnitType::SYSTEM:
-                    return $this->executeSystemUnit($unit, $arguments);
-                    
-                default:
-                    throw new OperationException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value));
-            }
+                ExecutionUnitType::PHP, ExecutionUnitType::WEB => $unit->isComposerBin() ? 0 : $this->executePhpUnit($unit, $arguments),
+                ExecutionUnitType::SYSTEM => $this->executeSystemUnit($unit, $arguments),
+                default => throw new OperationException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value)),
+            };
         }
 
         /**
@@ -1640,11 +1721,12 @@
                 }
             }
             
-            // Set up $argv for the script
-            $oldArgv = $_SERVER['argv'] ?? [];
-            $_SERVER['argv'] = array_merge([$scriptPath], $arguments);
-            $argc = count($_SERVER['argv']);
-            $_SERVER['argc'] = $argc;
+            // Set up $argv/$argc (global, $_SERVER and in the scope the script is included in) and point Composer
+            // bin scripts at a real autoload file, which also works in the child PHP processes some tools spawn
+            $autoloadShim = ComposerCompat::getAutoloadShim(IO::getRealPath($this->filePath), $packageName);
+            $previousGlobals = ComposerCompat::applyGlobals($scriptPath, $arguments, $autoloadShim);
+            $argv = $GLOBALS['argv'];
+            $argc = $GLOBALS['argc'];
             
             // Set working directory if specified
             $oldCwd = getcwd();
@@ -1681,8 +1763,7 @@
             finally
             {
                 // Restore environment
-                $_SERVER['argv'] = $oldArgv;
-                $_SERVER['argc'] = count($oldArgv);
+                ComposerCompat::restoreGlobals($previousGlobals);
                 
                 if($unit->getWorkingDirectory() !== null)
                 {
