@@ -23,6 +23,7 @@
     namespace ncc\CLI\Commands;
 
     use Exception;
+    use ncc\Abstracts\AbstractAuthentication;
     use ncc\Abstracts\AbstractCommandHandler;
     use ncc\Classes\Console;
     use ncc\Libraries\fslib\IO;
@@ -142,16 +143,7 @@
                 $options[] = 'optimized';
             }
             
-            // Parse dynamic repository authentication arguments (e.g., --github-auth=foo)
-            $repositoryAuth = [];
-            foreach($argv as $key => $value)
-            {
-                if(preg_match('/^(.+)-auth$/', $key, $matches))
-                {
-                    $repositoryName = $matches[1];
-                    $repositoryAuth[$repositoryName] = $value;
-                }
-            }
+            $repositoryAuth = self::parseRepositoryAuthentication($argv);
 
             if($skipDependencies)
             {
@@ -218,7 +210,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromFile($packageReader, $options, []);
+                $installedPackages = Console::withProgressScope(0.0, 1.0, static fn() => self::installFromFile($packageReader, $options, []));
             }
             else
             {
@@ -255,7 +247,7 @@
                     }
                 }
 
-                $installedPackages = self::installFromRemote($packageSource, $options, [], $repositoryAuth);
+                $installedPackages = Console::withProgressScope(0.0, 1.0, static fn() => self::installFromRemote($packageSource, $options, [], $repositoryAuth));
             }
 
             if(count($installedPackages) === 0)
@@ -311,12 +303,12 @@
                 
                 if($isInstalled)
                 {
-                    Console::out(sprintf("Package %s is already installed, skipping installation.", $packageIdentifier));
+                    Console::progressMessage(sprintf("Package %s is already installed, skipping installation", $packageIdentifier));
                     return $installed;
                 }
             }
 
-            Console::out(sprintf("Installing package %s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()));
+            Console::progressMessage(sprintf("Installing package %s=%s", $packageReader->getPackageName(), $packageReader->getAssembly()->getVersion()));
             self::verifyPackageSignature($packageReader, $packageIdentifier, $options, $builtFromSource);
             $installed[] = $packageIdentifier;
 
@@ -355,7 +347,7 @@
                 {
                     if(!Runtime::repositoryExists($repositoryConfiguration->getName()))
                     {
-                        Console::out(sprintf('Adding repository "%s" (%s)', $repositoryConfiguration->getName(), $repositoryConfiguration->getHost()));
+                        Console::progressMessage(sprintf('Adding repository "%s" (%s)', $repositoryConfiguration->getName(), $repositoryConfiguration->getHost()));
                         Runtime::getRepositoryManager()->addConfiguration($repositoryConfiguration);
                     }
                 }
@@ -364,38 +356,68 @@
             // Install all dependencies first if it's not statically linked
             if(!$options['skip-dependencies'] && !$packageReader->getHeader()->isStaticallyLinked())
             {
+                $pendingDependencies = [];
                 /** @var DependencyReference $dependency */
                 foreach($packageReader->getHeader()->getDependencyReferences() as $dependency)
                 {
-                    $depIdentifier = sprintf("%s=%s", $dependency->getPackage(), $dependency->getVersion());
-                    
-                    // Check if already in the installed list (current session)
-                    if(in_array($depIdentifier, $installed, true))
-                    {
-                        continue;
-                    }
-                    
-                    // Check if already installed on the system (exact match or semver match)
-                    $isInstalled = Runtime::packageInstalled($dependency->getPackage(), $dependency->getVersion());
-                    if(!$isInstalled)
-                    {
-                        $isInstalled = self::isPackageSatisfied($dependency->getPackage(), $dependency->getVersion());
-                    }
-                    
-                    if($isInstalled)
+                    if(!self::isDependencyPending($dependency, $installed))
                     {
                         continue;
                     }
 
-                    Console::out(sprintf("Installing dependency %s for package %s", $dependency, $packageReader->getPackageName()));
+                    $pendingDependencies[] = $dependency;
+                }
+
+                $pendingCount = count($pendingDependencies);
+                foreach($pendingDependencies as $index => $dependency)
+                {
+                    if(!self::isDependencyPending($dependency, $installed))
+                    {
+                        continue;
+                    }
+
+                    Console::progressMessage(sprintf("Installing dependency %s for package %s", $dependency, $packageReader->getPackageName()));
                     $dependencySource = new PackageSource($dependency);
-                    $installed = self::installFromRemote($dependencySource, $options, $installed, []);
+                    $installed = Console::withProgressScope(
+                        ($index / $pendingCount) * 0.9,
+                        (($index + 1) / $pendingCount) * 0.9,
+                        static fn() => self::installFromRemote($dependencySource, $options, $installed, [])
+                    );
                 }
             }
 
+            Console::inlineProgress(90, 100, sprintf("Installing package %s", $packageIdentifier));
             Runtime::getPackageManager()->install($packageReader, $options);
+            Console::inlineProgress(100, 100, sprintf("Installed package %s", $packageIdentifier));
 
             return $installed;
+        }
+
+        /**
+         * Checks if a dependency still needs to be installed, false if it was already installed during this session
+         * or a satisfying version is already installed on the system.
+         *
+         * @param DependencyReference $dependency The dependency to check
+         * @param array $installed The packages installed during this session
+         * @return bool True if the dependency still needs to be installed
+         */
+        private static function isDependencyPending(DependencyReference $dependency, array $installed): bool
+        {
+            $depIdentifier = sprintf("%s=%s", $dependency->getPackage(), $dependency->getVersion());
+
+            // Check if already in the installed list (current session)
+            if(in_array($depIdentifier, $installed, true))
+            {
+                return false;
+            }
+
+            // Check if already installed on the system (exact match or semver match)
+            if(Runtime::packageInstalled($dependency->getPackage(), $dependency->getVersion()))
+            {
+                return false;
+            }
+
+            return !self::isPackageSatisfied($dependency->getPackage(), $dependency->getVersion());
         }
 
         public static function installFromRemote(PackageSource $source, array $options=[], array $installed=[], array $repositoryAuth=[]): array
@@ -411,58 +433,19 @@
                 throw new OperationException(sprintf('Cannot install "%s", unknown remote repository "%s"', $source, $source->getRepository()));
             }
             
-            Console::out(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
-            
-            // Handle authentication if specified for this repository
-            $authentication = null;
-            if(isset($repositoryAuth[$source->getRepository()]))
-            {
-                $authEntryName = $repositoryAuth[$source->getRepository()];
-                Console::out(sprintf("Authenticating with entry '%s' for repository '%s'", $authEntryName, $source->getRepository()));
-                
-                try
-                {
-                    $authManager = Runtime::getAuthenticationManager();
-                    
-                    // Check if vault exists
-                    if(!$authManager->vaultExists())
-                    {
-                        throw new OperationException('Authentication vault does not exist. Please create authentication entries first.');
-                    }
-                    
-                    // Unlock the vault if not already unlocked
-                    if(!$authManager->isUnlocked())
-                    {
-                        $masterPassword = Console::getPassword('Enter vault master password: ');
-                        $authManager->unlock($masterPassword);
-                        Console::out('Vault unlocked successfully.');
-                    }
-                    
-                    // Retrieve the authentication entry
-                    $authentication = $authManager->getEntry($authEntryName);
-                    if($authentication === null)
-                    {
-                        throw new OperationException(sprintf('Authentication entry "%s" not found in vault', $authEntryName));
-                    }
-                    
-                    Console::out(sprintf('Using authentication entry "%s"', $authEntryName));
-                }
-                catch(Exception $e)
-                {
-                    throw new OperationException('Failed to authenticate: ' . $e->getMessage(), $e->getCode(), $e);
-                }
-            }
+            Console::progressMessage(sprintf("Resolving package %s from repository %s", $source, $source->getRepository()));
+            $authentication = self::resolveAuthentication($source->getRepository(), $repositoryAuth);
 
             // Define stages with weights for dynamic progress calculation
             $stages = [
-                'download' => ['weight' => 60, 'start' => 0],
-                'detect' => ['weight' => 5, 'start' => 0],
-                'convert' => ['weight' => 5, 'start' => 0],
-                'resolve_deps' => ['weight' => 10, 'start' => 0],
-                'generate_config' => ['weight' => 5, 'start' => 0],
-                'compile' => ['weight' => 15, 'start' => 0],
+                'download' => ['weight' => 45, 'start' => 0],
+                'detect' => ['weight' => 3, 'start' => 0],
+                'convert' => ['weight' => 2, 'start' => 0],
+                'resolve_deps' => ['weight' => 5, 'start' => 0],
+                'generate_config' => ['weight' => 3, 'start' => 0],
+                'compile' => ['weight' => 12, 'start' => 0],
             ];
-            
+
             // Calculate stage start positions
             $currentPos = 0;
             foreach($stages as $key => &$stage)
@@ -515,8 +498,7 @@
             // If it's a file, we assume it's an NCC package
             if(IO::isFile($downloadedPackage))
             {
-                Console::completeProgress();
-                return self::installFromFile(new PackageReader($downloadedPackage), $options, $installed);
+                return Console::withProgressScope(0.45, 1.0, static fn() => self::installFromFile(new PackageReader($downloadedPackage), $options, $installed));
             }
 
             // Stage: Detect project type
@@ -613,8 +595,7 @@
                     $progress = $calculateProgress('compile', $compileProgress);
                     Console::inlineProgress($progress, 100, $message);
                 }));
-                Console::completeProgress();
-                return self::installFromFile($packageReader, $options, $installed, true);
+                return Console::withProgressScope(0.70, 1.0, static fn() => self::installFromFile($packageReader, $options, $installed, true));
             }
             catch(Exception $e)
             {
@@ -648,16 +629,15 @@
                 case SignatureStatus::UNSIGNED:
                     if($builtFromSource)
                     {
-                        Console::warning(sprintf('%s was built from source and is not signed, future versions of ncc will require signed packages', $packageIdentifier));
+                        Logger::getLogger()?->debug(sprintf('%s was built from source and is not signed', $packageIdentifier));
+                        return;
                     }
-                    else
-                    {
-                        Console::warning(sprintf('%s is not signed, unsigned packages are deprecated and future versions of ncc will refuse to install them', $packageIdentifier));
-                    }
+
+                    Console::warning(sprintf('%s is not signed, unsigned packages are deprecated and future versions of ncc will refuse to install them', $packageIdentifier));
                     return;
 
                 case SignatureStatus::VERIFIED:
-                    Console::out($result->getSummary());
+                    Console::progressMessage($result->getSummary());
                     return;
 
                 case SignatureStatus::UNSUPPORTED:
@@ -740,6 +720,74 @@
                         Console::out(sprintf('Verified signature of %s', $packageIdentifier));
                     }
                     return;
+            }
+        }
+
+        /**
+         * Parses the dynamic repository authentication arguments (e.g., --github-auth=foo)
+         *
+         * @param array $argv The parsed command-line arguments
+         * @return array<string, string> The authentication entry names keyed by repository name
+         */
+        public static function parseRepositoryAuthentication(array $argv): array
+        {
+            $repositoryAuth = [];
+            foreach($argv as $key => $value)
+            {
+                if(is_string($key) && is_string($value) && preg_match('/^(.+)-auth$/', $key, $matches))
+                {
+                    $repositoryAuth[$matches[1]] = $value;
+                }
+            }
+
+            return $repositoryAuth;
+        }
+
+        /**
+         * Returns the authentication entry requested for a repository, unlocking the vault if needed
+         *
+         * @param string $repository The repository name
+         * @param array<string, string> $repositoryAuth The authentication entry names keyed by repository name
+         * @return AbstractAuthentication|null The authentication entry, or null if none was requested
+         * @throws OperationException If the vault or the entry is unavailable
+         */
+        public static function resolveAuthentication(string $repository, array $repositoryAuth): ?AbstractAuthentication
+        {
+            if(!isset($repositoryAuth[$repository]))
+            {
+                return null;
+            }
+
+            $authEntryName = $repositoryAuth[$repository];
+            Console::progressMessage(sprintf("Authenticating with entry '%s' for repository '%s'", $authEntryName, $repository));
+
+            try
+            {
+                $authManager = Runtime::getAuthenticationManager();
+                if(!$authManager->vaultExists())
+                {
+                    throw new OperationException('Authentication vault does not exist. Please create authentication entries first.');
+                }
+
+                if(!$authManager->isUnlocked())
+                {
+                    $masterPassword = Console::getPassword('Enter vault master password: ');
+                    $authManager->unlock($masterPassword);
+                    Console::out('Vault unlocked successfully.');
+                }
+
+                $authentication = $authManager->getEntry($authEntryName);
+                if($authentication === null)
+                {
+                    throw new OperationException(sprintf('Authentication entry "%s" not found in vault', $authEntryName));
+                }
+
+                Console::progressMessage(sprintf('Using authentication entry "%s"', $authEntryName));
+                return $authentication;
+            }
+            catch(Exception $e)
+            {
+                throw new OperationException('Failed to authenticate: ' . $e->getMessage(), $e->getCode(), $e);
             }
         }
 
@@ -938,8 +986,9 @@
             Console::out('                    Authenticate using the specified vault entry for a repository');
             Console::out('                    Example: --github-auth=mytoken');
             Console::out(PHP_EOL . 'Signatures:');
-            Console::out('  Signed packages are verified before they are installed. Unsigned packages are installed with a');
-            Console::out('  warning, packages that were modified or are signed by a different key than the one trusted for');
+            Console::out('  Signed packages are verified before they are installed. Unsigned .ncc packages are installed with');
+            Console::out('  a warning, packages built from source during the installation are installed without one. Packages');
+            Console::out('  that were modified or are signed by a different key than the one trusted for');
             Console::out('  their signer are refused. When a package is signed by a key that is not trusted yet you are asked');
             Console::out('  whether to trust it; non-interactive sessions (no terminal, or --yes) install it without trusting');
             Console::out('  the key unless --trust is used. --yes never trusts keys by itself.');
