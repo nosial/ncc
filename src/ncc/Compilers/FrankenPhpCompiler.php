@@ -22,6 +22,7 @@
 
     namespace ncc\Compilers;
 
+    use ncc\Classes\FrankenPhpLinker;
     use ncc\Classes\Logger;
     use ncc\Classes\PathResolver;
     use ncc\Classes\ShutdownHandler;
@@ -30,6 +31,8 @@
     use ncc\Libraries\fslib\IOException;
     use ncc\Libraries\Process\ExecutableFinder;
     use ncc\Libraries\Process\Process;
+    use ncc\Objects\FrankenPhpBuildState;
+    use ncc\Objects\Package\PackageCacheData;
     use Phar;
 
     class FrankenPhpCompiler extends PackageCompiler
@@ -66,6 +69,7 @@
         private bool $autoFix;
         private bool $upx;
         private bool $debugSymbols;
+        private bool $incremental;
 
         /**
          * @inheritDoc
@@ -102,6 +106,7 @@
             $this->autoFix = isset($options['auto_fix']) && $options['auto_fix'] === true;
             $this->upx = isset($options['upx']) && $options['upx'] === true;
             $this->debugSymbols = isset($options['debug_symbols']) && $options['debug_symbols'] === true;
+            $this->incremental = isset($options['incremental']) ? $options['incremental'] === true : PHP_OS_FAMILY === 'Linux';
 
             if($this->libc !== null && !in_array($this->libc, ['musl', 'glibc'], true))
             {
@@ -129,6 +134,7 @@
             Logger::getLogger()?->verbose(sprintf('PHP version: %s', $this->phpVersion));
             Logger::getLogger()?->verbose(sprintf('Extensions: %s', implode(',', $this->extensions)));
             Logger::getLogger()?->verbose(sprintf('Working directory: %s', $this->workingDirectory));
+            Logger::getLogger()?->verbose(sprintf('Incremental builds: %s', $this->incremental ? 'enabled' : 'disabled'));
         }
 
         /**
@@ -159,54 +165,35 @@
             Logger::getLogger()?->verbose('FrankenPhpCompiler: Compiling base ncc package');
             $packagePath = parent::compile($progressCallback, true);
 
-            $totalStages = 5;
             $stagingDirectory = PathResolver::getTmpLocation() . DIRECTORY_SEPARATOR . uniqid('frankenphp_');
             ShutdownHandler::flagTemporary($stagingDirectory);
 
             try
             {
-                $this->reportProgress($progressCallback, 1, $totalStages, 'Preparing embedded application');
+                $this->reportProgress($progressCallback, 1, 5, 'Preparing embedded application');
                 $this->prepareStagingDirectory($stagingDirectory, $packagePath);
 
-                $this->reportProgress($progressCallback, 2, $totalStages, 'Preparing static-php-cli');
-                $spc = $this->resolveSpc();
+                $lock = $this->acquireLock();
 
-                $this->reportProgress($progressCallback, 3, $totalStages, 'Checking build environment');
-                $this->runSpc($spc, $this->autoFix ? ['doctor', '--auto-fix'] : ['doctor']);
-                $this->runSpc($spc, ['install-pkg', 'go-xcaddy']);
-                if($this->upx && PHP_OS_FAMILY === 'Linux')
+                try
                 {
-                    $this->runSpc($spc, ['install-pkg', 'upx']);
+                    $this->reportProgress($progressCallback, 2, 5, 'Preparing static-php-cli');
+                    $spc = $this->resolveSpc();
+                    $builtBinary = $this->buildBinary($spc, $stagingDirectory, $progressCallback);
+
+                    if(IO::exists($outputPath))
+                    {
+                        IO::delete($outputPath);
+                    }
+
+                    IO::copy($builtBinary, $outputPath);
+                    chmod($outputPath, 0755);
+                }
+                finally
+                {
+                    $this->releaseLock($lock);
                 }
 
-                $this->reportProgress($progressCallback, 4, $totalStages, 'Downloading PHP & FrankenPHP sources');
-                $this->runSpc($spc, $this->getDownloadArguments());
-
-                // Remove the binary of a previous build so that a stale binary is never mistaken for the new one
-                $builtBinary = $this->workingDirectory . DIRECTORY_SEPARATOR . 'buildroot' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'frankenphp';
-                if(IO::exists($builtBinary))
-                {
-                    IO::delete($builtBinary);
-                }
-
-                $this->reportProgress($progressCallback, 5, $totalStages, 'Building FrankenPHP (this may take a while)');
-                $this->runSpc($spc, $this->getBuildArguments($stagingDirectory));
-
-                if(!IO::isFile($builtBinary))
-                {
-                    throw new OperationException(sprintf('static-php-cli finished but the FrankenPHP binary was not found at %s', $builtBinary));
-                }
-
-                if(IO::exists($outputPath))
-                {
-                    IO::delete($outputPath);
-                }
-
-                IO::copy($builtBinary, $outputPath);
-                chmod($outputPath, 0755);
-
-                // Stripping and compressing are done on the copy rather than by spc: spc does it in place right after
-                // xcaddy runs the freshly built binary as a smoke test, which can fail with "Text file busy"
                 $this->postProcessBinary($outputPath);
             }
             catch(IOException $e)
@@ -216,6 +203,423 @@
 
             Logger::getLogger()?->verbose(sprintf('FrankenPhpCompiler: Binary written to %s', $outputPath));
             return $outputPath;
+        }
+
+        /**
+         * Builds the FrankenPHP binary embedding the staging directory. When the previous full build in the working
+         * directory was made from the same inputs, only FrankenPHP is relinked with the new application, otherwise
+         * (or if the relink fails) PHP and FrankenPHP are fully built by spc.
+         *
+         * @param string $spc The path to the spc binary
+         * @param string $stagingDirectory The directory to embed into the binary
+         * @param callable|null $progressCallback The progress callback
+         * @return string The path of the built binary inside the working directory
+         * @throws IOException Thrown if there was an IO error
+         * @throws OperationException Thrown if the build failed
+         */
+        private function buildBinary(string $spc, string $stagingDirectory, ?callable $progressCallback): string
+        {
+            $baseFingerprint = $this->computeBaseFingerprint($spc);
+            $statePath = $this->workingDirectory . DIRECTORY_SEPARATOR . FrankenPhpBuildState::FILE_NAME;
+
+            if($this->incremental)
+            {
+                $state = FrankenPhpBuildState::load($statePath);
+                if($state !== null && $state->isValidFor($baseFingerprint, $this->getLibphpPath()) && $this->findGoXcaddy() !== null
+                    && IO::isDirectory($this->getFrankenPhpSourceDirectory()))
+                {
+                    $this->reportProgress($progressCallback, 3, 3, 'Relinking FrankenPHP with the application (incremental build)');
+
+                    try
+                    {
+                        return $this->relink($spc, $state, $stagingDirectory);
+                    }
+                    catch(OperationException|IOException $e)
+                    {
+                        Logger::getLogger()?->warning(sprintf('The incremental build failed, falling back to a full build: %s', $e->getMessage()));
+                    }
+                }
+                else
+                {
+                    Logger::getLogger()?->verbose('FrankenPhpCompiler: No reusable PHP build in the working directory, performing a full build');
+                }
+            }
+
+            // The state describes libphp.a which is about to be rebuilt, it's only written back once the build succeeds
+            if(IO::exists($statePath))
+            {
+                IO::delete($statePath);
+            }
+
+            return $this->fullBuild($spc, $baseFingerprint, $statePath, $stagingDirectory, $progressCallback);
+        }
+
+        /**
+         * Builds PHP and FrankenPHP from source using spc and records the build state on success
+         *
+         * @param string $spc The path to the spc binary
+         * @param string $baseFingerprint The base fingerprint of the build
+         * @param string $statePath The path of the build state file
+         * @param string $stagingDirectory The directory to embed into the binary
+         * @param callable|null $progressCallback The progress callback
+         * @return string The path of the built binary
+         * @throws IOException Thrown if there was an IO error
+         * @throws OperationException Thrown if the build failed
+         */
+        private function fullBuild(string $spc, string $baseFingerprint, string $statePath, string $stagingDirectory, ?callable $progressCallback): string
+        {
+            $totalStages = 5;
+
+            $this->reportProgress($progressCallback, 3, $totalStages, 'Checking build environment');
+            $this->runSpc($spc, $this->autoFix ? ['doctor', '--auto-fix'] : ['doctor']);
+            $this->runSpc($spc, ['install-pkg', 'go-xcaddy']);
+            if($this->upx && PHP_OS_FAMILY === 'Linux')
+            {
+                $this->runSpc($spc, ['install-pkg', 'upx']);
+            }
+
+            $this->reportProgress($progressCallback, 4, $totalStages, 'Downloading PHP & FrankenPHP sources');
+            $this->runSpc($spc, $this->getDownloadArguments());
+
+            // Remove the binary of a previous build so that a stale binary is never mistaken for the new one
+            $builtBinary = $this->getBuiltBinaryPath();
+            if(IO::exists($builtBinary))
+            {
+                IO::delete($builtBinary);
+            }
+
+            $this->reportProgress($progressCallback, 5, $totalStages, 'Building FrankenPHP (this may take a while)');
+            $this->runSpc($spc, $this->getBuildArguments($stagingDirectory));
+
+            if(!IO::isFile($builtBinary))
+            {
+                throw new OperationException(sprintf('static-php-cli finished but the FrankenPHP binary was not found at %s', $builtBinary));
+            }
+
+            $libphpFingerprint = PackageCacheData::computeFingerprint($this->getLibphpPath());
+            $phpVersion = $this->readBuiltPhpVersion();
+            $frankenPhpVersion = $this->readFrankenPhpVersion();
+            if($libphpFingerprint !== null && $phpVersion !== null && $frankenPhpVersion !== null)
+            {
+                (new FrankenPhpBuildState($baseFingerprint, $libphpFingerprint, $phpVersion, $frankenPhpVersion))->save($statePath);
+                Logger::getLogger()?->verbose(sprintf('FrankenPhpCompiler: Recorded build state (PHP %s, FrankenPHP %s), subsequent builds will be incremental', $phpVersion, $frankenPhpVersion));
+            }
+            else
+            {
+                Logger::getLogger()?->verbose('FrankenPhpCompiler: Unable to determine the built PHP/FrankenPHP versions, subsequent builds will not be incremental');
+            }
+
+            return $builtBinary;
+        }
+
+        /**
+         * Relinks FrankenPHP against the libphp.a of the previous full build with the new application embedded
+         *
+         * @param string $spc The path to the spc binary
+         * @param FrankenPhpBuildState $state The state of the previous full build
+         * @param string $stagingDirectory The directory to embed into the binary
+         * @return string The path of the built binary
+         * @throws IOException Thrown if there was an IO error
+         * @throws OperationException Thrown if the relink failed
+         */
+        private function relink(string $spc, FrankenPhpBuildState $state, string $stagingDirectory): string
+        {
+            if($this->upx && PHP_OS_FAMILY === 'Linux' && $this->findUpx() === null)
+            {
+                $this->runSpc($spc, ['install-pkg', 'upx']);
+            }
+
+            $linker = $this->createLinker($spc, $state);
+
+            $builtBinary = $linker->getBinaryPath();
+            if(IO::exists($builtBinary))
+            {
+                IO::delete($builtBinary);
+            }
+
+            $this->runCommand('tar', $linker->getArchiveCommand($stagingDirectory));
+            $checksum = hash_file('md5', $linker->getApplicationArchivePath());
+            if($checksum === false)
+            {
+                throw new OperationException(sprintf('Unable to compute the checksum of %s', $linker->getApplicationArchivePath()));
+            }
+
+            IO::writeFile($linker->getApplicationChecksumPath(), $checksum);
+            $this->runCommand('xcaddy', $linker->getCommand(), $linker->getEnvironment(), $linker->getBuildDirectory());
+
+            if(!IO::isFile($builtBinary))
+            {
+                throw new OperationException(sprintf('xcaddy finished but the FrankenPHP binary was not found at %s', $builtBinary));
+            }
+
+            return $builtBinary;
+        }
+
+        /**
+         * Creates the linker, the flags spc would use are resolved from spc itself so that they stay in sync with
+         * the version of spc that built libphp.a
+         *
+         * @param string $spc The path to the spc binary
+         * @param FrankenPhpBuildState $state The state of the previous full build
+         * @return FrankenPhpLinker
+         * @throws OperationException Thrown if spc could not resolve the flags
+         */
+        private function createLinker(string $spc, FrankenPhpBuildState $state): FrankenPhpLinker
+        {
+            $configArguments = ['spc-config', implode(',', $this->extensions)];
+            if(count($this->libraries) > 0)
+            {
+                $configArguments[] = '--with-libs=' . implode(',', $this->libraries);
+            }
+
+            $includes = $this->querySpc($spc, array_merge($configArguments, ['--includes']));
+            $libs = $this->querySpc($spc, array_merge($configArguments, ['--libs']));
+            if($includes === null || $libs === null)
+            {
+                throw new OperationException('spc was unable to resolve the compiler flags of the PHP build');
+            }
+
+            $variables = [];
+            foreach(FrankenPhpLinker::getSpcVariableNames() as $name)
+            {
+                $variables[$name] = $this->querySpc($spc, ['dev:env', $name]);
+            }
+
+            $goRoot = $this->findGoXcaddy();
+            if($goRoot === null)
+            {
+                throw new OperationException('The go-xcaddy package of spc was not found');
+            }
+
+            return new FrankenPhpLinker(
+                $this->workingDirectory,
+                $this->getFrankenPhpSourceDirectory(),
+                $goRoot,
+                dirname($goRoot) . DIRECTORY_SEPARATOR . 'go',
+                PHP_OS_FAMILY,
+                $this->isMusl(),
+                $includes,
+                $libs,
+                $state->getPhpVersion(),
+                $state->getFrankenPhpVersion(),
+                $variables
+            );
+        }
+
+        /**
+         * Computes the fingerprint of the inputs libphp.a is built from, the application and the Caddy modules are
+         * not part of it since they only affect the final link.
+         *
+         * @param string $spc The path to the spc binary
+         * @return string The fingerprint
+         * @throws OperationException Thrown if the spc binary could not be hashed
+         */
+        private function computeBaseFingerprint(string $spc): string
+        {
+            $spcHash = hash_file('sha1', $spc);
+            if($spcHash === false)
+            {
+                throw new OperationException(sprintf('Unable to hash the spc binary %s', $spc));
+            }
+
+            return FrankenPhpBuildState::computeBaseFingerprint([
+                'spc' => $spcHash,
+                'os' => PHP_OS_FAMILY,
+                'arch' => php_uname('m'),
+                'php_version' => $this->phpVersion,
+                'extensions' => $this->extensions,
+                'libraries' => $this->libraries,
+                'libc' => $this->isMusl() ? 'musl' : ($this->libc ?? 'default'),
+                'frankenphp_version' => $this->frankenPhpVersion,
+                'frankenphp_source' => $this->frankenPhpSource,
+            ]);
+        }
+
+        /**
+         * Acquires an exclusive lock on the working directory, waiting for other builds using it to finish
+         *
+         * @return resource The lock handle
+         * @throws OperationException Thrown if the lock could not be acquired
+         * @throws IOException Thrown if the working directory could not be created
+         */
+        private function acquireLock()
+        {
+            if(!IO::isDirectory($this->workingDirectory))
+            {
+                IO::createDirectory($this->workingDirectory, 0755, true);
+            }
+
+            $lockPath = $this->workingDirectory . DIRECTORY_SEPARATOR . '.ncc.lock';
+            $handle = fopen($lockPath, 'c');
+            if($handle === false)
+            {
+                throw new OperationException(sprintf('Unable to open the lock file %s', $lockPath));
+            }
+
+            if(!flock($handle, LOCK_EX | LOCK_NB))
+            {
+                Logger::getLogger()?->info(sprintf('Waiting for another build using %s to finish', $this->workingDirectory));
+                if(!flock($handle, LOCK_EX))
+                {
+                    fclose($handle);
+                    throw new OperationException(sprintf('Unable to lock the working directory %s', $this->workingDirectory));
+                }
+            }
+
+            return $handle;
+        }
+
+        /**
+         * Releases a lock acquired by acquireLock()
+         *
+         * @param resource $handle The lock handle
+         * @return void
+         */
+        private function releaseLock($handle): void
+        {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+
+        /**
+         * Returns the path of the binary built by spc or the linker
+         *
+         * @return string
+         */
+        private function getBuiltBinaryPath(): string
+        {
+            return $this->workingDirectory . DIRECTORY_SEPARATOR . 'buildroot' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'frankenphp';
+        }
+
+        /**
+         * Returns the path of the libphp.a built by spc
+         *
+         * @return string
+         */
+        private function getLibphpPath(): string
+        {
+            return $this->workingDirectory . DIRECTORY_SEPARATOR . 'buildroot' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'libphp.a';
+        }
+
+        /**
+         * Returns the FrankenPHP source directory, either the configured one or the one extracted by spc
+         *
+         * @return string
+         */
+        private function getFrankenPhpSourceDirectory(): string
+        {
+            return $this->frankenPhpSource ?? $this->workingDirectory . DIRECTORY_SEPARATOR . 'source' . DIRECTORY_SEPARATOR . 'frankenphp';
+        }
+
+        /**
+         * Returns the directory of the go-xcaddy package installed by `spc install-pkg go-xcaddy`
+         *
+         * @return string|null The directory, or null if it's not installed
+         */
+        private function findGoXcaddy(): ?string
+        {
+            $candidates = glob($this->workingDirectory . DIRECTORY_SEPARATOR . 'pkgroot' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'go-xcaddy') ?: [];
+            foreach($candidates as $candidate)
+            {
+                if(is_file($candidate . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'xcaddy'))
+                {
+                    return $candidate;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Reads the version of the PHP built into the working directory from its headers
+         *
+         * @return string|null The version, or null if it could not be determined
+         */
+        private function readBuiltPhpVersion(): ?string
+        {
+            $header = $this->workingDirectory . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, ['buildroot', 'include', 'php', 'main', 'php_version.h']);
+            $contents = is_file($header) ? @file_get_contents($header) : false;
+            if($contents === false || !preg_match('/#define\s+PHP_VERSION\s+"([^"]+)"/', $contents, $matches))
+            {
+                return null;
+            }
+
+            return $matches[1];
+        }
+
+        /**
+         * Determines the version of the FrankenPHP source that was built
+         *
+         * @return string|null The version, or null if it could not be determined
+         */
+        private function readFrankenPhpVersion(): ?string
+        {
+            if($this->frankenPhpSource !== null)
+            {
+                // A local source checkout has no release version, the same as FrankenPHP's own development builds
+                return $this->frankenPhpVersion !== null ? ltrim($this->frankenPhpVersion, 'v') : 'dev';
+            }
+
+            return self::extractVersion($this->readDownloadLock()['frankenphp']['filename'] ?? null);
+        }
+
+        /**
+         * Reads spc's download lock which records the sources that were downloaded
+         *
+         * @return array The lock entries keyed by source name, empty if the lock doesn't exist or is invalid
+         */
+        private function readDownloadLock(): array
+        {
+            $lockFile = $this->workingDirectory . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . '.lock.json';
+            $contents = is_file($lockFile) ? @file_get_contents($lockFile) : false;
+            if($contents === false)
+            {
+                return [];
+            }
+
+            $lock = json_decode($contents, true);
+            return is_array($lock) ? $lock : [];
+        }
+
+        /**
+         * Extracts a `major.minor.patch` version from a file name, eg; php-8.4.26.tar.xz or frankenphp-v1.13.0.tar.gz
+         *
+         * @param string|null $fileName The file name
+         * @return string|null The version, or null if the file name doesn't contain one
+         */
+        public static function extractVersion(?string $fileName): ?string
+        {
+            if($fileName === null || !preg_match('/(?:^|[^0-9.])v?(\d+\.\d+\.\d+)/', $fileName, $matches))
+            {
+                return null;
+            }
+
+            return $matches[1];
+        }
+
+        /**
+         * Checks if a downloaded source matches the requested version, a `major.minor` version matches any patch
+         * release of it while a full version must match exactly.
+         *
+         * @param string|null $fileName The file name of the downloaded source as recorded in spc's download lock
+         * @param string $requestedVersion The requested version, eg; 8.4 or 8.4.27
+         * @return bool True if the downloaded source can be reused
+         */
+        public static function matchesLockedVersion(?string $fileName, string $requestedVersion): bool
+        {
+            $lockedVersion = self::extractVersion($fileName);
+            $requestedVersion = ltrim(trim($requestedVersion), 'v');
+            if($lockedVersion === null || $requestedVersion === '')
+            {
+                return false;
+            }
+
+            if(preg_match('/^\d+\.\d+$/', $requestedVersion))
+            {
+                return str_starts_with($lockedVersion, $requestedVersion . '.');
+            }
+
+            return $lockedVersion === $requestedVersion;
         }
 
         /**
@@ -521,7 +925,13 @@ PHP;
             $spcPath = $this->workingDirectory . DIRECTORY_SEPARATOR . 'spc';
             if(IO::isFile($spcPath))
             {
-                return $spcPath;
+                if(is_executable($spcPath) && $this->isWorkingSpc($spcPath))
+                {
+                    return $spcPath;
+                }
+
+                Logger::getLogger()?->warning(sprintf('The spc binary %s is not working, downloading it again', $spcPath));
+                IO::delete($spcPath);
             }
 
             $architecture = php_uname('m');
@@ -535,7 +945,36 @@ PHP;
             $this->downloadFile($url, $spcPath);
             chmod($spcPath, 0755);
 
+            if(!$this->isWorkingSpc($spcPath))
+            {
+                IO::delete($spcPath);
+                throw new OperationException(sprintf('The spc binary downloaded from %s is not working on this system', $url));
+            }
+
             return $spcPath;
+        }
+
+        /**
+         * Checks if the given spc binary can be executed
+         *
+         * @param string $spcPath The path to the spc binary
+         * @return bool True if `spc --version` succeeds
+         */
+        private function isWorkingSpc(string $spcPath): bool
+        {
+            try
+            {
+                $process = new Process([$spcPath, '--version'], $this->workingDirectory);
+                $process->setTimeout(60);
+                $process->run();
+
+                return $process->isSuccessful() && str_contains($process->getOutput(), 'static-php-cli');
+            }
+            catch(\Throwable $e)
+            {
+                Logger::getLogger()?->debug(sprintf('Unable to execute %s: %s', $spcPath, $e->getMessage()));
+                return false;
+            }
         }
 
         /**
@@ -547,17 +986,32 @@ PHP;
          */
         private function downloadFile(string $url, string $destination): void
         {
+            if(!extension_loaded('curl'))
+            {
+                throw new OperationException(sprintf('The curl extension is required to download %s, alternatively set the "spc" option to an existing spc binary', $url));
+            }
+
             $temporaryPath = $destination . '.download';
-            $fileHandle = fopen($temporaryPath, 'wb');
+            $fileHandle = @fopen($temporaryPath, 'wb');
             if($fileHandle === false)
             {
                 throw new OperationException(sprintf('Unable to open %s for writing', $temporaryPath));
             }
 
             $curl = curl_init($url);
+            if($curl === false)
+            {
+                fclose($fileHandle);
+                @unlink($temporaryPath);
+                throw new OperationException(sprintf('Unable to initialize the download of %s', $url));
+            }
+
             curl_setopt($curl, CURLOPT_FILE, $fileHandle);
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($curl, CURLOPT_FAILONERROR, true);
+            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 30);
+            curl_setopt($curl, CURLOPT_LOW_SPEED_LIMIT, 1024);
+            curl_setopt($curl, CURLOPT_LOW_SPEED_TIME, 60);
             $success = curl_exec($curl);
             $error = curl_error($curl);
             fclose($fileHandle);
@@ -568,7 +1022,18 @@ PHP;
                 throw new OperationException(sprintf('Failed to download %s: %s', $url, $error));
             }
 
-            rename($temporaryPath, $destination);
+            clearstatcache(true, $temporaryPath);
+            if(!is_file($temporaryPath) || filesize($temporaryPath) === 0)
+            {
+                @unlink($temporaryPath);
+                throw new OperationException(sprintf('Failed to download %s: the downloaded file is empty', $url));
+            }
+
+            if(!@rename($temporaryPath, $destination))
+            {
+                @unlink($temporaryPath);
+                throw new OperationException(sprintf('Unable to move the downloaded file to %s', $destination));
+            }
         }
 
         /**
@@ -583,9 +1048,26 @@ PHP;
                 'download', 'frankenphp',
                 '--with-php=' . $this->phpVersion,
                 '--for-extensions=' . implode(',', $this->extensions),
-                '--ignore-cache-sources=' . ($pinFrankenPhp ? 'php-src,frankenphp' : 'php-src'),
                 '--retry=5',
             ];
+
+            $lock = $this->readDownloadLock();
+            $ignoreCache = [];
+            if(!self::matchesLockedVersion($lock['php-src']['filename'] ?? null, $this->phpVersion))
+            {
+                $ignoreCache[] = 'php-src';
+            }
+
+            if($pinFrankenPhp && !self::matchesLockedVersion($lock['frankenphp']['filename'] ?? null, $this->frankenPhpVersion))
+            {
+                $ignoreCache[] = 'frankenphp';
+            }
+
+            if(count($ignoreCache) > 0)
+            {
+                Logger::getLogger()?->verbose(sprintf('Downloading %s since the cached sources do not match the requested versions', implode(', ', $ignoreCache)));
+                $arguments[] = '--ignore-cache-sources=' . implode(',', $ignoreCache);
+            }
 
             if(count($this->libraries) > 0)
             {
@@ -709,24 +1191,56 @@ PHP;
         }
 
         /**
-         * Runs a command in the working directory, the output is logged and the last lines are included in the
-         * exception if the command fails.
+         * Runs an informational spc command (eg; spc-config or dev:env) and returns its standard output. spc deletes
+         * its logs when a command starts, `--preserve-log` keeps the logs of the last build for troubleshooting.
+         *
+         * @param string $spc The path to the spc binary
+         * @param string[] $arguments The arguments to pass to spc
+         * @return string|null The trimmed standard output, or null if spc exits with a non-zero exit code
+         */
+        private function querySpc(string $spc, array $arguments): ?string
+        {
+            try
+            {
+                return trim($this->runCommand(
+                    'spc ' . $arguments[0],
+                    array_merge([$spc], $arguments, ['--no-motd', '--preserve-log', '--no-interaction']),
+                    $this->getSpcEnvironment()
+                ));
+            }
+            catch(OperationException $e)
+            {
+                Logger::getLogger()?->debug($e->getMessage());
+                return null;
+            }
+        }
+
+        /**
+         * Runs a command, the output is logged and the last lines are included in the exception if the command fails.
          *
          * @param string $name The name of the command used in log messages and exceptions
          * @param string[] $command The command and its arguments
          * @param array<string,string> $environment Environment variables merged with the current environment
+         * @param string|null $workingDirectory The directory to run the command in, defaults to the working directory
+         * @return string The standard output of the command
          * @throws OperationException Thrown if the command exits with a non-zero exit code
          */
-        private function runCommand(string $name, array $command, array $environment=[]): void
+        private function runCommand(string $name, array $command, array $environment=[], ?string $workingDirectory=null): string
         {
             Logger::getLogger()?->verbose(sprintf('Running: %s', implode(' ', $command)));
 
-            $process = new Process($command, $this->workingDirectory, $environment);
+            $process = new Process($command, $workingDirectory ?? $this->workingDirectory, $environment);
             $process->setTimeout(null);
 
             $outputTail = [];
-            $process->run(function(string $type, string $buffer) use (&$outputTail, $name): void
+            $output = '';
+            $process->run(function(string $type, string $buffer) use (&$outputTail, &$output, $name): void
             {
+                if($type === Process::OUT)
+                {
+                    $output .= $buffer;
+                }
+
                 foreach(preg_split('/\r?\n/', rtrim($buffer)) as $line)
                 {
                     Logger::getLogger()?->verbose(sprintf('[%s] %s', $name, $line));
@@ -743,6 +1257,8 @@ PHP;
                     $name, $process->getExitCode(), implode("\n", $outputTail)
                 ));
             }
+
+            return $output;
         }
 
         /**
