@@ -299,7 +299,7 @@
                     throw new OperationException(sprintf('Authentication failed for %s/%s, 403 Forbidden, insufficient scope', $vendor, $project));
 
                 case 404:
-                    Logger::getLogger()?->error(sprintf('Resource not found for %s/%s, 404 Not Found', $vendor, $project));
+                    Logger::getLogger()?->debug(sprintf('Resource not found for %s/%s, 404 Not Found', $vendor, $project));
                     throw new OperationException(sprintf('Resource not found for %s/%s, server returned 404 Not Found', $vendor, $project));
 
                 default:
