@@ -36,6 +36,7 @@
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\PackageSource;
     use ncc\Runtime;
+    use Throwable;
 
     class UpdateCommand extends AbstractCommandHandler
     {
@@ -138,7 +139,7 @@
                     Console::withProgressScope(0.0, 1.0, static fn() => InstallCommand::installFromRemote($source, $packageOptions, [], $repositoryAuth));
                     $updated[] = sprintf('%s %s -> %s', $entry->getPackage(), $entry->getVersion(), $update['version']);
                 }
-                catch(Exception $e)
+                catch(Throwable $e)
                 {
                     Console::clearInlineProgress();
                     $failed[] = sprintf('%s %s -> %s: %s', $entry->getPackage(), $entry->getVersion(), $update['version'], $e->getMessage());
@@ -273,7 +274,7 @@
                         'optimized' => IO::exists(PackageManager::getOptimizedInstallationPath($packagePath))
                     ];
                 }
-                catch(Exception $e)
+                catch(Throwable $e)
                 {
                     $unchecked[$entry->getPackage()] = $e->getMessage();
                 }
