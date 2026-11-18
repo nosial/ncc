@@ -45,6 +45,7 @@ capabilities to improve the development process of php projects.
     * [frankenphp](#frankenphp)
   * [Project Configuration](#project-configuration)
     * [Project Conversion](#project-conversion)
+      * [Composer compatibility](#composer-compatibility)
     * [Creating a project from scratch](#creating-a-project-from-scratch)
     * [Macro Variables](#macro-variables)
     * [Project Structure (root)](#project-structure-root)
@@ -67,9 +68,12 @@ capabilities to improve the development process of php projects.
   * [Package Manager](#package-manager)
     * [Remote Package Format](#remote-package-format)
     * [Installing a package](#installing-a-package)
+      * [Launchers](#launchers)
       * [Optimized installations](#optimized-installations)
       * [Signature verification](#signature-verification)
     * [Uninstalling a package](#uninstalling-a-package)
+    * [Updating packages](#updating-packages)
+    * [Removing old package versions](#removing-old-package-versions)
     * [Listing installed packages](#listing-installed-packages)
 <!-- TOC -->
 
@@ -214,6 +218,8 @@ The header contains:
 - **update_source**: Source location for package updates
 - **repositories**: Array of repository configurations
 - **autoloader**: Class-to-file mapping for PHP autoloading
+- **autoload_files**: `ncc://` paths of files executed whenever the package is imported (like Composer's
+  `autoload.files`), in execution order; only present when the package has any
 - **compressed**: Boolean indicating if package contents are compressed
 
 #### A3 - Assembly Information
@@ -648,9 +654,20 @@ embedded into the binary alongside the ncc runtime of the ncc installation used 
 
  > Note: The first build can take a long time since PHP, its libraries and FrankenPHP are compiled from source, the
          downloaded sources are cached in the working directory (see the `work_dir` option) so subsequent builds are
-         faster. The build environment requires a C toolchain, spc's `doctor` command is executed before every build to
-         verify the environment, enable the `auto_fix` option to let spc install what's missing. This build type is
-         only supported on Linux and macOS, and the binary is built for the platform it's built on.
+         faster. The build environment requires a C toolchain, spc's `doctor` command is executed before every full
+         build to verify the environment, enable the `auto_fix` option to let spc install what's missing. This build
+         type is only supported on Linux and macOS, and the binary is built for the platform it's built on.
+
+Builds are incremental: the application is only embedded when FrankenPHP is linked, so when the working directory
+already contains a PHP build made from the same PHP version, extensions, libraries, libc, FrankenPHP version and spc
+binary, ncc skips spc's doctor, download and build steps and only relinks FrankenPHP with the new application, which
+takes seconds instead of minutes. Changing any of these inputs (or a different project rebuilding PHP in the same
+working directory) results in a full build, as does a relink that fails. The state of the last full build is stored
+in `ncc_build_state.dat` in the working directory, deleting it forces a full build.
+
+ > Note: The working directory is shared by all projects by default and builds using it wait for each other. Since
+         the working directory holds a single PHP build, projects that use different extensions or PHP versions rebuild
+         PHP every time they are built after each other, give them their own `work_dir` to keep both incremental.
 
 The `frankenphp` build extends the `ncc` build so it inherits all the options from the `ncc` build type. The project
 must define an `entry_point` and/or a `web_entry_point`, and if the project has dependencies the `static` option must
@@ -688,7 +705,9 @@ build_configurations:
 
 The following options are supported in the `frankenphp` build configuration:
 
- - `php_version` (string): The PHP version to build in `major.minor` format. Default is `8.4`.
+ - `php_version` (string): The PHP version to build, either in `major.minor` format (eg; `8.4`, any patch release
+                          of it is accepted and the one downloaded first is kept) or as an exact version (eg; `8.4.27`).
+                          Default is `8.4.27`.
  - `extensions` (string|array): The PHP extensions to build into the binary, as an array or a comma separated
                                 string. `ctype`, `msgpack`, `phar` and `zlib` are always included since the ncc runtime
                                 requires them. Defaults to a common set of extensions (`apcu`, `bcmath`, `curl`, `dom`,
@@ -711,6 +730,8 @@ The following options are supported in the `frankenphp` build configuration:
  - `auto_fix` (boolean): Lets spc automatically install missing build dependencies. Default is false.
  - `upx` (boolean): Compresses the binary using UPX, Linux only. Default is false.
  - `debug_symbols` (boolean): Keeps debug symbols in the binary. Default is false.
+ - `incremental` (boolean): Relinks FrankenPHP with the new application instead of rebuilding PHP when possible, see
+                            above. Default is true on Linux and false on macOS.
 
 
 ## Project Configuration
@@ -733,6 +754,40 @@ Using the `ncc project convert` command while in the current directory of the pr
 detect and locate a project configuration file it can convert. Upon success, you will see a generated `project.yml`
 file in the same directory as the detected project configuration file. This generated file should work out the box
 unless there were unexpected/malformed properties in your existing project configuration.
+
+#### Composer compatibility
+
+Packages installed from Packagist are converted from their `composer.json` the same way. The conversion maps Composer's
+properties as follows:
+
+| Composer                              | ncc                                                                                                                                                                     |
+|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name` (`vendor/package-name`)        | Package `com.vendor.package_name`, assembly name `package-name`                                                                                                         |
+| Package layout                        | The package root is the source path, so files keep the paths Composer installs them with (code reaching `__DIR__ . '/../schema'` works) and non-PHP files are resources |
+| `autoload.psr-4`, `psr-0`, `classmap` | Classes anywhere in the packaged files are autoloaded, no mapping is needed                                                                                             |
+| `autoload.exclude-from-classmap`      | Excluded components                                                                                                                                                     |
+| `archive.exclude`, `export-ignore`    | Excluded components and resources (Packagist downloads already lack these), as are `vendor/` and the build outputs                                                      |
+| `autoload.files`                      | `autoload_files` of every build configuration, executed whenever the package is imported (after its dependencies)                                                       |
+| `bin`                                 | One `composer_bin` execution unit per bin, named after the bin's file name (like Composer's `vendor/bin`), plus `main` running the first bin as the package entry point |
+| `require` / `require-dev`             | Dependencies of the project / of the `debug` build configuration; `php`, `ext-*` and virtual packages such as `composer-runtime-api` are not dependencies               |
+| `require` `ext-*`                     | Required PHP extensions                                                                                                                                                 |
+
+ncc provides the runtime environment Composer tools expect:
+
+ - When a PHP execution unit runs, `$argv`, `$argc` and `$_SERVER['argv']` hold the script path and its arguments, and
+   `$GLOBALS['_composer_autoload_path']` points to a real autoload file on disk (`<package>.autoload.php` next to the
+   installed package, or a per-user temporary file when that directory is not writable). Requiring that file loads ncc
+   and imports the package, so it also works in the child PHP processes some tools start, such as PHPUnit's process
+   isolation and PHPT tests.
+ - A `composer_bin` execution unit exits with `0` unless the script calls `exit()` itself, Composer's bin proxies ignore
+   the script's return value too.
+ - `Composer\InstalledVersions` is available for packages that query installed packages and versions; it reports the
+   imported and installed ncc packages and is only used when no real Composer installation provides the class.
+ - System-wide installations register one launcher per Composer bin (eg; `phpunit`, or `phpcs` and `phpcbf`), other
+   packages get a single launcher named after their assembly (see [Launchers](#launchers)).
+
+> Note: Code coverage of code imported from an ncc package is reported for `ncc://` paths, which do not match the
+> `<source>` directories of a PHPUnit configuration.
 
 ### Creating a project from scratch
 
@@ -949,6 +1004,7 @@ web scripts or even binary executables that are part of the project.
 | `environment`       | `key-value`   | Key-value pairs of environment variables to set when executing the unit                                                             | No       |
 | `required_files`    | `string[]`    | An array of files that must exist for the execution unit to run                                                                     | No       |
 | `timeout`           | `integer`     | The maximum execution time in seconds, default is no timeout (0)                                                                    | No       |
+| `composer_bin`      | `boolean`     | Marks a Composer bin script: the unit is always packaged and exits with `0` unless the script calls `exit()`, default is `false`    | No       |
 
 YAML Example:
 
@@ -976,17 +1032,18 @@ The build configuration object is used to define a build configuration for ncc t
 default build configuration is defined in the `default_build` property of the project configuration. But when building
 the package, you can use the `--configuration`, `-c` option to specify which build configuration to use.
 
-| Property Name        | Property Type | Description                                                                                                                                                                                    | Required |
-|----------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| `name`               | `string`      | The unique name of the build configuration                                                                                                                                                     | Yes      |
-| `output`             | `string`      | The output path of the compiled package, supports macro variables such as `${ASSEMBLY.PACKAGE}`                                                                                                | Yes      |
-| `type`               | `string`      | The type of build, the supported types are `ncc`, `phar`, `php` and `frankenphp`                                                                                                               | Yes      |
-| `definitions`        | `key-value`   | Key-value pairs of definitions to set when the package is imported, these use the builtin `define` method                                                                                      | No       |
-| `include_components` | `string[]`    | An array of component glob patterns to include in the build                                                                                                                                    | No       |
-| `exclude_components` | `string[]`    | An array of component glob patterns to exclude from the build                                                                                                                                  | No       |
-| `include_resources`  | `string[]`    | An array of resource glob patterns to include in the build                                                                                                                                     | No       |
-| `exclude_resources`  | `string[]`    | An array of resource glob patterns to exclude from the build                                                                                                                                   | No       |
-| `dependencies`       | `string[]`    | An array of key-value dependencies such as `com.symfony.console` => `symfony/console=version@packagist` where the key is the package name and the value is the remote source of the dependency | No       |
+| Property Name        | Property Type | Description                                                                                                                                                                                                                                                        | Required |
+|----------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| `name`               | `string`      | The unique name of the build configuration                                                                                                                                                                                                                         | Yes      |
+| `output`             | `string`      | The output path of the compiled package, supports macro variables such as `${ASSEMBLY.PACKAGE}`                                                                                                                                                                    | Yes      |
+| `type`               | `string`      | The type of build, the supported types are `ncc`, `phar`, `php` and `frankenphp`                                                                                                                                                                                   | Yes      |
+| `definitions`        | `key-value`   | Key-value pairs of definitions to set when the package is imported, these use the builtin `define` method                                                                                                                                                          | No       |
+| `include_components` | `string[]`    | An array of component glob patterns to include in the build, matched inside the source path; an entry naming an existing file is always included (even when excluded), one naming a directory outside the source path includes its PHP files from the project path | No       |
+| `exclude_components` | `string[]`    | An array of component glob patterns to exclude from the build                                                                                                                                                                                                      | No       |
+| `include_resources`  | `string[]`    | An array of resource glob patterns to include in the build                                                                                                                                                                                                         | No       |
+| `exclude_resources`  | `string[]`    | An array of resource glob patterns to exclude from the build                                                                                                                                                                                                       | No       |
+| `dependencies`       | `string[]`    | An array of key-value dependencies such as `com.symfony.console` => `symfony/console=version@packagist` where the key is the package name and the value is the remote source of the dependency                                                                     | No       |
+| `autoload_files`     | `string[]`    | Files relative to the project path that are executed whenever the package is imported, in order, after its dependencies are imported (like Composer's `autoload.files`)                                                                                            | No       |
 
 YAML Example:
 
@@ -1259,6 +1316,20 @@ project during the installation process and compile it. For example installing a
 parse the project structure and attempt to use a conversion process only if applicable.
 
 
+#### Launchers
+
+When ncc runs as the system user (root), installing a package with an entry point registers a launcher script in the
+first writable directory of `~/.local/bin`, `/usr/local/bin`, `/usr/bin` and `/bin`. The launcher is named after the
+package's assembly, or after each bin for packages converted from Composer, and runs:
+
+```sh
+exec ncc exec --package="com.example.foo" [--unit="name"] --args "$@"
+```
+
+Everything after `--args` (or a bare `--`) is passed to the executed package untouched and never parsed by ncc, so
+`phpunit --version` reaches PHPUnit rather than ncc. Launchers that exist but are not managed by ncc are left alone
+unless `--force-symlink` is used, `--no-symlink` skips them, and uninstalling the package removes them.
+
 #### Optimized installations
 
 By default the classes of an imported package are loaded through the `ncc://` stream wrapper. OPcache never caches
@@ -1339,6 +1410,42 @@ ncc uninstall --all
 
 Note that when uninstalling packages, you are only uninstalling packages you have write-access to, to uninstall packages
 from the system you need to run ncc with elevated permissions so that the ncc has write-access to the system scope.
+
+
+### Updating packages
+
+The `ncc update` command checks the update source of every installed package (the `update_source` of its project) and
+installs the latest version of each package that has a newer version available:
+
+```sh
+ncc update
+```
+
+The packages that will be updated are listed with their current and new version and the update has to be confirmed,
+`--yes` (or `-y`) skips the confirmation. Packages without an update source are not checked, and only the packages you
+have write-access to are updated (run ncc with elevated permissions to update system packages).
+
+ - Updates are installed the same way as `ncc install` installs them, including their dependencies, launchers and
+   signature verification. `--trust`, `--skip-signature-check`, `--build-source` and `--<repository>-auth=<entry>`
+   work the same as they do for `ncc install`
+ - A package installed with `--optimized` is updated to an optimized installation
+ - The previous versions stay installed, use `ncc autoremove` to uninstall them
+
+
+### Removing old package versions
+
+The `ncc autoremove` command uninstalls the old versions of installed packages, keeping the latest version of each
+package:
+
+```sh
+ncc autoremove
+```
+
+The versions that will be uninstalled are listed and the removal has to be confirmed, `--yes` (or `-y`) skips the
+confirmation. An old version that another installed package depends on (because the latest version does not satisfy the
+dependency's version constraint) is kept, and the reason is shown. Like `ncc uninstall`, only the packages you have
+write-access to are uninstalled. Uninstalling an old version keeps the launchers of the package, they run the latest
+installed version.
 
 
 ### Listing installed packages
