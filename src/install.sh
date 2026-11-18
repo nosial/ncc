@@ -366,8 +366,8 @@ exec php \"$TARGET_PHAR\" --ncc-cli \"\$@\"
     $USE_SUDO $BIN_SCRIPT repo add --overwrite --name github --type github --host api.github.com
     $USE_SUDO $BIN_SCRIPT repo add --overwrite --name gitlab --type gitlab --host gitlab.com
     $USE_SUDO $BIN_SCRIPT repo add --overwrite --name gitgud --type gitlab --host gitgud.io
-    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name codeberg --type github --host codeberg.org
-    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name n64 --type github --host git.n64.cc
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name codeberg --type gitea --host codeberg.org
+    $USE_SUDO $BIN_SCRIPT repo add --overwrite --name n64 --type gitea --host git.n64.cc
 
     print_success "Installation complete!"
     print_info "You can now run 'ncc' from anywhere in your terminal"
