@@ -100,7 +100,7 @@
 
             if(!isset($response['package']['versions']))
             {
-                Logger::getLogger()?->error(sprintf('Invalid response from %s/%s, missing "package.versions" key', $group, $project));
+                Logger::getLogger()?->verbose(sprintf('Invalid response from %s/%s, missing "package.versions" key', $group, $project));
                 throw new OperationException(sprintf('Invalid response from %s/%s, missing "package.versions" key', $group, $project));
             }
 
@@ -130,7 +130,7 @@
 
             if (!isset($versions[0]))
             {
-                Logger::getLogger()?->warning(sprintf('Failed to resolve latest version for %s/%s', $group, $project));
+                Logger::getLogger()?->verbose(sprintf('Failed to resolve latest version for %s/%s', $group, $project));
                 throw new OperationException(sprintf('Failed to resolve latest version for %s/%s', $group, $project));
             }
 
@@ -172,13 +172,13 @@
 
             if(!isset($response['package']['versions'][$version]))
             {
-                Logger::getLogger()?->error(sprintf('Invalid response from %s/%s, version %s does not exist', $group, $project, $version));
+                Logger::getLogger()?->verbose(sprintf('Invalid response from %s/%s, version %s does not exist', $group, $project, $version));
                 throw new OperationException(sprintf('Invalid response from %s/%s, version %s does not exist', $group, $project, $version));
             }
 
             if(!isset($response['package']['versions'][$version]['dist']['url']))
             {
-                Logger::getLogger()?->error(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
+                Logger::getLogger()?->verbose(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
                 throw new OperationException(sprintf('Invalid response from %s/%s, version %s does not have a dist URL', $group, $project, $version));
             }
 
@@ -244,7 +244,7 @@
                 }
             }
 
-            Logger::getLogger()?->error(sprintf('Version %s for %s/%s does not exist', $version, $group, $project));
+            Logger::getLogger()?->verbose(sprintf('Version %s for %s/%s does not exist', $version, $group, $project));
             throw new InvalidArgumentException(sprintf('Version %s for %s/%s does not exist', $version, $group, $project));
         }
 
@@ -271,14 +271,14 @@
 
                 if($response === false)
                 {
-                    Logger::getLogger()?->warning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $vendor, $project, curl_error($curl), $retry_count + 1));
+                    Logger::getLogger()?->verbose(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $vendor, $project, curl_error($curl), $retry_count + 1));
                     $retry_count++;
                 }
             }
 
             if($response === false)
             {
-                Logger::getLogger()?->error(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $vendor, $project, curl_error($curl)));
+                Logger::getLogger()?->verbose(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $vendor, $project, curl_error($curl)));
                 throw new OperationException(sprintf('HTTP request failed for %s/%s: %s', $vendor, $project, curl_error($curl)));
             }
 
@@ -291,11 +291,11 @@
                     break;
 
                 case 401:
-                    Logger::getLogger()?->error(sprintf('Authentication failed for %s/%s, 401 Unauthorized', $vendor, $project));
+                    Logger::getLogger()?->verbose(sprintf('Authentication failed for %s/%s, 401 Unauthorized', $vendor, $project));
                     throw new OperationException(sprintf('Authentication failed for %s/%s, 401 Unauthorized, invalid/expired access token', $vendor, $project));
 
                 case 403:
-                    Logger::getLogger()?->error(sprintf('Authentication failed for %s/%s, 403 Forbidden', $vendor, $project));
+                    Logger::getLogger()?->verbose(sprintf('Authentication failed for %s/%s, 403 Forbidden', $vendor, $project));
                     throw new OperationException(sprintf('Authentication failed for %s/%s, 403 Forbidden, insufficient scope', $vendor, $project));
 
                 case 404:
@@ -303,7 +303,7 @@
                     throw new OperationException(sprintf('Resource not found for %s/%s, server returned 404 Not Found', $vendor, $project));
 
                 default:
-                    Logger::getLogger()?->error(sprintf('Server responded with HTTP %s for %s/%s', $http_code, $vendor, $project));
+                    Logger::getLogger()?->verbose(sprintf('Server responded with HTTP %s for %s/%s', $http_code, $vendor, $project));
                     throw new OperationException(sprintf('Server responded with HTTP code %s for %s/%s: %s', curl_getinfo($curl, CURLINFO_HTTP_CODE), $vendor, $project, $response));
             }
 
@@ -321,7 +321,7 @@
             }
             catch(JsonException $e)
             {
-                Logger::getLogger()?->error(sprintf('Failed to parse JSON response from %s/%s: %s', $vendor, $project, $e->getMessage()));
+                Logger::getLogger()?->verbose(sprintf('Failed to parse JSON response from %s/%s: %s', $vendor, $project, $e->getMessage()));
                 throw new OperationException(sprintf('Failed to parse response from %s/%s: %s', $vendor, $project, $e->getMessage()), $e->getCode(), $e);
             }
         }

@@ -102,7 +102,7 @@
             $tags = $this->getTags($group, $project);
             if(count($tags) === 0)
             {
-                Logger::getLogger()?->warning(sprintf('No tags found for %s/%s', $group, $project));
+                Logger::getLogger()?->verbose(sprintf('No tags found for %s/%s', $group, $project));
                 throw new OperationException(sprintf('No tags found for %s/%s', $group, $project));
             }
 
@@ -144,7 +144,7 @@
             $response = curl_exec($curl);
             if($response === false)
             {
-                Logger::getLogger()?->error(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
+                Logger::getLogger()?->verbose(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
                 throw new OperationException(sprintf('HTTP request failed for %s/%s tag %s: %s', $group, $project, $tag, curl_error($curl)));
             }
 
@@ -156,7 +156,7 @@
                 return new RemotePackage(curl_getinfo($curl, CURLINFO_EFFECTIVE_URL), RemotePackageType::SOURCE_ZIP, $group, $project);
             }
 
-            Logger::getLogger()?->warning(sprintf('No tag archive found for %s/%s/%s (HTTP %d)', $group, $project, $tag, $http_code));
+            Logger::getLogger()?->verbose(sprintf('No tag archive found for %s/%s/%s (HTTP %d)', $group, $project, $tag, $http_code));
             return null;
         }
 
@@ -205,7 +205,7 @@
             $releases = $this->getReleases($group, $project);
             if(count($releases) === 0)
             {
-                Logger::getLogger()?->warning(sprintf('No releases found for %s/%s', $group, $project));
+                Logger::getLogger()?->verbose(sprintf('No releases found for %s/%s', $group, $project));
                 throw new OperationException(sprintf('No releases found for %s/%s', $group, $project));
             }
 
@@ -256,7 +256,7 @@
                 return new RemotePackage($response['tarball_url'], RemotePackageType::SOURCE_TAR, $group, $project, $release);
             }
 
-            Logger::getLogger()?->warning(sprintf('No archive found for release %s in %s/%s', $release, $group, $project));
+            Logger::getLogger()?->verbose(sprintf('No archive found for release %s in %s/%s', $release, $group, $project));
             return null;
         }
 
@@ -303,7 +303,7 @@
                 return new RemotePackage($targetAsset['browser_download_url'], RemotePackageType::NCC, $group, $project);
             }
 
-            Logger::getLogger()?->warning(sprintf('No suitable package found for release %s in %s/%s', $release, $group, $project));
+            Logger::getLogger()?->verbose(sprintf('No suitable package found for release %s in %s/%s', $release, $group, $project));
             return null;
         }
 
@@ -352,7 +352,7 @@
                 }
             }
 
-            Logger::getLogger()?->warning(sprintf('No asset found for %s in %s/%s/%s', $assetName, $group, $project, $release));
+            Logger::getLogger()?->verbose(sprintf('No asset found for %s in %s/%s/%s', $assetName, $group, $project, $release));
             return null;
         }
 
@@ -388,7 +388,7 @@
                 return new RemotePackage($response['git_url'], RemotePackageType::SOURCE_GIT, $group, $project);
             }
 
-            Logger::getLogger()?->warning(sprintf('No git url found for %s/%s', $group, $project));
+            Logger::getLogger()?->verbose(sprintf('No git url found for %s/%s', $group, $project));
             return null;
         }
 
@@ -459,14 +459,14 @@
                 $response = curl_exec($curl);
                 if($response === false)
                 {
-                    Logger::getLogger()?->warning(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $group, $project, curl_error($curl), $retry_count + 1));
+                    Logger::getLogger()?->verbose(sprintf('HTTP request failed for %s/%s: %s, retrying (%s/3)', $group, $project, curl_error($curl), $retry_count + 1));
                     $retry_count++;
                 }
             }
 
             if($response === false)
             {
-                Logger::getLogger()?->error(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $group, $project, curl_error($curl)));
+                Logger::getLogger()?->verbose(sprintf('HTTP request failed for %s/%s after 3 retries: %s', $group, $project, curl_error($curl)));
                 throw new OperationException(sprintf('HTTP request failed for %s/%s: %s', $group, $project, curl_error($curl)));
             }
 
@@ -479,19 +479,19 @@
                     break;
 
                 case 401:
-                    Logger::getLogger()?->error(sprintf('Authentication failed for %s/%s, 401 Unauthorized', $group, $project));
+                    Logger::getLogger()?->verbose(sprintf('Authentication failed for %s/%s, 401 Unauthorized', $group, $project));
                     throw new OperationException(sprintf('Authentication failed for %s/%s, 401 Unauthorized, invalid/expired access token', $group, $project));
 
                 case 403:
-                    Logger::getLogger()?->error(sprintf('Authentication failed for %s/%s, 403 Forbidden', $group, $project));
+                    Logger::getLogger()?->verbose(sprintf('Authentication failed for %s/%s, 403 Forbidden', $group, $project));
                     throw new OperationException(sprintf('Authentication failed for %s/%s, 403 Forbidden, insufficient scope', $group, $project));
 
                 case 404:
-                    Logger::getLogger()?->error(sprintf('Resource not found for %s/%s, 404 Not Found', $group, $project));
+                    Logger::getLogger()?->debug(sprintf('Resource not found for %s/%s, 404 Not Found', $group, $project));
                     throw new OperationException(sprintf('Resource not found for %s/%s, server returned 404 Not Found', $group, $project));
 
                 default:
-                    Logger::getLogger()?->error(sprintf('Server responded with HTTP %s for %s/%s', $http_code, $group, $project));
+                    Logger::getLogger()?->verbose(sprintf('Server responded with HTTP %s for %s/%s', $http_code, $group, $project));
                     throw new OperationException(sprintf('%s responded with HTTP code %s for %s/%s: %s', curl_getinfo($curl, CURLINFO_HTTP_CODE), $this->getConfiguration()->getName(), $group, $project, $response));
             }
 
@@ -508,7 +508,7 @@
             }
             catch(JsonException $e)
             {
-                Logger::getLogger()?->error(sprintf('Failed to parse JSON response from %s/%s: %s', $group, $project, $e->getMessage()));
+                Logger::getLogger()?->verbose(sprintf('Failed to parse JSON response from %s/%s: %s', $group, $project, $e->getMessage()));
                 throw new OperationException(sprintf('Failed to parse response from %s/%s: %s', $group, $project, $e->getMessage()), $e->getCode(), $e);
             }
         }
