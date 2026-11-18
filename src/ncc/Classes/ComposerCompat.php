@@ -206,7 +206,7 @@ PHP;
                     if(strcasecmp($className, 'ncc\\Classes\\InstalledVersions') === 0)
                     {
                         // .inc so ncc's own generated autoloader never claims the class over a real Composer installation
-                        require_once __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Compat' . DIRECTORY_SEPARATOR . 'Composer' . DIRECTORY_SEPARATOR . 'InstalledVersions.inc';
+                        require_once __DIR__ . DIRECTORY_SEPARATOR . 'InstalledVersions.inc';
                     }
                 };
             }

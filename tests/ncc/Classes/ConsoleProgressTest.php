@@ -397,7 +397,8 @@ class ConsoleProgressTest extends TestCase
                     Console::completeProgress();
                 });
 
-                $this->assertSame(1, preg_match('/\[(.*?)\]/u', $output, $matches));
+                // Strip the escape sequences first, the "\e[K" that clears the line also contains a "["
+                $this->assertSame(1, preg_match('/\[(.*?)\]/u', preg_replace('/\e\[[0-9;]*[A-Za-z]/', '', $output), $matches));
                 $this->assertSame(30, mb_strlen($matches[1]), 'Width at ' . $percent . '% (smooth: ' . var_export($smooth, true) . ')');
             }
         }

@@ -1789,10 +1789,17 @@
             $unit = $this->readExecutionUnit($executionUnitRef);
             Logger::getLogger()?->verbose(sprintf('Executing unit: %s (type: %s)', $executionUnit, $unit->getType()->value));
             
+            // Composer bins only exit non-zero through exit(), their return value is ignored
+            if($unit->isComposerBin() && in_array($unit->getType(), [ExecutionUnitType::PHP, ExecutionUnitType::WEB], true))
+            {
+                $this->executePhpUnit($unit, $arguments);
+                return 0;
+            }
+
             // Handle execution based on type
             return match ($unit->getType())
             {
-                ExecutionUnitType::PHP, ExecutionUnitType::WEB => $unit->isComposerBin() ? 0 : $this->executePhpUnit($unit, $arguments),
+                ExecutionUnitType::PHP, ExecutionUnitType::WEB => $this->executePhpUnit($unit, $arguments),
                 ExecutionUnitType::SYSTEM => $this->executeSystemUnit($unit, $arguments),
                 default => throw new OperationException(sprintf('Unsupported execution unit type: %s', $unit->getType()->value)),
             };

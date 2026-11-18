@@ -333,7 +333,7 @@
          */
         public function addIncludedComponent(string $component): void
         {
-            if(!in_array($component, $this->includeComponents, true))
+            if(in_array($component, $this->includeComponents, true))
             {
                 return;
             }
@@ -368,7 +368,7 @@
          */
         public function addExcludedComponent(string $component): void
         {
-            if(!in_array($component, $this->excludeComponents, true))
+            if(in_array($component, $this->excludeComponents, true))
             {
                 return;
             }
@@ -403,7 +403,7 @@
          */
         public function addIncludedResource(string $resource): void
         {
-            if(!in_array($resource, $this->includeResources, true))
+            if(in_array($resource, $this->includeResources, true))
             {
                 return;
             }
@@ -438,7 +438,7 @@
          */
         public function addExcludedResource(string $resource): void
         {
-            if(!in_array($resource, $this->excludeResources, true))
+            if(in_array($resource, $this->excludeResources, true))
             {
                 return;
             }
