@@ -5,10 +5,109 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.14] - Ongoing
+## [3.1.14] - 2026-11-17
 
-This is an ongoing update
+This update focuses on running Composer packages and tools such as PHPUnit through ncc, and adds the `ncc update`
+and `ncc autoremove` commands
 
+### Added
+ - Added the `ncc update` command, it checks the update source of every installed package and installs the latest
+   version of the packages that have a newer one, after listing them and asking for confirmation (`--yes` skips it).
+   Previous versions stay installed
+ - Added the `ncc autoremove` command, it uninstalls old versions of installed packages, keeping the latest version and
+   the versions other installed packages depend on, after listing them and asking for confirmation (`--yes` skips it)
+ - Added the `autoload_files` build configuration property and package header entry: the files are executed whenever
+   the package is imported (after its dependencies). The Composer converter fills it from `autoload.files`, so global
+   functions such as PHPUnit's `assertTrue()` and polyfills are available
+ - Added the `composer_bin` execution unit property. Composer bins are always packaged and exit with `0` unless the
+   script calls `exit()`, like Composer's bin proxies
+ - PHP execution units get `$argv`, `$argc` and `$GLOBALS['_composer_autoload_path']`. The latter points to an autoload
+   file on disk that loads ncc and imports the package, so it also works in child PHP processes (PHPUnit's process
+   isolation and PHPT tests). Installed executable packages get it as `<package>.autoload.php`
+ - Added a `Composer\InstalledVersions` fallback backed by ncc, used only when no real Composer installation provides it
+ - `ncc exec` accepts a bare `--` as an alternative to `--args`
+ - The `frankenphp` build type builds incrementally: when PHP was already built in the working directory with the same
+   PHP version, extensions, libraries, libc and spc binary, only FrankenPHP is relinked instead of running spc's
+   doctor, download and PHP build again. It falls back to a full build if the relink fails. The new `incremental`
+   option disables it (enabled by default on Linux, opt-in on macOS)
+ - The class map of installed packages is stored in their cache file, so statically linking a dependency no longer
+   tokenizes all of its components on every build. Packages installed by older versions of ncc get it on first use
+   when their cache file is writable
+
+### Changed
+ - Arguments after `--args` (or `--`) are no longer parsed by ncc. Previously, eg; `phpunit --version` or `phpunit -h`
+   run through an ncc launcher were handled as ncc's own options, and other arguments could select a different command
+ - Composer conversion:
+   - The assembly is named after the package instead of the vendor (`sebastian/diff` is `diff`, it was `sebastian`)
+   - An execution unit is created for every `bin` instead of only the first one, and each bin gets its own launcher
+     named after it (uninstalling removes all of them)
+   - The package root is the source path (it was the first autoload root, eg; `src`), so code that reaches files of
+     its package relative to `__DIR__` works and non-PHP files such as PHPUnit's XML schemas are packaged
+   - `vendor/`, the build outputs, `archive.exclude` and `export-ignore` paths are excluded from the package
+   - Dependency versions are no longer resolved twice
+   - Development dependencies that can't be found on Packagist (eg; `yaml/yaml-test-suite`) are only logged at debug
+     level instead of showing an error and a warning
+ - Building:
+   - Included components naming an existing file or directory outside the source path are included from the project
+     path (previously they were silently ignored), and included components naming an existing file are included even
+     when an exclusion pattern matches them
+   - Files outside the source path are stored under their path relative to the project path instead of their file
+     name, which could collide, and their classes are added to the autoloader
+   - The autoloader only maps classes of packaged components, previously classes of excluded files in the source path
+     were mapped to files missing from the package
+   - Statically linked dependencies are loaded through their package cache
+   - The `frankenphp` build type only downloads the PHP and FrankenPHP sources when the cached sources don't match the
+     requested versions, previously the PHP source was downloaded on every build
+   - Builds sharing a `frankenphp` working directory wait for each other instead of overwriting each other's files
+ - Installing:
+   - Unsigned packages built from source during the installation (including converted Composer packages) are
+     installed without a warning, since a locally compiled package can't carry the author's signature. Prebuilt
+     unsigned packages still show the deprecation warning
+   - The installation status (resolving, installing, dependencies, verified signatures) is shown as the message of a
+     single progress bar instead of a line for every step, and log warnings and errors no longer break the bar's line
+ - The progress bar moves smoothly: terminals that support it draw eighth blocks (8 steps per character), while the
+   Linux text console, non-UTF-8 locales and the legacy Windows console draw a connected line (`━╸─`). The remaining
+   part of the bar is dimmed when colors are enabled
+ - The package cache version is now 5, older cache files are regenerated
+
+### Fixed
+ - The `addIncludedComponent`, `addExcludedComponent`, `addIncludedResource` and `addExcludedResource` methods of build
+   configurations never added anything, so the include and exclude patterns added by the Composer converter (including
+   `exclude-from-classmap`) had no effect
+ - Uninstalling an old version of a package removed its launchers while a newer version was still installed, launchers
+   are now only removed with the last installed version
+ - Composer bin scripts outside the source path (such as `phpunit`) could not find their `vendor/autoload.php`, PHPUnit
+   failed with "You need to set up the project dependencies using Composer"
+ - PHPUnit's XML configuration migration failed because its `schema/` directory was not packaged
+ - Packages bundling a `.phar` archive (Composer tools such as PHPStan, whose bin loads a `.phar` next to it) failed
+   with "unable to open phar for reading", because PHP can only open phar archives from the filesystem. Such packages
+   are now always installed as an optimized installation; packages without one (installed by an older version of ncc
+   or executed from a package file) are extracted to a per-user temporary directory when imported
+ - Projects whose source path is `.` or contains a symbolic link stored every component under its file name
+ - The fallback class parser of the `ncc` build type reset the namespace after the first class of a file with a
+   non-bracketed namespace, so the following classes were mapped without their namespace (the parser is now shared
+   with the `phar` build type, which was not affected)
+ - Duplicate source resources were counted twice when calculating the build number
+ - The `frankenphp` build type re-downloads a cached spc binary that doesn't work (eg; an interrupted download) and
+   aborts stalled downloads instead of hanging
+ - `ncc project install` reported every dependency that didn't fail as installed, even when it already was, and didn't
+   count transitive dependencies. It now lists the packages that were actually installed and how many dependencies
+   were already installed
+ - `ncc update` printed an error, a warning and a stack trace for every source it tried of a package whose repository
+   could not be queried. Repository clients no longer log errors they throw, `AbstractRepository::getAll()` logs
+   unavailable sources at verbose level without the stack trace and resolves the latest release only once, and
+   `ncc update` ends with a summary of the packages it checked, the packages it could not check (with the reason),
+   the packages it updated and the packages that failed to update (with the reason)
+ - The installer registered the `n64` and `codeberg` repositories as `github` repositories, but both are Gitea/Forgejo
+   instances, so every request to them failed with 404 Not Found. They are now registered as `gitea` repositories,
+   existing installations can fix them with `ncc repo add --overwrite --name n64 --type gitea --host git.n64.cc` and
+   `ncc repo add --overwrite --name codeberg --type gitea --host codeberg.org`
+ - Packages converted from Composer had no update source, so `ncc update` never checked them. The Composer converter
+   now sets `<vendor>/<name>@packagist` as the update source, and packages built from a remote source whose project
+   doesn't declare an update source get the source they were installed from (without the version). Packages that are
+   already installed get it when they're reinstalled
+ - Gitea repositories crashed with a `TypeError` when resolving a project's git source, because the repository's
+   `zipball_url` (which the Gitea API doesn't return) was used instead of its `clone_url`
 
 
 ## [3.1.13] - 2026-11-02
