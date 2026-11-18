@@ -718,6 +718,11 @@ The following options are supported in the `frankenphp` build configuration:
  - `libc` (string): `musl` or `glibc`, the C library to link against on Linux. Default is `musl` which produces a fully
                     static binary.
  - `php_ini` (key-value): php.ini directives to embed into the binary, these are applied when running `php-server`.
+ - `php_ini_path` (string): The directory the binary looks for a `php.ini` file in. Default is `/etc/frankenphp`.
+ - `php_ini_scan_dir` (string): The directory the binary loads further `.ini` files from. Default is
+                                `/etc/frankenphp/php.d`. Unlike spc's defaults (`/usr/local/etc/php`), these are not
+                                used by the official PHP Docker images, whose extension `.ini` files a static binary
+                                cannot load.
  - `caddyfile` (string): Path to a Caddyfile (relative to the project directory) to embed into the binary. Note that
                          when a Caddyfile is embedded, `php-server` uses it and ignores its command-line flags.
  - `frankenphp_version` (string): The FrankenPHP release to build, eg; `1.9.0`. Defaults to the latest release.
