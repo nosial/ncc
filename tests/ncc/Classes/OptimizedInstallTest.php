@@ -200,6 +200,59 @@
             $this->assertNull($cacheData->getOptimizedPath());
         }
 
+        public function testExportedCacheContainsClassMap(): void
+        {
+            $reader = new PackageReader(self::$builtPackage);
+            $cacheFile = $this->dataDirectory . DIRECTORY_SEPARATOR . 'test.cache';
+            $reader->exportCache($cacheFile);
+
+            $cacheData = unserialize(file_get_contents($cacheFile));
+            $this->assertInstanceOf(PackageCacheData::class, $cacheData);
+            $classMap = $cacheData->getClassMap();
+            $this->assertIsArray($classMap);
+            $this->assertArrayHasKey('OptimizedInstallTestRoot', $classMap);
+            $this->assertArrayHasKey('OptimizedInstallTestChild', $classMap);
+            $this->assertStringEndsWith('Sub/OptimizedInstallTestChild.php', $classMap['OptimizedInstallTestChild']);
+            $this->assertSame($classMap, $reader->getClassMap());
+        }
+
+        public function testClassMapIsRestoredFromCache(): void
+        {
+            $packagePath = $this->dataDirectory . DIRECTORY_SEPARATOR . 'package.ncc';
+            copy(self::$builtPackage, $packagePath);
+            (new PackageReader($packagePath))->exportCache($packagePath . '.cache');
+
+            $cachedReader = new PackageReader($packagePath, true);
+            $this->assertSame((new PackageReader($packagePath))->getClassMap(), $cachedReader->getClassMap());
+        }
+
+        public function testCacheWithoutClassMapIsUpgradedLazily(): void
+        {
+            $packagePath = $this->dataDirectory . DIRECTORY_SEPARATOR . 'package.ncc';
+            $cacheFile = $packagePath . '.cache';
+            copy(self::$builtPackage, $packagePath);
+            (new PackageReader($packagePath))->exportCache($cacheFile);
+
+            // Simulate a cache file written before the classMap property existed
+            $cacheData = unserialize(file_get_contents($cacheFile));
+            $cacheData->setClassMap(null);
+            $serialized = serialize($cacheData);
+            $property = "\0" . PackageCacheData::class . "\0classMap";
+            $serialized = str_replace(sprintf('s:%d:"%s";N;', strlen($property), $property), '', $serialized, $count);
+            $this->assertSame(1, $count);
+            $serialized = preg_replace_callback('/^(O:\d+:"[^"]+":)(\d+)/', fn($m) => $m[1] . ((int)$m[2] - 1), $serialized);
+            file_put_contents($cacheFile, $serialized);
+
+            $oldCacheData = unserialize($serialized);
+            $this->assertInstanceOf(PackageCacheData::class, $oldCacheData);
+            $this->assertNull($oldCacheData->getClassMap());
+
+            // The class map is computed on first use and written back into the cache file
+            $classMap = (new PackageReader($packagePath, true))->getClassMap();
+            $this->assertArrayHasKey('OptimizedInstallTestRoot', $classMap);
+            $this->assertSame($classMap, unserialize(file_get_contents($cacheFile))->getClassMap());
+        }
+
         public function testInstallOptionParsing(): void
         {
             $parseOptions = new ReflectionMethod(InstallCommand::class, 'parseOptions');
