@@ -43,6 +43,16 @@ class AbstractRepositoryTest extends TestCase
         {
             public int $latestReleaseCalls = 0;
 
+            public static function checkRateLimited(int $httpCode, array $headers, string|false $body): bool
+            {
+                return self::isRateLimited($httpCode, $headers, $body);
+            }
+
+            public function rateLimitMessage(array $headers): string
+            {
+                return $this->getRateLimitMessage('group', 'project', $headers);
+            }
+
             public function __construct(RepositoryConfiguration $configuration, private readonly ?string $failure)
             {
                 parent::__construct($configuration);
@@ -148,5 +158,39 @@ class AbstractRepositoryTest extends TestCase
     {
         $repository = $this->createRepository('Resource not found');
         $this->assertCount(1, $repository->getAll('group', 'project'));
+    }
+
+    public function testRateLimitDetection(): void
+    {
+        $repository = $this->createRepository(null);
+
+        // HTTP 429 is always a rate limit
+        $this->assertTrue($repository::checkRateLimited(429, [], ''));
+
+        // GitHub answers 403 when the rate limit is exceeded
+        $this->assertTrue($repository::checkRateLimited(403, ['x-ratelimit-remaining' => '0'], ''));
+        $this->assertTrue($repository::checkRateLimited(403, ['ratelimit-remaining' => '0'], ''));
+        $this->assertTrue($repository::checkRateLimited(403, ['retry-after' => '60'], ''));
+        $this->assertTrue($repository::checkRateLimited(403, [], '{"message":"API rate limit exceeded for 127.0.0.1."}'));
+
+        // A 403 without rate limit indicators is a permission problem
+        $this->assertFalse($repository::checkRateLimited(403, ['x-ratelimit-remaining' => '42'], '{"message":"Resource not accessible"}'));
+        $this->assertFalse($repository::checkRateLimited(403, [], false));
+        $this->assertFalse($repository::checkRateLimited(404, ['x-ratelimit-remaining' => '0'], ''));
+        $this->assertFalse($repository::checkRateLimited(200, [], ''));
+    }
+
+    public function testRateLimitMessage(): void
+    {
+        $repository = $this->createRepository(null);
+
+        $message = $repository->rateLimitMessage(['retry-after' => '30']);
+        $this->assertStringContainsString('API rate limit of test exceeded for group/project', $message);
+        $this->assertStringContainsString('retry in 30 second(s)', $message);
+        $this->assertStringContainsString('--test-auth=<entry>', $message);
+
+        $reset = time() + 600;
+        $message = $repository->rateLimitMessage(['x-ratelimit-reset' => (string)$reset]);
+        $this->assertStringContainsString(sprintf('the limit resets at %s', date('H:i:s', $reset)), $message);
     }
 }

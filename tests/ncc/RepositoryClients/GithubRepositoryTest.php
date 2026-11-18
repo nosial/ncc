@@ -23,12 +23,15 @@
 namespace ncc\RepositoryClients;
 
 use ncc\Enums\RepositoryType;
+use ncc\Exceptions\OperationException;
+use ncc\Objects\Authentication\AccessToken;
 use ncc\Objects\RepositoryConfiguration;
 use PHPUnit\Framework\TestCase;
 
 class GithubRepositoryTest extends TestCase
 {
     private GithubRepository $repository;
+    private GithubRepository $apiRepository;
     private RepositoryConfiguration $config;
 
     protected function setUp(): void
@@ -40,6 +43,10 @@ class GithubRepositoryTest extends TestCase
             true
         );
         $this->repository = new GithubRepository($this->config);
+
+        // Live API calls are authenticated when a token is available (eg; GITHUB_TOKEN in CI)
+        $token = getenv('GITHUB_TOKEN');
+        $this->apiRepository = is_string($token) && $token !== '' ? new GithubRepository($this->config, new AccessToken($token)) : $this->repository;
     }
 
     public function testConstructorWithValidConfiguration(): void
@@ -61,9 +68,25 @@ class GithubRepositoryTest extends TestCase
         new GithubRepository($invalidConfig);
     }
 
+    /**
+     * Calls the live GitHub API, skipping the test when the API rate limit is exceeded (unauthenticated requests
+     * from shared CI runners easily hit it). Set GITHUB_TOKEN to authenticate the requests.
+     */
+    private function callApi(callable $call): mixed
+    {
+        try {
+            return $call($this->apiRepository);
+        } catch (OperationException $e) {
+            if (str_contains($e->getMessage(), 'API rate limit')) {
+                $this->markTestSkipped($e->getMessage());
+            }
+            throw $e;
+        }
+    }
+
     public function testGetTags(): void
     {
-        $tags = $this->repository->getTags('nosial', 'configlib');
+        $tags = $this->callApi(fn(GithubRepository $repository) => $repository->getTags('nosial', 'configlib'));
         $this->assertIsArray($tags);
         $this->assertNotEmpty($tags);
         foreach ($tags as $tag) {
@@ -73,16 +96,15 @@ class GithubRepositoryTest extends TestCase
 
     public function testGetLatestTag(): void
     {
-        $latestTag = $this->repository->getLatestTag('nosial', 'configlib');
+        $latestTag = $this->callApi(fn(GithubRepository $repository) => $repository->getLatestTag('nosial', 'configlib'));
         $this->assertIsString($latestTag);
         $this->assertNotEmpty($latestTag);
     }
 
     public function testGetTagArchive(): void
     {
-        $latestTag = $this->repository->getLatestTag('nosial', 'configlib');
-        $archive = $this->repository->getTagArchive('nosial', 'configlib', $latestTag);
-        
+        $archive = $this->callApi(fn(GithubRepository $repository) => $repository->getTagArchive('nosial', 'configlib', $repository->getLatestTag('nosial', 'configlib')));
+
         if ($archive !== null) {
             $this->assertNotEmpty($archive->getDownloadUrl());
         } else {
@@ -92,7 +114,7 @@ class GithubRepositoryTest extends TestCase
 
     public function testGetReleases(): void
     {
-        $releases = $this->repository->getReleases('nosial', 'configlib');
+        $releases = $this->callApi(fn(GithubRepository $repository) => $repository->getReleases('nosial', 'configlib'));
         $this->assertIsArray($releases);
         // Releases might be empty for some projects
         foreach ($releases as $release) {
@@ -103,10 +125,10 @@ class GithubRepositoryTest extends TestCase
     public function testGetLatestRelease(): void
     {
         try {
-            $latestRelease = $this->repository->getLatestRelease('nosial', 'configlib');
+            $latestRelease = $this->callApi(fn(GithubRepository $repository) => $repository->getLatestRelease('nosial', 'configlib'));
             $this->assertIsString($latestRelease);
             $this->assertNotEmpty($latestRelease);
-        } catch (\Exception $e) {
+        } catch (OperationException $e) {
             // Some projects might not have releases
             $this->assertStringContainsString('No releases found', $e->getMessage());
         }
@@ -115,20 +137,19 @@ class GithubRepositoryTest extends TestCase
     public function testGetReleaseArchive(): void
     {
         try {
-            $latestRelease = $this->repository->getLatestRelease('nosial', 'configlib');
-            $archive = $this->repository->getReleaseArchive('nosial', 'configlib', $latestRelease);
-            
+            $archive = $this->callApi(fn(GithubRepository $repository) => $repository->getReleaseArchive('nosial', 'configlib', $repository->getLatestRelease('nosial', 'configlib')));
+
             if ($archive !== null) {
                 $this->assertNotEmpty($archive->getDownloadUrl());
             }
-        } catch (\Exception $e) {
+        } catch (OperationException $e) {
             $this->markTestSkipped('No releases available for testing');
         }
     }
 
     public function testGetGit(): void
     {
-        $gitPackage = $this->repository->getGit('nosial', 'configlib');
+        $gitPackage = $this->apiRepository->getGit('nosial', 'configlib');
         $this->assertNotNull($gitPackage);
         $this->assertNotEmpty($gitPackage->getDownloadUrl());
         $this->assertStringContainsString('git', strtolower($gitPackage->getDownloadUrl()));
@@ -136,7 +157,7 @@ class GithubRepositoryTest extends TestCase
 
     public function testGetAll(): void
     {
-        $packages = $this->repository->getAll('nosial', 'configlib');
+        $packages = $this->apiRepository->getAll('nosial', 'configlib');
         $this->assertIsArray($packages);
         $this->assertNotEmpty($packages);
         
