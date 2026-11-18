@@ -22,7 +22,7 @@
 
     namespace ncc\Abstracts;
 
-    use Exception;
+    use Throwable;
     use ncc\ArchiveExtractors\TarArchive;
     use ncc\ArchiveExtractors\ZipArchive;
     use ncc\Libraries\fslib\IO;
@@ -94,7 +94,7 @@
         {
             $results = [];
             $errors = [];
-            $recordError = static function(string $sourceName, Exception $e) use ($group, $project, $version, &$errors): void
+            $recordError = static function(string $sourceName, Throwable $e) use ($group, $project, $version, &$errors): void
             {
                 Logger::getLogger()?->verbose(sprintf('Could not get %s for %s/%s:%s - %s', $sourceName, $group, $project, $version ?? 'latest', $e->getMessage()));
                 if(!in_array($e->getMessage(), $errors, true))
@@ -117,7 +117,7 @@
                 {
                     $release = $this->getLatestRelease($group, $project);
                 }
-                catch(Exception $e)
+                catch(Throwable $e)
                 {
                     $recordError('the latest release', $e);
                 }
@@ -134,7 +134,7 @@
                         $results[] = $releaseArchive;
                     }
                 }
-                catch(Exception $e)
+                catch(Throwable $e)
                 {
                     $recordError('release archive', $e);
                 }
@@ -149,7 +149,7 @@
                     $results[] = $tagArchive;
                 }
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 // Don't log warnings for Packagist repositories about tags not being supported (it's expected behavior)
                 if(!($this instanceof PackagistRepository && $e instanceof OperationException && str_contains($e->getMessage(), 'does not support tags')))
@@ -167,7 +167,7 @@
                     $results[] = $gitSource;
                 }
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 $recordError('git repository', $e);
             }
@@ -183,7 +183,7 @@
                         $results[] = $releasePackage;
                     }
                 }
-                catch(Exception $e)
+                catch(Throwable $e)
                 {
                     $recordError('release package', $e);
                 }
@@ -308,7 +308,7 @@
                     return $result;
                 }
             }
-            catch(Exception $e)
+            catch(Throwable $e)
             {
                 Logger::getLogger()?->debug(sprintf('Failed to fetch git URL for %s/%s from API, falling back to assumed URL: %s', $group, $project, $e->getMessage()));
             }

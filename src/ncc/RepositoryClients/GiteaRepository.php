@@ -424,7 +424,7 @@
             if(isset($response['clone_url']))
             {
                 Logger::getLogger()?->verbose(sprintf('Found git url for %s/%s', $group, $project));
-                return new RemotePackage($response['zipball_url'], RemotePackageType::SOURCE_ZIP, $group, $project);
+                return new RemotePackage($response['clone_url'], RemotePackageType::SOURCE_GIT, $group, $project);
             }
 
             Logger::getLogger()?->verbose(sprintf('No git url found for %s/%s', $group, $project));
