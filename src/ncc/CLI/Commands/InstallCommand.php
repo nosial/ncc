@@ -586,6 +586,14 @@
                 throw new OperationException(sprintf('Failed to convert project source for %s: %s', $source, $e->getMessage()));
             }
 
+            if($compiler->getProjectConfiguration()->getUpdateSource() === null && $source->getRepository() !== null)
+            {
+                $updateSource = clone $source;
+                $updateSource->setVersion(null);
+                $compiler->getProjectConfiguration()->setUpdateSource($updateSource);
+                Logger::getLogger()?->debug(sprintf('No update source is declared by %s, using %s', $source, $updateSource));
+            }
+
             // Stage: Compile
             // Build & install the project
             try
