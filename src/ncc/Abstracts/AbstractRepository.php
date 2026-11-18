@@ -22,6 +22,8 @@
 
     namespace ncc\Abstracts;
 
+    use ArrayObject;
+    use CurlHandle;
     use Throwable;
     use ncc\ArchiveExtractors\TarArchive;
     use ncc\ArchiveExtractors\ZipArchive;
@@ -503,6 +505,94 @@
             }
 
             return $filePath;
+        }
+
+        /**
+         * Captures the response headers of a cURL request, the returned object is filled with the headers of the final
+         * response (lowercase names) once the request is executed
+         *
+         * @param CurlHandle $curl The cURL instance to capture the response headers of
+         * @return ArrayObject The response headers, filled when the request is executed
+         */
+        protected static function captureResponseHeaders(CurlHandle $curl): ArrayObject
+        {
+            $headers = new ArrayObject();
+            curl_setopt($curl, CURLOPT_HEADERFUNCTION, static function($handle, string $header) use ($headers): int
+            {
+                // A new status line starts the headers of another response (eg; after a redirect or a retry)
+                if(str_starts_with($header, 'HTTP/'))
+                {
+                    $headers->exchangeArray([]);
+                }
+                elseif(str_contains($header, ':'))
+                {
+                    [$name, $value] = explode(':', $header, 2);
+                    $headers[strtolower(trim($name))] = trim($value);
+                }
+
+                return strlen($header);
+            });
+
+            return $headers;
+        }
+
+        /**
+         * Determines if a response was rejected because the API rate limit was exceeded. HTTP 429 is always a rate
+         * limit, GitHub answers 403 with "x-ratelimit-remaining: 0" or a "rate limit" message instead
+         *
+         * @param int $httpCode The HTTP status code of the response
+         * @param ArrayObject|array $headers The response headers with lowercase names
+         * @param string|false $body The response body
+         * @return bool True if the API rate limit was exceeded
+         */
+        protected static function isRateLimited(int $httpCode, ArrayObject|array $headers, string|false $body): bool
+        {
+            if($httpCode === 429)
+            {
+                return true;
+            }
+
+            if($httpCode !== 403)
+            {
+                return false;
+            }
+
+            return ($headers['x-ratelimit-remaining'] ?? null) === '0'
+                || ($headers['ratelimit-remaining'] ?? null) === '0'
+                || isset($headers['retry-after'])
+                || (is_string($body) && stripos($body, 'rate limit') !== false);
+        }
+
+        /**
+         * Builds the error message for a request rejected by the API rate limit, including when the limit resets if
+         * the server reports it
+         *
+         * @param string $group The group or namespace of the requested project
+         * @param string $project The name of the requested project
+         * @param ArrayObject|array $headers The response headers with lowercase names
+         * @return string The error message
+         */
+        protected function getRateLimitMessage(string $group, string $project, ArrayObject|array $headers): string
+        {
+            $message = sprintf('API rate limit of %s exceeded for %s/%s', $this->getConfiguration()->getName(), $group, $project);
+
+            $reset = $headers['x-ratelimit-reset'] ?? $headers['ratelimit-reset'] ?? null;
+            if(isset($headers['retry-after']) && ctype_digit($headers['retry-after']))
+            {
+                $message .= sprintf(', retry in %d second(s)', (int)$headers['retry-after']);
+            }
+            elseif($reset !== null && ctype_digit($reset))
+            {
+                // Reset headers are a unix timestamp
+                $message .= sprintf(', the limit resets at %s', date('H:i:s', (int)$reset));
+            }
+
+            if($this->getAuthentication() === null)
+            {
+                $message .= sprintf(', add an authentication entry with "ncc auth" and use it with --%s-auth=<entry> for a higher limit', $this->getConfiguration()->getName());
+            }
+
+            return $message;
         }
 
         /**
