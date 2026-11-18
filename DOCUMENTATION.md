@@ -1353,6 +1353,11 @@ files instead, which OPcache can cache. This is recommended for php-fpm deployme
    works, explicit `ncc://` paths keep working through the stream wrapper
  - Setting the environment variable `NCC_DISABLE_OPTIMIZED` makes ncc ignore optimized installations
  - The extracted files are uncompressed, so an optimized installation uses more disk space
+ - Packages that bundle a `.phar` archive (such as Composer tools whose bin loads a `.phar` shipped next to it) are
+   always installed as an optimized installation, even without `--optimized`, because PHP can only open phar archives
+   from the filesystem and not through `ncc://`. When such a package has no optimized installation (it was installed by
+   an older version of ncc or is executed directly from a package file) it is extracted on import to a per-user
+   temporary directory (`ncc-extract-<uid>` in the system temporary directory) and reused while the package is unchanged
 
 
 #### Signature verification
