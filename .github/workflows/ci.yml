@@ -80,6 +80,8 @@ jobs:
           sudo mv phpunit.phar /usr/local/bin/phpunit
 
       - name: Run PHPUnit tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Run tests and capture output
           phpunit --configuration phpunit.xml --no-coverage --dont-report-useless-tests > test_output.txt 2>&1 || TEST_EXIT=$?
