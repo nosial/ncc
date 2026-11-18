@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.15] - 2026-11-18
+
+This update introduces a small fix
+
+### Fixed
+- The `frankenphp` build type built PHP with spc's default configuration paths (`/usr/local/etc/php` and its `conf.d`),
+  the paths of the official PHP Docker images, so building in such an image (including ncc's own) failed spc's
+  sanity check: the binary loaded the image's extension `.ini` files and warned that it cannot load them. Binaries
+  look in `/etc/frankenphp` and `/etc/frankenphp/php.d` instead, configurable with the new `php_ini_path` and
+  `php_ini_scan_dir` options
+
+
+
 ## [3.1.14] - 2026-11-18
 
 This update focuses on running Composer packages and tools such as PHPUnit through ncc, and adds the `ncc update`

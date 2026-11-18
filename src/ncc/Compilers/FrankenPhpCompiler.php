@@ -45,6 +45,8 @@
         ];
 
         private const string DEFAULT_PHP_VERSION = '8.4.27';
+        private const string DEFAULT_PHP_INI_PATH = '/etc/frankenphp';
+        private const string DEFAULT_PHP_INI_SCAN_DIR = '/etc/frankenphp/php.d';
         private const string SPC_DOWNLOAD_URL = 'https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-%s-%s';
         private const string FRANKENPHP_TAG_URL = 'https://github.com/php/frankenphp/archive/refs/tags/v%s.tar.gz';
 
@@ -65,6 +67,8 @@
         private ?string $frankenPhpVersion;
         private ?string $xcaddyModules;
         private ?array $phpIni;
+        private string $phpIniPath;
+        private string $phpIniScanDir;
         private ?string $caddyfile;
         private bool $autoFix;
         private bool $upx;
@@ -102,6 +106,8 @@
             $this->frankenPhpVersion = self::stringOption($options, 'frankenphp_version');
             $this->xcaddyModules = self::stringOption($options, 'xcaddy_modules');
             $this->phpIni = isset($options['php_ini']) && is_array($options['php_ini']) ? $options['php_ini'] : null;
+            $this->phpIniPath = self::stringOption($options, 'php_ini_path') ?? self::DEFAULT_PHP_INI_PATH;
+            $this->phpIniScanDir = self::stringOption($options, 'php_ini_scan_dir') ?? self::DEFAULT_PHP_INI_SCAN_DIR;
             $this->caddyfile = self::stringOption($options, 'caddyfile');
             $this->autoFix = isset($options['auto_fix']) && $options['auto_fix'] === true;
             $this->upx = isset($options['upx']) && $options['upx'] === true;
@@ -432,6 +438,8 @@
                 'libc' => $this->isMusl() ? 'musl' : ($this->libc ?? 'default'),
                 'frankenphp_version' => $this->frankenPhpVersion,
                 'frankenphp_source' => $this->frankenPhpSource,
+                'php_ini_path' => $this->phpIniPath,
+                'php_ini_scan_dir' => $this->phpIniScanDir,
             ]);
         }
 
@@ -1101,6 +1109,8 @@ PHP;
                 '--build-embed',
                 '--build-frankenphp',
                 '--with-frankenphp-app=' . $stagingDirectory,
+                '--with-config-file-path=' . $this->phpIniPath,
+                '--with-config-file-scan-dir=' . $this->phpIniScanDir,
             ];
 
             if(count($this->libraries) > 0)
