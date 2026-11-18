@@ -86,11 +86,22 @@
          * @param string $group The group or namespace the project belongs to
          * @param string $project The name of the project
          * @param string|null $version The specific version (release/tag) to get packages for, or null for latest
+         * @param array|null $errors If provided, receives the unique error messages of the sources that could not be
+         *                           resolved, so callers can explain why no (or fewer) sources were found
          * @return RemotePackage[] Returns an array of RemotePackage objects representing possible sources
          */
-        public function getAll(string $group, string $project, ?string $version=null): array
+        public function getAll(string $group, string $project, ?string $version=null, ?array &$errors=null): array
         {
             $results = [];
+            $errors = [];
+            $recordError = static function(string $sourceName, Exception $e) use ($group, $project, $version, &$errors): void
+            {
+                Logger::getLogger()?->verbose(sprintf('Could not get %s for %s/%s:%s - %s', $sourceName, $group, $project, $version ?? 'latest', $e->getMessage()));
+                if(!in_array($e->getMessage(), $errors, true))
+                {
+                    $errors[] = $e->getMessage();
+                }
+            };
 
             // Treat "latest" as null to use the latest release/tag
             if($version !== null && strtolower($version) === 'latest')
@@ -98,18 +109,35 @@
                 $version = null;
             }
 
-            // Find possible release archives
-            try
+            // Resolve the release once, it's shared by the release archive and the release package
+            $release = $version;
+            if($release === null)
             {
-                $releaseArchive = $this->getReleaseArchive($group, $project, $version ?? $this->getLatestRelease($group, $project));
-                if($releaseArchive !== null)
+                try
                 {
-                    $results[] = $releaseArchive;
+                    $release = $this->getLatestRelease($group, $project);
+                }
+                catch(Exception $e)
+                {
+                    $recordError('the latest release', $e);
                 }
             }
-            catch(Exception $e)
+
+            // Find possible release archives
+            if($release !== null)
             {
-                Logger::getLogger()?->warning(sprintf('Could not get release archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                try
+                {
+                    $releaseArchive = $this->getReleaseArchive($group, $project, $release);
+                    if($releaseArchive !== null)
+                    {
+                        $results[] = $releaseArchive;
+                    }
+                }
+                catch(Exception $e)
+                {
+                    $recordError('release archive', $e);
+                }
             }
 
             // Find possible tag archives
@@ -126,7 +154,7 @@
                 // Don't log warnings for Packagist repositories about tags not being supported (it's expected behavior)
                 if(!($this instanceof PackagistRepository && $e instanceof OperationException && str_contains($e->getMessage(), 'does not support tags')))
                 {
-                    Logger::getLogger()?->warning(sprintf('Could not get tag archive for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                    $recordError('tag archive', $e);
                 }
             }
 
@@ -141,21 +169,24 @@
             }
             catch(Exception $e)
             {
-                Logger::getLogger()?->warning(sprintf('Could not get the git repo for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                $recordError('git repository', $e);
             }
 
             // Find possible release packages
-            try
+            if($release !== null)
             {
-                $releasePackage = $this->getReleasePackage($group, $project, $version ?? $this->getLatestRelease($group, $project));
-                if($releasePackage !== null)
+                try
                 {
-                    $results[] = $releasePackage;
+                    $releasePackage = $this->getReleasePackage($group, $project, $release);
+                    if($releasePackage !== null)
+                    {
+                        $results[] = $releasePackage;
+                    }
                 }
-            }
-            catch(Exception $e)
-            {
-                Logger::getLogger()?->warning(sprintf('Could not get release package for %s/%s:%s - %s', $group, $project, $version ?? 'latest', $e->getMessage()), $e);
+                catch(Exception $e)
+                {
+                    $recordError('release package', $e);
+                }
             }
 
             return $results;
@@ -279,7 +310,7 @@
             }
             catch(Exception $e)
             {
-                Logger::getLogger()?->warning(sprintf('Failed to fetch git URL for %s/%s from API, falling back to assumed URL: %s', $group, $project, $e->getMessage()), $e);
+                Logger::getLogger()?->debug(sprintf('Failed to fetch git URL for %s/%s from API, falling back to assumed URL: %s', $group, $project, $e->getMessage()));
             }
 
             // Fallback: construct an assumed git URL from the host, group and project
