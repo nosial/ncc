@@ -96,6 +96,14 @@
             $this->assertSame('1.2.3', $project->getAssembly()->getVersion());
         }
 
+        public function testUpdateSourceIsThePackagistPackage(): void
+        {
+            $project = $this->convert(['name' => 'symfony/yaml', 'version' => '8.1.11'], ['src']);
+
+            $this->assertNotNull($project->getUpdateSource());
+            $this->assertSame('symfony/yaml@packagist', (string)$project->getUpdateSource());
+        }
+
         public function testNameHelpers(): void
         {
             $this->assertSame('com.symfony.polyfill_mbstring', ComposerProjectConverter::generatePackageName('symfony/polyfill-mbstring'));
