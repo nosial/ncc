@@ -30,6 +30,8 @@
     use ncc\Classes\PackageReader;
     use ncc\Exceptions\OperationException;
     use ncc\Libraries\fslib\IO;
+    use ncc\Libraries\LogLib2\Classes\Utilities;
+    use ncc\Libraries\LogLib2\Enums\LogLevel;
     use ncc\Libraries\semver\VersionParser;
     use ncc\Objects\PackageLockEntry;
     use ncc\Objects\PackageSource;
@@ -91,16 +93,13 @@
                 return 0;
             }
 
-            [$updates, $skipped] = Console::withProgressScope(0.0, 1.0, static fn() => self::findUpdates($packageManager, $entries, $repositoryAuth));
-
-            if($skipped > 0)
-            {
-                Console::out(sprintf('%d package(s) have no update source and were not checked.', $skipped));
-            }
+            $results = Console::withProgressScope(0.0, 1.0, static fn() => self::findUpdates($packageManager, $entries, $repositoryAuth));
+            $updates = $results['updates'];
+            self::printCheckSummary($results);
 
             if(count($updates) === 0)
             {
-                Console::out('All packages are up to date.');
+                Console::out(count($results['unchecked']) > 0 ? 'No updates are available for the packages that were checked.' : 'All packages are up to date.');
                 return 0;
             }
 
@@ -142,8 +141,7 @@
                 catch(Exception $e)
                 {
                     Console::clearInlineProgress();
-                    Console::error(sprintf('Failed to update %s: %s', $entry->getPackage(), $e->getMessage()));
-                    $failed[] = $entry->getPackage();
+                    $failed[] = sprintf('%s %s -> %s: %s', $entry->getPackage(), $entry->getVersion(), $update['version'], $e->getMessage());
                 }
             }
 
@@ -160,11 +158,53 @@
 
             if(count($failed) > 0)
             {
-                Console::error(sprintf('Failed to update %d package(s): %s', count($failed), implode(', ', $failed)));
+                Console::error(sprintf('Failed to update %d package(s):', count($failed)));
+                foreach($failed as $line)
+                {
+                    Console::out(' - ' . $line);
+                }
+
                 return 1;
             }
 
             return 0;
+        }
+
+        /**
+         * Prints what was found while checking the installed packages for updates
+         *
+         * @param array{updates: array, upToDate: string[], unchecked: array<string, string>, skipped: string[]} $results
+         *        The results returned by findUpdates()
+         * @return void
+         */
+        private static function printCheckSummary(array $results): void
+        {
+            $checked = count($results['updates']) + count($results['upToDate']);
+            if($checked > 0)
+            {
+                Console::out(sprintf('Checked %d package(s) for updates: %d up to date, %d update(s) available', $checked, count($results['upToDate']), count($results['updates'])));
+                if(in_array(Utilities::getEnvironmentLogLevel(), [LogLevel::VERBOSE, LogLevel::DEBUG], true))
+                {
+                    foreach($results['upToDate'] as $line)
+                    {
+                        Console::out(' - ' . $line . ' (up to date)');
+                    }
+                }
+            }
+
+            if(count($results['unchecked']) > 0)
+            {
+                Console::warning(sprintf('Could not check %d package(s) for updates:', count($results['unchecked'])));
+                foreach($results['unchecked'] as $package => $reason)
+                {
+                    Console::out(sprintf(' - %s: %s', $package, $reason));
+                }
+            }
+
+            if(count($results['skipped']) > 0)
+            {
+                Console::out(sprintf('%d package(s) have no update source and were not checked.', count($results['skipped'])));
+            }
         }
 
         /**
@@ -173,13 +213,16 @@
          * @param PackageManager $packageManager The package manager the packages are installed in
          * @param array<string, PackageLockEntry> $entries The latest installed entry of each package
          * @param array<string, string> $repositoryAuth The authentication entry names keyed by repository name
-         * @return array{0: array<int, array{entry: PackageLockEntry, source: PackageSource, version: string, optimized: bool}>, 1: int}
-         *         The available updates and the number of packages without an update source
+         * @return array{updates: array<int, array{entry: PackageLockEntry, source: PackageSource, version: string, optimized: bool}>, upToDate: string[], unchecked: array<string, string>, skipped: string[]}
+         *         The available updates, the packages that are up to date, the packages that could not be checked
+         *         (keyed by package name with the reason as the value) and the packages without an update source
          */
         private static function findUpdates(PackageManager $packageManager, array $entries, array $repositoryAuth): array
         {
             $updates = [];
-            $skipped = 0;
+            $upToDate = [];
+            $unchecked = [];
+            $skipped = [];
             $total = count($entries);
             $index = 0;
 
@@ -193,25 +236,33 @@
                     $source = (new PackageReader($packagePath))->getHeader()->getUpdateSource();
                     if($source === null || $source->getRepository() === null)
                     {
-                        $skipped++;
+                        $skipped[] = $entry->getPackage();
                         continue;
                     }
 
                     if(!Runtime::repositoryExists($source->getRepository()))
                     {
-                        Console::warning(sprintf('Cannot check %s for updates, unknown remote repository "%s"', $entry->getPackage(), $source->getRepository()));
+                        $unchecked[$entry->getPackage()] = sprintf('unknown remote repository "%s"', $source->getRepository());
                         continue;
                     }
 
-                    $latestVersion = self::getLatestRemoteVersion($source, $repositoryAuth);
+                    $errors = [];
+                    $latestVersion = self::getLatestRemoteVersion($source, $repositoryAuth, $errors);
                     if($latestVersion === null)
                     {
-                        Console::warning(sprintf('Cannot check %s for updates, no version was found in %s', $entry->getPackage(), $source));
+                        $reason = sprintf('no version was found in %s', $source);
+                        if(count($errors) > 0)
+                        {
+                            $reason .= sprintf(' (%s)', $errors[0]);
+                        }
+
+                        $unchecked[$entry->getPackage()] = $reason;
                         continue;
                     }
 
                     if(!PackageMaintenance::isNewerVersion($entry->getVersion(), $latestVersion))
                     {
+                        $upToDate[] = sprintf('%s %s', $entry->getPackage(), $entry->getVersion());
                         continue;
                     }
 
@@ -224,12 +275,19 @@
                 }
                 catch(Exception $e)
                 {
-                    Console::warning(sprintf('Cannot check %s for updates: %s', $entry->getPackage(), $e->getMessage()));
+                    $unchecked[$entry->getPackage()] = $e->getMessage();
                 }
             }
 
             Console::inlineProgress($total, $total, 'Checked for updates');
-            return [$updates, $skipped];
+            Console::clearInlineProgress();
+
+            return [
+                'updates' => $updates,
+                'upToDate' => $upToDate,
+                'unchecked' => $unchecked,
+                'skipped' => $skipped
+            ];
         }
 
         /**
@@ -237,10 +295,11 @@
          *
          * @param PackageSource $source The update source
          * @param array<string, string> $repositoryAuth The authentication entry names keyed by repository name
+         * @param array|null $errors Receives the unique errors of the sources that could not be resolved
          * @return string|null The latest version, or null if the repository reported none
          * @throws OperationException If the repository cannot be queried
          */
-        private static function getLatestRemoteVersion(PackageSource $source, array $repositoryAuth): ?string
+        private static function getLatestRemoteVersion(PackageSource $source, array $repositoryAuth, ?array &$errors=null): ?string
         {
             $authentication = InstallCommand::resolveAuthentication($source->getRepository(), $repositoryAuth);
             $repository = Runtime::getRepository($source->getRepository())?->createClient($authentication);
@@ -252,7 +311,7 @@
             // Tags that are not versions (eg; "nightly") cannot be installed through a package source
             $versionParser = new VersionParser();
             $latestVersion = null;
-            foreach($repository->getAll($source->getOrganization(), $source->getName()) as $remotePackage)
+            foreach($repository->getAll($source->getOrganization(), $source->getName(), null, $errors) as $remotePackage)
             {
                 $version = $remotePackage->getVersion();
                 if($version !== null && $versionParser->isValid($version) && ($latestVersion === null || PackageMaintenance::isNewerVersion($latestVersion, $version)))
