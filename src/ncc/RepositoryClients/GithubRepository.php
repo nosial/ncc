@@ -451,6 +451,7 @@
                 return Cache::get($cache_key);
             }
 
+            $responseHeaders = self::captureResponseHeaders($curl);
             $retry_count = 0;
             $response = false;
 
@@ -471,6 +472,12 @@
             }
 
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            if(self::isRateLimited($http_code, $responseHeaders, $response))
+            {
+                Logger::getLogger()?->verbose(sprintf('API rate limit exceeded for %s/%s (HTTP %d)', $group, $project, $http_code));
+                throw new OperationException($this->getRateLimitMessage($group, $project, $responseHeaders));
+            }
+
             Logger::getLogger()?->verbose(sprintf('Received HTTP %d response for %s/%s', $http_code, $group, $project));
             switch ($http_code)
             {
