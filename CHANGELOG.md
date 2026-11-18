@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.14] - 2026-11-17
+## [3.1.14] - 2026-11-18
 
 This update focuses on running Composer packages and tools such as PHPUnit through ncc, and adds the `ncc update`
 and `ncc autoremove` commands
@@ -108,6 +108,10 @@ and `ncc autoremove` commands
    already installed get it when they're reinstalled
  - Gitea repositories crashed with a `TypeError` when resolving a project's git source, because the repository's
    `zipball_url` (which the Gitea API doesn't return) was used instead of its `clone_url`
+ - Exceeding a repository's API rate limit was reported as "403 Forbidden, insufficient scope" by GitHub repositories
+   and as a generic HTTP error by the others. Repository clients now detect rate limits (HTTP 429, or 403 with
+   GitHub's rate limit headers or message) and report them, including when the limit resets and, for unauthenticated
+   requests, how to authenticate for a higher limit
 
 
 ## [3.1.13] - 2026-11-02
