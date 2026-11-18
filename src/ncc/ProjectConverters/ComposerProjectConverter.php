@@ -23,6 +23,7 @@
     namespace ncc\ProjectConverters;
 
     use Exception;
+    use InvalidArgumentException;
     use ncc\Abstracts\AbstractProjectConverter;
     use ncc\Libraries\fslib\IO;
     use ncc\Classes\Logger;
@@ -137,6 +138,19 @@
                 host: 'packagist.org',
                 ssl: true
             ));
+
+            // Composer packages are updated from Packagist
+            if(isset($composerData['name']) && is_string($composerData['name']))
+            {
+                try
+                {
+                    $project->setUpdateSource(new PackageSource($composerData['name'] . '@packagist'));
+                }
+                catch(InvalidArgumentException)
+                {
+                    Logger::getLogger()?->debug(sprintf('Cannot use "%s" as the update source, it is not a valid package name', $composerData['name']));
+                }
+            }
 
             // Get the base directory of the composer.json file
             $baseDir = dirname($filePath);
