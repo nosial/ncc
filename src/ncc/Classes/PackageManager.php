@@ -548,6 +548,11 @@
                     Logger::getLogger()?->verbose('Creating optimized installation');
                     $optimizedPath = self::createOptimizedInstallation($installedReader, $packageInstallationPath);
                 }
+                elseif($installedReader->requiresFilesystem())
+                {
+                    Logger::getLogger()?->verbose('Creating optimized installation, the package bundles files PHP can only open from the filesystem');
+                    $optimizedPath = self::createOptimizedInstallation($installedReader, $packageInstallationPath);
+                }
 
                 $installedReader->exportCache($packageInstallationPath . '.cache', $optimizedPath);
                 if($installedReader->getHeader()->getEntryPoint() !== null)
@@ -751,7 +756,6 @@
         private static function createOptimizedInstallation(PackageReader $packageReader, string $packagePath): ?string
         {
             $optimizedPath = self::getOptimizedInstallationPath($packagePath);
-            $temporaryPath = $optimizedPath . '.tmp-' . bin2hex(random_bytes(4));
 
             try
             {
@@ -761,19 +765,7 @@
                     throw new IOException($packagePath, 'Could not compute SHA1 hash of package file');
                 }
 
-                $packageReader->extractContents($temporaryPath);
-                IO::writeFile($temporaryPath . DIRECTORY_SEPARATOR . PackageReader::OPTIMIZED_MARKER, $sha1);
-
-                if(IO::exists($optimizedPath))
-                {
-                    IO::delete($optimizedPath, true);
-                }
-
-                if(!@rename($temporaryPath, $optimizedPath))
-                {
-                    throw new IOException($optimizedPath, 'Failed to move the optimized installation into place');
-                }
-
+                $packageReader->extractVerified($optimizedPath, $sha1);
                 Logger::getLogger()?->verbose(sprintf('Created optimized installation at: %s', $optimizedPath));
                 return $optimizedPath;
             }
@@ -781,19 +773,6 @@
             {
                 // The optimized installation is not critical, the package is imported through ncc:// without it
                 Logger::getLogger()?->warning(sprintf('Failed to create optimized installation: %s', $e->getMessage()));
-
-                try
-                {
-                    if(IO::exists($temporaryPath))
-                    {
-                        IO::delete($temporaryPath, true);
-                    }
-                }
-                catch(Exception $cleanupException)
-                {
-                    Logger::getLogger()?->debug(sprintf('Failed to clean up %s: %s', $temporaryPath, $cleanupException->getMessage()));
-                }
-
                 return null;
             }
         }

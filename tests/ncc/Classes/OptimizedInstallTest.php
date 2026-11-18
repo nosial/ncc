@@ -133,6 +133,7 @@
             $installedPath = $this->install(new PackageManager($this->dataDirectory), false);
 
             $this->assertDirectoryDoesNotExist(PackageManager::getOptimizedInstallationPath($installedPath));
+            $this->assertFalse((new PackageReader($installedPath, true))->requiresFilesystem());
             $this->assertNull((new PackageReader($installedPath, true))->getOptimizedPath());
         }
 

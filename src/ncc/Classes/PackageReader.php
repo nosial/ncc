@@ -54,7 +54,9 @@
         private const int MAX_NAME_LENGTH = 65536;
         public const string OPTIMIZED_SUFFIX = '.optimized';
         public const string OPTIMIZED_MARKER = '.ncc-optimized';
+        public const array FILESYSTEM_ONLY_EXTENSIONS = ['phar'];
         private string $filePath;
+        private ?bool $requiresFilesystem = null;
         private ?string $filePathHash = null;
         private ?string $contentVersion = null;
         private ?string $cachedFileSha1 = null;
@@ -314,7 +316,12 @@
             if($this->optimizedPath === null)
             {
                 $this->optimizedPath = false;
-                if($this->cachedOptimizedPath !== null && $this->cachedFileSha1 !== null && getenv('NCC_DISABLE_OPTIMIZED') === false)
+                if(getenv('NCC_DISABLE_OPTIMIZED') !== false)
+                {
+                    return null;
+                }
+
+                if($this->cachedOptimizedPath !== null && $this->cachedFileSha1 !== null)
                 {
                     $marker = @file_get_contents($this->cachedOptimizedPath . DIRECTORY_SEPARATOR . self::OPTIMIZED_MARKER);
                     if($marker !== false && trim($marker) === $this->cachedFileSha1)
@@ -326,9 +333,142 @@
                         Logger::getLogger()?->warning(sprintf('Optimized installation %s is missing or outdated, loading %s through ncc://', $this->cachedOptimizedPath, $this->filePath));
                     }
                 }
+
+                if($this->optimizedPath === false && $this->requiresFilesystem())
+                {
+                    $this->optimizedPath = $this->getRuntimeExtraction() ?? false;
+                }
             }
 
             return $this->optimizedPath === false ? null : $this->optimizedPath;
+        }
+
+        /**
+         * Returns true if the package contains entries PHP can only open from a real filesystem path (see
+         * FILESYSTEM_ONLY_EXTENSIONS), such packages are always loaded from an extracted copy.
+         *
+         * @return bool True if the package must be extracted to the filesystem to work
+         */
+        public function requiresFilesystem(): bool
+        {
+            if($this->requiresFilesystem === null)
+            {
+                $this->requiresFilesystem = false;
+                foreach(array_merge($this->componentReferences, $this->resourceReferences) as $reference)
+                {
+                    if(in_array(strtolower(pathinfo($reference->getName(), PATHINFO_EXTENSION)), self::FILESYSTEM_ONLY_EXTENSIONS, true))
+                    {
+                        $this->requiresFilesystem = true;
+                        break;
+                    }
+                }
+            }
+
+            return $this->requiresFilesystem;
+        }
+
+        /**
+         * Extracts the package to the given directory atomically: the contents are extracted to a temporary directory
+         * first, the marker file containing the SHA-1 of the package is written last and the directory is then moved
+         * into place, so a partial extraction is never used by the runtime.
+         *
+         * @param string $destination The directory the package is extracted to, replaced if it already exists
+         * @param string $sha1 The SHA-1 of the package file, written to the marker file
+         * @throws Exception If the package could not be extracted or moved into place
+         */
+        public function extractVerified(string $destination, string $sha1): void
+        {
+            try
+            {
+                $temporaryPath = $destination . '.tmp-' . bin2hex(random_bytes(4));
+            }
+            catch(Exception $e)
+            {
+                throw new IOException($destination, 'Unable to generate random bytes', 0, $e);
+            }
+
+            try
+            {
+                $this->extractContents($temporaryPath);
+                IO::writeFile($temporaryPath . DIRECTORY_SEPARATOR . self::OPTIMIZED_MARKER, $sha1);
+
+                if(IO::exists($destination))
+                {
+                    IO::delete($destination, true);
+                }
+
+                if(!@rename($temporaryPath, $destination))
+                {
+                    // Another process may have extracted the same package in the meantime
+                    $marker = @file_get_contents($destination . DIRECTORY_SEPARATOR . self::OPTIMIZED_MARKER);
+                    if($marker === false || trim($marker) !== $sha1)
+                    {
+                        throw new IOException($destination, 'Failed to move the extracted package into place');
+                    }
+
+                    IO::delete($temporaryPath, true);
+                }
+            }
+            catch(Exception $e)
+            {
+                try
+                {
+                    if(IO::exists($temporaryPath))
+                    {
+                        IO::delete($temporaryPath, true);
+                    }
+                }
+                catch(Exception $cleanupException)
+                {
+                    Logger::getLogger()?->debug(sprintf('Failed to clean up %s: %s', $temporaryPath, $cleanupException->getMessage()));
+                }
+
+                throw $e;
+            }
+        }
+
+        /**
+         * Returns an up-to-date extracted copy of the package in a per-user temporary directory, extracting it if
+         * needed. Used for packages that require the filesystem but have no optimized installation (installed by an
+         * older ncc, executed directly from a package file or installed where the package directory is not writable).
+         *
+         * @return string|null The path to the extracted copy, or null if it could not be created
+         */
+        private function getRuntimeExtraction(): ?string
+        {
+            $packageName = $this->assembly->getPackage();
+
+            try
+            {
+                $sha1 = $this->cachedFileSha1 ?? hash_file('sha1', $this->filePath);
+                if($sha1 === false)
+                {
+                    throw new IOException($this->filePath, 'Could not compute SHA1 hash of package file');
+                }
+
+                $user = function_exists('posix_geteuid') ? (string)posix_geteuid() : preg_replace('/[^A-Za-z0-9_.-]/', '_', get_current_user());
+                $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ncc-extract-' . $user;
+                if(!is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory))
+                {
+                    throw new IOException($directory, 'Could not create the extraction directory');
+                }
+
+                $extractionPath = $directory . DIRECTORY_SEPARATOR . $sha1;
+                $marker = @file_get_contents($extractionPath . DIRECTORY_SEPARATOR . self::OPTIMIZED_MARKER);
+                if($marker === false || trim($marker) !== $sha1)
+                {
+                    Logger::getLogger()?->verbose(sprintf('Extracting %s to %s', $packageName, $extractionPath));
+                    $this->extractVerified($extractionPath, $sha1);
+                }
+
+                Logger::getLogger()?->verbose(sprintf('%s bundles files PHP can only open from the filesystem, using the extracted copy at %s', $packageName, $extractionPath));
+                return $extractionPath;
+            }
+            catch(Exception $e)
+            {
+                Logger::getLogger()?->warning(sprintf('Failed to extract %s to the filesystem, loading it through ncc://: %s', $packageName, $e->getMessage()));
+                return null;
+            }
         }
 
         public function getPackageSource(): ?PackageSource
