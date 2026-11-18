@@ -550,6 +550,10 @@
                 }
 
                 $installedReader->exportCache($packageInstallationPath . '.cache', $optimizedPath);
+                if($installedReader->getHeader()->getEntryPoint() !== null)
+                {
+                    ComposerCompat::getAutoloadShim(IO::getRealPath($packageInstallationPath), $installedReader->getAssembly()->getPackage());
+                }
             }
             catch(Exception $e)
             {
@@ -565,58 +569,68 @@
             {
                 try
                 {
-                    $projectName = $packageReader->getAssembly()->getName();
                     $packageName = $packageReader->getAssembly()->getPackage();
                     $forceSymlink = isset($options['force-symlink']) && $options['force-symlink'];
-                    
-                    // Check if symlink already exists
-                    $symlinkExists = SymlinkManager::symlinkExists($projectName);
-                    $isNccManaged = SymlinkManager::isNccManaged($projectName);
-                    
-                    // Determine if we should create/update the symlink
-                    $shouldCreateSymlink = false;
-                    
-                    if (!$symlinkExists)
+                    $launchers = self::getLaunchers($packageReader);
+                    $isComposerLaunchers = !in_array(null, $launchers, true);
+                    $createdLaunchers = [];
+
+                    foreach($launchers as $projectName => $executionUnit)
                     {
-                        // No symlink exists, create one
-                        $shouldCreateSymlink = true;
-                        Logger::getLogger()?->verbose(sprintf('No symlink exists for %s, will create one', $projectName));
-                    }
-                    else if ($isNccManaged)
-                    {
-                        // Symlink exists and is managed by ncc, update it
-                        $shouldCreateSymlink = true;
-                        Logger::getLogger()?->verbose(sprintf('Updating existing ncc-managed symlink for %s', $projectName));
-                    }
-                    else if ($forceSymlink)
-                    {
-                        // Symlink exists but is not managed by ncc, force overwrite
-                        $shouldCreateSymlink = true;
-                        Logger::getLogger()?->verbose(sprintf('Force-overwriting existing symlink for %s', $projectName));
-                    }
-                    else
-                    {
-                        Logger::getLogger()?->warning(sprintf('Symlink for %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $projectName));
-                    }
-                    
-                    if ($shouldCreateSymlink)
-                    {
-                        $symlinkPath = SymlinkManager::createSymlink($projectName, $packageName, $forceSymlink);
-                        
-                        if ($symlinkPath !== null)
+                        $symlinkExists = SymlinkManager::symlinkExists($projectName);
+                        $isNccManaged = SymlinkManager::isNccManaged($projectName);
+                        $shouldCreateSymlink = false;
+
+                        if (!$symlinkExists)
                         {
-                            Logger::getLogger()?->verbose(sprintf('Symlink created at: %s', $symlinkPath));
-                            
-                            // Update the package entry to mark symlink as registered
-                            $entry = $this->getEntry($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
-                            if ($entry !== null)
+                            // No symlink exists, create one
+                            $shouldCreateSymlink = true;
+                            Logger::getLogger()?->verbose(sprintf('No symlink exists for %s, will create one', $projectName));
+                        }
+                        else if ($isNccManaged)
+                        {
+                            // Symlink exists and is managed by ncc, update it
+                            $shouldCreateSymlink = true;
+                            Logger::getLogger()?->verbose(sprintf('Updating existing ncc-managed symlink for %s', $projectName));
+                        }
+                        else if ($forceSymlink)
+                        {
+                            // Symlink exists but is not managed by ncc, force overwrite
+                            $shouldCreateSymlink = true;
+                            Logger::getLogger()?->verbose(sprintf('Force-overwriting existing symlink for %s', $projectName));
+                        }
+                        else
+                        {
+                            Logger::getLogger()?->warning(sprintf('Symlink for %s already exists and is not managed by ncc. Use --force-symlink to overwrite.', $projectName));
+                        }
+
+                        if ($shouldCreateSymlink)
+                        {
+                            $symlinkPath = SymlinkManager::createSymlink($projectName, $packageName, $forceSymlink, $executionUnit);
+                            if ($symlinkPath !== null)
                             {
-                                $entry->setSymlinkRegistered(true);
-                                $this->modified = true;
-                                if ($this->autoSave && !$this->readOnly)
-                                {
-                                    $this->save();
-                                }
+                                Logger::getLogger()?->verbose(sprintf('Symlink created at: %s', $symlinkPath));
+                                $createdLaunchers[] = $projectName;
+                            }
+                        }
+                    }
+
+                    // Update the package entry to mark the symlinks as registered
+                    if (count($createdLaunchers) > 0)
+                    {
+                        $entry = $this->getEntry($packageReader->getAssembly()->getPackage(), $packageReader->getAssembly()->getVersion());
+                        if ($entry !== null)
+                        {
+                            $entry->setSymlinkRegistered(true);
+                            if ($isComposerLaunchers)
+                            {
+                                $entry->setSymlinks($createdLaunchers);
+                            }
+
+                            $this->modified = true;
+                            if ($this->autoSave && !$this->readOnly)
+                            {
+                                $this->save();
                             }
                         }
                     }
@@ -669,18 +683,24 @@
                 if(IO::exists($packagePath))
                 {
                     // Handle symlink removal if this is a system installation and symlink was registered
-                    if (Runtime::isSystemUser() && $entry->isSymlinkRegistered())
+                    if (Runtime::isSystemUser() && $entry->isSymlinkRegistered() && count($this->getAllVersions($package)) <= 1)
                     {
                         try
                         {
-                            // Try to read the package to get the project name
-                            $packageReader = new PackageReader($packagePath);
-                            $projectName = $packageReader->getAssembly()->getName();
-                            
-                            // Remove the symlink
-                            if (SymlinkManager::removeSymlink($projectName))
+                            // Composer bins register one launcher each, other packages one named after the assembly
+                            $launcherNames = $entry->getSymlinks();
+                            if (count($launcherNames) === 0)
                             {
-                                Logger::getLogger()?->verbose(sprintf('Removed symlink for project: %s', $projectName));
+                                $packageReader = new PackageReader($packagePath);
+                                $launcherNames = [$packageReader->getAssembly()->getName()];
+                            }
+
+                            foreach ($launcherNames as $projectName)
+                            {
+                                if (SymlinkManager::removeSymlink($projectName))
+                                {
+                                    Logger::getLogger()?->verbose(sprintf('Removed symlink for project: %s', $projectName));
+                                }
                             }
                         }
                         catch (Exception $e)
@@ -779,7 +799,46 @@
         }
 
         /**
-         * Removes the cache file and the optimized installation that belong to an installed package file
+         * Returns the launchers to register for a package: one per Composer bin (launcher name => execution unit), or
+         * a single launcher named after the assembly running the entry point (assembly name => null)
+         *
+         * @param PackageReader $packageReader The installed package
+         * @return array<string, string|null> The launcher names mapped to the execution unit they run
+         */
+        private static function getLaunchers(PackageReader $packageReader): array
+        {
+            $launchers = [];
+            foreach($packageReader->getExecutionUnitReferences() as $reference)
+            {
+                $unit = $packageReader->readExecutionUnit($reference);
+
+                // "main" is the entry point alias of the first bin, which gets its own launcher under the bin's name
+                if(!$unit->isComposerBin() || $unit->getName() === 'main')
+                {
+                    continue;
+                }
+
+                // The name ends up in a file name and a shell script, only allow plain command names
+                if(!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $unit->getName()))
+                {
+                    Logger::getLogger()?->warning(sprintf('Not creating a launcher for the execution unit %s, it is not a valid command name', $unit->getName()));
+                    continue;
+                }
+
+                $launchers[strtolower($unit->getName())] = $unit->getName();
+            }
+
+            if(count($launchers) === 0)
+            {
+                $launchers[$packageReader->getAssembly()->getName()] = null;
+            }
+
+            return $launchers;
+        }
+
+        /**
+         * Removes the cache file, Composer autoload shim and optimized installation that belong to an installed
+         * package file
          *
          * @param string $packagePath The path to the installed package file
          * @throws IOException If the files cannot be removed
@@ -789,6 +848,11 @@
             if(IO::exists($packagePath . '.cache'))
             {
                 IO::delete($packagePath . '.cache', false);
+            }
+
+            if(IO::exists(ComposerCompat::getInstalledShimPath($packagePath)))
+            {
+                IO::delete(ComposerCompat::getInstalledShimPath($packagePath), false);
             }
 
             $optimizedPath = self::getOptimizedInstallationPath($packagePath);
