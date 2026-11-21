@@ -28,6 +28,11 @@
     {
         private static array $temporaryFiles = [];
 
+        /**
+         * Cleans up registered temporary files during shutdown.
+         *
+         * @return void
+         */
         protected static function onShutdown(): void
         {
             foreach(self::$temporaryFiles as $file)
@@ -39,11 +44,22 @@
             }
         }
 
+        /**
+         * Flags the specified file path as temporary for later cleanup.
+         *
+         * @param string $filePath Path to the file to flag as temporary.
+         * @return void
+         */
         public static function flagTemporary(string $filePath): void
         {
             self::$temporaryFiles[] = $filePath;
         }
 
+        /**
+         * Registers the shutdown handler used to perform cleanup when the script terminates.
+         *
+         * @return void
+         */
         public static function register(): void
         {
             register_shutdown_function([self::class, 'onShutdown']);
